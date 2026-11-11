@@ -162,10 +162,11 @@ SQLite journal/WAL/SHM успадковують права БД. Права на
 
 Вибір ролі — три взаємовиключні радіокнопки, початково Учень; запис у БД
 виконується лише кнопкою збереження. Membership pickers не мають row-selection:
-клік у рядку або Space змінює checkbox, пошук зберігає незбережені позначки.
+клік лише в індикатор або Space змінює checkbox; пошук зберігає чернетку.
 
 Власник підтвердив фізичний ввід Standard Ukrainian; Enhanced не працює
-через WSLg mapping. Ctrl+V під Standard ще досліджується. Для порівняння
+через WSLg mapping. Для Ctrl shortcuts під Standard додано описану нижче
+корекцію за фізичними доказами. Для baseline-порівняння
 фізичних Ctrl+V/C/X/A та Shift+Insert запустіть `tools/keyboard_probe.py`
 за інструкцією diagnostics. Надсилайте лише metadata-рядки — не текст,
 clipboard або паролі. Виправленого офіційного релізу Enhanced не підтверджено.
