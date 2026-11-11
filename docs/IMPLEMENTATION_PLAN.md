@@ -252,3 +252,10 @@ Windows 11 потребує окремої перевірки. Сценарії 
 **Доставка:** реалізація `83e803d`, гілка відправлена;
 [PR #3](https://github.com/the1llus1on/cyberforge/pull/3) відкрито до `main`.
 Remote CI запущено; актуальний результат — у checks PR. Merge не виконано.
+
+### Уточнення security review — права SQLite
+
+Phase 2 залишається REVIEW. SRS §§2.8,14.9,16,21.4: нові каталоги БД 0700,
+файл 0600 на POSIX без зміни umask або прав наявних файлів. Додано
+subprocess-тести з umask 000 для DELETE journal і WAL/SHM та preservation.
+Windows ACL не перевірено; див. ADR-0002.

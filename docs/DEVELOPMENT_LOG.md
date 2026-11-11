@@ -531,3 +531,18 @@ GitHub MCP `get_check_runs` повернув 403 через scope PAT. Fallback 
 branch read та створення PR були успішні. Поточний результат CI доступний
 у [перевірках PR](https://github.com/the1llus1on/cyberforge/pull/3/checks).
 Після основного коміту внесено лише цей запис про доставку результату.
+
+## Phase 2 — уточнення security review: POSIX SQLite permissions
+
+Нові каталоги створюються приватно (0700), файл БД резервується через
+ексклюзивний os.open з mode 0600 до відкриття SQLite. Наявні файли й каталоги
+не змінюються, глобальний umask не змінюється. Нові subprocess-тести з
+umask 000 перевіряють файл, вкладені каталоги, живі DELETE journal і WAL/SHM,
+а також збереження наявних mode 0755/0640. Windows ACL не перевірено й не
+гарантується POSIX mode; старі відкриті БД потребують окремого огляду власником.
+Оновлено README, ADR-0002 та план. Phase 2 — REVIEW, Phase 3 не починалася.
+Перевірки: Ruff lint — успіх; format — 34 файли; нові permission-тести —
+2 passed. Повний pytest включає міграції, persistence, RBAC та GUI.
+
+Фінальний `uv run --offline pytest -q --tb=short`: **70 passed**, 130.25 s.
+`git diff --check` успішний. Remote CI перевіряється після push у PR #3.
