@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
 )
 
 from cyberforge.ui.icons import icon
-from cyberforge.ui.navigation import NavigationState, View
+from cyberforge.ui.navigation import AuthenticationState, NavigationState, View
 from cyberforge.ui.pages import WorkspacePage, label
 
 
@@ -36,6 +36,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("CyberForge")
         self.resize(1280, 800)
         self.setMinimumSize(860, 620)
+        self.authentication_state = AuthenticationState.GUEST
         self.navigation = NavigationState()
         root = QWidget()
         outer = QVBoxLayout(root)
@@ -58,7 +59,7 @@ class MainWindow(QMainWindow):
         top.addSpacing(16)
         top.addWidget(brand)
         top.addStretch()
-        self.context_label = label("Вітання")
+        self.context_label = label("Головна")
         top.addWidget(self.context_label)
         top.addSpacing(16)
         badge = label("Гостьовий режим")
@@ -79,7 +80,7 @@ class MainWindow(QMainWindow):
         self.nav_group = QButtonGroup(self)
         self.nav_buttons: dict[View, QPushButton] = {}
         entries = (
-            (View.GUEST, "home", "Головна"),
+            (View.HOME, "home", "Головна"),
             (View.CONSTRUCTOR, "plus", "Конструктор — перегляд оболонки"),
             (View.ANALYTICS, "chart", "Аналіз — перегляд оболонки"),
             (View.SETTINGS, "settings", "Налаштування"),
@@ -167,10 +168,11 @@ class MainWindow(QMainWindow):
         self.nav_buttons[current].setChecked(True)
         self.back_button.setEnabled(self.navigation.can_go_back)
         self.forward_button.setEnabled(self.navigation.can_go_forward)
+        self.scenario_panel.setVisible(current in (View.CONSTRUCTOR, View.ANALYTICS))
         self.new_scenario_button.setVisible(current == View.CONSTRUCTOR)
         self.context_label.setText(
             {
-                View.GUEST: "Вітання",
+                View.HOME: "Головна",
                 View.CONSTRUCTOR: "Конструктор",
                 View.ANALYTICS: "Аналіз",
                 View.SETTINGS: "Налаштування",

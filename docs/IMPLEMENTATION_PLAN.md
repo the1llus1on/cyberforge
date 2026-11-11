@@ -17,7 +17,7 @@
 | Phase | Name | Status | Deliverable and acceptance focus |
 |---|---|---|---|
 | 0 | Project Foundation | ACCEPTED | Python 3.12/uv, src package, CLI, lockfile, pytest/Ruff; власник підтвердив перевірки у WSL Ubuntu та прийняв фазу 11.11.2026 |
-| 1 | Main UI Shell | REVIEW | Dark PySide6 shell, Guest view, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
+| 1 | Main UI Shell | REVIEW | Dark PySide6 shell, universal Home / Guest state, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
 | 2 | Users & Groups | NOT STARTED | Login, Argon2id, 3 roles, demo accounts/groups, permission enforcement; denied-access tests |
 | 3 | Scenario Management | NOT STARTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
 | 4 | LLM Integration | NOT STARTED | LLMGateway, provider adapter, Gemini configuration, deterministic MockLLMProvider; schema and fallback tests |
@@ -115,7 +115,7 @@ The owner evaluates the working demonstration, diff, test evidence and SRS trace
   перегляд оболонки. Каталог порожній та закритий; створення й пошук
   недоступні. Авторизації, сценаріїв, тестових користувачів, оцінок,
   persistence та LLM немає; login/profile пояснює майбутній етап.
-- **Критерії:** старт у Guest; темна тема; видимі й узгоджені активні
+- **Критерії:** старт на Home у стані Guest; темна тема; видимі й узгоджені активні
   стани; «+» лише перемикає режим; кнопка нового сценарію видима тільки
   в Конструкторі та недоступна гостю; один каталог; переходи назад/вперед;
   клавіатура, прокручування й розміри 860×620–1920×1080; offline тести;
@@ -146,3 +146,31 @@ The owner evaluates the working demonstration, diff, test evidence and SRS trace
   Наступна дія — рев’ю PR/демонстрації; Phase 2 не починати без дозволу.
 - **Рев’ю:** [PR #2](https://github.com/the1llus1on/cyberforge/pull/2),
   гілка `feat/phase-1-main-ui-shell`; merge не виконано.
+
+
+### Уточнення після рев’ю власника — Home (11.11.2026)
+
+- **Статус:** Phase 1 залишається REVIEW; той самий PR #2 і feature branch.
+- **Погоджене відхилення від SRS v3.0:** універсальна Home додається до
+  Конструктора й Аналізу; джерело рішення — прямий запит власника.
+  [ADR-0001](adr/0001-home-navigation.md) містить рішення, межі та рольову
+  матрицю для Phase 2. SRS не редагується.
+- **Поведінка:** `View.HOME` відокремлено від `AuthenticationState.GUEST`;
+  Home — інформаційна сторінка без каталогу, з привітанням, підказками
+  та циклом «Сценарій → Електронний лист → Вебсайт → Аналіз».
+  Каталог існує в одному екземплярі й видимий тільки в робочих режимах.
+  Повторюваний disclaimer видалено з UI; security-вимоги залишаються чинними.
+- **Межі:** автентифікація/RBAC не реалізовані. Home не залежить від ролі;
+  контракт після входу — Home для всіх; Administrator/Instructor зберігають
+  Конструктор/Аналіз, Learner отримає «Мої сценарії»/«Мої результати» (§3.9).
+  Перемикання поточних порожніх режимів не змінює Guest і не дає доступу.
+- **Перевірки:** `uv run ruff check .`, `uv run ruff format --check .` — успіх;
+  `uv run pytest` — **25 passed** offscreen. CLI/module startup smoke — exit 0.
+  `QT_QPA_PLATFORM=wayland uv run pytest tests/ui -q` — **21 passed**;
+  Wayland startup smoke — exit 0. Візуально оглянуто Home у двох розмірах
+  і компактний Конструктор; докази наведено в журналі розробки.
+- **Знімки:** оновлено `phase-1-home.png`, `phase-1-home-compact.png`,
+  `phase-1-analytics.png`, `phase-1-compact.png`; старий guest-знімок замінено.
+- **Gate:** WSL-перевірки й рев’ю уточнення; Windows 11/DPI залишаються
+  неперевіреними. Наступна дія — рев’ю власником; merge та Phase 2 заборонені
+  без нового явного погодження.

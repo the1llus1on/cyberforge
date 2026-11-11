@@ -48,7 +48,7 @@ class WorkspacePage(QWidget):
         body.setSpacing(22)
         body.setContentsMargins(0, 0, 0, 0)
         eyebrow, title, description = {
-            View.GUEST: (
+            View.HOME: (
                 "НАВЧАЙТЕСЯ РОЗПІЗНАВАТИ ЗАГРОЗИ",
                 "Вітаємо в CyberForge",
                 "Безпечний простір для навчання кібергігієни. "
@@ -84,15 +84,20 @@ class WorkspacePage(QWidget):
         self.title = label(title, "title")
         body.addWidget(self.title)
         body.addWidget(label(description))
-        if view == View.GUEST:
+        if view == View.HOME:
             body.addWidget(
                 card(
                     "Навчальний цикл",
-                    "Електронний лист  →  Вебсценарій  →  Оцінювання  →  "
-                    "Зворотний зв’язок",
+                    "Сценарій → Електронний лист → Вебсайт → Аналіз",
                 )
             )
-            body.addWidget(label("Увійдіть, щоб отримати доступ до ваших сценаріїв."))
+            body.addWidget(
+                label(
+                    "«+» відкриває Конструктор, іконка графіка — Аналіз. "
+                    "Кнопка будинку повертає на Головну.\n"
+                    "Увійдіть, щоб отримати доступ до ваших сценаріїв."
+                )
+            )
         elif view == View.CONSTRUCTOR:
             body.addWidget(
                 card(
@@ -118,7 +123,7 @@ class WorkspacePage(QWidget):
                     "Доступ до сценаріїв залишається закритим.",
                 )
             )
-        if view in (View.GUEST, View.CONSTRUCTOR, View.ANALYTICS):
+        if view in (View.HOME, View.CONSTRUCTOR, View.ANALYTICS):
             self.login_button = QPushButton("Перейти до входу  →")
             self.login_button.setObjectName("primary")
             self.login_button.clicked.connect(self.profile_requested)
@@ -126,6 +131,9 @@ class WorkspacePage(QWidget):
             row.addWidget(self.login_button)
             row.addStretch()
             body.addLayout(row)
-        body.addWidget(label("Лише синтетичні навчальні матеріали. Без реальних атак."))
-        layout.addWidget(content)
+        centered = QHBoxLayout()
+        centered.addStretch(1)
+        centered.addWidget(content, 10)
+        centered.addStretch(1)
+        layout.addLayout(centered)
         layout.addStretch(2)

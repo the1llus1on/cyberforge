@@ -3,8 +3,16 @@
 from enum import StrEnum
 
 
-class View(StrEnum):
+class AuthenticationState(StrEnum):
+    """Presentation state only; identity and authorization belong to Phase 2."""
+
     GUEST = "guest"
+
+
+class View(StrEnum):
+    """Destinations independent of authentication or future user roles."""
+
+    HOME = "home"
     CONSTRUCTOR = "constructor"
     ANALYTICS = "analytics"
     PROFILE = "profile"
@@ -15,7 +23,7 @@ class NavigationState:
     """Track contexts without creating scenarios or changing saved material."""
 
     def __init__(self) -> None:
-        self._history = [View.GUEST]
+        self._history = [View.HOME]
         self._index = 0
 
     @property

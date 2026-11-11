@@ -7,7 +7,7 @@ def test_history_boundaries_and_duplicates() -> None:
     state = NavigationState()
     state.back()
     state.forward()
-    assert state.current == View.GUEST
+    assert state.current == View.HOME
     assert not state.can_go_back
     assert not state.can_go_forward
     state.navigate(View.CONSTRUCTOR)
@@ -16,7 +16,7 @@ def test_history_boundaries_and_duplicates() -> None:
     state.back()
     assert state.current == View.CONSTRUCTOR
     state.back()
-    assert state.current == View.GUEST
+    assert state.current == View.HOME
     state.forward()
     assert state.current == View.CONSTRUCTOR
 

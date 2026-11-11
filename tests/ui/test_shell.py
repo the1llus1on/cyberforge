@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QLabel, QLineEdit
 from pytestqt.qtbot import QtBot
 
-from cyberforge.ui.navigation import View
+from cyberforge.ui.navigation import AuthenticationState, View
 from cyberforge.ui.shell import MainWindow
 from cyberforge.ui.theme import apply_theme
 
@@ -24,12 +24,14 @@ def click(qtbot: QtBot, window: MainWindow, view: View) -> None:
 
 
 def test_guest_start_and_profile(qtbot: QtBot, window: MainWindow) -> None:
-    assert window.navigation.current == View.GUEST
-    assert "Вітаємо" in window.pages[View.GUEST].title.text()
+    assert window.navigation.current == View.HOME
+    assert window.authentication_state == AuthenticationState.GUEST
+    assert not window.scenario_panel.isVisible()
+    assert "Вітаємо" in window.pages[View.HOME].title.text()
     assert not window.back_button.isEnabled()
     assert not window.forward_button.isEnabled()
     assert not window.new_scenario_button.isVisible()
-    qtbot.mouseClick(window.pages[View.GUEST].login_button, Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(window.pages[View.HOME].login_button, Qt.MouseButton.LeftButton)
     assert window.navigation.current == View.PROFILE
     assert window.nav_buttons[View.PROFILE].isChecked()
     assert not window.pages[View.PROFILE].findChildren(QLineEdit)
@@ -43,6 +45,8 @@ def test_mode_switches_share_catalog_without_granting_access(
         click(qtbot, window, view)
         assert window.navigation.current == view
         assert window.scenario_panel is panel
+        assert panel.isVisible()
+        assert window.authentication_state == AuthenticationState.GUEST
         assert window.workspace.currentWidget() is window.containers[view]
         assert window.nav_buttons[view].isChecked()
         assert sum(b.isChecked() for b in window.nav_buttons.values()) == 1
@@ -82,6 +86,9 @@ def test_layout_does_not_clip_text(
     QApplication.processEvents()
     assert window.workspace.geometry().right() < window.width()
     assert window.pages[view].width() <= window.containers[view].viewport().width()
+    assert window.scenario_panel.isVisible() == (
+        view in (View.CONSTRUCTOR, View.ANALYTICS)
+    )
     for text in window.pages[view].findChildren(QLabel):
         assert text.height() >= text.heightForWidth(text.width()), text.text()
 
@@ -90,3 +97,46 @@ def test_keyboard_mode_switch(qtbot: QtBot, window: MainWindow) -> None:
     window.nav_buttons[View.ANALYTICS].setFocus()
     qtbot.keyClick(window.nav_buttons[View.ANALYTICS], Qt.Key.Key_Space)
     assert window.navigation.current == View.ANALYTICS
+
+
+def test_home_content_and_primary_navigation(qtbot: QtBot, window: MainWindow) -> None:
+    texts = [text.text() for text in window.pages[View.HOME].findChildren(QLabel)]
+    assert "Навчальний цикл" in texts
+    assert "Сценарій → Електронний лист → Вебсайт → Аналіз" in texts
+    assert any("Конструктор" in text and "Головну" in text for text in texts)
+    primary = [
+        window.nav_buttons[view]
+        for view in (View.HOME, View.CONSTRUCTOR, View.ANALYTICS)
+    ]
+    assert [control.y() for control in primary] == sorted(
+        control.y() for control in primary
+    )
+    assert all(control.isEnabled() and control.accessibleName() for control in primary)
+    for page in window.pages.values():
+        assert all(
+            "Лише синтетичні навчальні матеріали. Без реальних атак." not in text.text()
+            for text in page.findChildren(QLabel)
+        )
+
+
+def test_home_roundtrip_preserves_mode_history_and_guest_state(
+    qtbot: QtBot, window: MainWindow
+) -> None:
+    panel = window.scenario_panel
+    click(qtbot, window, View.CONSTRUCTOR)
+    click(qtbot, window, View.ANALYTICS)
+    window.nav_buttons[View.HOME].setFocus()
+    qtbot.keyClick(window.nav_buttons[View.HOME], Qt.Key.Key_Space)
+    assert window.navigation.current == View.HOME
+    assert window.nav_buttons[View.HOME].isChecked()
+    assert not panel.isVisible()
+    qtbot.mouseClick(window.back_button, Qt.MouseButton.LeftButton)
+    assert window.navigation.current == View.ANALYTICS
+    assert panel.isVisible()
+    assert window.scenario_panel is panel
+    qtbot.mouseClick(window.forward_button, Qt.MouseButton.LeftButton)
+    assert window.navigation.current == View.HOME
+    assert not panel.isVisible()
+    assert window.authentication_state == AuthenticationState.GUEST
+    assert not window.new_scenario_button.isEnabled()
+    assert not window.search.isEnabled()
