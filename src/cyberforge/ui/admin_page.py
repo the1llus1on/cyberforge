@@ -24,23 +24,16 @@ from cyberforge.ui.pages import label
 
 
 class EditableList(QListWidget):
+    def focusOutEvent(self, event) -> None:
+        super().focusOutEvent(event)
+        # Keep the current edit identity and check states, only drop row highlight.
+        self.clearSelection()
+
     def mousePressEvent(self, event) -> None:
         if not self.indexAt(event.position().toPoint()).isValid():
             self.setCurrentRow(-1)
             self.clearSelection()
         super().mousePressEvent(event)
-
-
-class RoleCombo(QComboBox):
-    def __init__(self) -> None:
-        super().__init__()
-        # Use Qt's widget popup consistently rather than a native menu popup.
-        self.setStyleSheet("QComboBox { combobox-popup: 0; }")
-        self.view().clicked.connect(self._choose)
-
-    def _choose(self, index) -> None:
-        self.setCurrentIndex(index.row())
-        self.hidePopup()
 
 
 class AdminPage(QWidget):
@@ -70,12 +63,14 @@ class AdminPage(QWidget):
         tabs.addTab(groups_page, "Навчальні групи")
         users_layout = QVBoxLayout(users_page)
         self.users = EditableList()
+        self.users.setTextElideMode(Qt.TextElideMode.ElideRight)
+        self.users.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.users.currentItemChanged.connect(self.select_user)
         self._filter(users_layout, self.users, "Пошук користувачів")
         users_layout.addWidget(self.users)
         form = QFormLayout()
         self.username, self.display_name = QLineEdit(), QLineEdit()
-        self.role = RoleCombo()
+        self.role = QComboBox()
         for role in Role:
             self.role.addItem(role.label, role)
         self.active = QCheckBox("Обліковий запис активний")
@@ -119,7 +114,7 @@ class AdminPage(QWidget):
         group_form.addRow("Опис", self.description)
         groups_layout.addLayout(group_form)
         row = QHBoxLayout()
-        self.instructors, self.learners = EditableList(), QListWidget()
+        self.instructors, self.learners = EditableList(), EditableList()
         for title, widget in (("Викладачі", self.instructors), ("Учні", self.learners)):
             column = QVBoxLayout()
             column.addWidget(label(title))
@@ -172,9 +167,10 @@ class AdminPage(QWidget):
         users = self.accounts.list_users(token)
         for user in users:
             item = QListWidgetItem(
-                f"{user.username} · {user.role.label} · "
-                f"{'активний' if user.active else 'вимкнений'}"
+                f"{user.display_name} ({user.username}) — {user.role.label} · "
+                f"{'Активний' if user.active else 'Вимкнений'}"
             )
+            item.setToolTip(item.text())
             item.setData(Qt.ItemDataRole.UserRole, user)
             self.users.addItem(item)
             if user.active and user.role in (Role.INSTRUCTOR, Role.LEARNER):

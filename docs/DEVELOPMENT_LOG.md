@@ -592,3 +592,43 @@ empty-area deselect зі збереженням identity при простій �
 старих Guest-preview тестів новими Guest-deny/layout тестами; рольові
 layout/regression тести для трьох авторизованих ролей збережено.
 `git diff --check` — успіх. CI запускається push у той самий PR #3.
+
+## Залишкові чотири дефекти після фізичного owner review
+
+Початкове дерево чисте, поточна feat/phase-2-users-groups. Прочитано SRS §§2,
+план/журнал/ADR і відповідні UI-тести. План (§§2–3,16.6,21): прибрати custom
+popup lifecycle → уніфікувати списки → display names/search/elision → повторна
+keyboard діагностика → Ruff/pytest/WSLg/CI, push у той самий PR #3.
+
+RoleCombo власноруч викликав setCurrentIndex/hidePopup з clicked усередині
+Qt event dispatch. Його видалено; тепер стандартний QComboBox без popup
+stylesheet override і без власних mouse event handlers. Context7 перевірив
+офіційний контракт Qt hidePopup/activated/currentIndexChanged. Нові повні
+mouse-тести спочатку виявили межу QTest: без наведення/settling перший release
+може ігноруватися штатним Qt. Додано реалістичне наведення й перевірку закриття
+самого popup window після наступних event-loop turn; усі три ролі та клавіатура.
+У Wayland synthetic pointer не надає compositor serial і warp; зафіксовано
+Failed to create grabbing popup, три mouse-випадки явно skipped, а keyboard
+popup проходить окремо. Не додавали event workaround в продукт заради тесту.
+
+Асиметрію списків підтверджено в коді: instructors=EditableList,
+learners=QListWidget. Обидва уніфіковано, focus-out знімає лише selection,
+current identity/check states зберігаються. Тести обох списків незалежні.
+Users раніше взагалі не включав display_name у текст — додано повний запис,
+elide-right/tooltip, пошук за ім’ям/логіном і перевірку оновлення після Save.
+
+Фізична клавіатура: свіжі логи Weston повторюють failure 0x20422; reliable
+solution/physical workaround не підтверджено. Read-only Windows interop:
+Python лише 3.13, PySide6 відсутній, uv не знайдено. Native Windows 11 не
+запускався. tools/keyboard_probe.py дає незалежне порівняння без БД/секретів,
+ручні кроки наведено у docs/diagnostics/wslg-keyboard.md. Системні налаштування,
+owner demo-БД й credentials не читали/не змінювали. Скриншоти — тимчасова demo-БД.
+
+Фінальні перевірки: `uv run --offline pytest -q --tb=short` — **74 passed**,
+59.77 s. `QT_QPA_PLATFORM=wayland uv run --offline pytest tests/ui -q --tb=short`
+— **34 passed, 3 skipped**, 37.80 s; усі skips — окремо позначені synthetic
+mouse-popup випадки, не фізична перевірка. Ruff check/format — успіх,
+35 Python-файлів; git diff --check — успіх. Актуальні WSLg-знімки оглянуто:
+імена видно, групи/позначки після зміни фокуса збережено. Remote CI перевіряється
+після push. Phase 2 — REVIEW; фізичний Ukrainian input лишається відкритим,
+Windows verification не виконано, Phase 3/merge заборонені без погодження.

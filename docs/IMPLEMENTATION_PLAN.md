@@ -270,3 +270,18 @@ Constructor/Analytics. План: сервісні зміни (§§2,14.9,16.6) �
 (§3, ADR-0001/0002) → unit/integration/GUI/WSLg (§21) → CI та той самий PR.
 SRS незмінний. Фізична клавіатура власника після environment remediation
 потребує окремого підтвердження; докази Weston — docs/diagnostics/wslg-keyboard.md.
+
+### Повторна перевірка чотирьох залишкових дефектів
+
+Phase 2 — REVIEW. SRS §§2–3,16.6,21: стандартний QComboBox замість custom
+popup, однакові EditableList з focus-out selection cleanup, display name
+у Users/search/tooltip та responsive elision. Окремі тести обох списків,
+mouse/keyboard dismissal і explicit Save. Для фізичного вводу mapping error
+Weston 0x20422 підтверджений повторно; додано незалежний Qt probe й план
+native Windows порівняння. Фізичне введення й Windows залишаються неперевіреними.
+Owner demo-БД/credentials не змінюються; PR #3 без merge, Phase 3 не починається.
+
+Докази поточного уточнення: Ruff check/format — успіх; повний pytest —
+74 passed; WSLg GUI — 34 passed, 3 synthetic-mouse skips із поясненням.
+Native mouse selection/dismissal — offscreen/CI; keyboard popup — також WSLg.
+Прийняття фізичного UI та українського вводу потребує власника.

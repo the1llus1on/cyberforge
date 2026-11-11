@@ -112,3 +112,24 @@ SRS v3.0 залишається незмінним. Phase 2 — REVIEW.
   скидає вибір. Палітра й архітектура оболонки збережені.
 - Причина WSLg keyboard та межі фізичної перевірки —
   [діагностика](../diagnostics/wslg-keyboard.md).
+
+## Наступне owner review: popup, обидва списки, display names
+
+Попередній RoleCombo та clicked→setCurrentIndex→hidePopup видалено разом
+із stylesheet override combobox-popup. Використовується стандартний
+QComboBox і його життєвий цикл; Save залишається єдиним записом БД.
+Початковий тест showPopup не покривав відкриття мишею й відкладене повторне
+відображення. Нові тести перевіряють усі ролі, наступні event-loop turn,
+F4/Enter/Escape. Для WSLg synthetic mouse grab існує явно задокументований skip.
+Офіційний контракт Qt: https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/QComboBox.html
+
+Причина асиметрії: instructors був EditableList, learners — QListWidget.
+Обидва тепер EditableList. focusOutEvent знімає selection, але не current
+identity і не check states; empty click скидає current/selection. Фільтри
+не перебудовують items. Кожен список має окремий regression test.
+
+Users entry містить display_name, username, role, active status; пошук
+використовує повний текст. Довгі назви elide-right, повний текст у tooltip,
+горизонтальне прокручування вимкнено. Зміна імені оновлює entry після Save.
+Фізичне українське введення лишається невирішеним environment issue до
+порівняння probe/native Windows; не змінювати налаштування автоматично.
