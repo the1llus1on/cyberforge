@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Planning baseline. No phase is complete until validated in the actual repository.
+**State:** Phase 0 — ACCEPTED власником 11.11.2026 після особистої перевірки у WSL Ubuntu.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -16,7 +16,7 @@
 
 | Phase | Name | Status | Deliverable and acceptance focus |
 |---|---|---|---|
-| 0 | Project Foundation | NOT STARTED | Inspect repo and tools, establish Python 3.12/uv project, test/lint baseline, Git hygiene, foundational documentation; commands verified |
+| 0 | Project Foundation | ACCEPTED | Python 3.12/uv, src package, CLI, lockfile, pytest/Ruff; власник підтвердив перевірки у WSL Ubuntu та прийняв фазу 11.11.2026 |
 | 1 | Main UI Shell | NOT STARTED | Dark PySide6 shell, Guest view, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
 | 2 | Users & Groups | NOT STARTED | Login, Argon2id, 3 roles, demo accounts/groups, permission enforcement; denied-access tests |
 | 3 | Scenario Management | NOT STARTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
@@ -63,6 +63,37 @@ Each phase can be divided into substeps, but no substep should leave the working
 - No secrets or generated/local state appear in version control.
 - Git diff is scoped, and a concise Phase 0 report is available for user review.
 - Status changes to REVIEW after evidence is recorded; ACCEPTED only following user approval.
+
+### Phase 0 — виконання та докази (11.11.2026)
+
+- **Вимоги:** SRS §§15.1, 15.4 (Python 3.12, uv, pytest, Ruff), §21
+  (базова перевірка), §§22–22.2 (src layout без порожніх майбутніх модулів),
+  §23 Phase 0, §27 (перевірки та звіт).
+- **Початковий стан:** чиста гілка `chore/phase-0-foundation`, лише документація;
+  SRS v3.0 та AGENTS.md наявні; DEVELOPMENT_LOG.md, код і uv відсутні.
+- **Послідовність:** мінімальний пакет/CLI → конфігурація й lockfile → тести
+  встановлення/запуску → offline lint/test/build → документація.
+- **Файли:** `pyproject.toml`, `uv.lock`, `.python-version`, `.env.example`,
+  `.gitignore`, `src/cyberforge/{__init__,__main__,main}.py`,
+  `tests/test_foundation.py`, README, цей план і DEVELOPMENT_LOG.
+- **Демонстрація:** `uv sync --locked`, `uv run cyberforge`; очікується
+  українське повідомлення й код 0, без GUI або зовнішніх сервісів.
+- **Докази:** `uv sync --locked --offline`, `uv run ruff check .`,
+  `uv run ruff format --check .`, `uv run pytest`, `uv run cyberforge`,
+  `uv run python -m cyberforge`, `uv build --offline` — успішні;
+  pytest: **2 passed**. Wheel установлено та запущено в окремому середовищі.
+  Деталі команд і середовища — у DEVELOPMENT_LOG.
+- **Git hygiene:** `git diff --check` успішний; локальні дані ігноруються,
+  `.env.example` доступний для відстеження; секретів у доданих файлах немає.
+- **Gate:** Phase 0 — ACCEPTED власником 11.11.2026. Власник особисто
+  підтвердив у WSL Ubuntu успішні `uv sync --locked`, `uv run ruff check .`,
+  `uv run ruff format --check .`, `uv run pytest` (2 passed) та
+  `uv run cyberforge`. Windows-перевірка не виконувалася.
+- **Обмеження:** PySide6 відсутній, запуск Qt/Qt WebEngine у WSL та Windows 11
+  не перевірено; MockLLMProvider належить Phase 4. ТЗ не змінювалося,
+  його формальне затвердження залишається за власником.
+- **Наступний крок:** очікувати окремого явного погодження Phase 1.
+  Прийняття Phase 0 не є дозволом на її початок. Phase 1–12 не розпочаті.
 
 ## Review protocol
 
