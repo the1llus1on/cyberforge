@@ -42,8 +42,18 @@ QScrollBar::handle:vertical { background: #494d59; border-radius: 4px;
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
 QListWidget::item:selected:active { background: #b8a1ff; color: #19151f; }
 QListWidget::item:selected:!active { background: #30343e; color: #eef0f5; }
-QComboBox QAbstractItemView { background: #20232a; color: #eef0f5;
-    selection-background-color: #b8a1ff; selection-color: #19151f; }
+QRadioButton { spacing: 7px; padding: 5px; }
+QRadioButton:focus { background: #30283f; border: 1px solid #b8a1ff; }
+QListWidget#membershipPicker::item { padding: 5px; background: #14161a; }
+QListWidget#membershipPicker::item:hover { background: #30343e; }
+QListWidget#membershipPicker::item:focus { border: 1px solid #b8a1ff; }
+QListWidget#membershipPicker::indicator { width: 16px; height: 16px; }
+QListWidget#membershipPicker::indicator:unchecked {
+    border: 1px solid #a2a8b5; background: #20232a; }
+QRadioButton::indicator:unchecked {
+    border: 1px solid #a2a8b5; border-radius: 7px;
+    width: 14px; height: 14px; background: #20232a; }
+
 QToolTip { color: #eef0f5; background: #30343e; border: 1px solid #515766; }
 """
 

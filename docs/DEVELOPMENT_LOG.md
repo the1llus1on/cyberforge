@@ -632,3 +632,58 @@ mouse-popup випадки, не фізична перевірка. Ruff check/f
 імена видно, групи/позначки після зміни фокуса збережено. Remote CI перевіряється
 після push. Phase 2 — REVIEW; фізичний Ukrainian input лишається відкритим,
 Windows verification не виконано, Phase 3/merge заборонені без погодження.
+
+## Owner refinement: три ролі без popup, checkbox pickers, Ctrl metadata
+
+Початкове дерево чисте, гілка feat/phase-2-users-groups. Прочитано актуальні
+SRS §§2–3, план/журнал/ADR, UI і probe; обсяг §§2–3,16,21 у межах REVIEW.
+
+Upstream прочитано через GitHub MCP: WSLg #1522 open; Weston #172 open,
+merged=false, виправляє popup/RAIL; Weston #150 open, merged=false, додає
+Enhanced/Unicode layouts, автор зазначив відсутність тестування. WSL 3.0.5
+release notes та standalone WSLg release list не підтверджують доставку
+Enhanced fix. Не робимо висновок про всі bundled builds лише з цього списку.
+Локальна версія 1.0.73/Weston 2318feca; фікс у офіційному доступному релізі
+не верифіковано. Система не змінювалася, Weston не збирали/не патчили.
+
+Причини/зміни: власник повторно підтвердив popup defect навіть зі стандартним
+QComboBox; тепер popup взагалі прибрано. RoleChoice: три accessible radio,
+exclusive QButtonGroup, Учень default, зміна лише форми до explicit Save.
+Membership — checkbox pickers NoSelection/items not selectable; default Qt
+check indicators постійно видимі, unchecked мають контрастну рамку. Row release
+змінює check state рівно раз, Space — штатний delegate. Додано незалежні
+тести обох picker: checked/unchecked toggle, клавіатура, no row-selection,
+фільтрація draft values. Atomic group service і RBAC не змінювалися.
+Проміжний тест виявив enum/int відмінність CheckStateRole у PySide6;
+порівняння виправлено, повторний toggle перевірено.
+Context7 звірив офіційні QButtonGroup/NoSelection/delegate контракти.
+
+Фізичні докази власника: Standard Ukrainian typing працює; Enhanced typing
+не працює і в app, і в чистому probe; English Ctrl+V працює, Standard Ctrl+V
+ні. Це не доказ конкретного Qt shortcut mapping. Probe тепер показує лише
+числові Ctrl/Shift+Insert key/modifiers/scan/native virtual/backend і Qt matches,
+без event.text(), clipboard, паролів, stdout або файлів. Звичайні символи,
+AltGr/GroupSwitch і password fields не спостерігаються. Observer не споживає
+події; тестується стандартне copy/cut/paste/select-all, Shift+Insert і Qt paste
+метод. Власнику запитано фізичні English/Standard рядки; поки їх немає,
+application-level shortcut correction не вводиться. Ctrl+V під Standard —
+відкритий пункт, Shift+Insert можливий workaround лише після фізичного тесту.
+
+Оновлено README, ADR, план, діагностику і WSLg screenshots (тимчасова synthetic
+demo-БД, owner БД/credentials не змінено). Native Windows не перевірено;
+ніяких автоматичних змін Windows layouts/WSL configuration. Після додаткового
+редагування контрасту запущено фінальний повний pytest і WSLg suite.
+Попередній прогін 78 passed / WSLg 41 passed; додатковий probe-editing test
+і перевірки privacy/password protections включені у фінальний набір.
+
+Фінальні команди: `uv run --offline ruff check .` — успіх;
+`uv run --offline ruff format --check .` — 36 files formatted;
+`uv run --offline pytest -q --tb=short` — **79 passed**, 60.43 s;
+`QT_QPA_PLATFORM=wayland uv run --offline pytest tests/ui -q --tb=short` —
+**42 passed**, 40.91 s, без skips. Popup tests замінено radio tests, бо popup
+видалено з продукту. Нові probe privacy/Qt editing tests перевіряють StandardKey,
+Shift+Insert, paste(), Copy/Cut/SelectAll і password copy restriction, але це
+не фізичні Windows/XKB події. Скриншоти оновлено й оглянуто, unchecked border
+контрастний; owner demo-файлів не торкалися. git diff --check — успіх.
+Phase 2 — REVIEW; Ctrl+V під Standard і Enhanced лишаються відкритими,
+фізичні event-метадані очікуються від власника. CI буде перевірено після push.

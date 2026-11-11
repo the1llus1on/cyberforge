@@ -285,3 +285,17 @@ Owner demo-БД/credentials не змінюються; PR #3 без merge, Phase
 74 passed; WSLg GUI — 34 passed, 3 synthetic-mouse skips із поясненням.
 Native mouse selection/dismissal — offscreen/CI; keyboard popup — також WSLg.
 Прийняття фізичного UI та українського вводу потребує власника.
+
+### Owner refinement: radio roles / checkbox pickers / shortcut metadata
+
+Phase 2 — REVIEW. План у межах §§2–3,16,21: QRadioButton exclusive role choice
+→ NoSelection membership pickers → safe probe фізичних Ctrl events →
+unit/GUI/WSLg/CI → той самий PR #3. Сценарії/Phase 3 не починати.
+Standard Ukrainian typing підтверджено власником; фізичні shortcut mapping
+та Enhanced лишаються окремими відкритими пунктами. Систему не змінювати.
+
+Докази: Ruff — успіх; pytest 79 passed; WSLg GUI 42 passed, без skips.
+UI-пункти реалізовано; фізична перевірка radio/checkbox залишається власнику.
+Ctrl shortcuts: діагностика готова, корекція відкладена до фактичних event
+метаданих, а не synthetic mapping. Enhanced fix у офіційному релізі не
+підтверджений. Owner acceptance не надається автоматично.

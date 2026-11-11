@@ -121,7 +121,7 @@ def test_admin_users_groups_membership_and_reset(qtbot, authenticated_window):
     assert page.users.count() == 3
     page.username.setText("created")
     page.display_name.setText("Новий учень")
-    page.role.setCurrentIndex(page.role.findData(Role.LEARNER))
+    page.role.set_role(Role.LEARNER)
     replacement = token_urlsafe(24)
     page.password.setText(replacement)
     page.perform(page.save_user)
@@ -201,7 +201,7 @@ def test_switch_user_drops_history_data_and_passwords(qtbot, authenticated_windo
     assert window.navigation.current == View.HOME
 
 
-def test_popup_filters_unicode_and_default(qtbot, authenticated_window):
+def test_role_filters_unicode_and_default(qtbot, authenticated_window):
     from PySide6.QtCore import QEvent, QPoint
     from PySide6.QtGui import QInputMethodEvent, QKeyEvent
     from PySide6.QtWidgets import QApplication, QLineEdit
@@ -211,32 +211,9 @@ def test_popup_filters_unicode_and_default(qtbot, authenticated_window):
     window.navigate(View.ADMIN)
     page = window.admin_page
     page.new_user()
-    assert page.role.currentData() == Role.LEARNER
-    page.role.showPopup()
-    qtbot.wait(250)
-    index = page.role.model().index(page.role.findData(Role.INSTRUCTOR), 0)
-    page.role.view().scrollTo(index)
-    qtbot.mouseMove(
-        page.role.view().viewport(), pos=page.role.view().visualRect(index).center()
-    )
-    if QApplication.platformName() == "wayland":
-        # QtTest cannot supply a compositor pointer serial/warp for mouse grabs.
-        qtbot.keyClick(page.role.view(), Qt.Key.Key_Home)
-        qtbot.keyClick(page.role.view(), Qt.Key.Key_Down)
-        qtbot.keyClick(page.role.view(), Qt.Key.Key_Return)
-    else:
-        qtbot.mouseClick(
-            page.role.view().viewport(),
-            Qt.MouseButton.LeftButton,
-            pos=page.role.view().visualRect(index).center(),
-        )
-    assert page.role.currentData() == Role.INSTRUCTOR
-    assert not page.role.view().isVisible()
-    page.role.setFocus()
-    qtbot.keyClick(page.role, Qt.Key.Key_Home)
-    assert page.role.currentData() == Role.ADMINISTRATOR
-    qtbot.keyClick(page.role, Qt.Key.Key_End)
-    assert page.role.currentData() == Role.LEARNER
+    assert page.role.selected_role() == Role.LEARNER
+    qtbot.mouseClick(page.role.buttons[Role.INSTRUCTOR], Qt.MouseButton.LeftButton)
+    assert page.role.selected_role() == Role.INSTRUCTOR
     assert len(window.accounts.list_users(window._token)) == 3
     for field in (page.display_name, page.group_name, page.description):
         field.setFocus()
@@ -298,50 +275,6 @@ def test_deletion_confirmation(qtbot, authenticated_window):
     assert len(window.accounts.list_users(window._token)) == 2
 
 
-@pytest.mark.parametrize("target", list(Role))
-def test_native_popup_mouse_and_keyboard(qtbot, authenticated_window, target):
-    from PySide6.QtWidgets import QApplication
-
-    if QApplication.platformName() == "wayland":
-        pytest.skip(
-            "QtTest mouse lacks Wayland input serial/pointer warp; "
-            "physical check required"
-        )
-    window, password = authenticated_window
-    login(qtbot, window, "admin", password)
-    window.navigate(View.ADMIN)
-    page = window.admin_page
-    before = window.accounts.list_users(window._token)
-    qtbot.mouseClick(page.role, Qt.MouseButton.LeftButton)
-    qtbot.waitUntil(lambda: page.role.view().isVisible())
-    index = page.role.model().index(page.role.findData(target), 0)
-    page.role.view().scrollTo(index)
-    qtbot.wait(250)
-    qtbot.mouseMove(
-        page.role.view().viewport(), pos=page.role.view().visualRect(index).center()
-    )
-    qtbot.mouseClick(
-        page.role.view().viewport(),
-        Qt.MouseButton.LeftButton,
-        pos=page.role.view().visualRect(index).center(),
-    )
-    qtbot.waitUntil(lambda: not page.role.view().window().isVisible())
-    qtbot.wait(150)  # Detect a reopened popup on the next event-loop turn.
-    assert not page.role.view().window().isVisible()
-    assert page.role.currentData() == target
-    page.role.setFocus()
-    qtbot.keyClick(page.role, Qt.Key.Key_F4)
-    qtbot.waitUntil(lambda: page.role.view().isVisible())
-    qtbot.keyClick(page.role.view(), Qt.Key.Key_Home)
-    qtbot.keyClick(page.role.view(), Qt.Key.Key_Return)
-    qtbot.waitUntil(lambda: not page.role.view().window().isVisible())
-    assert page.role.currentData() == Role.ADMINISTRATOR
-    qtbot.keyClick(page.role, Qt.Key.Key_F4)
-    qtbot.keyClick(page.role.view(), Qt.Key.Key_Escape)
-    qtbot.waitUntil(lambda: not page.role.view().window().isVisible())
-    assert window.accounts.list_users(window._token) == before
-
-
 @pytest.mark.parametrize("member_list", ["instructors", "learners"])
 def test_both_membership_lists_focus_and_checks(
     qtbot, authenticated_window, member_list
@@ -360,7 +293,7 @@ def test_both_membership_lists_focus_and_checks(
     widget.setCurrentRow(0)
     widget.setFocus()
     qtbot.waitUntil(widget.hasFocus)
-    assert widget.selectedItems()
+    assert not widget.selectedItems()
     page.group_name.setFocus()
     qtbot.waitUntil(lambda: not widget.hasFocus())
     assert not widget.selectedItems()
@@ -411,22 +344,53 @@ def test_display_name_search_save_and_long_names(qtbot, authenticated_window):
 
 
 @pytest.mark.parametrize("target", list(Role))
-def test_native_popup_keyboard_dismissal(qtbot, authenticated_window, target):
+def test_radio_roles_explicit_save(qtbot, authenticated_window, target):
     window, password = authenticated_window
     login(qtbot, window, "admin", password)
     window.navigate(View.ADMIN)
-    combo = window.admin_page.role
+    page = window.admin_page
+    page.users.setCurrentRow(2)
     before = window.accounts.list_users(window._token)
-    combo.setFocus()
-    qtbot.keyClick(combo, Qt.Key.Key_F4)
-    qtbot.waitUntil(lambda: combo.view().isVisible())
-    qtbot.keyClick(combo.view(), Qt.Key.Key_Home)
-    for _ in range(combo.findData(target)):
-        qtbot.keyClick(combo.view(), Qt.Key.Key_Down)
-    qtbot.keyClick(combo.view(), Qt.Key.Key_Return)
-    qtbot.waitUntil(lambda: not combo.view().window().isVisible())
-    assert combo.currentData() == target
-    qtbot.keyClick(combo, Qt.Key.Key_F4)
-    qtbot.keyClick(combo.view(), Qt.Key.Key_Escape)
-    qtbot.waitUntil(lambda: not combo.view().window().isVisible())
+    button = page.role.buttons[target]
+    qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
+    assert page.role.selected_role() == target
+    assert sum(control.isChecked() for control in page.role.buttons.values()) == 1
+    qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
+    assert button.isChecked()
     assert window.accounts.list_users(window._token) == before
+    page.role.buttons[Role.LEARNER].setFocus()
+    qtbot.keyClick(page.role.buttons[Role.LEARNER], Qt.Key.Key_Space)
+    assert page.role.selected_role() == Role.LEARNER
+    page.new_user()
+    assert page.role.selected_role() == Role.LEARNER
+
+
+@pytest.mark.parametrize("member_list", ["instructors", "learners"])
+def test_checkbox_picker_row_toggle(qtbot, authenticated_window, member_list):
+    from PySide6.QtWidgets import QAbstractItemView, QTabWidget
+
+    window, password = authenticated_window
+    login(qtbot, window, "admin", password)
+    window.navigate(View.ADMIN)
+    page = window.admin_page
+    page.findChild(QTabWidget).setCurrentIndex(1)
+    widget = getattr(page, member_list)
+    assert widget.selectionMode() == QAbstractItemView.SelectionMode.NoSelection
+    item = widget.item(0)
+    for checked in (True, False):
+        qtbot.mouseClick(
+            widget.viewport(),
+            Qt.MouseButton.LeftButton,
+            pos=widget.visualItemRect(item).center(),
+        )
+        assert (item.checkState() == Qt.CheckState.Checked) == checked
+        assert not widget.selectedItems()
+    widget.setCurrentRow(0)
+    widget.setFocus()
+    qtbot.keyClick(widget, Qt.Key.Key_Space)
+    assert item.checkState() == Qt.CheckState.Checked
+    for candidate, field in page.filters:
+        if candidate is widget:
+            field.setText("немає")
+            field.clear()
+    assert item.checkState() == Qt.CheckState.Checked

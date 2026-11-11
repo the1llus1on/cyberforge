@@ -94,3 +94,63 @@ input serial/warp, і Qt повідомляє `Failed to create grabbing popup`.
 Три тести повної mouse-послідовності popup запускаються offscreen/CI, але
 явно skip у Wayland. Keyboard popup acceptance/dismissal тестуються у WSLg.
 Це обмеження тесту не є доказом ані успіху, ані збою фізичного кліку власника.
+
+## Нові upstream-докази та фізичне підтвердження власника
+
+Стан перевірено GitHub MCP 11.11.2026:
+
+- [WSLg #1522](https://github.com/microsoft/wslg/issues/1522) — OPEN,
+  popup QComboBox лишається видимим у Wayland; автор повідомляє, що xcb
+  поводиться інакше. Це upstream observation, не перевірка xcb CyberForge.
+- [Weston #172](https://github.com/microsoft/weston-mirror/pull/172) — OPEN,
+  merged=false. Пропонує popup placement/RAIL synchronization/dismissal fix,
+  а не виправлення української клавіатури. Посилання на PR не означає реліз.
+- [Weston #150](https://github.com/microsoft/weston-mirror/pull/150) — OPEN,
+  merged=false. Додає 0x20422 → ua/enhanced і 0xa0000422 → ua/unicode;
+  автор прямо зазначив відсутність власного тестування.
+- [WSL releases](https://github.com/microsoft/WSL/releases/tag/3.0.5): latest
+  release 3.0.5 не оголошує цього keyboard fix. Переглянуті standalone WSLg
+  releases (1.0.71 prerelease, 1.0.69 prerelease, 1.0.66 stable) також не
+  підтверджують його доставку. Цей список не тотожний усім bundled-версіям
+  WSLg; на підставі перевірених джерел офіційний реліз із цим fix не встановлено.
+  Локально 1.0.73 містить Weston 2318feca й зафіксований mapping failure.
+
+Власник фізично підтвердив: Enhanced не вводить український текст ані в
+CyberForge, ані у чистому probe; Standard Ukrainian вводить його. Це
+підтверджує environment проблему Enhanced і робочу стандартну конфігурацію
+для typing, але НЕ для всіх shortcuts: Ctrl+V під Standard не працює, English
+Ctrl+V працює. Не перебудовувати Weston і не переносити неперевірений patch
+у системну WSLg. Standard Ukrainian — обраний власником безпечний шлях
+введення тексту, не універсальне виправлення Enhanced.
+
+## Ctrl+V: необхідне порівняння фізичних подій
+
+`tools/keyboard_probe.py` тепер показує metadata лише Ctrl-комбінацій та
+Shift+Insert: backend, числові Qt key/modifiers/native scan/native virtual key,
+і збіг із Qt StandardKey Copy/Paste/Cut/SelectAll. Він не читає event.text(),
+clipboard або credentials, не пише файлів/stdout, пропускає звичайні символи,
+Alt/AltGr/GroupSwitch і password fields. Спостереження не споживає подій.
+Журнал обмежено 24 рядками в самому вікні, поле Qt Paste показує platform
+standard bindings. Не вводьте паролі; використовуйте тільки тестові дані.
+
+1. Запустити `QT_QPA_PLATFORM=wayland uv run python tools/keyboard_probe.py`.
+2. У полі Ім’я з English фізично натиснути Ctrl+V, Ctrl+C, Ctrl+X, Ctrl+A.
+   Потім у Standard Ukrainian повторити ті самі комбінації. Надіслати лише
+   metadata-рядки, без тексту полів або clipboard. Порівняти key/scan/modifiers
+   і `standard=Paste` для обох Ctrl+V.
+3. Під Standard Ukrainian натиснути Shift+Insert; перевірити фактичну вставку
+   й відповідний рядок metadata. Це можливий workaround, поки не
+   підтверджений власником. Праве меню «Вставити» також потребує фізичної
+   перевірки через окреме upstream обмеження popup.
+4. Якщо Ctrl+V під Ukrainian приходить як інша Qt key при тому самому scan
+   та точному Ctrl без Alt/GroupSwitch, це підстава для вузької platform-
+   scoped корекції. Не hardcode-ити scan code за припущенням. Якщо key та
+   standard збігаються, потрібно досліджувати delivery/shortcut dispatch,
+   а не мовну транслітерацію. Потрібні також C/X/A події для повної корекції.
+
+На момент реалізації цих метаданих власника ще немає. Application-level
+shortcut mapping не додано: непідтверджений mapping міг би зламати Unicode,
+AltGr або password protections. Ctrl+V під Standard залишається відкритим
+фізичним дефектом. Синтетичні StandardKey/Shift+Insert тести — лише baseline
+Qt, не доказ правильності фізичного XKB path. Native Windows порівняння з
+попереднього розділу залишається альтернативною діагностикою, ще не виконаною.

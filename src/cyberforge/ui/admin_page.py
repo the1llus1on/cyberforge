@@ -2,16 +2,19 @@
 
 from collections.abc import Callable
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QEvent, Qt
 from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QButtonGroup,
     QCheckBox,
-    QComboBox,
     QFormLayout,
     QHBoxLayout,
     QLineEdit,
     QListWidget,
     QListWidgetItem,
     QPushButton,
+    QRadioButton,
+    QStyledItemDelegate,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -34,6 +37,62 @@ class EditableList(QListWidget):
             self.setCurrentRow(-1)
             self.clearSelection()
         super().mousePressEvent(event)
+
+
+class RoleChoice(QWidget):
+    """Three explicit choices; no popup or implicit persistence."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.group = QButtonGroup(self)
+        self.group.setExclusive(True)
+        self.buttons = {}
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        for role in (Role.LEARNER, Role.INSTRUCTOR, Role.ADMINISTRATOR):
+            control = QRadioButton(role.label)
+            control.setAccessibleName("Роль: " + role.label)
+            self.group.addButton(control)
+            self.buttons[role] = control
+            layout.addWidget(control)
+        self.set_role(Role.LEARNER)
+
+    def selected_role(self) -> Role:
+        return next(
+            role for role, control in self.buttons.items() if control.isChecked()
+        )
+
+    def set_role(self, role: Role) -> None:
+        self.buttons[Role(role)].setChecked(True)
+
+
+class MembershipDelegate(QStyledItemDelegate):
+    """A checkbox picker toggles once on row release, independently of selection."""
+
+    def editorEvent(self, event, model, option, index) -> bool:
+        if event.type() == QEvent.Type.MouseButtonRelease:
+            if event.button() == Qt.MouseButton.LeftButton and option.rect.contains(
+                event.position().toPoint()
+            ):
+                checked = index.data(Qt.ItemDataRole.CheckStateRole)
+                state = (
+                    Qt.CheckState.Unchecked
+                    if checked in (Qt.CheckState.Checked, Qt.CheckState.Checked.value)
+                    else Qt.CheckState.Checked
+                )
+                return model.setData(index, state, Qt.ItemDataRole.CheckStateRole)
+            return False
+        if event.type() == QEvent.Type.MouseButtonDblClick:
+            return True
+        return super().editorEvent(event, model, option, index)
+
+
+class MembershipPicker(QListWidget):
+    def __init__(self) -> None:
+        super().__init__()
+        self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self.setItemDelegate(MembershipDelegate(self))
+        self.setObjectName("membershipPicker")
 
 
 class AdminPage(QWidget):
@@ -70,9 +129,7 @@ class AdminPage(QWidget):
         users_layout.addWidget(self.users)
         form = QFormLayout()
         self.username, self.display_name = QLineEdit(), QLineEdit()
-        self.role = QComboBox()
-        for role in Role:
-            self.role.addItem(role.label, role)
+        self.role = RoleChoice()
         self.active = QCheckBox("Обліковий запис активний")
         self.active.setChecked(True)
         self.password = QLineEdit()
@@ -114,7 +171,7 @@ class AdminPage(QWidget):
         group_form.addRow("Опис", self.description)
         groups_layout.addLayout(group_form)
         row = QHBoxLayout()
-        self.instructors, self.learners = EditableList(), EditableList()
+        self.instructors, self.learners = MembershipPicker(), MembershipPicker()
         for title, widget in (("Викладачі", self.instructors), ("Учні", self.learners)):
             column = QVBoxLayout()
             column.addWidget(label(title))
@@ -176,7 +233,10 @@ class AdminPage(QWidget):
             if user.active and user.role in (Role.INSTRUCTOR, Role.LEARNER):
                 member = QListWidgetItem(f"{user.display_name} ({user.username})")
                 member.setData(Qt.ItemDataRole.UserRole, user.id)
-                member.setFlags(member.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                member.setFlags(
+                    (member.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                    & ~Qt.ItemFlag.ItemIsSelectable
+                )
                 member.setCheckState(Qt.CheckState.Unchecked)
                 (
                     self.instructors if user.role == Role.INSTRUCTOR else self.learners
@@ -197,7 +257,7 @@ class AdminPage(QWidget):
         self.display_name.clear()
         self.password.clear()
         self.active.setChecked(True)
-        self.role.setCurrentIndex(self.role.findData(Role.LEARNER))
+        self.role.set_role(Role.LEARNER)
 
     def select_user(self, current, previous=None) -> None:
         if current is None:
@@ -207,7 +267,7 @@ class AdminPage(QWidget):
         self.user_id = user.id
         self.username.setText(user.username)
         self.display_name.setText(user.display_name)
-        self.role.setCurrentIndex(self.role.findData(user.role))
+        self.role.set_role(user.role)
         self.active.setChecked(user.active)
         self.password.clear()
 
@@ -218,7 +278,7 @@ class AdminPage(QWidget):
                 token,
                 self.username.text(),
                 self.display_name.text(),
-                self.role.currentData(),
+                self.role.selected_role(),
                 self.password.text(),
             )
         else:
@@ -226,7 +286,7 @@ class AdminPage(QWidget):
                 token,
                 self.user_id,
                 self.display_name.text(),
-                self.role.currentData(),
+                self.role.selected_role(),
                 self.active.isChecked(),
                 username=self.username.text(),
             )

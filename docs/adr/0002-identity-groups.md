@@ -133,3 +133,22 @@ Users entry містить display_name, username, role, active status; пошу
 горизонтальне прокручування вимкнено. Зміна імені оновлює entry після Save.
 Фізичне українське введення лишається невирішеним environment issue до
 порівняння probe/native Windows; не змінювати налаштування автоматично.
+
+## Owner-directed заміна popup і membership selection
+
+RoleChoice тепер містить три стандартні QRadioButton у exclusive QButtonGroup:
+Учень, Викладач, Адміністратор. Popup та його тести/обробники прибрані;
+Learner default і explicit Save не змінюються. Це замінює попереднє рішення
+про QComboBox, з огляду на повторний фізичний збій і upstream WSLg #1522.
+
+MembershipPicker — QListWidget NoSelection, items без ItemIsSelectable.
+Постійні check indicators не перекриваються row-selection. Delegate змінює
+CheckStateRole один раз при лівому mouse release у рядку; Space обробляється
+стандартним Qt delegate. Current index підтримує клавіатурну навігацію, але
+не виділення. Фільтри й атомарний save працюють із незмінними draft items.
+
+Корекцію clipboard shortcuts дозволено додавати лише після фізичних
+key/modifier/scan доказів; наразі є safe observer тільки в окремому probe.
+Застосунок не отримав глобальних keyboard filters. Standard Ukrainian typing
+підтверджено власником, Enhanced і Ctrl+V під Standard — відкриті дефекти
+оточення/shortcut path; подробиці та upstream статус — у diagnostics.
