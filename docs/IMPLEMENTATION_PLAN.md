@@ -144,3 +144,5 @@ The owner evaluates the working demonstration, diff, test evidence and SRS trace
 - **Gate:** технічні критерії оболонки у WSL пройдено; **REVIEW**.
   Прийняття власником та Windows-перевірка залишаються відкритими.
   Наступна дія — рев’ю PR/демонстрації; Phase 2 не починати без дозволу.
+- **Рев’ю:** [PR #2](https://github.com/the1llus1on/cyberforge/pull/2),
+  гілка `feat/phase-1-main-ui-shell`; merge не виконано.
