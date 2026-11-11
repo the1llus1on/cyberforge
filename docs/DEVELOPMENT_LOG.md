@@ -825,3 +825,17 @@ socket поза sandbox; sandbox socket denial не є application regression).
 migration і відсутність local DB/credentials/cache. Повторний Windows matrix
 перевіряється після push; фактичні hosted результати див. checks PR#3.
 Owner data/credentials/host settings збережено; REVIEW, без merge/Phase3.
+
+### Підтверджений hosted matrix результат
+
+11.11.2026, code commit60947fa, run43103905494 — completed/success.
+GitHub MCP перевірено job status, усі steps та pytest summaries у logs:
+- Ubuntu:119 passed,90.12s.
+- Windows Server2022:117 passed,2 skipped,124.67s; skips — POSIX mode tests.
+- На обох: locked install, Ruff lint/format40files, package import та
+  Qt event-loop CLI smoke — success.
+
+Попередні Windows CLI failures усунуто реальним application fix; tests не
+вимикали/не послаблювали. Windows host власника не змінювався. Hosted Server
+offscreen результат не доводить Win11 desktop, physical keyboard/resize/DPI/ACL.
+PR#3 оновлюється результатами; автоматизовані gates пройдено, Phase2 REVIEW.

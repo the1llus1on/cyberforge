@@ -74,9 +74,14 @@ clipboard bridge, desktop fonts/DPI, ACL власного профілю або 
 Перший фактичний [matrix run для 5eb443a](https://github.com/the1llus1on/cyberforge/actions/runs/43102780570):
 Linux успішний; Windows — 113 passed, 2 POSIX skips, 2 CLI failures.
 Обидва failures спричинено redirected CP1252, не GUI/DB/RBAC. Виправлення
-внесено в application CLI, перевірки не вимикалися. Поточний повторний
-результат доступний у checks PR #3; hosted CI залишається окремим від
-фізичного Windows 11 gate.
+внесено в application CLI, перевірки не вимикалися.
+
+Повторний [run43103905494 для60947fa](https://github.com/the1llus1on/cyberforge/actions/runs/43103905494)
+завершився success: Linux119 passed (90.12s); Windows117 passed,2 skipped
+(124.67s). На обох платформах locked sync, Ruff lint/format, повний pytest,
+isolated package import і Qt startup smoke — success. Windows skips — саме
+два POSIX permissions tests. Це фактичний hosted Windows результат, який
+залишається окремим від фізичного Windows 11 gate.
 
 ## Чому 6ba0a6a queued
 
@@ -111,5 +116,5 @@ Phase 2 — REVIEW, merge/Phase 3 не виконуються.
 
 Підсумок локального head: **119 pytest passed**, **73 WSLg GUI passed**,
 Ruff lint/format, locked sync/import/startup/build/isolated wheel — успіх.
-Початковий hosted Windows failure й виправлення описано вище; актуальний
-результат повторного workflow слід перевіряти в checks PR #3.
+Hosted matrix для code commit60947fa — success; докази й межі Windows
+перевірки наведено вище. Поточний стан PR перевіряється у checks PR #3.

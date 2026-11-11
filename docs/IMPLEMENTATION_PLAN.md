@@ -333,4 +333,6 @@ startup/build/isolated wheel — успіх. Стан Windows hosted jobs пер
 Перший Windows run виявив redirected CP1252 CLI defect; виправлено явним
 UTF-8 для pipes, не змінюючи interactive console. Historical FK guard
 додатково перевірено з parent NOCASE collation та mixed-case table name.
-Повторний matrix result відстежується у PR #3; Phase 2 лишається REVIEW.
+Повторний matrix run43103905494 для60947fa — success: Linux119 passed,
+Windows117 passed/2 POSIX skips; locked sync, Ruff, import/Qt startup — success
+на обох OS. Native Windows11 gate не закрито. Phase 2 лишається REVIEW.
