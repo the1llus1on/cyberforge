@@ -21,7 +21,8 @@ If documents conflict, follow the SRS for approved product requirements. Do not 
 - Do NOT start the next phase without explicit user approval, even if the current phase is complete.
 - For ambiguous decisions that change approved functionality, security, evaluation semantics or architecture, record options and ask for approval. For minor reversible implementation details, make a justified choice and document it.
 - Maintain `docs/IMPLEMENTATION_PLAN.md` and `docs/DEVELOPMENT_LOG.md` after each completed increment or phase.
-- Do not push to remote, merge branches, rewrite history or perform destructive Git operations without explicit approval.
+- For a user-approved phase, Codex may update a clean local `main` with a fast-forward, create a feature branch, and, after successful relevant verification, commit, push that feature branch and create a Pull Request targeting `main`. Preserve uncommitted changes; report failed checks before publishing.
+- Never merge into `main`, force-push, delete branches, rewrite history or perform destructive Git operations without explicit user approval.
 
 ## Engineering conventions
 
@@ -68,3 +69,10 @@ At the end of a task, respond in Ukrainian with:
 - unresolved issues or environmental limitations;
 - whether the acceptance gate passed;
 - the proposed next action (without automatically starting the next phase).
+
+## MCP usage policy
+
+- Use GitHub MCP for remote repository inspection and supported branch, commit and Pull Request operations. Local Git is appropriate for working-tree inspection, checkout, fast-forward synchronization, local commits and transport of verified commits; do not replace a requested MCP connectivity check with local Git.
+- Use Context7 for current library/framework documentation and OpenAI Developer Docs MCP for OpenAI-specific documentation. Prefer official primary sources for APIs and technical requirements.
+- Check connections with small functional read requests; report each unavailable server and any fallback used. Never modify or expose MCP credentials.
+- Developer MCP integrations are tooling only, not runtime dependencies of CyberForge agents (SRS §27.4).

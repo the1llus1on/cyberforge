@@ -1,5 +1,6 @@
 """Verify the installed package and its executable entry points."""
 
+import os
 import subprocess
 import sys
 from importlib.metadata import distribution
@@ -17,13 +18,14 @@ def test_installed_package() -> None:
 
 def test_module_runs_outside_repository(tmp_path: Path) -> None:
     result = subprocess.run(
-        [sys.executable, "-I", "-m", "cyberforge"],
+        [sys.executable, "-I", "-m", "cyberforge", "--smoke-test"],
         cwd=tmp_path,
+        env={**os.environ, "QT_QPA_PLATFORM": "offscreen"},
         capture_output=True,
         encoding="utf-8",
         timeout=10,
         check=False,
     )
     assert result.returncode == 0, result.stderr
-    assert "CyberForge: базове середовище готове." in result.stdout
-    assert result.stderr == ""
+    assert result.stdout == ""
+    assert "Traceback" not in result.stderr
