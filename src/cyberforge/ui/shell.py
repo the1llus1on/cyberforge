@@ -210,7 +210,7 @@ class MainWindow(QMainWindow):
 
     def _allowed(self, view: View) -> bool:
         if self._token is None:
-            return view not in (View.ADMIN, View.MY_SCENARIOS, View.MY_RESULTS)
+            return view in (View.HOME, View.PROFILE, View.SETTINGS)
         try:
             self.accounts.current(self._token)
         except AccessDenied:
@@ -275,7 +275,7 @@ class MainWindow(QMainWindow):
         self.rail.setVisible(not login_form)
         learner = user is not None and user.role == Role.LEARNER
         for view in (View.CONSTRUCTOR, View.ANALYTICS):
-            self.nav_buttons[view].setVisible(not learner)
+            self.nav_buttons[view].setVisible(user is not None and not learner)
         for view in (View.MY_SCENARIOS, View.MY_RESULTS):
             self.nav_buttons[view].setVisible(learner)
         self.nav_buttons[View.ADMIN].setVisible(

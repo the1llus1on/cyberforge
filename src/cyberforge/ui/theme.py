@@ -40,6 +40,10 @@ QScrollBar:vertical { background: #191b20; width: 8px; }
 QScrollBar::handle:vertical { background: #494d59; border-radius: 4px;
     min-height: 24px; }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+QListWidget::item:selected:active { background: #b8a1ff; color: #19151f; }
+QListWidget::item:selected:!active { background: #30343e; color: #eef0f5; }
+QComboBox QAbstractItemView { background: #20232a; color: #eef0f5;
+    selection-background-color: #b8a1ff; selection-color: #19151f; }
 QToolTip { color: #eef0f5; background: #30343e; border: 1px solid #515766; }
 """
 

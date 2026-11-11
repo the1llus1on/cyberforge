@@ -259,3 +259,14 @@ Phase 2 залишається REVIEW. SRS §§2.8,14.9,16,21.4: нові кат
 файл 0600 на POSIX без зміни umask або прав наявних файлів. Додано
 subprocess-тести з umask 000 для DELETE journal і WAL/SHM та preservation.
 Windows ACL не перевірено; див. ADR-0002.
+
+### Повторний owner UI review PR #3
+
+Phase 2 — REVIEW. Погоджено вісім корекцій у коментарі 6804044603:
+видалення користувачів із захистами, негайний вибір popup ролі, діагностика
+української клавіатури, атомарне збереження групи/складу, чотири фільтри,
+Learner default, активний/неактивний selection і deselect, заборона Guest
+Constructor/Analytics. План: сервісні зміни (§§2,14.9,16.6) → UI/фільтри
+(§3, ADR-0001/0002) → unit/integration/GUI/WSLg (§21) → CI та той самий PR.
+SRS незмінний. Фізична клавіатура власника після environment remediation
+потребує окремого підтвердження; докази Weston — docs/diagnostics/wslg-keyboard.md.

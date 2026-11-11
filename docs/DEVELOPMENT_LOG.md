@@ -546,3 +546,49 @@ umask 000 перевіряють файл, вкладені каталоги, ж
 
 Фінальний `uv run --offline pytest -q --tb=short`: **70 passed**, 130.25 s.
 `git diff --check` успішний. Remote CI перевіряється після push у PR #3.
+
+## Повторний owner UI review — PR #3, коментар 6804044603
+
+Усі вісім пунктів прочитано через GitHub MCP. Робоче дерево на початку чисте,
+гілка feat/phase-2-users-groups. Обсяг: SRS §§2–3,14.9,16.6,21–23.
+
+Причини: відсутня delete-операція; default role був index 0 (Administrator);
+metadata/membership мали дві транзакції та дві кнопки; фільтри відсутні;
+Guest preview був явно дозволений попереднім ADR; selection не мав окремого
+inactive treatment або empty-area deselect. Combo використовував стандартний
+popup: додано widget popup і явне прийняття clicked index. Фізичний збій
+старого popup у середовищі власника не оголошується відтвореним; поточна
+поведінка перевірена реальним Qt popup mouse click у WSLg.
+
+Зміни: admin-only delete у транзакції, current/last-admin protections,
+FK-перевірка історичних даних незалежно від CASCADE, membership cleanup.
+Credential fingerprint сесії захищає також від повторного використання ID;
+rehash консервативно відкликає старі сесії. Єдиний save metadata+membership
+відкочується повністю при помилці. Фільтри приховують items без rebuild,
+зберігаючи edit identity і checked draft state. Додано Learner default,
+confirmation dialog, selection styles/empty deselect, Guest deny routes.
+
+WSLg 1.0.73 журнал містить Failed to switch 0x20422, layout=(null), reset
+keymap. ua symbols присутні, C.UTF-8 підтримує Unicode. Це підтверджений збій
+Weston RDP→XKB для Enhanced; зміна locale застосунку не випливає з доказів.
+Тест QKeyEvent/QInputMethodEvent у трьох полях успішний у WSLg. Фізичний
+ввід власника/перемикання Windows Settings не виконано агентом; кроки та
+джерела наведено в docs/diagnostics/wslg-keyboard.md. Власник не перевіряв
+інші Linux GUI, Windows Terminal використовує інший шлях введення.
+
+Оновлено README, ADR-0001/0002 з явним заміщенням попередніх Guest/deletion
+рішень, план і фактичні WSLg screenshots. SRS/AGENTS.md не змінено.
+Початкові прогони: 63 pytest passed; 27 WSLg GUI passed. Після додавання
+регресій confirmation/ID-reuse запущено фінальні прогони нижче.
+Windows 11 та фізичне введення після зміни розкладки не перевірено.
+Phase 2 залишається REVIEW; Phase 3/merge не виконуються.
+
+Фінальні результати: `uv run --offline pytest -q --tb=short` — **65 passed**,
+88.49 s; `QT_QPA_PLATFORM=wayland uv run --offline pytest tests/ui -q --tb=short`
+— **28 passed**, 47.63 s. Ruff check/format — успіх, 34 Python-файли.
+Окремий WSLg popup regression додатково перевіряє Home/End з клавіатури та
+empty-area deselect зі збереженням identity при простій втраті фокуса.
+Зменшення загальної кількості тестів від попередніх 70 пояснюється заміною
+старих Guest-preview тестів новими Guest-deny/layout тестами; рольові
+layout/regression тести для трьох авторизованих ролей збережено.
+`git diff --check` — успіх. CI запускається push у той самий PR #3.

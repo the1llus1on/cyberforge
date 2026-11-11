@@ -3,6 +3,7 @@
 import re
 from collections.abc import Iterator
 from contextlib import contextmanager
+from hashlib import sha256
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
@@ -62,7 +63,12 @@ class AccountService:
     def require(self, db: Session, token: str | None, *roles: Role) -> User:
         record = self.sessions.get(token)
         user = db.get(User, record.user_id) if record else None
-        if user is None or not user.active or user.auth_version != record.auth_version:
+        if (
+            user is None
+            or not user.active
+            or user.auth_version != record.auth_version
+            or sha256(user.password_hash.encode()).hexdigest() != record.credential_tag
+        ):
             self.sessions.revoke(token)
             raise AccessDenied()
         if roles and Role(user.role) not in roles:
@@ -101,8 +107,8 @@ class AccountService:
             if self.passwords.hasher.check_needs_rehash(user.password_hash):
                 user.password_hash = self.passwords.hash(password)
             db.flush()
-            user_id, version = user.id, user.auth_version
-        return self.sessions.issue(user_id, version)
+            user_id, version, encoded = user.id, user.auth_version, user.password_hash
+        return self.sessions.issue(user_id, version, encoded)
 
     def logout(self, token: str | None) -> None:
         self.sessions.revoke(token)
@@ -220,3 +226,47 @@ class AccountService:
                 raise ApplicationError("Обліковий запис не знайдено.")
             user.password_hash = self.passwords.hash(new_password)
             user.auth_version += 1
+
+    def delete_user(self, token: str | None, user_id: int) -> None:
+        from sqlalchemy import inspect, text
+
+        with self.transaction(write=True) as db:
+            actor = self.require(db, token, Role.ADMINISTRATOR)
+            user = db.get(User, user_id)
+            if user is None:
+                raise ApplicationError("Обліковий запис не знайдено.")
+            if actor.id == user_id:
+                raise ApplicationError("Не можна видалити поточного користувача.")
+            if user.role == Role.ADMINISTRATOR and user.active:
+                count = db.scalar(
+                    select(func.count())
+                    .select_from(User)
+                    .where(User.role == Role.ADMINISTRATOR, User.active.is_(True))
+                )
+                if count == 1:
+                    raise ApplicationError(
+                        "Не можна видалити останнього адміністратора."
+                    )
+            inspector = inspect(db.connection())
+            for table in inspector.get_table_names():
+                if table in ("group_instructors", "group_learners"):
+                    continue
+                for fk in inspector.get_foreign_keys(table):
+                    if fk["referred_table"] == "users":
+                        # Never cascade historical data.
+                        quote = db.bind.dialect.identifier_preparer.quote
+                        for column in fk["constrained_columns"]:
+                            query = text(
+                                f"SELECT 1 FROM {quote(table)} "
+                                f"WHERE {quote(column)}=:id LIMIT 1"
+                            )
+                            if db.execute(query, {"id": user_id}).first():
+                                raise ApplicationError(
+                                    "Є пов’язані дані. Деактивуйте користувача "
+                                    "замість видалення."
+                                )
+            db.execute(
+                delete(GroupInstructor).where(GroupInstructor.user_id == user_id)
+            )
+            db.execute(delete(GroupLearner).where(GroupLearner.user_id == user_id))
+            db.delete(user)

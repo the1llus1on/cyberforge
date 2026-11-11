@@ -68,3 +68,10 @@ Home-підказки. `tests/ui/test_accounts_ui.py` перевіряє всі 
 знаходиться в AccountService; приховані кнопки не надають прав.
 Подробиці зберігання й сесій — [ADR-0002](0002-identity-groups.md).
 Статус Phase 2 — REVIEW, прийняття належить власнику.
+
+### Заміна Guest preview за повторним рев’ю Phase 2
+
+Коментар власника PR #3 #issuecomment-6804044603 явно скасовує Guest preview
+Constructor/Analytics. Для Guest лишаються Home, Profile/Login, Settings;
+приховування супроводжується блокуванням прямої навігації. Матриця для
+авторизованих ролей і Home не змінюються. SRS v3.0 не редагується.

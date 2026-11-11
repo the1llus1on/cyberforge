@@ -199,3 +199,90 @@ def test_switch_user_drops_history_data_and_passwords(qtbot, authenticated_windo
     assert window.navigation.current == View.HOME
     window.navigate(View.ADMIN)
     assert window.navigation.current == View.HOME
+
+
+def test_popup_filters_unicode_and_default(qtbot, authenticated_window):
+    from PySide6.QtCore import QEvent, QPoint
+    from PySide6.QtGui import QInputMethodEvent, QKeyEvent
+    from PySide6.QtWidgets import QApplication, QLineEdit
+
+    window, password = authenticated_window
+    login(qtbot, window, "admin", password)
+    window.navigate(View.ADMIN)
+    page = window.admin_page
+    page.new_user()
+    assert page.role.currentData() == Role.LEARNER
+    page.role.showPopup()
+    qtbot.wait(100)
+    index = page.role.model().index(page.role.findData(Role.INSTRUCTOR), 0)
+    qtbot.mouseClick(
+        page.role.view().viewport(),
+        Qt.MouseButton.LeftButton,
+        pos=page.role.view().visualRect(index).center(),
+    )
+    assert page.role.currentData() == Role.INSTRUCTOR
+    assert not page.role.view().isVisible()
+    page.role.setFocus()
+    qtbot.keyClick(page.role, Qt.Key.Key_Home)
+    assert page.role.currentData() == Role.ADMINISTRATOR
+    qtbot.keyClick(page.role, Qt.Key.Key_End)
+    assert page.role.currentData() == Role.LEARNER
+    assert len(window.accounts.list_users(window._token)) == 3
+    for field in (page.display_name, page.group_name, page.description):
+        field.setFocus()
+        field.clear()
+        for character in "Україна":
+            QApplication.sendEvent(
+                field,
+                QKeyEvent(
+                    QEvent.Type.KeyPress, 0, Qt.KeyboardModifier.NoModifier, character
+                ),
+            )
+        assert field.text() == "Україна"
+        event = QInputMethodEvent()
+        event.setCommitString(" Київ")
+        QApplication.sendEvent(field, event)
+        assert field.text() == "Україна Київ"
+    page.learners.item(0).setCheckState(Qt.CheckState.Checked)
+    page.users.setCurrentRow(0)
+    selected = page.user_id
+    for field in page.findChildren(QLineEdit):
+        if field.placeholderText().startswith("Пошук"):
+            field.setText("невідповідність")
+            field.clear()
+    assert page.user_id == selected
+    assert page.learners.item(0).checkState() == Qt.CheckState.Checked
+    page.display_name.setFocus()
+    assert page.users.currentItem() is not None
+    qtbot.mouseClick(
+        page.users.viewport(),
+        Qt.MouseButton.LeftButton,
+        pos=page.users.viewport().rect().bottomRight() - QPoint(10, 10),
+    )
+    assert page.user_id is None
+    assert not page.users.selectedItems()
+
+
+def test_deletion_confirmation(qtbot, authenticated_window):
+    from PySide6.QtCore import QTimer
+    from PySide6.QtWidgets import QApplication, QMessageBox
+
+    window, password = authenticated_window
+    login(qtbot, window, "admin", password)
+    window.navigate(View.ADMIN)
+    page = window.admin_page
+    page.users.setCurrentRow(2)
+
+    def respond(accept):
+        dialog = QApplication.activeModalWidget()
+        assert isinstance(dialog, QMessageBox)
+        for button in dialog.buttons():
+            if button.text() == ("Видалити" if accept else "Скасувати"):
+                button.click()
+
+    QTimer.singleShot(20, lambda: respond(False))
+    page.delete_user()
+    assert len(window.accounts.list_users(window._token)) == 3
+    QTimer.singleShot(20, lambda: respond(True))
+    page.delete_user()
+    assert len(window.accounts.list_users(window._token)) == 2

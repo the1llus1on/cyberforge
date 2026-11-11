@@ -204,3 +204,20 @@ def test_demo_cli_never_prints_credentials(tmp_path):
     assert repeated.returncode == 0
     assert credentials.read_bytes() == before
     assert "вже існують" in repeated.stdout
+
+
+def test_atomic_group_save_rollback(demo):
+    _, _, groups, _, admin, _ = demo
+    group = groups.list_groups(admin)[0]
+    with pytest.raises(ApplicationError):
+        groups.save_group(
+            admin, "Зміна", group_id=group.id, instructors=(), learners=(999,)
+        )
+    assert groups.get_group(admin, group.id) == group
+    with pytest.raises(ApplicationError):
+        groups.save_group(admin, "Нова", instructors=(), learners=(999,))
+    assert len(groups.list_groups(admin)) == 2
+    saved = groups.save_group(
+        admin, "Нова", instructors=group.instructors, learners=group.learners
+    )
+    assert saved.learners == group.learners

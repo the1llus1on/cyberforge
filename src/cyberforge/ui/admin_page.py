@@ -23,6 +23,26 @@ from cyberforge.groups.service import GroupService
 from cyberforge.ui.pages import label
 
 
+class EditableList(QListWidget):
+    def mousePressEvent(self, event) -> None:
+        if not self.indexAt(event.position().toPoint()).isValid():
+            self.setCurrentRow(-1)
+            self.clearSelection()
+        super().mousePressEvent(event)
+
+
+class RoleCombo(QComboBox):
+    def __init__(self) -> None:
+        super().__init__()
+        # Use Qt's widget popup consistently rather than a native menu popup.
+        self.setStyleSheet("QComboBox { combobox-popup: 0; }")
+        self.view().clicked.connect(self._choose)
+
+    def _choose(self, index) -> None:
+        self.setCurrentIndex(index.row())
+        self.hidePopup()
+
+
 class AdminPage(QWidget):
     def __init__(
         self,
@@ -34,6 +54,7 @@ class AdminPage(QWidget):
         super().__init__()
         self.accounts, self.groups = accounts, groups
         self.get_token, self.on_change = get_token, on_change
+        self.filters = []
         self.user_id: int | None = None
         self.group_id: int | None = None
         layout = QVBoxLayout(self)
@@ -48,12 +69,13 @@ class AdminPage(QWidget):
         tabs.addTab(users_page, "Користувачі")
         tabs.addTab(groups_page, "Навчальні групи")
         users_layout = QVBoxLayout(users_page)
-        self.users = QListWidget()
+        self.users = EditableList()
         self.users.currentItemChanged.connect(self.select_user)
+        self._filter(users_layout, self.users, "Пошук користувачів")
         users_layout.addWidget(self.users)
         form = QFormLayout()
         self.username, self.display_name = QLineEdit(), QLineEdit()
-        self.role = QComboBox()
+        self.role = RoleCombo()
         for role in Role:
             self.role.addItem(role.label, role)
         self.active = QCheckBox("Обліковий запис активний")
@@ -76,6 +98,7 @@ class AdminPage(QWidget):
                 ("Новий запис", self.new_user),
                 ("Зберегти користувача", self.save_user),
                 ("Скинути пароль", self.reset_password),
+                ("Видалити користувача", self.delete_user),
             ),
         )
         users_layout.addWidget(
@@ -86,8 +109,9 @@ class AdminPage(QWidget):
             )
         )
         groups_layout = QVBoxLayout(groups_page)
-        self.group_list = QListWidget()
+        self.group_list = EditableList()
         self.group_list.currentItemChanged.connect(self.select_group)
+        self._filter(groups_layout, self.group_list, "Пошук груп")
         groups_layout.addWidget(self.group_list)
         group_form = QFormLayout()
         self.group_name, self.description = QLineEdit(), QLineEdit()
@@ -95,10 +119,11 @@ class AdminPage(QWidget):
         group_form.addRow("Опис", self.description)
         groups_layout.addLayout(group_form)
         row = QHBoxLayout()
-        self.instructors, self.learners = QListWidget(), QListWidget()
+        self.instructors, self.learners = EditableList(), QListWidget()
         for title, widget in (("Викладачі", self.instructors), ("Учні", self.learners)):
             column = QVBoxLayout()
             column.addWidget(label(title))
+            self._filter(column, widget, "Пошук: " + title.lower())
             column.addWidget(widget)
             row.addLayout(column)
         groups_layout.addLayout(row)
@@ -107,7 +132,6 @@ class AdminPage(QWidget):
             (
                 ("Нова група", self.new_group),
                 ("Зберегти групу", self.save_group),
-                ("Зберегти склад", self.save_members),
                 ("Видалити групу", self.delete_group),
             ),
         )
@@ -166,16 +190,22 @@ class AdminPage(QWidget):
             item.setData(Qt.ItemDataRole.UserRole, group)
             self.group_list.addItem(item)
 
+        for widget, field in self.filters:
+            self._apply_filter(widget, field.text())
+
     def new_user(self) -> None:
+        self.users.setCurrentRow(-1)
+        self.users.clearSelection()
         self.user_id = None
         self.username.clear()
         self.display_name.clear()
         self.password.clear()
         self.active.setChecked(True)
-        self.role.setCurrentIndex(0)
+        self.role.setCurrentIndex(self.role.findData(Role.LEARNER))
 
     def select_user(self, current, previous=None) -> None:
         if current is None:
+            self.new_user()
             return
         user = current.data(Qt.ItemDataRole.UserRole)
         self.user_id = user.id
@@ -215,6 +245,8 @@ class AdminPage(QWidget):
         self.refresh()
 
     def new_group(self) -> None:
+        self.group_list.setCurrentRow(-1)
+        self.group_list.clearSelection()
         self.group_id = None
         self.group_name.clear()
         self.description.clear()
@@ -224,6 +256,7 @@ class AdminPage(QWidget):
 
     def select_group(self, current, previous=None) -> None:
         if current is None:
+            self.new_group()
             return
         group = current.data(Qt.ItemDataRole.UserRole)
         self.group_id = group.id
@@ -247,6 +280,8 @@ class AdminPage(QWidget):
             self.group_name.text(),
             self.description.text(),
             self.group_id,
+            instructors=self._checked(self.instructors),
+            learners=self._checked(self.learners),
         )
         self.refresh()
         for i in range(self.group_list.count()):
@@ -254,19 +289,45 @@ class AdminPage(QWidget):
                 self.group_list.setCurrentRow(i)
 
     def save_members(self) -> None:
-        if self.group_id is None:
-            raise ApplicationError("Спочатку збережіть або виберіть групу.")
-        selections = []
-        for widget in (self.instructors, self.learners):
-            selections.append(
-                tuple(
-                    widget.item(i).data(Qt.ItemDataRole.UserRole)
-                    for i in range(widget.count())
-                    if widget.item(i).checkState() == Qt.CheckState.Checked
-                )
-            )
-        self.groups.set_members(self.get_token(), self.group_id, *selections)
-        self.refresh()
+        self.save_group()
+
+    @staticmethod
+    def _checked(widget) -> tuple[int, ...]:
+        return tuple(
+            widget.item(i).data(Qt.ItemDataRole.UserRole)
+            for i in range(widget.count())
+            if widget.item(i).checkState() == Qt.CheckState.Checked
+        )
+
+    def _filter(self, layout, widget, placeholder) -> None:
+        field = QLineEdit()
+        field.setPlaceholderText(placeholder)
+        field.setAccessibleName(placeholder)
+        self.filters.append((widget, field))
+        field.textChanged.connect(lambda text: self._apply_filter(widget, text))
+        layout.addWidget(field)
+
+    @staticmethod
+    def _apply_filter(widget, text) -> None:
+        for i in range(widget.count()):
+            item = widget.item(i)
+            item.setHidden(text.casefold() not in item.text().casefold())
+
+    def delete_user(self) -> None:
+        from PySide6.QtWidgets import QMessageBox
+
+        if self.user_id is None:
+            raise ApplicationError("Виберіть користувача.")
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle("Видалити користувача?")
+        dialog.setText("Обліковий запис і членство буде видалено. Продовжити?")
+        accept = dialog.addButton("Видалити", QMessageBox.ButtonRole.AcceptRole)
+        cancel = dialog.addButton("Скасувати", QMessageBox.ButtonRole.RejectRole)
+        dialog.setDefaultButton(cancel)
+        dialog.exec()
+        if dialog.clickedButton() == accept:
+            self.accounts.delete_user(self.get_token(), self.user_id)
+            self.refresh()
 
     def delete_group(self) -> None:
         from PySide6.QtWidgets import QMessageBox

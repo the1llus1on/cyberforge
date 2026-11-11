@@ -60,6 +60,9 @@ class GroupService:
         name: str,
         description: str = "",
         group_id: int | None = None,
+        *,
+        instructors: tuple[int, ...] | None = None,
+        learners: tuple[int, ...] | None = None,
     ) -> LearningGroup:
         with self.accounts.transaction(write=True) as db:
             self.accounts.require(db, token, Role.ADMINISTRATOR)
@@ -72,6 +75,9 @@ class GroupService:
             group.description = description.strip()
             db.add(group)
             db.flush()
+            if instructors is not None or learners is not None:
+                self._set_members(db, group.id, instructors or (), learners or ())
+                db.flush()
             return self._value(db, group)
 
     def set_members(
@@ -85,24 +91,27 @@ class GroupService:
             self.accounts.require(db, token, Role.ADMINISTRATOR)
             if db.get(Group, group_id) is None:
                 raise ApplicationError("Групу не знайдено.")
-            for identifiers, role in (
-                (instructors, Role.INSTRUCTOR),
-                (learners, Role.LEARNER),
-            ):
-                if len(set(identifiers)) != len(identifiers):
-                    raise ApplicationError("Учасник не може повторюватися у групі.")
-                for identifier in identifiers:
-                    user = db.get(User, identifier)
-                    if user is None or user.role != role or not user.active:
-                        raise ApplicationError(
-                            "Учасник неактивний або має невідповідну роль."
-                        )
-            for table, identifiers in (
-                (GroupInstructor, instructors),
-                (GroupLearner, learners),
-            ):
-                db.execute(delete(table).where(table.group_id == group_id))
-                db.add_all(table(group_id=group_id, user_id=i) for i in identifiers)
+            self._set_members(db, group_id, instructors, learners)
+
+    def _set_members(self, db, group_id, instructors, learners) -> None:
+        for identifiers, role in (
+            (instructors, Role.INSTRUCTOR),
+            (learners, Role.LEARNER),
+        ):
+            if len(set(identifiers)) != len(identifiers):
+                raise ApplicationError("Учасник не може повторюватися у групі.")
+            for identifier in identifiers:
+                user = db.get(User, identifier)
+                if user is None or user.role != role or not user.active:
+                    raise ApplicationError(
+                        "Учасник неактивний або має невідповідну роль."
+                    )
+        for table, identifiers in (
+            (GroupInstructor, instructors),
+            (GroupLearner, learners),
+        ):
+            db.execute(delete(table).where(table.group_id == group_id))
+            db.add_all(table(group_id=group_id, user_id=i) for i in identifiers)
 
     def delete_group(self, token: str | None, group_id: int) -> None:
         with self.accounts.transaction(write=True) as db:

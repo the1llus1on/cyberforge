@@ -230,7 +230,53 @@ def test_rehash_on_login_and_malformed_hash(accounts, administrator, password):
     with accounts.database.sessions() as db:
         encoded = db.get(User, user.id).password_hash
     assert not accounts.passwords.hasher.check_needs_rehash(encoded)
-    assert accounts.current(token)
+    with pytest.raises(AccessDenied):
+        accounts.current(token)
     assert not accounts.passwords.verify("$argon2id$invalid", password)
     assert not accounts.passwords.verify(None, password)
     assert not accounts.passwords.verify(encoded, "x" * 1025)
+
+
+def test_delete_user(accounts, administrator, password):
+    actor, admin = administrator
+    user = accounts.create_user(admin, "removed", "Учень", Role.LEARNER, password)
+    token = accounts.login("removed", password)
+    groups = GroupService(accounts)
+    group = groups.save_group(admin, "Група")
+    groups.set_members(admin, group.id, (), (user.id,))
+    with pytest.raises(AccessDenied):
+        accounts.delete_user(token, actor.id)
+    with pytest.raises(ApplicationError):
+        accounts.delete_user(admin, actor.id)
+    accounts.delete_user(admin, user.id)
+    with pytest.raises(AccessDenied):
+        accounts.current(token)
+    assert not groups.get_group(admin, group.id).learners
+
+
+def test_delete_rejects_historical_reference(accounts, administrator, password):
+    from sqlalchemy import text
+
+    _, admin = administrator
+    user = accounts.create_user(admin, "history", "Учень", Role.LEARNER, password)
+    with accounts.database.engine.begin() as connection:
+        connection.exec_driver_sql(
+            "CREATE TABLE historical_probe "
+            "(user_id INTEGER REFERENCES users(id) ON DELETE CASCADE)"
+        )
+        connection.execute(
+            text("INSERT INTO historical_probe VALUES (:id)"), {"id": user.id}
+        )
+    with pytest.raises(ApplicationError, match="Деактивуйте"):
+        accounts.delete_user(admin, user.id)
+
+
+def test_deleted_identity_cannot_reuse_session(accounts, administrator, password):
+    _, admin = administrator
+    user = accounts.create_user(admin, "first", "Перший", Role.LEARNER, password)
+    other = AccountService(accounts.database)
+    token = other.login("first", password)
+    accounts.delete_user(admin, user.id)
+    accounts.create_user(admin, "replacement", "Другий", Role.LEARNER, password)
+    with pytest.raises(AccessDenied):
+        other.current(token)
