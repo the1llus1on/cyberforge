@@ -181,3 +181,10 @@ scroll fallback. [Деталі геометрії](docs/diagnostics/window-sizin
 для Standard Ukrainian під WSLg Wayland. Вона не змінює системну розкладку,
 English, Shift+Insert або Unicode typing; password copy/cut лишаються заборонені.
 Підтвердження нової поведінки фізично — за власником. Enhanced не виправлено.
+
+Перед прийняттям Phase 2 проведено [технічний аудит](docs/audits/phase-2-pre-acceptance.md).
+[Короткий checklist власника](docs/PHASE_2_ACCEPTANCE.md) містить лише залишкові
+фізичні desktop-перевірки. CI має Linux і Windows Server2022 offscreen jobs;
+успіх такого job не означає фізичну Windows11 acceptance. Перевіряйте фактичний
+стан PR checks: queued не є success. Existing inactive memberships зберігаються
+при редагуванні групи; нове призначення inactive account заборонено.

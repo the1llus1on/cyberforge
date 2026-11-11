@@ -198,8 +198,17 @@ class MainWindow(QMainWindow):
         self._token = token
         self.authentication_state = AuthenticationState.AUTHENTICATED
         self.navigation.reset()
-        self.account_page.refresh(token)
-        self._render()
+        if self._refresh_profile():
+            self._render()
+
+    def _refresh_profile(self) -> bool:
+        try:
+            self.account_page.refresh(self._token)
+        except ApplicationError as error:
+            self._signed_out()
+            self.statusBar().showMessage(str(error), 5000)
+            return False
+        return True
 
     def _signed_out(self) -> None:
         self.accounts.logout(self._token)
@@ -215,8 +224,9 @@ class MainWindow(QMainWindow):
         if self._token:
             try:
                 self.accounts.current(self._token)
-            except AccessDenied:
+            except ApplicationError as error:
                 self._signed_out()
+                self.statusBar().showMessage(str(error), 5000)
             else:
                 self._render()
 
@@ -225,13 +235,18 @@ class MainWindow(QMainWindow):
             return view in (View.HOME, View.PROFILE, View.SETTINGS)
         try:
             self.accounts.current(self._token)
-        except AccessDenied:
+        except ApplicationError as error:
             self._signed_out()
+            self.statusBar().showMessage(str(error), 5000)
             return False
         if view.value in {workspace.value for workspace in Workspace}:
             try:
                 self.accounts.authorize_workspace(self._token, Workspace(view.value))
             except AccessDenied:
+                return False
+            except ApplicationError as error:
+                self._signed_out()
+                self.statusBar().showMessage(str(error), 5000)
                 return False
         return True
 
@@ -247,8 +262,8 @@ class MainWindow(QMainWindow):
             return
         if view != View.PROFILE:
             self.account_page.clear()
-        if view == View.PROFILE:
-            self.account_page.refresh(self._token)
+        if view == View.PROFILE and not self._refresh_profile():
+            return
         if view == View.ADMIN:
             try:
                 self.admin_page.refresh()
@@ -262,15 +277,15 @@ class MainWindow(QMainWindow):
     def _back(self) -> None:
         self.account_page.clear()
         self.navigation.back()
-        if self.navigation.current == View.PROFILE:
-            self.account_page.refresh(self._token)
+        if self.navigation.current == View.PROFILE and not self._refresh_profile():
+            return
         self._render()
 
     def _forward(self) -> None:
         self.account_page.clear()
         self.navigation.forward()
-        if self.navigation.current == View.PROFILE:
-            self.account_page.refresh(self._token)
+        if self.navigation.current == View.PROFILE and not self._refresh_profile():
+            return
         self._render()
 
     def _render(self) -> None:
@@ -279,8 +294,9 @@ class MainWindow(QMainWindow):
         if self._token:
             try:
                 user = self.accounts.current(self._token)
-            except AccessDenied:
+            except ApplicationError as error:
                 self._signed_out()
+                self.statusBar().showMessage(str(error), 5000)
                 return
         login_form = current == View.PROFILE and user is None
         self.topbar.setVisible(not login_form)

@@ -7,16 +7,28 @@ permissions:
   contents: read
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    name: checks (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    env:
+      QT_QPA_PLATFORM: offscreen
+      PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
           version: '0.13.7'
-      - run: sudo apt-get update && sudo apt-get install -y libgl1 libegl1 libopengl0 libxkbcommon0 libdbus-1-3
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgl1 libegl1 libopengl0 libxkbcommon0 libdbus-1-3
       - run: uv sync --locked --python 3.12
-      - run: uv run ruff check .
-      - run: uv run ruff format --check .
-      - run: uv run pytest
-        env:
-          QT_QPA_PLATFORM: offscreen
+      - run: uv run --locked ruff check .
+      - run: uv run --locked ruff format --check .
+      - run: uv run --locked pytest
+      - name: Package import and Qt event-loop smoke
+        run: |
+          uv run --locked python -I -c "import cyberforge"
+          uv run --locked cyberforge --database "${{ runner.temp }}/cyberforge-ci-smoke.sqlite3" --smoke-test

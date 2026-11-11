@@ -742,3 +742,65 @@ Windows11/native DPI не тестувалися; WSLg QT_SCALE_FACTOR не є W
 Owner demo-БД/credentials не змінено. Фізичні виправлені shortcuts і manual
 resize ще має перевірити власник. Enhanced upstream limitation не змінена.
 Phase 2 — REVIEW, SRS не редаговано, Phase 3/merge не виконуються.
+
+## Phase 2 — pre-acceptance independent technical audit
+
+Старт: чиста feat/phase-2-users-groups на 6ba0a6a, порівняння з origin/main.
+Прочитано SRS v3.0, AGENTS, план/журнал/ADR і Phase2 diff (production, tests,
+міграція, CI, залежності, документи). Scope §§2–3,14–16,21–23. Незалежний
+огляд не спирався лише на попередні green checks. Нових фаз/LLM/scenarios немає.
+
+Реальні audit fixes:
+- Logout залишав текст admin filters; тепер cleanup очищає, refresh зберігає.
+- Частковий optional membership payload міг стерти інший набір: відхиляється
+  до mutation, обидва sets зберігаються атомарно або none/none metadata-only.
+- New-user Active checkbox ігнорувався: обраний стан передано в сервіс,
+  inactive account не може ввійти.
+- Відтворено failing GUI test: деактивований member зникав із picker й
+  metadata Save стирав membership. Existing inactive membership тепер видимий
+  і зберігається; нове inactive assignment відхиляється, removal явний.
+- DB lock/open/migration errors не мали safe handling. DBAPIError перетворюється
+  у safe ApplicationError; UI fail-closed скидає сесію/дані; startup не виводить
+  SQL/traceback. Реальні lock/recovery та corrupt-file preservation тести.
+- Historical delete guard неправильно припускав users.id для всіх FK.
+  Correlated FK predicates враховують referenced columns (username теж),
+  не повертають hash/records у UI й не каскадують історію.
+- Cancel/New могли показувати false «Зміни збережено»: це виправлено.
+
+Сервіси/RBAC/role triggers/Argon2id/credential tags/atomic writes залишилися
+окремими відповідальностями. sessionmaker.begin closes/rolls back — звірено
+Context7 з офіційним SQLAlchemy. Додано concurrency test двох адміністраторів:
+BEGIN IMMEDIATE допускає лише одну взаємну деактивацію; залишається active admin.
+Заборонені delete paths включено в загальну Guest/Instructor/Learner matrix.
+
+CI: GitHub MCP/app для status/jobs, read-only gh api для полів, які wrapper
+не повертає. 6ba0a6a run43098666057 queued, jobs=[]; created22:53:35 Kyiv,
+до нього GitHub підтвердив Actions major outage з22:48 Kyiv. Workflow не має
+approval/self-hosted/concurrency gates; run6 того самого workflow успішний.
+Статус не оголошено success; exact per-run scheduler reason API не віддає.
+Посилання інциденту й аналіз — docs/audits/phase-2-pre-acceptance.md.
+
+Додано matrix ubuntu-latest/windows-2022, locked Python3.12 sync/Ruff/full pytest,
+import і Qt event-loop smoke у runner.temp. Windows Server2022/offscreen не
+дорівнює Windows11 physical desktop. Host Windows власника не змінено, нічого
+не встановлено. POSIX permissions tests лишаються platform-skipped на Windows;
+ACL/DPI/keyboard/clipboard bridge потребують фізичної перевірки.
+
+Фінальні локальні докази:
+- uv sync --locked --offline — успіх.
+- uv run --offline ruff check . — успіх.
+- uv run --offline ruff format --check . — 40 files already formatted.
+- uv run --offline pytest -q --tb=short — **117 passed**, 97.32 s.
+- QT_QPA_PLATFORM=wayland uv run --offline pytest tests/ui -q --tb=short —
+  **73 passed**, 73.92 s, справжній WSLg, без skips.
+- Package import та CLI --smoke-test на тимчасовій БД — exit0.
+- uv build --offline; wheel reinstall в окреме /tmp environment; isolated
+  Python -I startup smoke — exit0. Пакетна міграція присутня, local DB/credentials
+  у wheel відсутні. Попередження uv про кеш перевірено оглядом архіву.
+- YAML matrix розібрано системним parser без нової залежності.
+- git diff --check — успіх. Усі runtime перевірки offline без cloud/LLM.
+
+README, ADR, план оновлено; docs/audits/phase-2-pre-acceptance.md — повний звіт,
+docs/PHASE_2_ACCEPTANCE.md — лише залишкові owner physical tests. Owner local
+files/DB/credentials/system settings не читали/не змінювали. Phase2 REVIEW;
+Windows CI до фактичного завершення не вважається верифікованим. Без merge/Phase3.

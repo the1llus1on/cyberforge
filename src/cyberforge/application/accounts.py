@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from hashlib import sha256
 
 from sqlalchemy import delete, func, select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.orm import Session
 
 from cyberforge.domain.accounts import (
@@ -58,6 +58,10 @@ class AccountService:
         except IntegrityError:
             raise ApplicationError(
                 "Запис уже існує або порушує зв’язки даних."
+            ) from None
+        except DBAPIError:
+            raise ApplicationError(
+                "База даних недоступна. Спробуйте пізніше."
             ) from None
 
     def require(self, db: Session, token: str | None, *roles: Role) -> User:
@@ -121,7 +125,14 @@ class AccountService:
             )
 
     def _create(
-        self, db: Session, username: str, display_name: str, role: Role, password: str
+        self,
+        db: Session,
+        username: str,
+        display_name: str,
+        role: Role,
+        password: str,
+        *,
+        active: bool = True,
     ) -> User:
         username = username_value(username)
         user = User(
@@ -130,7 +141,7 @@ class AccountService:
             display_name=text_value(display_name, 160, "Ім’я"),
             role=Role(role).value,
             password_hash=self.passwords.hash(password),
-            active=True,
+            active=active,
             auth_version=1,
         )
         db.add(user)
@@ -144,11 +155,13 @@ class AccountService:
         display_name: str,
         role: Role,
         password: str,
+        *,
+        active: bool = True,
     ) -> Account:
         with self.transaction(write=True) as db:
             self.require(db, token, Role.ADMINISTRATOR)
             return account_value(
-                self._create(db, username, display_name, role, password)
+                self._create(db, username, display_name, role, password, active=active)
             )
 
     def bootstrap(self, username: str, display_name: str, password: str) -> Account:
@@ -255,16 +268,24 @@ class AccountService:
                     if fk["referred_table"] == "users":
                         # Never cascade historical data.
                         quote = db.bind.dialect.identifier_preparer.quote
-                        for column in fk["constrained_columns"]:
-                            query = text(
-                                f"SELECT 1 FROM {quote(table)} "
-                                f"WHERE {quote(column)}=:id LIMIT 1"
+                        predicates = " AND ".join(
+                            f"child.{quote(local)} = parent.{quote(remote)}"
+                            for local, remote in zip(
+                                fk["constrained_columns"],
+                                fk["referred_columns"],
+                                strict=True,
                             )
-                            if db.execute(query, {"id": user_id}).first():
-                                raise ApplicationError(
-                                    "Є пов’язані дані. Деактивуйте користувача "
-                                    "замість видалення."
-                                )
+                        )
+                        query = text(
+                            f"SELECT 1 FROM {quote(table)} AS child "
+                            "WHERE EXISTS (SELECT 1 FROM users AS parent "
+                            f"WHERE parent.id=:id AND {predicates}) LIMIT 1"
+                        )
+                        if db.execute(query, {"id": user_id}).first():
+                            raise ApplicationError(
+                                "Є пов’язані дані. Деактивуйте користувача "
+                                "замість видалення."
+                            )
             db.execute(
                 delete(GroupInstructor).where(GroupInstructor.user_id == user_id)
             )

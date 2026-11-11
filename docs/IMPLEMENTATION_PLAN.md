@@ -314,3 +314,18 @@ layout/indicator tests при 150% і200% Qt scale — по16 passed. Qt minimum
 передаються на перевіреному WSLg шляху; надано незалежний root fallback.
 Знімки1400×900/1100×720 актуальні. Physical acceptance shortcuts/manual resize
 та Windows11 DPI лишаються власнику; Enhanced не виправлено. REVIEW збережено.
+
+### Pre-acceptance technical audit
+
+Phase 2 — REVIEW. Прочитано Phase2 diff проти origin/main і SRS/ADR.
+Вузькі виправлення data loss (partial save, inactive memberships), active flag,
+session filter cleanup, DB error handling і historical FK deletion guard,
+правдиві cancel statuses; додано негативні й concurrency тести.
+CI matrix Linux/Windows Server2022: locked sync, Ruff, pytest/DB/GUI/import/smoke.
+6ba0a6a queued узгоджується з офіційним major outage GitHub Actions; не success.
+Повний звіт docs/audits/phase-2-pre-acceptance.md; тільки залишкові фізичні
+owner тести — docs/PHASE_2_ACCEPTANCE.md. Phase3/merge заборонені без дозволу.
+
+Підсумок audit head: 117 pytest passed; WSLg73 passed; Ruff/locked sync/
+startup/build/isolated wheel — успіх. Стан Windows hosted jobs перевіряється
+окремо; до фактичного завершення Windows CI verification не зараховується.

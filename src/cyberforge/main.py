@@ -35,7 +35,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.credentials_file and not args.init_demo:
         parser.error("--credentials-file використовується лише з --init-demo.")
 
+    from alembic.util.exc import CommandError
     from PySide6.QtCore import QCoreApplication, QStandardPaths, QTimer
+    from sqlalchemy.exc import SQLAlchemyError
 
     from cyberforge.application.accounts import AccountService
     from cyberforge.domain.accounts import ApplicationError
@@ -59,8 +61,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         / "cyberforge.sqlite3"
     )
-    database = Database(path)
+    database = None
     try:
+        database = Database(path)
         database.upgrade()
         accounts = AccountService(database)
         if args.init_demo:
@@ -103,5 +106,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     except ApplicationError as error:
         print(str(error), file=sys.stderr)
         return 1
+    except (OSError, SQLAlchemyError, CommandError):
+        print("Не вдалося відкрити або оновити локальну базу даних.", file=sys.stderr)
+        return 1
     finally:
-        database.close()
+        if database is not None:
+            database.close()

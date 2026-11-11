@@ -221,3 +221,29 @@ def test_atomic_group_save_rollback(demo):
         admin, "Нова", instructors=group.instructors, learners=group.learners
     )
     assert saved.learners == group.learners
+
+
+@pytest.mark.parametrize("arguments", [{"instructors": ()}, {"learners": ()}])
+def test_partial_membership_save_rejected_without_data_loss(demo, arguments):
+    _, _, groups, _, token, _ = demo
+    group = groups.list_groups(token)[0]
+    with pytest.raises(ApplicationError, match="обидва"):
+        groups.save_group(token, "Зміна", group_id=group.id, **arguments)
+    assert groups.get_group(token, group.id) == group
+
+
+def test_inactive_members_preserved_but_new_assignment_denied(demo):
+    _, accounts, groups, _, token, _ = demo
+    a, b = groups.list_groups(token)
+    learner_id = a.learners[0]
+    user = next(u for u in accounts.list_users(token) if u.id == learner_id)
+    accounts.update_user(token, user.id, user.display_name, user.role, False)
+    saved = groups.save_group(
+        token, a.name, "Опис", a.id, instructors=a.instructors, learners=a.learners
+    )
+    assert saved.learners == a.learners
+    with pytest.raises(ApplicationError):
+        groups.set_members(token, b.id, b.instructors, (learner_id,))
+    assert groups.get_group(token, b.id) == b
+    groups.set_members(token, a.id, a.instructors, ())
+    assert not groups.get_group(token, a.id).learners

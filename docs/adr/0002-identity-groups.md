@@ -181,3 +181,14 @@ Root scroll містить usable content minimum 860×620, незалежний
 при примусовому меншому frame з’являється прокручування. Адміністративні
 форми прокручуються окремо у вкладках, дії збереження/видалення розміщено
 поза ними у двоколонковій панелі. Це замінює full-page-scroll-only layout.
+
+## Вузькі виправлення pre-acceptance audit
+
+CreateUser враховує обраний active; неповний membership payload відхиляється,
+щоб None не означав мовчазне очищення іншої ролі. Existing inactive memberships
+зберігаються при Save й видимі у picker; нові inactive assignments заборонені.
+Logout очищає також filters, а refresh не втрачає їх. Cancel/New не імітують Save.
+DBAPI failures мають safe errors, UI повертається до Guest, startup не друкує
+traceback/SQL. Delete guard використовує фактичні FK columns, а не припущення
+про id. Windows hosted offscreen CI додано окремо від manual Windows11 gate.
+Докази й межі — audits/phase-2-pre-acceptance.md. SRS/Phase scope незмінні.

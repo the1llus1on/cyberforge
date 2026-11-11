@@ -193,16 +193,22 @@ class AdminPage(QWidget):
 
     def perform(self, action) -> None:
         try:
-            action()
+            result = action()
         except ApplicationError as error:
             self.message.setText(str(error))
         else:
-            self.message.setText("Зміни збережено.")
+            if result is False or action in (self.new_user, self.new_group):
+                self.message.clear()
+            else:
+                self.message.setText("Зміни збережено.")
         finally:
             self.password.clear()
             self.on_change()
 
-    def clear(self) -> None:
+    def clear(self, *, reset_filters: bool = True) -> None:
+        if reset_filters:
+            for _, field in self.filters:
+                field.clear()
         self.users.clear()
         self.group_list.clear()
         self.instructors.clear()
@@ -212,7 +218,7 @@ class AdminPage(QWidget):
         self.message.clear()
 
     def refresh(self) -> None:
-        self.clear()
+        self.clear(reset_filters=False)
         token = self.get_token()
         users = self.accounts.list_users(token)
         for user in users:
@@ -223,14 +229,20 @@ class AdminPage(QWidget):
             item.setToolTip(item.text())
             item.setData(Qt.ItemDataRole.UserRole, user)
             self.users.addItem(item)
-            if user.active and user.role in (Role.INSTRUCTOR, Role.LEARNER):
-                member = QListWidgetItem(f"{user.display_name} ({user.username})")
+            if user.role in (Role.INSTRUCTOR, Role.LEARNER):
+                member = QListWidgetItem(
+                    f"{user.display_name} ({user.username})"
+                    + (" — Неактивний" if not user.active else "")
+                )
+                member.setData(Qt.ItemDataRole.UserRole + 1, user.active)
                 member.setData(Qt.ItemDataRole.UserRole, user.id)
                 member.setFlags(
                     (member.flags() | Qt.ItemFlag.ItemIsUserCheckable)
                     & ~Qt.ItemFlag.ItemIsSelectable
                 )
                 member.setCheckState(Qt.CheckState.Unchecked)
+                if not user.active:
+                    member.setFlags(member.flags() & ~Qt.ItemFlag.ItemIsEnabled)
                 (
                     self.instructors if user.role == Role.INSTRUCTOR else self.learners
                 ).addItem(member)
@@ -273,6 +285,7 @@ class AdminPage(QWidget):
                 self.display_name.text(),
                 self.role.selected_role(),
                 self.password.text(),
+                active=self.active.isChecked(),
             )
         else:
             self.accounts.update_user(
@@ -301,7 +314,10 @@ class AdminPage(QWidget):
         self.description.clear()
         for widget in (self.instructors, self.learners):
             for i in range(widget.count()):
-                widget.item(i).setCheckState(Qt.CheckState.Unchecked)
+                item = widget.item(i)
+                item.setCheckState(Qt.CheckState.Unchecked)
+                if not item.data(Qt.ItemDataRole.UserRole + 1):
+                    item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
 
     def select_group(self, current, previous=None) -> None:
         if current is None:
@@ -317,6 +333,11 @@ class AdminPage(QWidget):
         ):
             for i in range(widget.count()):
                 item = widget.item(i)
+                existing = item.data(Qt.ItemDataRole.UserRole) in identifiers
+                flags = item.flags() & ~Qt.ItemFlag.ItemIsEnabled
+                if existing or item.data(Qt.ItemDataRole.UserRole + 1):
+                    flags |= Qt.ItemFlag.ItemIsEnabled
+                item.setFlags(flags)
                 item.setCheckState(
                     Qt.CheckState.Checked
                     if item.data(Qt.ItemDataRole.UserRole) in identifiers
@@ -362,7 +383,7 @@ class AdminPage(QWidget):
             item = widget.item(i)
             item.setHidden(text.casefold() not in item.text().casefold())
 
-    def delete_user(self) -> None:
+    def delete_user(self) -> bool:
         from PySide6.QtWidgets import QMessageBox
 
         if self.user_id is None:
@@ -377,8 +398,10 @@ class AdminPage(QWidget):
         if dialog.clickedButton() == accept:
             self.accounts.delete_user(self.get_token(), self.user_id)
             self.refresh()
+            return True
+        return False
 
-    def delete_group(self) -> None:
+    def delete_group(self) -> bool:
         from PySide6.QtWidgets import QMessageBox
 
         if self.group_id is None:
@@ -393,3 +416,5 @@ class AdminPage(QWidget):
         if dialog.clickedButton() == delete_button:
             self.groups.delete_group(self.get_token(), self.group_id)
             self.refresh()
+            return True
+        return False

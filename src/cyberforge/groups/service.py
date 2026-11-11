@@ -66,6 +66,8 @@ class GroupService:
     ) -> LearningGroup:
         with self.accounts.transaction(write=True) as db:
             self.accounts.require(db, token, Role.ADMINISTRATOR)
+            if (instructors is None) != (learners is None):
+                raise ApplicationError("Передайте обидва набори учасників групи.")
             group = db.get(Group, group_id) if group_id is not None else Group()
             if group is None:
                 raise ApplicationError("Групу не знайдено.")
@@ -102,7 +104,15 @@ class GroupService:
                 raise ApplicationError("Учасник не може повторюватися у групі.")
             for identifier in identifiers:
                 user = db.get(User, identifier)
-                if user is None or user.role != role or not user.active:
+                membership = (
+                    GroupInstructor if role == Role.INSTRUCTOR else GroupLearner
+                )
+                existing = db.get(membership, (group_id, identifier))
+                if (
+                    user is None
+                    or user.role != role
+                    or (not user.active and existing is None)
+                ):
                     raise ApplicationError(
                         "Учасник неактивний або має невідповідну роль."
                     )

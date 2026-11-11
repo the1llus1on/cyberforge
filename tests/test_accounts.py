@@ -161,6 +161,7 @@ def test_all_administrative_operations_forbidden(
         ),
         lambda: accounts.update_user(token, user.id, "Зміна", Role.LEARNER, False),
         lambda: accounts.reset_password(token, user.id, token_urlsafe(24)),
+        lambda: accounts.delete_user(token, user.id),
         lambda: groups.save_group(token, "Заборонена"),
         lambda: groups.save_group(token, "Зміна", group_id=group.id),
         lambda: groups.set_members(token, group.id, (), ()),
@@ -280,3 +281,86 @@ def test_deleted_identity_cannot_reuse_session(accounts, administrator, password
     accounts.create_user(admin, "replacement", "Другий", Role.LEARNER, password)
     with pytest.raises(AccessDenied):
         other.current(token)
+
+
+def test_locked_database_safe_error_and_recovery(
+    accounts, administrator, password, caplog
+):
+    import sqlite3
+
+    _, token = administrator
+    with accounts.database.engine.connect() as connection:
+        connection.exec_driver_sql("PRAGMA busy_timeout=1")
+    locked = sqlite3.connect(accounts.database.engine.url.database)
+    try:
+        locked.execute("BEGIN EXCLUSIVE")
+        with pytest.raises(ApplicationError, match="База даних недоступна") as error:
+            accounts.login("admin", password)
+        assert password not in str(error.value) + caplog.text
+        assert "$argon2" not in caplog.text
+    finally:
+        locked.rollback()
+        locked.close()
+    assert accounts.current(token)
+
+
+def test_concurrent_admin_deactivation_keeps_one_active(
+    accounts, administrator, password
+):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+
+    first, first_token = administrator
+    second = accounts.create_user(
+        first_token, "second", "Другий", Role.ADMINISTRATOR, password
+    )
+    second_token = accounts.login("second", password)
+    barrier = Barrier(2)
+
+    def deactivate(token, target):
+        barrier.wait(timeout=5)
+        try:
+            accounts.update_user(
+                token, target.id, target.display_name, target.role, False
+            )
+        except AccessDenied:
+            return "denied"
+        return "updated"
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        one = executor.submit(deactivate, first_token, second)
+        two = executor.submit(deactivate, second_token, first)
+        assert sorted([one.result(timeout=10), two.result(timeout=10)]) == [
+            "denied",
+            "updated",
+        ]
+    with accounts.database.sessions() as db:
+        users = tuple(db.scalars(select(User)))
+        assert sum(u.active and u.role == Role.ADMINISTRATOR for u in users) == 1
+
+
+def test_delete_preserves_history_referencing_username(
+    accounts, administrator, password
+):
+    from sqlalchemy import text
+
+    _, admin = administrator
+    user = accounts.create_user(
+        admin, "historical_name", "Учень", Role.LEARNER, password
+    )
+    with accounts.database.engine.begin() as connection:
+        connection.exec_driver_sql(
+            "CREATE TABLE history_by_name (username TEXT "
+            "REFERENCES users(username) ON DELETE CASCADE)"
+        )
+        connection.execute(
+            text("INSERT INTO history_by_name VALUES (:name)"), {"name": user.username}
+        )
+    with pytest.raises(ApplicationError, match="Деактивуйте"):
+        accounts.delete_user(admin, user.id)
+    with accounts.database.engine.connect() as connection:
+        assert (
+            connection.exec_driver_sql("SELECT count(*) FROM history_by_name").scalar()
+            == 1
+        )
+    assert any(u.id == user.id for u in accounts.list_users(admin))

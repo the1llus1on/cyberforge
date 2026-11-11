@@ -268,7 +268,8 @@ def test_deletion_confirmation(qtbot, authenticated_window):
                 button.click()
 
     QTimer.singleShot(20, lambda: respond(False))
-    page.delete_user()
+    page.perform(page.delete_user)
+    assert not page.message.text()
     assert len(window.accounts.list_users(window._token)) == 3
     QTimer.singleShot(20, lambda: respond(True))
     page.delete_user()
@@ -441,3 +442,83 @@ def test_admin_actions_stay_visible(qtbot, authenticated_window):
         window.root_scroll.viewport(), QPoint(10, 10)
     )
     assert window.root_scroll.viewport().rect().contains(position)
+
+
+def test_logout_clears_filter_text(qtbot, authenticated_window):
+    window, password = authenticated_window
+    login(qtbot, window, "admin", password)
+    window.navigate(View.ADMIN)
+    for _, field in window.admin_page.filters:
+        field.setText("попередній пошук")
+    window._signed_out()
+    assert all(not field.text() for _, field in window.admin_page.filters)
+    login(qtbot, window, "admin", password)
+    window.navigate(View.ADMIN)
+    assert window.admin_page.users.count() == 3
+    assert all(not window.admin_page.users.item(i).isHidden() for i in range(3))
+
+
+def test_storage_failure_cleans_session(qtbot, authenticated_window, monkeypatch):
+    from cyberforge.domain.accounts import ApplicationError
+
+    window, password = authenticated_window
+    login(qtbot, window, "admin", password)
+    window.navigate(View.ADMIN)
+    token = window._token
+    window.admin_page.password.setText("synthetic-hidden-value")
+
+    def unavailable(*args):
+        raise ApplicationError("База даних недоступна. Спробуйте пізніше.")
+
+    monkeypatch.setattr(window.accounts, "current", unavailable)
+    window._sync_session()
+    assert window._token is None
+    assert window.admin_page.users.count() == 0
+    assert not window.admin_page.password.text()
+    assert window.accounts.sessions.get(token) is None
+    assert window.navigation.current == View.HOME
+    assert "База даних" in window.statusBar().currentMessage()
+
+
+def test_new_user_respects_inactive_checkbox(qtbot, authenticated_window):
+    window, password = authenticated_window
+    login(qtbot, window, "admin", password)
+    window.navigate(View.ADMIN)
+    page = window.admin_page
+    page.new_user()
+    page.username.setText("inactive_new")
+    page.display_name.setText("Неактивний учень")
+    page.password.setText(password)
+    page.active.setChecked(False)
+    page.perform(page.save_user)
+    user = next(
+        u
+        for u in window.accounts.list_users(window._token)
+        if u.username == "inactive_new"
+    )
+    assert not user.active
+    from cyberforge.domain.accounts import ApplicationError
+
+    with pytest.raises(ApplicationError):
+        window.accounts.login(user.username, password)
+
+
+def test_group_edit_preserves_deactivated_member(qtbot, authenticated_window):
+    window, password = authenticated_window
+    login(qtbot, window, "admin", password)
+    token = window._token
+    learner = next(
+        u for u in window.accounts.list_users(token) if u.role == Role.LEARNER
+    )
+    group = window.groups.save_group(
+        token, "Група", instructors=(), learners=(learner.id,)
+    )
+    window.accounts.update_user(
+        token, learner.id, learner.display_name, learner.role, False
+    )
+    window.navigate(View.ADMIN)
+    page = window.admin_page
+    page.group_list.setCurrentRow(0)
+    page.description.setText("Оновлений опис")
+    page.save_group()
+    assert window.groups.get_group(token, group.id).learners == (learner.id,)
