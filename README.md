@@ -169,3 +169,14 @@ SQLite journal/WAL/SHM успадковують права БД. Права на
 фізичних Ctrl+V/C/X/A та Shift+Insert запустіть `tools/keyboard_probe.py`
 за інструкцією diagnostics. Надсилайте лише metadata-рядки — не текст,
 clipboard або паролі. Виправленого офіційного релізу Enhanced не підтверджено.
+
+Актуальне уточнення Phase 2: membership змінюється лише кліком у checkbox
+або Space; клік на ім’я/порожню область нічого не змінює. Admin actions
+розташовані поза прокручуваними формами. Preferred старт 1400×900, minimum
+1100×720 на достатньому екрані; менші екрани обмежують ці значення й мають
+scroll fallback. [Деталі геометрії](docs/diagnostics/window-sizing.md).
+
+Після отримання фізичних key/scan доказів додано вузьку корекцію Ctrl+C/V/X/A
+для Standard Ukrainian під WSLg Wayland. Вона не змінює системну розкладку,
+English, Shift+Insert або Unicode typing; password copy/cut лишаються заборонені.
+Підтвердження нової поведінки фізично — за власником. Enhanced не виправлено.

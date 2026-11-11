@@ -366,8 +366,9 @@ def test_radio_roles_explicit_save(qtbot, authenticated_window, target):
 
 
 @pytest.mark.parametrize("member_list", ["instructors", "learners"])
-def test_checkbox_picker_row_toggle(qtbot, authenticated_window, member_list):
-    from PySide6.QtWidgets import QAbstractItemView, QTabWidget
+def test_checkbox_picker_indicator_only(qtbot, authenticated_window, member_list):
+    from PySide6.QtCore import QPoint
+    from PySide6.QtWidgets import QStyle, QStyleOptionViewItem, QTabWidget
 
     window, password = authenticated_window
     login(qtbot, window, "admin", password)
@@ -375,15 +376,29 @@ def test_checkbox_picker_row_toggle(qtbot, authenticated_window, member_list):
     page = window.admin_page
     page.findChild(QTabWidget).setCurrentIndex(1)
     widget = getattr(page, member_list)
-    assert widget.selectionMode() == QAbstractItemView.SelectionMode.NoSelection
     item = widget.item(0)
-    for checked in (True, False):
-        qtbot.mouseClick(
-            widget.viewport(),
-            Qt.MouseButton.LeftButton,
-            pos=widget.visualItemRect(item).center(),
+    for expected in (Qt.CheckState.Checked, Qt.CheckState.Unchecked):
+        option = QStyleOptionViewItem()
+        index = widget.model().index(0, 0)
+        widget.itemDelegate().initStyleOption(option, index)
+        option.rect = widget.visualItemRect(item)
+        option.widget = widget
+        indicator = widget.style().subElementRect(
+            QStyle.SubElement.SE_ItemViewItemCheckIndicator, option, widget
         )
-        assert (item.checkState() == Qt.CheckState.Checked) == checked
+        qtbot.mouseClick(
+            widget.viewport(), Qt.MouseButton.LeftButton, pos=indicator.center()
+        )
+        assert item.checkState() == expected
+        text_rect = widget.style().subElementRect(
+            QStyle.SubElement.SE_ItemViewItemText, option, widget
+        )
+        for point in (
+            QPoint(text_rect.left() + 10, text_rect.center().y()),
+            option.rect.topRight() + QPoint(-8, 8),
+        ):
+            qtbot.mouseClick(widget.viewport(), Qt.MouseButton.LeftButton, pos=point)
+            assert item.checkState() == expected
         assert not widget.selectedItems()
     widget.setCurrentRow(0)
     widget.setFocus()
@@ -394,3 +409,35 @@ def test_checkbox_picker_row_toggle(qtbot, authenticated_window, member_list):
             field.setText("немає")
             field.clear()
     assert item.checkState() == Qt.CheckState.Checked
+
+
+def test_admin_actions_stay_visible(qtbot, authenticated_window):
+    from PySide6.QtCore import QPoint
+    from PySide6.QtWidgets import QPushButton, QTabWidget
+
+    window, password = authenticated_window
+    login(qtbot, window, "admin", password)
+    window.navigate(View.ADMIN)
+    window.resize(1100, 720)
+    page = window.admin_page
+    tabs = page.findChild(QTabWidget)
+    for index in (0, 1):
+        tabs.setCurrentIndex(index)
+        qtbot.wait(30)
+        for control in tabs.currentWidget().findChildren(QPushButton, "adminAction"):
+            center = control.mapTo(window, control.rect().center())
+            assert window.rect().contains(center)
+            assert control.isVisible()
+    # Model a compositor violating the minimum rather than relying on hints.
+    window.setMinimumSize(1, 1)
+    window.resize(640, 480)
+    qtbot.wait(30)
+    assert (
+        window.root_scroll.horizontalScrollBar().maximum() > 0
+        or window.root_scroll.verticalScrollBar().maximum() > 0
+    )
+    window.root_scroll.ensureWidgetVisible(window.nav_buttons[View.PROFILE])
+    position = window.nav_buttons[View.PROFILE].mapTo(
+        window.root_scroll.viewport(), QPoint(10, 10)
+    )
+    assert window.root_scroll.viewport().rect().contains(position)

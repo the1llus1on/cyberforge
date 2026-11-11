@@ -299,3 +299,18 @@ UI-пункти реалізовано; фізична перевірка radio/
 Ctrl shortcuts: діагностика готова, корекція відкладена до фактичних event
 метаданих, а не synthetic mapping. Enhanced fix у офіційному релізі не
 підтверджений. Owner acceptance не надається автоматично.
+
+### Indicator-only / geometry / confirmed clipboard mapping
+
+Phase 2 — REVIEW. SRS §§2–3,16,21: default Qt indicator hit testing замість
+row toggle; screen-bounded 1400×900 / 1100×720 і root fallback; sticky admin
+actions; exact WSLg Wayland Ctrl mappings на owner physical evidence.
+Порядок: UI/Qt geometry → scoped native editing operations → positive/negative
+unit+GUI → WSLg 100/150/200% → docs/screenshots/CI → existing PR #3.
+Ні Enhanced fix, ні Windows DPI acceptance не заявляються. Phase 3 не починати.
+
+Результат уточнення: Ruff — успіх; pytest106 passed; WSLg GUI69 passed;
+layout/indicator tests при 150% і200% Qt scale — по16 passed. Qt minimum hints
+передаються на перевіреному WSLg шляху; надано незалежний root fallback.
+Знімки1400×900/1100×720 актуальні. Physical acceptance shortcuts/manual resize
+та Windows11 DPI лишаються власнику; Enhanced не виправлено. REVIEW збережено.

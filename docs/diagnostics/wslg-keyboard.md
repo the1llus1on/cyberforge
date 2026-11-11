@@ -154,3 +154,38 @@ AltGr або password protections. Ctrl+V під Standard залишається
 фізичним дефектом. Синтетичні StandardKey/Shift+Insert тести — лише baseline
 Qt, не доказ правильності фізичного XKB path. Native Windows порівняння з
 попереднього розділу залишається альтернативною діагностикою, ще не виконаною.
+
+## Фізичні події отримано: причина Ctrl shortcuts підтверджена
+
+Власник надав такі значення (hex):
+
+| Дія | English Qt key | Standard Ukrainian Qt key | native scan |
+|---|---|---|---|
+| Copy | 43 | 421 | 36 |
+| Paste | 56 | 41C | 37 |
+| Cut | 58 | 427 | 35 |
+| SelectAll | 41 | 424 | 26 |
+
+У всіх випадках modifiers=04000000 (тільки Ctrl). English дає правильний
+StandardKey, Ukrainian — `standard=-`. Під Standard фізичний Shift+Insert
+працює: key=1000006, modifiers=22000000, scan=5A, standard=Paste. Текст
+вводиться фізично під Standard. Enhanced і далі падає у Weston mapping.
+Ці нові факти замінюють попередній статус «метаданих ще немає».
+
+За цим доказом у CyberForge додано точну корекцію, описану в ADR-0002;
+probe залишено без змін як baseline. Це не перепризначення глобальних клавіш
+і не універсальна таблиця Linux/Windows scans. Нова фізична перевірка:
+
+1. У CyberForge під Standard Ukrainian скопіювати/вирізати тестовий текст,
+   вставити Ctrl+V, виділити Ctrl+A. Перевірити, що paste відбувається один раз.
+2. Повторити English та Shift+Insert, звичайне українське введення й AltGr,
+   якщо використовуєте його. Всі дії мають зберегти свою стандартну поведінку.
+3. У password-полі перевірити paste/select-all на тестовому паролі; copy/cut
+   не повинні переносити пароль у clipboard. Не надсилати паролі або clipboard.
+4. У standalone probe Standard Ctrl+V може й далі не виконувати paste — це
+   очікуваний baseline без app correction. Enhanced фізичне введення не
+   оголошується виправленим. Native Windows залишається неперевіреним.
+
+Автотести використовують точні owner key/scan/modifier дані, окремі негативні
+сценарії, QLineEdit/QTextEdit/QPlainTextEdit native operations, signal count
+та English/Shift+Insert. Фізичне виконання після зміни ще перевіряє власник.

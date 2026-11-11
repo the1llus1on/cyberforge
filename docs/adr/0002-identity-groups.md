@@ -152,3 +152,32 @@ key/modifier/scan доказів; наразі є safe observer тільки в 
 Застосунок не отримав глобальних keyboard filters. Standard Ukrainian typing
 підтверджено власником, Enhanced і Ctrl+V під Standard — відкриті дефекти
 оточення/shortcut path; подробиці та upstream статус — у diagnostics.
+
+## Indicator-only membership та підтверджена shortcut-корекція
+
+Після нового owner review broad MembershipDelegate видалено. Qt default
+QStyledItemDelegate виконує indicator hit-testing за стилем; negative GUI
+тести використовують SE_ItemViewItemText, empty space і позитивний
+SE_ItemViewItemCheckIndicator. NoSelection та keyboard Space збережені.
+Atomic save без змін. Це замінює попереднє рішення про row-release toggle.
+
+Власник надав фізичні English/Standard Ukrainian події з однаковими scans:
+C: 43/421 scan36, V: 56/41C scan37, X: 58/427 scan35, A: 41/424 scan26
+(усі значення hex), модифікатор тільки Control 0x04000000. Qt StandardKey
+не збігається з українськими logical keys; це підтверджує причину shortcuts.
+ClipboardShortcuts у межах MainWindow обробляє тільки чотири точні пари
+Ukr logical key + scan під backend=wayland та наявним WSLg versions marker,
+з точним Ctrl. Уже впізнані StandardKey, інші modifiers/keys/scans/platforms,
+Unicode та input-method events пропускаються. ShortcutOverride резервує
+редагувальну дію; тільки KeyPress викликає native copy/paste/cut/selectAll
+і споживається один раз, без synthetic events. Password/NoEcho забороняють
+copy/cut, readonly не змінюється. Немає логування чи транслітерації тексту.
+Standalone probe навмисно лишається baseline observer без виправлення.
+Enhanced mapping перебуває нижче Qt і цим рішенням не виправляється.
+
+Геометрія обчислюється у logical pixels з availableGeometry: preferred
+1400×900, minimum 1100×720, обидва bounded екраном із запасом 48 px.
+Root scroll містить usable content minimum 860×620, незалежний від WM hints;
+при примусовому меншому frame з’являється прокручування. Адміністративні
+форми прокручуються окремо у вкладках, дії збереження/видалення розміщено
+поза ними у двоколонковій панелі. Це замінює full-page-scroll-only layout.

@@ -2,6 +2,7 @@
 
 from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtWidgets import (
+    QApplication,
     QButtonGroup,
     QFrame,
     QHBoxLayout,
@@ -20,9 +21,11 @@ from cyberforge.domain.accounts import AccessDenied, ApplicationError, Role, Wor
 from cyberforge.groups.service import GroupService
 from cyberforge.ui.account_pages import AccountPage
 from cyberforge.ui.admin_page import AdminPage
+from cyberforge.ui.clipboard_shortcuts import ClipboardShortcuts
 from cyberforge.ui.icons import icon
 from cyberforge.ui.navigation import AuthenticationState, NavigationState, View
 from cyberforge.ui.pages import WorkspacePage, label
+from cyberforge.ui.window_geometry import window_geometry
 
 
 def button(text: str, icon_name: str, tooltip: str) -> QPushButton:
@@ -42,15 +45,24 @@ class MainWindow(QMainWindow):
         self.groups = GroupService(accounts)
         self._token: str | None = None
         self.setWindowTitle("CyberForge")
-        self.resize(1280, 800)
-        self.setMinimumSize(860, 620)
+        bounds, minimum = window_geometry(self.screen().availableGeometry())
+        self.setMinimumSize(minimum)
+        self.setGeometry(bounds)
+        self.clipboard_shortcuts = ClipboardShortcuts(self)
+        QApplication.instance().installEventFilter(self.clipboard_shortcuts)
         self.authentication_state = AuthenticationState.GUEST
         self.navigation = NavigationState()
         root = QWidget()
+        root.setMinimumSize(860, 620)
         outer = QVBoxLayout(root)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
-        self.setCentralWidget(root)
+        # RDP/compositors may force a frame below advertised minimum hints.
+        # A root scroll area keeps navigation and content reachable in that case.
+        self.root_scroll = QScrollArea()
+        self.root_scroll.setWidgetResizable(True)
+        self.root_scroll.setWidget(root)
+        self.setCentralWidget(self.root_scroll)
         topbar = QFrame()
         self.topbar = topbar
         topbar.setObjectName("topbar")

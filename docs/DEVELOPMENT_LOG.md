@@ -687,3 +687,58 @@ Shift+Insert, paste(), Copy/Cut/SelectAll і password copy restriction, але �
 контрастний; owner demo-файлів не торкалися. git diff --check — успіх.
 Phase 2 — REVIEW; Ctrl+V під Standard і Enhanced лишаються відкритими,
 фізичні event-метадані очікуються від власника. CI буде перевірено після push.
+
+## Owner evidence: indicator-only, window sizing, scoped shortcuts
+
+Початок: чиста feat/phase-2-users-groups, Phase 2 REVIEW. Прочитано SRS §§2–3,
+план/журнал/ADR, shell/admin і відповідні тести. Погоджений обсяг §§2–3,16,21:
+штатний Qt indicator hit-testing → availableGeometry sizing/sticky actions →
+точний clipboard mapping за фізичними доказами → unit/WSLg/DPI/CI → PR #3.
+
+Broad row-click delegate прибрано: лишився default QStyledItemDelegate.
+Positive test визначає rect через SE_ItemViewItemCheckIndicator; negative
+clicks у SE_ItemViewItemText та порожній області не змінюють CheckStateRole.
+Space/NoSelection/draft filtering/atomic save збережено. Context7 звірив
+офіційний Qt delegate/style контракт.
+
+Новий ui/clipboard_shortcuts.py: exact owner pairs (421,36) Copy, (41C,37)
+Paste, (427,35) Cut, (424,26) SelectAll, hex; тільки Ctrl 04000000, Qt backend
+wayland + WSLg marker. Already-matching StandardKey не перехоплюється.
+Filter обмежений Qt text editors-нащадками MainWindow. ShortcutOverride
+лише резервує подію; KeyPress викликає native operation один раз, без
+synthetic events і logging. Password copy/cut блокуються, paste/select-all
+працюють; readonly не змінюється. Інші modifiers, platforms, scans/keys,
+Unicode, IME, AltGr і Shift+Insert лишаються Qt. Тести перевіряють scope,
+signal count, exact mapping, негативні умови, English, Shift+Insert і три
+типи text editor. Standalone probe залишається baseline observer.
+
+Window sizing: старе preferred1280×800/min860×620 і full-page form scroll
+було незручним для admin. Тепер preferred1400×900/min1100×720, bounded
+availableGeometry (logical pixels), centered, 48 px screen reserve. Root
+scroll з usable content860×620 незалежний від WM hints. Admin actions у
+двоколонковому footer поза scrollable forms. Тест fallback спершу виявив,
+що root без content minimum просто стискався без scrollbars; додано explicit
+content minimum, після чого forced640×480 із знятим frame minimum має
+scrollbars і досяжний Profile. Sticky actions перевірено на обох admin tabs.
+
+WSLg діагностика з тимчасовою порожньою БД: screen1920×1080, DPR1,
+initial1400×900, minimum1100×720; resize(1,1) обмежено до1100×720. Wayland
+trace містить set_min_size1100×720 і1106×753 (decoration extents).
+Фізичний owner drag RDP-рамки нижче minimum агентом не відтворено; не
+стверджується, що Windows/compositor завжди виконає hints. Root fallback
+покриває випадок фактичного меншого Qt viewport. Деталі — window-sizing.md.
+Windows11/native DPI не тестувалися; WSLg QT_SCALE_FACTOR не є Windows acceptance.
+
+Фінальні перевірки:
+- `uv run --offline ruff check .` — успіх.
+- `uv run --offline ruff format --check .` — 40 Python-файлів.
+- `uv run --offline pytest -q --tb=short` — **106 passed**, 85.89 s.
+- `QT_QPA_PLATFORM=wayland uv run --offline pytest tests/ui -q --tb=short`
+  — **69 passed**, 66.86 s, без skips.
+- `QT_QPA_PLATFORM=wayland QT_SCALE_FACTOR=1.5 uv run --offline pytest tests/ui -k 'role_layout or admin_actions or indicator_only or screen_sizing' -q --tb=short`
+  — **16 passed**, 15.70 s.
+- Та сама команда з QT_SCALE_FACTOR=2 — **16 passed**, 26.07 s.
+- git diff --check — успіх; screenshots1400×900 і1100×720 оновлено й оглянуто.
+Owner demo-БД/credentials не змінено. Фізичні виправлені shortcuts і manual
+resize ще має перевірити власник. Enhanced upstream limitation не змінена.
+Phase 2 — REVIEW, SRS не редаговано, Phase 3/merge не виконуються.

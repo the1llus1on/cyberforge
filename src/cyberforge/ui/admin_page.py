@@ -2,19 +2,20 @@
 
 from collections.abc import Callable
 
-from PySide6.QtCore import QEvent, Qt
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QButtonGroup,
     QCheckBox,
     QFormLayout,
+    QGridLayout,
     QHBoxLayout,
     QLineEdit,
     QListWidget,
     QListWidgetItem,
     QPushButton,
     QRadioButton,
-    QStyledItemDelegate,
+    QScrollArea,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -66,32 +67,10 @@ class RoleChoice(QWidget):
         self.buttons[Role(role)].setChecked(True)
 
 
-class MembershipDelegate(QStyledItemDelegate):
-    """A checkbox picker toggles once on row release, independently of selection."""
-
-    def editorEvent(self, event, model, option, index) -> bool:
-        if event.type() == QEvent.Type.MouseButtonRelease:
-            if event.button() == Qt.MouseButton.LeftButton and option.rect.contains(
-                event.position().toPoint()
-            ):
-                checked = index.data(Qt.ItemDataRole.CheckStateRole)
-                state = (
-                    Qt.CheckState.Unchecked
-                    if checked in (Qt.CheckState.Checked, Qt.CheckState.Checked.value)
-                    else Qt.CheckState.Checked
-                )
-                return model.setData(index, state, Qt.ItemDataRole.CheckStateRole)
-            return False
-        if event.type() == QEvent.Type.MouseButtonDblClick:
-            return True
-        return super().editorEvent(event, model, option, index)
-
-
 class MembershipPicker(QListWidget):
     def __init__(self) -> None:
         super().__init__()
         self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
-        self.setItemDelegate(MembershipDelegate(self))
         self.setObjectName("membershipPicker")
 
 
@@ -120,8 +99,11 @@ class AdminPage(QWidget):
         users_page, groups_page = QWidget(), QWidget()
         tabs.addTab(users_page, "Користувачі")
         tabs.addTab(groups_page, "Навчальні групи")
-        users_layout = QVBoxLayout(users_page)
+        users_outer = QVBoxLayout(users_page)
+        users_layout = self._scroll_form(users_outer)
         self.users = EditableList()
+        self.users.setMinimumHeight(100)
+        self.users.setMaximumHeight(220)
         self.users.setTextElideMode(Qt.TextElideMode.ElideRight)
         self.users.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.users.currentItemChanged.connect(self.select_user)
@@ -145,7 +127,7 @@ class AdminPage(QWidget):
             form.addRow(title, field)
         users_layout.addLayout(form)
         self._buttons(
-            users_layout,
+            users_outer,
             (
                 ("Новий запис", self.new_user),
                 ("Зберегти користувача", self.save_user),
@@ -160,7 +142,8 @@ class AdminPage(QWidget):
                 "адміністратора вимкнути не можна."
             )
         )
-        groups_layout = QVBoxLayout(groups_page)
+        groups_outer = QVBoxLayout(groups_page)
+        groups_layout = self._scroll_form(groups_outer)
         self.group_list = EditableList()
         self.group_list.currentItemChanged.connect(self.select_group)
         self._filter(groups_layout, self.group_list, "Пошук груп")
@@ -180,7 +163,7 @@ class AdminPage(QWidget):
             row.addLayout(column)
         groups_layout.addLayout(row)
         self._buttons(
-            groups_layout,
+            groups_outer,
             (
                 ("Нова група", self.new_group),
                 ("Зберегти групу", self.save_group),
@@ -188,14 +171,24 @@ class AdminPage(QWidget):
             ),
         )
 
+    @staticmethod
+    def _scroll_form(outer):
+        content = QWidget()
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(content)
+        outer.addWidget(scroll, 1)
+        return QVBoxLayout(content)
+
     def _buttons(self, layout, entries) -> None:
-        row = QHBoxLayout()
-        for text, callback in entries:
+        row = QGridLayout()
+        for index, (text, callback) in enumerate(entries):
             control = QPushButton(text)
             control.clicked.connect(
                 lambda checked=False, action=callback: self.perform(action)
             )
-            row.addWidget(control)
+            control.setObjectName("adminAction")
+            row.addWidget(control, index // 2, index % 2)
         layout.addLayout(row)
 
     def perform(self, action) -> None:
