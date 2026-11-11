@@ -385,3 +385,134 @@ Windows 11/DPI не перевірялися агентом. Платформу 
 відсутності конфліктів, без force-push, переписування історії та видалення гілок.
 
 Phase 2 — **NOT STARTED**, готова до окремого явного погодження.
+
+## 11.11.2026 — Phase 2: початок
+
+Погоджено лише Users & Groups. Чиста main синхронна з origin/main
+(`fc713837`), створено feat/phase-2-users-groups. GitHub MCP та Context7
+функціональні. Перевірено офіційну документацію SQLAlchemy, Alembic,
+argon2-cffi; рішення й результати реалізації будуть записані нижче.
+
+## 11.11.2026 — Phase 2: реалізація та перевірки
+
+### Обсяг і архітектура
+
+Покрито SRS §§2.1–2.8, 3.9–3.13 і рольові частини §3, 14.1–14.2/14.9,
+15.1/15.4, 16.2/16.6, релевантні перевірки §§21–23, ADR-0001.
+Реалізація на гілці `feat/phase-2-users-groups`; SRS та AGENTS.md не змінено.
+
+- `domain/accounts.py`: Role/Workspace та публічні DTO без паролів/хешів.
+- `identity/{passwords,sessions}.py`: Argon2id, перевірка/rehash,
+  випадкові процесні сесії.
+- `application/accounts.py`: login/logout, зміна/скидання пароля,
+  користувачі, авторизація маршрутів, транзакційні перевірки Administrator.
+- `groups/service.py`: CRUD груп і M:N-членство; scoped читання для
+  Instructor/Learner, усі зміни виконує лише Administrator.
+- `persistence/{models,database}.py`, пакетні `migrations/`: чотири таблиці,
+  PK/unique/check/FK, role-тригери, foreign_keys=ON, Alembic revision
+  `0001_users_groups`. Сценарних таблиць немає.
+- `ui/{account_pages,admin_page}.py`, shell/navigation/pages/icons:
+  масковані форми, рольові маршрути, Home й нова історія після входу/виходу,
+  українські адміністративні екрани, очищення даних і відкликаних сесій.
+  Візуальну основу Phase 1 збережено.
+- `main.py`, `application/demo.py`: явні normal/bootstrap/demo режими,
+  необов’язковий шлях БД, ідемпотентний demo seed, випадкові паролі лише у
+  новому приватному локальному файлі. Нормальна ініціалізація не додає demo.
+- Нові unit/integration/security/GUI-тести; мінімальний GitHub Actions CI;
+  README, ADR-0001/0002, план і цей журнал; актуальні WSLg-знімки.
+
+Рішення й наслідки детально наведено в ADR-0002: деактивація замість
+видалення користувача, захист останнього адміністратора, від’єднання
+членства при зміні ролі, межі паролів/логінів, `BEGIN IMMEDIATE` для записів,
+auth_version для відкликання між процесами. Це локальні реалізаційні
+деталі в погодженому обсязі; нових продуктових ролей або вимог немає.
+Після reset/change потрібен повторний вхід. Сесії не переживають перезапуск.
+
+### Залежності та джерела
+
+Python 3.12.3, uv 0.13.7; наявні PySide6/Qt 6.10.3, pytest 8.4.2,
+pytest-qt 4.5.0, Ruff 0.14.14. Додано лише необхідні runtime-залежності:
+SQLAlchemy `>=2.0,<2.1` (lock 2.0.57), Alembic `>=1.18,<2` (1.20.1),
+argon2-cffi `>=25.1,<26` (25.1.0). Установлення й сумісність перевірено.
+
+GitHub MCP функціонально підтвердив remote main `fc713837…`; локальний
+fetch/fast-forward підтвердив тотожність HEAD/origin/main і чисте дерево.
+Context7 перевірив офіційні джерела API:
+
+- [SQLAlchemy SQLite foreign keys](https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#foreign-key-support)
+  — connect event і PRAGMA.
+- [Alembic shared connection](https://alembic.sqlalchemy.org/en/latest/cookbook.html#sharing-a-connection-across-one-or-more-programmatic-migration-commands)
+  — Config.attributes і пакетні міграції.
+- [argon2-cffi API](https://argon2-cffi.readthedocs.io/en/stable/api.html)
+  — Argon2id defaults, verification errors, check_needs_rehash.
+
+GitHub MCP також прочитав `astral-sh/setup-uv` action.yml у tag v6:
+версія uv задається офіційним параметром `version`. OpenAI-документація
+для цієї фази не потрібна. Runtime не залежить від developer MCP.
+
+### Середовище й виправлені проміжні помилки
+
+Фактичне середовище: WSL2 Linux 6.6.114.1, Ubuntu/glibc 2.39, x86_64.
+Запис у `.git` і доступ до WSLg потребували дозволеного виконання поза sandbox.
+Початковий мережевий `uv add` у sandbox завершився DNS-помилкою;
+повтор з дозволом успішний. Усі перевірки проєкту після встановлення — offline.
+
+Перший прогін старих GUI-тестів виявив запис БД у read-only каталог профілю;
+тести переведено на власні тимчасові БД та ін’єкцію сервісів, subprocess smoke
+отримав явний тимчасовий шлях БД. Після зміни layout короткий проміжний прогін
+виявив пропущений імпорт QFrame/QHBoxLayout; виправлено та повторно перевірено.
+Жодного з цих станів не опубліковано.
+
+Початковий Wayland-запуск у sandbox: `wl_display (Operation not permitted)`.
+Повтор з доступом до WSLg успішний. Першій isolated wheel-інсталяції offline
+бракувало кешованих wheels; залежності встановлено з дозволеною мережею,
+подальший запуск і повторна інсталяція актуального wheel — offline.
+
+### Докази
+
+Для команд uv використано `UV_CACHE_DIR=$PWD/.uv-cache`.
+Команди та підсумкові результати наведено нижче після фінального прогону.
+
+
+| Команда / перевірка | Підсумковий результат |
+|---|---|
+| `uv sync --locked --offline` | Успіх, 23 resolved / 22 installed checked |
+| `uv run --offline ruff check .` | All checks passed |
+| `uv run --offline ruff format --check .` | 33 files already formatted |
+| `uv run --offline pytest --tb=short -q` | **68 passed**, 147.71 s |
+| `QT_QPA_PLATFORM=wayland uv run --offline pytest tests/ui -q --tb=short` | **37 passed**, 103.62 s |
+| `uv build --offline` | Wheel і sdist успішні |
+| ZipFile/tarfile inspection | Пакетні міграції присутні, local/cache/credentials/БД відсутні |
+| Ізольована інсталяція wheel та `python -I -m cyberforge --database … --smoke-test` з `/tmp` | Успіх, exit 0 |
+| `QT_QPA_PLATFORM=offscreen uv run --offline cyberforge --database /tmp/cyberforge-phase2-cli-smoke.sqlite3 --smoke-test` | Exit 0 |
+| `QT_QPA_PLATFORM=wayland uv run --offline cyberforge --database /tmp/cyberforge-phase2-wayland-smoke.sqlite3 --smoke-test` | Exit 0 |
+| WSLg preview script `/tmp/cyberforge-phase2-preview.py` | 4 актуальні знімки, exit 0, оглянуто |
+| `git diff --check` | Успіх |
+
+Повний pytest включає 19 identity/RBAC unit-security тестів, 8 database/demo
+integration тестів (зокрема CLI без виведення паролів), 37 GUI-тестів і
+4 foundation/navigation тести. Негативні перевірки охоплюють Guest, Instructor,
+Learner, підроблений/відкликаний токен, чужу групу, некоректне членство,
+повторний логін без logout, деактивацію та заборонені адміністративні зміни.
+Alembic перевірено через metadata diff, повторний upgrade, downgrade/upgrade,
+FK/unique/check/role constraints і повторне відкриття БД.
+
+Знімки фактичного WSLg:
+[вхід](screenshots/phase-2-login.png),
+[користувачі](screenshots/phase-2-admin-users.png),
+[групи](screenshots/phase-2-admin-groups.png),
+[учень](screenshots/phase-2-learner.png).
+Секрети у знімках відсутні; preview використовував тимчасову синтетичну БД.
+
+### Обмеження та рішення gate
+
+Технічний gate Phase 2 у WSL пройдено, статус **REVIEW**. Windows 11, DPI,
+Windows ACL demo-файлу й майбутнє Windows-пакування не перевірено.
+WSLg не є Windows-верифікацією. Runtime та baseline тести offline без cloud
+викликів; MockLLMProvider належить Phase 4 і не додавався завчасно.
+Статистики/результатів/сценарних сутностей немає; майбутні правила доступу
+до них перевірятимуться у відповідних фазах. GitHub Actions workflow додано,
+але результат remote CI слід відрізняти від локальних доказів.
+
+Рекомендована наступна дія — рев’ю PR та особиста демонстрація власником.
+Прийняття Phase 2 і merge залишаються за власником. Phase 3 не починалася.

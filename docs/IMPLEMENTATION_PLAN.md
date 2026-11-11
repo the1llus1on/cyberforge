@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phase 0 — ACCEPTED; Phase 1 — ACCEPTED власником 11.11.2026 після особистого запуску та візуального рев’ю.
+**State:** Phase 0 — ACCEPTED; Phase 1 — ACCEPTED власником 11.11.2026; Phase 2 — REVIEW.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -18,7 +18,7 @@
 |---|---|---|---|
 | 0 | Project Foundation | ACCEPTED | Python 3.12/uv, src package, CLI, lockfile, pytest/Ruff; власник підтвердив перевірки у WSL Ubuntu та прийняв фазу 11.11.2026 |
 | 1 | Main UI Shell | ACCEPTED | Dark PySide6 shell, universal Home / Guest state, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
-| 2 | Users & Groups | NOT STARTED | Login, Argon2id, 3 roles, demo accounts/groups, permission enforcement; denied-access tests |
+| 2 | Users & Groups | REVIEW | Login, Argon2id, 3 roles, demo accounts/groups, permission enforcement; denied-access tests |
 | 3 | Scenario Management | NOT STARTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
 | 4 | LLM Integration | NOT STARTED | LLMGateway, provider adapter, Gemini configuration, deterministic MockLLMProvider; schema and fallback tests |
 | 5 | Specialized Agents | NOT STARTED | Typed I/O contracts for four specialized agents and bounded orchestration; mock agent tests |
@@ -198,3 +198,53 @@ The owner evaluates the working demonstration, diff, test evidence and SRS trace
   власника в повідомленні про прийняття не вказана.
 - **Наступна дія:** Phase 2 готова до окремого погодження, залишається
   **NOT STARTED**. Прийняття Phase 1 та дозвіл merge не дозволяють її початок.
+
+## Phase 2 — Users & Groups (11.11.2026)
+
+Власник явно погодив реалізацію, commit/push/PR. Початок: чиста `main`,
+`HEAD == origin/main == fc713837109b3a5b5cd9ad53e10d1fcb223764ee`,
+GitHub MCP підтвердив remote; створено `feat/phase-2-users-groups`.
+
+План: моделі Users/LearningGroups/GroupInstructors/GroupLearners і міграція
+(§§2.5,14–15) → Argon2id, сесії, service-level RBAC (§§2.7–2.8,16.6) →
+рольова оболонка, login/profile/admin (§3, ADR-0001) → явний demo setup (§2.6) →
+позитивні/негативні тести, CI, WSLg, документація (§§21–23).
+Gate: входи всіх ролей, ізоляція logout/reset, persistence та M:N,
+заборонені service/UI шляхи, Alembic consistency, Ruff/pytest/GUI.
+Windows 11 потребує окремої перевірки. Сценарії та LLM не входять у фазу.
+
+
+### Реалізація та gate Phase 2
+
+**Статус: REVIEW.** Технічний gate у WSL пройдено; ACCEPTED потребує рев’ю
+власника. Phase 3–12 не розпочато.
+
+- Реалізовано login/logout, три ролі й Guest, Argon2id/rehash, власну зміну
+  та адміністративне скидання паролів, відкликання сесій через auth_version.
+- SQLite/SQLAlchemy/Alembic: Users, LearningGroups, GroupInstructors,
+  GroupLearners; M:N, FK, constraints, role-тригери, транзакційні записи.
+- Administrator керує користувачами, ролями, активністю, групами й складом;
+  Instructor/Learner мають лише scoped читання груп. Прямі service-виклики
+  та навігація перевіряються незалежно від видимості кнопок.
+- Рольова оболонка з універсальною Home, повновіконним login, профілем,
+  адмінформами й порожніми сценаріями/результатами; logout очищає UI/історію.
+- Явна normal/bootstrap/demo ініціалізація; сім точних demo-логінів та дві
+  групи SRS §2.6; незалежні випадкові паролі у приватному файлі поза Git.
+- Нові модулі domain/identity/application/groups/persistence та дві UI-сторінки;
+  README, ADR-0001/0002, журнал, CI й чотири WSLg-знімки оновлено.
+- `uv sync --locked --offline`, `uv run --offline ruff check .`,
+  `uv run --offline ruff format --check .` — успіх.
+- `uv run --offline pytest --tb=short -q` — **68 passed** (147.71 s),
+  включно з 8 integration/database/demo-тестами та негативними RBAC-шляхами.
+- `QT_QPA_PLATFORM=wayland uv run --offline pytest tests/ui -q --tb=short`
+  — **37 passed** (103.62 s); справжній WSLg, не Windows.
+- `uv build --offline` — wheel/sdist; міграції присутні, БД/секретів/кешів
+  немає; ізольований wheel встановлено і запущено з `/tmp`, exit 0.
+- CLI smoke offscreen й WSLg Wayland, login/admin/learner screenshots;
+  подробиці команд — DEVELOPMENT_LOG.
+- Тести та runtime не використовують мережу/LLM; MockLLMProvider — Phase 4.
+  Windows 11/DPI/ACL не перевірено. Міграція перевірена на SQLite у WSL;
+  GitHub Actions виконує окрему Linux-перевірку після відкриття PR.
+
+**Наступна дія:** рев’ю PR і демонстрація Phase 2 власником. Не виконувати merge
+або Phase 3 без окремого явного дозволу.

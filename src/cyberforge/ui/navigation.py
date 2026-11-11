@@ -4,19 +4,23 @@ from enum import StrEnum
 
 
 class AuthenticationState(StrEnum):
-    """Presentation state only; identity and authorization belong to Phase 2."""
+    """Presentation status; AccountService owns identity and authorization."""
 
     GUEST = "guest"
+    AUTHENTICATED = "authenticated"
 
 
 class View(StrEnum):
-    """Destinations independent of authentication or future user roles."""
+    """Destinations; application services authorize protected workspaces."""
 
     HOME = "home"
     CONSTRUCTOR = "constructor"
     ANALYTICS = "analytics"
     PROFILE = "profile"
     SETTINGS = "settings"
+    MY_SCENARIOS = "my_scenarios"
+    MY_RESULTS = "my_results"
+    ADMIN = "admin"
 
 
 class NavigationState:
@@ -37,6 +41,10 @@ class NavigationState:
     @property
     def can_go_forward(self) -> bool:
         return self._index < len(self._history) - 1
+
+    def reset(self) -> None:
+        self._history = [View.HOME]
+        self._index = 0
 
     def navigate(self, view: View) -> None:
         if view == self.current:

@@ -1,22 +1,30 @@
 """Guest access boundary, mode routing and desktop layout smoke checks."""
 
+from collections.abc import Iterator
+
 import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QLabel, QLineEdit
 from pytestqt.qtbot import QtBot
 
+from cyberforge.application.accounts import AccountService
+from cyberforge.persistence.database import Database
 from cyberforge.ui.navigation import AuthenticationState, View
 from cyberforge.ui.shell import MainWindow
 from cyberforge.ui.theme import apply_theme
 
 
 @pytest.fixture
-def window(qtbot: QtBot, qapp: QApplication) -> MainWindow:
+def window(qtbot: QtBot, qapp: QApplication, tmp_path) -> Iterator[MainWindow]:
     apply_theme(qapp)
-    widget = MainWindow()
+    database = Database(tmp_path / "ui.sqlite3")
+    database.upgrade()
+    widget = MainWindow(AccountService(database))
     qtbot.addWidget(widget)
     widget.show()
-    return widget
+    yield widget
+    widget.close()
+    database.close()
 
 
 def click(qtbot: QtBot, window: MainWindow, view: View) -> None:
@@ -34,7 +42,7 @@ def test_guest_start_and_profile(qtbot: QtBot, window: MainWindow) -> None:
     qtbot.mouseClick(window.pages[View.HOME].login_button, Qt.MouseButton.LeftButton)
     assert window.navigation.current == View.PROFILE
     assert window.nav_buttons[View.PROFILE].isChecked()
-    assert not window.pages[View.PROFILE].findChildren(QLineEdit)
+    assert window.pages[View.PROFILE].findChildren(QLineEdit)
 
 
 def test_mode_switches_share_catalog_without_granting_access(
@@ -76,7 +84,9 @@ def test_back_forward_and_settings(qtbot: QtBot, window: MainWindow) -> None:
 
 
 @pytest.mark.parametrize("size", [(860, 620), (1280, 800), (1920, 1080)])
-@pytest.mark.parametrize("view", list(View))
+@pytest.mark.parametrize(
+    "view", [View.HOME, View.CONSTRUCTOR, View.ANALYTICS, View.PROFILE, View.SETTINGS]
+)
 def test_layout_does_not_clip_text(
     qtbot: QtBot, window: MainWindow, size: tuple[int, int], view: View
 ) -> None:

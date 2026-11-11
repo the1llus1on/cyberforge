@@ -67,11 +67,15 @@ class WorkspacePage(QWidget):
                 "Тут відображатимуться результати проходжень і статистика "
                 "вибраного сценарію. Режим аналізу призначений для перегляду.",
             ),
-            View.PROFILE: (
-                "ОБЛІКОВИЙ ЗАПИС",
-                "Вхід до CyberForge",
-                "Зараз ви працюєте як гість. Авторизація буде доступна "
-                "після реалізації етапу «Користувачі та групи».",
+            View.MY_SCENARIOS: (
+                "НАВЧАННЯ",
+                "Мої сценарії",
+                "Призначених опублікованих сценаріїв поки немає.",
+            ),
+            View.MY_RESULTS: (
+                "РЕЗУЛЬТАТИ",
+                "Мої результати",
+                "Ви ще не маєте завершених проходжень. Результати не обчислюються.",
             ),
             View.SETTINGS: (
                 "НАЛАШТУВАННЯ",
@@ -83,7 +87,8 @@ class WorkspacePage(QWidget):
         body.addWidget(label(eyebrow, "eyebrow"))
         self.title = label(title, "title")
         body.addWidget(self.title)
-        body.addWidget(label(description))
+        self.description = label(description)
+        body.addWidget(self.description)
         if view == View.HOME:
             body.addWidget(
                 card(
@@ -91,13 +96,12 @@ class WorkspacePage(QWidget):
                     "Сценарій → Електронний лист → Вебсайт → Аналіз",
                 )
             )
-            body.addWidget(
-                label(
-                    "«+» відкриває Конструктор, іконка графіка — Аналіз. "
-                    "Кнопка будинку повертає на Головну.\n"
-                    "Увійдіть, щоб отримати доступ до ваших сценаріїв."
-                )
+            self.session_hint = label(
+                "«+» відкриває Конструктор, іконка графіка — Аналіз. "
+                "Кнопка будинку повертає на Головну.\n"
+                "Увійдіть, щоб отримати доступ до ваших сценаріїв."
             )
+            body.addWidget(self.session_hint)
         elif view == View.CONSTRUCTOR:
             body.addWidget(
                 card(
@@ -113,14 +117,6 @@ class WorkspacePage(QWidget):
                     "Дані для аналізу відсутні",
                     "Сценарій не вибрано. Показники та оцінки не обчислюються.\n\n"
                     "Це попередній перегляд оболонки, без навчальних даних.",
-                )
-            )
-        elif view == View.PROFILE:
-            body.addWidget(
-                card(
-                    "Авторизацію ще не реалізовано",
-                    "Форма входу з’явиться на наступному етапі. "
-                    "Доступ до сценаріїв залишається закритим.",
                 )
             )
         if view in (View.HOME, View.CONSTRUCTOR, View.ANALYTICS):
