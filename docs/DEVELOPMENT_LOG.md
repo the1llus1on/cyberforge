@@ -804,3 +804,24 @@ README, ADR, план оновлено; docs/audits/phase-2-pre-acceptance.md �
 docs/PHASE_2_ACCEPTANCE.md — лише залишкові owner physical tests. Owner local
 files/DB/credentials/system settings не читали/не змінювали. Phase2 REVIEW;
 Windows CI до фактичного завершення не вважається верифікованим. Без merge/Phase3.
+
+### Доповнення аудиту: фактичний Windows run і FK collation
+
+Run43102780570 для5eb443a: Linux success; Windows113 passed,2 skipped,
+2 failed. Обидва CLI failures від redirected CP1252 при Python -I (env UTF-8
+mode в isolated запуску не застосовується). Demo дані створювались, але
+status print кидав UnicodeEncodeError. CLI тепер налаштовує перенаправлені
+stdout/stderr на UTF-8, без зміни console/stdin/system locale. Consumer tests
+явно декодують UTF-8; regression моделює CP1252 streams. Перевірки не послаблено.
+
+Окремий failing-first test виявив CASCADE corner з parent NOCASE unique key.
+Guard ставить parent column зліва згідно SQLite FK comparison semantics і
+розпізнає mixed-case referred table name. Production schema не розширювалася.
+
+Повторний local pytest:119 passed,79.82s; Ruff lint/format40files — успіх;
+uv build --offline — успіх. WSLg Wayland GUI:73 passed,61.18s (із доступом до
+socket поза sandbox; sandbox socket denial не є application regression).
+Оновлений isolated wheel startup:exit0; archive inspection підтвердив packaged
+migration і відсутність local DB/credentials/cache. Повторний Windows matrix
+перевіряється після push; фактичні hosted результати див. checks PR#3.
+Owner data/credentials/host settings збережено; REVIEW, без merge/Phase3.

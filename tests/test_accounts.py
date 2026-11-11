@@ -351,7 +351,7 @@ def test_delete_preserves_history_referencing_username(
     with accounts.database.engine.begin() as connection:
         connection.exec_driver_sql(
             "CREATE TABLE history_by_name (username TEXT "
-            "REFERENCES users(username) ON DELETE CASCADE)"
+            "REFERENCES UsErS(username) ON DELETE CASCADE)"
         )
         connection.execute(
             text("INSERT INTO history_by_name VALUES (:name)"), {"name": user.username}
@@ -364,3 +364,27 @@ def test_delete_preserves_history_referencing_username(
             == 1
         )
     assert any(u.id == user.id for u in accounts.list_users(admin))
+
+
+def test_delete_guard_uses_parent_fk_collation(accounts, administrator, password):
+    _, token = administrator
+    user = accounts.create_user(
+        token, "collation_history", "Учень", Role.LEARNER, password
+    )
+    with accounts.database.engine.begin() as connection:
+        connection.exec_driver_sql(
+            "ALTER TABLE users ADD COLUMN legacy_key TEXT COLLATE NOCASE"
+        )
+        connection.exec_driver_sql(
+            "CREATE UNIQUE INDEX legacy_key_unique ON users(legacy_key)"
+        )
+        connection.exec_driver_sql(
+            "UPDATE users SET legacy_key='MixedCase' WHERE id=?", (user.id,)
+        )
+        connection.exec_driver_sql(
+            "CREATE TABLE collation_history "
+            "(owner_key TEXT REFERENCES users(legacy_key) ON DELETE CASCADE)"
+        )
+        connection.exec_driver_sql("INSERT INTO collation_history VALUES ('mixedcase')")
+    with pytest.raises(ApplicationError, match="Деактивуйте"):
+        accounts.delete_user(token, user.id)

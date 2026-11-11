@@ -188,3 +188,6 @@ English, Shift+Insert або Unicode typing; password copy/cut лишаютьс�
 успіх такого job не означає фізичну Windows11 acceptance. Перевіряйте фактичний
 стан PR checks: queued не є success. Existing inactive memberships зберігаються
 при редагуванні групи; нове призначення inactive account заборонено.
+
+Перенаправлені повідомлення CLI (`stdout`/`stderr`) мають кодування UTF-8,
+зокрема при запуску Python `-I` у Windows; читачі pipes мають декодувати UTF-8.

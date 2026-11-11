@@ -265,11 +265,11 @@ class AccountService:
                 if table in ("group_instructors", "group_learners"):
                     continue
                 for fk in inspector.get_foreign_keys(table):
-                    if fk["referred_table"] == "users":
+                    if fk["referred_table"].casefold() == "users":
                         # Never cascade historical data.
                         quote = db.bind.dialect.identifier_preparer.quote
                         predicates = " AND ".join(
-                            f"child.{quote(local)} = parent.{quote(remote)}"
+                            f"parent.{quote(remote)} = child.{quote(local)}"
                             for local, remote in zip(
                                 fk["constrained_columns"],
                                 fk["referred_columns"],

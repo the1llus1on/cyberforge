@@ -326,6 +326,11 @@ CI matrix Linux/Windows Server2022: locked sync, Ruff, pytest/DB/GUI/import/smok
 Повний звіт docs/audits/phase-2-pre-acceptance.md; тільки залишкові фізичні
 owner тести — docs/PHASE_2_ACCEPTANCE.md. Phase3/merge заборонені без дозволу.
 
-Підсумок audit head: 117 pytest passed; WSLg73 passed; Ruff/locked sync/
+Підсумок audit head: 119 pytest passed; WSLg73 passed; Ruff/locked sync/
 startup/build/isolated wheel — успіх. Стан Windows hosted jobs перевіряється
 окремо; до фактичного завершення Windows CI verification не зараховується.
+
+Перший Windows run виявив redirected CP1252 CLI defect; виправлено явним
+UTF-8 для pipes, не змінюючи interactive console. Historical FK guard
+додатково перевірено з parent NOCASE collation та mixed-case table name.
+Повторний matrix result відстежується у PR #3; Phase 2 лишається REVIEW.

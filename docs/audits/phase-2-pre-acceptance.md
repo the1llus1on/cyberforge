@@ -40,13 +40,20 @@ subprocess з umask000. Наявні файли/права не перезапи
 | Create ігнорував unchecked Active | Передано active у service/_create, login inactive заборонено. GUI create-inactive test. |
 | Редагування групи прибирало inactive members | Відтворено failing GUI test до fix. Існуючі inactive checked members показуються й зберігаються; нове inactive assignment заборонено, явне removal дозволено. |
 | SQLite lock/open/migration errors виходили в Qt/CLI traceback | DBAPIError → safe ApplicationError; UI fail-closed cleanup; startup errors без raw SQL/path/traceback. Реальний exclusive-lock test, recovery і corrupt-file preservation. |
-| Guard delete перевіряв усі FK так, ніби вони посилаються на users.id | Correlated query враховує реальні constrained/referred columns, включно з alternate unique username; historical CASCADE test не втрачає даних. |
+| Guard delete перевіряв усі FK так, ніби вони посилаються на users.id | Correlated query враховує constrained/referred columns, alternate unique username, регістр назви таблиці та parent collation; historical CASCADE tests не втрачають даних. |
 | Cancel/New могли показувати «Зміни збережено» | Cancel повертає no-change, нова форма/cancel не показують success-save message; GUI confirmation test. |
+| Windows isolated CLI використовував CP1252 у pipe | Реальний Windows CI відтворив UnicodeEncodeError після demo setup і escaped stderr. Перенаправлені stdout/stderr явно UTF-8; interactive console не змінюється. Regression з CP1252 streams та CLI subprocess. |
 
 Жодна зміна не послаблює RBAC чи password protections. Історичні FK
 перевіряються без створення Phase 3 моделей; synthetic history tables існують
 тільки в тимчасових test databases. Деактивація зберігає membership, але не
 дозволяє вхід або нове призначення неактивного користувача.
+
+SQLite FK порівнює значення з collation/affinity батьківської колонки;
+тому в guard вона стоїть зліва. Тест NOCASE спершу відтворив втрату
+history через CASCADE, після виправлення delete відхиляється.
+[Правила SQLite FK](https://www.sqlite.org/foreignkeys.html) враховано без
+додавання майбутніх production entities.
 
 ## Windows CI
 
@@ -64,6 +71,13 @@ locked dependency compatibility, SQLite/Alembic/Argon2id, service/RBAC і
 clipboard bridge, desktop fonts/DPI, ACL власного профілю або інсталятор.
 На Windows host власника нічого не встановлювалося.
 
+Перший фактичний [matrix run для 5eb443a](https://github.com/the1llus1on/cyberforge/actions/runs/43102780570):
+Linux успішний; Windows — 113 passed, 2 POSIX skips, 2 CLI failures.
+Обидва failures спричинено redirected CP1252, не GUI/DB/RBAC. Виправлення
+внесено в application CLI, перевірки не вимикалися. Поточний повторний
+результат доступний у checks PR #3; hosted CI залишається окремим від
+фізичного Windows 11 gate.
+
 ## Чому 6ba0a6a queued
 
 Через GitHub app MCP: run43098666057 status=queued, jobs=[]; logs відсутні.
@@ -80,6 +94,9 @@ ubuntu-latest, без environment approval/self-hosted/concurrency gate; та с
 API не надає; billing/capacity конкретного акаунта не вигадуються.
 Queued не є success. Checks не вимикали, continue-on-error не додавали,
 old runs не скасовували; нові jobs можуть чекати відновлення GitHub.
+Повторний API-запит після завершення run43102780570 все ще повертав для
+старого run43098666057 queued. Новий matrix уже виконувався; це не дає
+підстав вважати старий run успішним або приписувати йому test failure.
 
 ## Автоматизовані докази та межі
 
@@ -92,7 +109,7 @@ build, пакетну міграцію й isolated wheel startup. Тести off
 [окремий короткий checklist](../PHASE_2_ACCEPTANCE.md). Acceptance не надано;
 Phase 2 — REVIEW, merge/Phase 3 не виконуються.
 
-Підсумок локального head: **117 pytest passed**, **73 WSLg GUI passed**,
+Підсумок локального head: **119 pytest passed**, **73 WSLg GUI passed**,
 Ruff lint/format, locked sync/import/startup/build/isolated wheel — успіх.
-Hosted Windows result відсутній до завершення нового PR workflow; не
-прирівнювати конфігурацію job до виконаної Windows-перевірки.
+Початковий hosted Windows failure й виправлення описано вище; актуальний
+результат повторного workflow слід перевіряти в checks PR #3.

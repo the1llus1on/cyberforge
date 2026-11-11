@@ -192,3 +192,9 @@ DBAPI failures мають safe errors, UI повертається до Guest, s
 traceback/SQL. Delete guard використовує фактичні FK columns, а не припущення
 про id. Windows hosted offscreen CI додано окремо від manual Windows11 gate.
 Докази й межі — audits/phase-2-pre-acceptance.md. SRS/Phase scope незмінні.
+
+Historical FK guard дотримується SQLite parent collation/affinity і
+case-insensitive table identifiers, у тому числі для alternate unique key.
+Windows CI відтворив окремий дефект redirected CP1252: CLI задає UTF-8
+тільки для перенаправлених stdout/stderr. Interactive console, stdin,
+системна locale та Windows host settings не змінюються.

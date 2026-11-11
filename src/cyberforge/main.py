@@ -7,7 +7,16 @@ from getpass import getpass
 from pathlib import Path
 
 
+def _configure_output() -> None:
+    """Use UTF-8 for redirected CLI messages, including isolated Windows Python."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None and not stream.isatty():
+            reconfigure(encoding="utf-8", errors="backslashreplace")
+
+
 def main(argv: Sequence[str] | None = None) -> int:
+    _configure_output()
     parser = argparse.ArgumentParser(description="CyberForge — навчальна платформа")
     parser.add_argument(
         "--smoke-test", action="store_true", help="Перевірити запуск і закрити вікно"

@@ -190,7 +190,7 @@ def test_demo_cli_never_prints_credentials(tmp_path):
         str(credentials),
     ]
     result = subprocess.run(
-        args, capture_output=True, text=True, timeout=30, check=False
+        args, capture_output=True, encoding="utf-8", timeout=30, check=False
     )
     assert result.returncode == 0, result.stderr
     passwords = json.loads(credentials.read_text())
@@ -199,7 +199,7 @@ def test_demo_cli_never_prints_credentials(tmp_path):
         assert value not in result.stdout + result.stderr
     before = credentials.read_bytes()
     repeated = subprocess.run(
-        args, capture_output=True, text=True, timeout=30, check=False
+        args, capture_output=True, encoding="utf-8", timeout=30, check=False
     )
     assert repeated.returncode == 0
     assert credentials.read_bytes() == before

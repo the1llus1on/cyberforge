@@ -1,10 +1,26 @@
 """Verify the installed package and its executable entry points."""
 
+import io
 import os
 import subprocess
 import sys
 from importlib.metadata import distribution
 from pathlib import Path
+
+
+def test_redirected_cli_output_uses_utf8(monkeypatch):
+    from cyberforge.main import _configure_output
+
+    output, errors = io.BytesIO(), io.BytesIO()
+    stdout = io.TextIOWrapper(output, encoding="cp1252")
+    stderr = io.TextIOWrapper(errors, encoding="cp1252")
+    monkeypatch.setattr(sys, "stdout", stdout)
+    monkeypatch.setattr(sys, "stderr", stderr)
+    _configure_output()
+    for stream, buffer in ((stdout, output), (stderr, errors)):
+        stream.write("Повідомлення українською")
+        stream.flush()
+        assert buffer.getvalue().decode("utf-8") == "Повідомлення українською"
 
 
 def test_installed_package() -> None:
