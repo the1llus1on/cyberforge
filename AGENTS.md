@@ -1,0 +1,70 @@
+# CyberForge — instructions for OpenAI Codex
+
+## Mission and source of truth
+
+CyberForge is a local Windows 11 educational simulator and constructor of social-engineering training scenarios. It is developed as part of a master's dissertation, using Python 3.12 and PySide6. Its training flow is Email → Web → Scoring → Feedback.
+
+Read these files before making changes:
+1. `TECHNICAL_SPECIFICATION.md` — authoritative SRS, version 3.0.
+2. `docs/IMPLEMENTATION_PLAN.md` — implementation phases, acceptance gates, progress.
+3. `docs/DEVELOPMENT_LOG.md` — previous implementation decisions and verification results.
+4. Existing project files, tests and architectural decisions relevant to the task.
+
+If documents conflict, follow the SRS for approved product requirements. Do not silently override an approved requirement. The SRS labels `[ЗАТВЕРДЖЕНО]`, `[ОБОВ'ЯЗКОВА ВИМОГА]`, `[ТЕХНІЧНЕ РІШЕННЯ]`, `[ПРОПОЗИЦІЯ]`, `[ВІДКЛАДЕНО]` and `[ПОТРЕБУЄ УЗГОДЖЕННЯ]` have distinct meanings. Do not treat proposals, deferred features or decisions awaiting approval as committed MVP scope.
+
+## Scope of work and phase gate
+
+- Work on one approved phase or narrowly scoped task at a time. The project roadmap is Phase 0 through Phase 12, as specified in SRS section 23.
+- Before coding, inspect the repository, working tree, dependencies and existing components; never duplicate working functionality or overwrite uncommitted user changes.
+- Present a short implementation plan mapped to relevant SRS sections and acceptance criteria.
+- Inside an approved phase, work in small, testable increments and fix regressions before proceeding.
+- Do NOT start the next phase without explicit user approval, even if the current phase is complete.
+- For ambiguous decisions that change approved functionality, security, evaluation semantics or architecture, record options and ask for approval. For minor reversible implementation details, make a justified choice and document it.
+- Maintain `docs/IMPLEMENTATION_PLAN.md` and `docs/DEVELOPMENT_LOG.md` after each completed increment or phase.
+- Do not push to remote, merge branches, rewrite history or perform destructive Git operations without explicit approval.
+
+## Engineering conventions
+
+- Application code, API names, symbols, classes and variables: English. User-facing UI, progress reports, explanations and documentation intended for the dissertation: Ukrainian.
+- Python 3.12; prefer typed code; small cohesive modules; src layout. Keep domain, application services, UI, persistence, analytics and AI integrations separate.
+- Use the agreed stack where relevant: PySide6, Qt WebEngine, Pydantic v2, SQLite, SQLAlchemy 2.x, Alembic, LangChain, LangGraph, Gemini behind `LLMGateway`, `uv`, `pytest`, `pytest-qt` and Ruff.
+- Add only necessary dependencies; verify their current official documentation and compatible versions. Do not invent APIs or quietly replace the SRS technology decisions.
+- Do not create every proposed directory in advance; evolve the structure when code actually needs it.
+- Build and test offline with `MockLLMProvider` whenever possible. Make real API use explicitly configurable; never require a live Gemini key for the baseline tests.
+- Use `gemini-3.8-flash` as the default provider model only where supported and verified by current provider documentation and actual API access. Keep the provider replaceable.
+- Keep `.env`, tokens, credentials, local databases and other secrets out of Git. Supply safe `.env.example` values. Use secure password hashing (Argon2id) and an appropriate OS secret store where specified.
+
+## Non-negotiable domain and security requirements
+
+- Training content, identities, accounts, organizations and credentials must be synthetic. No real phishing delivery, external credential collection, unauthorized access or unsafe downloads.
+- Web Simulator must isolate rendering and block uncontrolled external network requests; `display_url` is only visual text and MUST NOT be navigated to as a real URL. Use internal resource identifiers for navigation.
+- Never execute arbitrary LLM-generated HTML, JavaScript, CSS or commands. Validate structured output, escape data and render only through controlled templates.
+- Enforce role permissions in application services, not just UI. Administrator, Instructor and Learner have distinct privileges. Learners cannot see other learners' results; instructors cannot access unrelated private scenarios.
+- Constructor and Analytics share one scenario identity and database. Analytics is read-only and must not duplicate scoring or permit scenario edits.
+- A published scenario version is immutable; later changes create a new draft. Do not overwrite saved artifacts or unsaved UI edits silently. Do not publish an incomplete or invalid scenario.
+- `ScoringService` calculates results deterministically from events, versioned rubrics and a published scenario. LLM agents may explain existing scores but must never assign or modify them.
+- Missing results, incomplete attempts and actual zero scores are distinct. Skipping Web due to a correct safe decision must not automatically produce a zero Web score.
+- Never send real learners' personal data, actual credentials, secrets or unanonymized attempt results to a cloud LLM.
+- Verify NIST assertions from official documents. NIST Phish Scale describes email-detection difficulty, not a learner score or a web-page difficulty scale.
+
+## Quality gates
+
+For each relevant change:
+1. Add or update appropriate unit, integration, UI and security tests.
+2. Run project checks (prefer `uv run ruff check .`, `uv run ruff format --check .` and `uv run pytest` after these commands are configured). Report exactly what ran and what could not run.
+3. Test both successful and forbidden access paths where permissions are involved.
+4. Confirm behavior under `MockLLMProvider` without external network access.
+5. On Windows-specific Qt/WebEngine behavior, state clearly whether it was actually verified on Windows 11; WSL tests alone are not Windows validation.
+6. Record evidence, limitations and remaining risks; never mark an untested requirement as completed.
+
+## Completion report
+
+At the end of a task, respond in Ukrainian with:
+- phase / task and SRS requirements covered;
+- implemented behavior;
+- files added or modified;
+- design decisions;
+- exact checks run and their results;
+- unresolved issues or environmental limitations;
+- whether the acceptance gate passed;
+- the proposed next action (without automatically starting the next phase).
