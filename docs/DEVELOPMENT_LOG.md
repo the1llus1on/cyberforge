@@ -516,3 +516,18 @@ WSLg не є Windows-верифікацією. Runtime та baseline тести 
 
 Рекомендована наступна дія — рев’ю PR та особиста демонстрація власником.
 Прийняття Phase 2 і merge залишаються за власником. Phase 3 не починалася.
+
+### Git та PR
+
+Реалізацію закомічено як `83e803d` і відправлено в
+`origin/feat/phase-2-users-groups`. Через GitHub MCP створено
+[PR #3 — Phase 2: автентифікація, користувачі та навчальні групи](https://github.com/the1llus1on/cyberforge/pull/3)
+до `main`, відкритий для рев’ю; merge не виконувався.
+
+GitHub MCP `get_check_runs` повернув 403 через scope PAT. Fallback —
+підключений GitHub app MCP: він підтвердив запуск Actions `Python checks`.
+Установлення, Ruff lint і format пройшли; pytest виконувався на момент
+запису. Це не збій локальних перевірок і не недоступність GitHub MCP загалом:
+branch read та створення PR були успішні. Поточний результат CI доступний
+у [перевірках PR](https://github.com/the1llus1on/cyberforge/pull/3/checks).
+Після основного коміту внесено лише цей запис про доставку результату.
