@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phase 0 — ACCEPTED власником 11.11.2026 після особистої перевірки у WSL Ubuntu.
+**State:** Phase 0 — ACCEPTED; Phase 1 — REVIEW, реалізацію та перевірки завершено 11.11.2026.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -17,7 +17,7 @@
 | Phase | Name | Status | Deliverable and acceptance focus |
 |---|---|---|---|
 | 0 | Project Foundation | ACCEPTED | Python 3.12/uv, src package, CLI, lockfile, pytest/Ruff; власник підтвердив перевірки у WSL Ubuntu та прийняв фазу 11.11.2026 |
-| 1 | Main UI Shell | NOT STARTED | Dark PySide6 shell, Guest view, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
+| 1 | Main UI Shell | REVIEW | Dark PySide6 shell, Guest view, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
 | 2 | Users & Groups | NOT STARTED | Login, Argon2id, 3 roles, demo accounts/groups, permission enforcement; denied-access tests |
 | 3 | Scenario Management | NOT STARTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
 | 4 | LLM Integration | NOT STARTED | LLMGateway, provider adapter, Gemini configuration, deterministic MockLLMProvider; schema and fallback tests |
@@ -98,3 +98,49 @@ Each phase can be divided into substeps, but no substep should leave the working
 ## Review protocol
 
 The owner evaluates the working demonstration, diff, test evidence and SRS traceability. If approved, Codex may start the next phase in a *new task/session* based on the updated repository plan/log. If rejected, repair only the current phase.
+
+## Phase 1 — Main UI Shell (11.11.2026)
+
+- **Обсяг:** SRS §§3.1–3.8, 3.10–3.13 (у межах оболонки), 15.1/15.4,
+  21.1/21.3/21.4, 22–22.2, 23 Phase 1, 27.4.
+- **Передумови:** Phase 0 прийнята й об’єднана PR #1 у `main`
+  (`1fc4a596`); дерево чисте; `main` оновлено fast-forward; створено
+  `feat/phase-1-main-ui-shell`.
+- **Послідовність:** політика MCP/Git → PySide6/pytest-qt → тема та
+  навігаційний стан → оболонка/порожні представлення → GUI-тести →
+  перевірки й демонстрація → документація → commit/push/PR.
+- **Архітектура:** `ui/{shell,navigation,pages,icons,theme}.py`; окремі
+  представлення у QStackedWidget, єдиний каталог, локальна історія.
+- **Межа Guest:** перемикачі відкривають лише явно позначений попередній
+  перегляд оболонки. Каталог порожній та закритий; створення й пошук
+  недоступні. Авторизації, сценаріїв, тестових користувачів, оцінок,
+  persistence та LLM немає; login/profile пояснює майбутній етап.
+- **Критерії:** старт у Guest; темна тема; видимі й узгоджені активні
+  стани; «+» лише перемикає режим; кнопка нового сценарію видима тільки
+  в Конструкторі та недоступна гостю; один каталог; переходи назад/вперед;
+  клавіатура, прокручування й розміри 860×620–1920×1080; offline тести;
+  фактичні докази WSL та окреме позначення неперевіреного Windows 11.
+- **Поза gate Phase 1:** справжня форма входу/RBAC (Phase 2), ID та
+  сценарії/захист незбережених матеріалів (Phase 3+), AI (Phase 4+),
+  обчислення аналітики (Phase 11).
+- **Демонстрація:** `uv sync --locked`, `uv run cyberforge`; перемикнути
+  «+», «Аналіз», «Назад/Вперед», профіль, налаштування; змінити розмір.
+- **Докази:** `uv sync --locked --offline`, `uv run ruff check .`,
+  `uv run ruff format --check .`, `uv run pytest` — успіх, **23 passed**;
+  startup CLI та module з `--smoke-test`/offscreen — exit 0;
+  `QT_QPA_PLATFORM=wayland uv run cyberforge --smoke-test` — exit 0;
+  `QT_QPA_PLATFORM=wayland uv run pytest tests/ui -q` — **19 passed**;
+  `uv build --offline` та перевірка вмісту архівів — успіх.
+  GUI-перевірки виконані у WSL2, Python 3.12.3, Qt/PySide6 6.10.3.
+- **Візуальний огляд:** фактичні знімки WSLg у `docs/screenshots/`; перевірено
+  Guest, Аналіз та компактний Конструктор. Регресійний тест перевіряє,
+  що текст не обрізається у всіх п’яти представленнях і трьох розмірах.
+- **MCP:** GitHub, Context7, OpenAI Developer Docs — функціональні запити
+  успішні; політика додана до AGENTS.md, credentials не змінювалися.
+- **Обмеження:** Windows 11/DPI ще не перевірені; XCB у цьому WSL не
+  завантажується через системну залежність; WSLg Wayland працює поза
+  обмеженням sandbox-дисплея. MockLLMProvider ще не існує (Phase 4);
+  оболонка і тести не викликають LLM/зовнішні сервіси.
+- **Gate:** технічні критерії оболонки у WSL пройдено; **REVIEW**.
+  Прийняття власником та Windows-перевірка залишаються відкритими.
+  Наступна дія — рев’ю PR/демонстрації; Phase 2 не починати без дозволу.
