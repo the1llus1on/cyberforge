@@ -339,3 +339,49 @@ Windows 11/DPI не перевірялися; WSLg не замінює нати�
 Зміни публікуються в ту саму гілку й
 [PR #2](https://github.com/the1llus1on/cyberforge/pull/2); новий PR,
 merge в main та Phase 2 не виконуються. Наступна дія — рев’ю власника.
+
+## 11.11.2026 — офіційне прийняття та фіналізація Phase 1
+
+Власник явно прийняв **Phase 1 — Main UI Shell (ACCEPTED)** після особистого
+запуску та візуального рев’ю CyberForge. Схвалено дизайн, універсальну Home,
+Конструктор, Аналіз та погоджені уточнення. Дата рішення — **11 листопада
+2026 року**. Це прийняття замінює попередній статус REVIEW; історичні записи
+збережено. Власник також явно дозволив злиття PR #2 до main після перевірок.
+
+Початковий стан фіналізації: чиста `feat/phase-1-main-ui-shell`,
+HEAD `46dff5357f0ee7a384f3e4023002c9f781fcc439`; GitHub MCP підтвердив той самий
+head, base `main`, PR #2 open/unmerged і `mergeable=true`.
+Перелік 22 файлів PR та локальний diff відповідають погодженому обсягу
+Phase 1: UI, необхідні PySide6/pytest-qt, тести, документація, ADR і знімки.
+SRS v3.0 незмінна. Реалізації Phase 2 чи інших фаз немає.
+
+### Фінальні перевірки
+
+Середовище: WSL2, Python 3.12.3, Qt/PySide6 6.10.3, pytest 8.4.2.
+Команди uv виконано з `UV_CACHE_DIR="$PWD/.uv-cache" UV_OFFLINE=1`:
+
+| Команда | Результат |
+|---|---|
+| `uv run ruff check .` | All checks passed |
+| `uv run ruff format --check .` | 13 files already formatted |
+| `uv run pytest` | **25 passed**, 27.01 s, offscreen |
+| `QT_QPA_PLATFORM=wayland uv run pytest tests/ui -q` | **21 passed**, 26.91 s, WSLg |
+| `QT_QPA_PLATFORM=offscreen uv run cyberforge --smoke-test` | Exit 0 |
+| `QT_QPA_PLATFORM=offscreen uv run python -m cyberforge --smoke-test` | Exit 0 |
+| `QT_QPA_PLATFORM=wayland uv run cyberforge --smoke-test` | Exit 0 |
+| `git diff --check` | Успіх |
+| `git diff --exit-code origin/main...HEAD -- TECHNICAL_SPECIFICATION.md` | Успіх, SRS не змінено |
+
+GitHub MCP повернув порожні списки commit statuses та workflow runs:
+віддалений CI не налаштовано; це не замінює локальних перевірок вище.
+Тести виконані offline без API-ключів чи LLM; MockLLMProvider залишається Phase 4.
+Windows 11/DPI не перевірялися агентом. Платформу особистого запуску власник
+не вказав, тому його схвалення не позначається як Windows-верифікація.
+
+План, README і статус фази в ADR оновлено до ACCEPTED. Код і залежності
+під час фіналізації не змінюються. Технічний gate та прийняття власником
+завершено; документація публікується в існуючу feature-гілку PR #2.
+Злиття виконується лише після повторної перевірки актуального head і
+відсутності конфліктів, без force-push, переписування історії та видалення гілок.
+
+Phase 2 — **NOT STARTED**, готова до окремого явного погодження.

@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phase 0 — ACCEPTED; Phase 1 — REVIEW, реалізацію та перевірки завершено 11.11.2026.
+**State:** Phase 0 — ACCEPTED; Phase 1 — ACCEPTED власником 11.11.2026 після особистого запуску та візуального рев’ю.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -17,7 +17,7 @@
 | Phase | Name | Status | Deliverable and acceptance focus |
 |---|---|---|---|
 | 0 | Project Foundation | ACCEPTED | Python 3.12/uv, src package, CLI, lockfile, pytest/Ruff; власник підтвердив перевірки у WSL Ubuntu та прийняв фазу 11.11.2026 |
-| 1 | Main UI Shell | REVIEW | Dark PySide6 shell, universal Home / Guest state, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
+| 1 | Main UI Shell | ACCEPTED | Dark PySide6 shell, universal Home / Guest state, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
 | 2 | Users & Groups | NOT STARTED | Login, Argon2id, 3 roles, demo accounts/groups, permission enforcement; denied-access tests |
 | 3 | Scenario Management | NOT STARTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
 | 4 | LLM Integration | NOT STARTED | LLMGateway, provider adapter, Gemini configuration, deterministic MockLLMProvider; schema and fallback tests |
@@ -101,6 +101,10 @@ The owner evaluates the working demonstration, diff, test evidence and SRS trace
 
 ## Phase 1 — Main UI Shell (11.11.2026)
 
+**Поточний статус: ACCEPTED.** Записи реалізації та уточнення нижче зберігають
+історичні результати REVIEW; рішення про прийняття й фінальні перевірки
+наведено наприкінці цього розділу.
+
 - **Обсяг:** SRS §§3.1–3.8, 3.10–3.13 (у межах оболонки), 15.1/15.4,
   21.1/21.3/21.4, 22–22.2, 23 Phase 1, 27.4.
 - **Передумови:** Phase 0 прийнята й об’єднана PR #1 у `main`
@@ -150,7 +154,7 @@ The owner evaluates the working demonstration, diff, test evidence and SRS trace
 
 ### Уточнення після рев’ю власника — Home (11.11.2026)
 
-- **Статус:** Phase 1 залишається REVIEW; той самий PR #2 і feature branch.
+- **Статус на момент уточнення:** REVIEW; той самий PR #2 і feature branch.
 - **Погоджене відхилення від SRS v3.0:** універсальна Home додається до
   Конструктора й Аналізу; джерело рішення — прямий запит власника.
   [ADR-0001](adr/0001-home-navigation.md) містить рішення, межі та рольову
@@ -174,3 +178,23 @@ The owner evaluates the working demonstration, diff, test evidence and SRS trace
 - **Gate:** WSL-перевірки й рев’ю уточнення; Windows 11/DPI залишаються
   неперевіреними. Наступна дія — рев’ю власником; merge та Phase 2 заборонені
   без нового явного погодження.
+
+
+### Прийняття Phase 1 власником — 11 листопада 2026 року
+
+- **Рішення:** Phase 1 — **ACCEPTED**. Власник особисто запустив і візуально
+  перевірив застосунок; схвалив дизайн, Home, Конструктор, Аналіз та уточнення.
+  Gate Phase 1 пройдено; попередні записи REVIEW збережені як історія.
+- **Фінальна перевірка:** `uv run ruff check .` та
+  `uv run ruff format --check .` — успіх; `uv run pytest` — **25 passed**;
+  `QT_QPA_PLATFORM=wayland uv run pytest tests/ui -q` — **21 passed**.
+  CLI/module startup smoke в offscreen і CLI startup smoke через WSLg — exit 0.
+- **Обсяг:** PR #2 містить лише погоджену оболонку Phase 1, тести, необхідні
+  залежності та супровідну документацію. SRS v3.0 не змінено; Phase 2 не реалізовано.
+- **Git:** власник явно дозволив merge PR #2 до `main` після успішних перевірок;
+  перед злиттям перевіряються конфлікти та точний head SHA. Гілки не видаляються.
+- **Обмеження доказів:** автоматизовані GUI-перевірки виконані у WSL2/WSLg;
+  нативна Windows 11/DPI-верифікація не заявляється. ОС особистої перевірки
+  власника в повідомленні про прийняття не вказана.
+- **Наступна дія:** Phase 2 готова до окремого погодження, залишається
+  **NOT STARTED**. Прийняття Phase 1 та дозвіл merge не дозволяють її початок.
