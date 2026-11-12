@@ -839,3 +839,40 @@ GitHub MCP перевірено job status, усі steps та pytest summaries �
 вимикали/не послаблювали. Windows host власника не змінювався. Hosted Server
 offscreen результат не доводить Win11 desktop, physical keyboard/resize/DPI/ACL.
 PR#3 оновлюється результатами; автоматизовані gates пройдено, Phase2 REVIEW.
+
+### 12.11.2026 — native Windows acceptance environment
+
+Owner report:9/10 фізичних WSLg acceptance checks passed; remaining — tiny
+physical window frame. Стан REVIEW. Новий дозволений D:\Programs\Own\program\
+cyberforge-win-test; existing contents були відсутні. git archive04f01db
+експортував лише tracked files, без WSL .venv/.local/DB/secrets.
+Portable uv0.13.7 перевірено за release SHA256; Python3.12.16 x64 local install
+з --no-bin/--no-registry. Усі cache/temp/runtime dirs у test root. Python3.13,
+PATH/registry/PyCharm/Windows keyboard settings не змінювалися.
+
+Native PowerShell5.1: PySide6/Qt6.10.3, backendwindows, desktopDPR1.25,
+available1536×816 logical. minimum1100×720; hint36×54; native min tracking
+1393×947 physical; resize(1,1) →1100×720. Native startup/migrations success;
+baseline full pytest117passed/2POSIX skips,81.51s; native shell/geometry14passed,
+7.18s. Ці автоматизовані дії не є physical mouse/keyboard acceptance.
+
+Реальний frame(68,-6,1400,798) відтворив clipping над screen6logical px.
+Додано showEvent clamp початкової позиції після native decorations, без
+fixed-size і resize loops; regression перевіряє frame containment, native
+tracking metadata (лишеwindows backend) та вільний resize. Новий window_probe
+збирає geometry/version metadata з порожньої temporary DB, без account data.
+Preliminary geometry tests:5passed offscreen/5passed WSLg Wayland.
+
+Окремий random-suffix profile demo-каталог захищено ДО init: ACL inheritance
+off; FullControl тільки user SID/SYSTEM/Administrators. Get-Acl перевірив dir,
+DB, credentials; repeat init зберіг credentials (вміст/хеші не логувалися).
+Запускний tracked PS script перевіряє ACL, викликає явний local Python і
+backendwindows, не seed-ить і не встановлює нічого. Root cmd wrapper створюється
+лише в дозволеному test workspace. docs/diagnostics/native-windows.md — guide.
+Final snapshot/export і результати після source fix фіксуються наступним кроком.
+
+Перед export виправлення: Ruff lint/format41files, diff check — success;
+повний local pytest120passed,80.24s; geometry5passed offscreen та5passed
+WSLg Wayland. PowerShell5 parser прийняв launcher (UTF-8 BOM навмисно).
+Native OS caption підтвердив Windows11 Pro, build26300; automation не є
+physical acceptance. Результат source fix на native backend ще не зараховано.

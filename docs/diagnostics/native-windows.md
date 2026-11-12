@@ -1,0 +1,106 @@
+# Нативне тестове середовище Windows 11 — Phase 2
+
+Статус REVIEW. Власник повідомив про 9/10 успішних фізичних WSLg перевірок:
+ролі, CRUD, radio/checkbox interaction, Standard Ukrainian і English typing/
+shortcuts, Shift+Insert, persistence, logout та обмеження доступу. Невирішена
+WSLg перевірка — фізичне зменшення рамки нижче Qt minimum. Це не acceptance
+нативної Windows або дозвіл Phase 3.
+
+## Ізоляція та запуск
+
+Дозволений workspace: `D:\Programs\Own\program\cyberforge-win-test`.
+До підготовки він не існував. Джерела експортуються через `git archive HEAD`
+у новий `source-<revision>`, без `.git`, WSL venv, `.local`, БД або credentials.
+`SOURCE_REVISION.txt` і `environment.json` у test root указують точний snapshot.
+Початковий snapshot — `04f01dbaccc2b32db8eb3f7d2b22c3fc6dcb38e3`.
+
+Portable uv0.13.7 ZIP завантажено з офіційного GitHub release, SHA-256:
+`0cdc5b38fe5a8168ed6a25814f5ba43c21d313dd3187314fccb37b7cec46e021`.
+Native CPython3.12.16 x64 міститься в `.runtime\python`, Windows venv —
+у snapshot `.venv`; cache/temp/tools також усередині workspace. Використано
+`uv python install 3.12 --no-bin --no-registry`, явні local install/cache dirs
+та `uv sync --locked --python <local-python> --no-python-downloads`.
+PATH, registry, Python3.13, PyCharm, keyboard/WSL settings не змінювалися.
+
+Для звичайного запуску двічі натисніть **Launch-CyberForge.cmd** у test root.
+Це нативний PowerShell → `.venv\Scripts\python.exe`, без WSL/PyCharm/мережі.
+Команда PowerShell:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'D:\Programs\Own\program\cyberforge-win-test\Launch-CyberForge.ps1' -TestRoot 'D:\Programs\Own\program\cyberforge-win-test'
+```
+
+ExecutionPolicy Bypass стосується тільки цього процесу; глобальна policy
+не змінюється. Прапорці `-SmokeTest`, `-WindowProbe`, `-KeyboardProbe`
+доступні окремо. Launcher задає backend `windows`, перевіряє local paths і
+приватні demo ACL, не встановлює пакети й не ініціалізує дані при запуску.
+Це acceptance workspace, не production installer.
+
+## Незалежні demo-дані й ACL
+
+Нова БД та нові випадкові credentials розміщені тільки в
+`%LOCALAPPDATA%\CyberForge-Phase2-Native-<id>`. Точний шлях — `dataDirectory`
+у `environment.json`. Новий каталог захищений до створення даних: inheritance
+вимкнено, FullControl мають тільки поточний user SID, SYSTEM та Administrators;
+файли БД/credentials успадковують ці правила. ACL перевірено через Get-Acl.
+Це не захист від адміністратора ОС, який може змінити права.
+
+Повторний explicit demo setup зберіг credentials; значення паролів та hashes
+файлу не друкувалися. WSL demo та наявні owner credentials не копіювалися й
+не змінювалися. Переглядайте новий JSON лише локально, не вставляйте його в
+чат, скриншоти або журнал. Логіни: `Administrator_demo`, `teacher_demo_1`,
+`learner_demo_2`; пароль кожного окремий, береться з нового приватного файлу.
+
+## Початкові автоматизовані докази
+
+Windows PowerShell5.1, sys.platform=win32, native CPython3.12.16 x64,
+PySide6/Qt6.10.3, backend=windows. На snapshot04f01db: locked install,
+Ruff, migrations/startup smoke — success; full pytest offscreen117 passed,
+2 POSIX skips; native windows shell/geometry suite14 passed.
+
+При наявному desktop scale125%: availableGeometry1536×816 logical,
+DPR1.25, minimumSize1100×720, minimumSizeHint36×54. Preferred обмежився
+1400×768. Programmatic resize(1,1) дав1100×720. WM_GETMINMAXINFO повернув
+min tracking1393×947 physical pixels (з native decorations). Малий layout
+minimumSizeHint не скасовує явний minimumSize.
+
+Початковий frame(68,-6,1400,798) виходив на6 logical pixels вище available
+screen. Внесено вузький showEvent clamp початкової рамки після визначення
+decorations; він не фіксує розмір і не примушує resize під час роботи.
+Регресія перевіряє frame containment і можливість подальшого resize; під
+native backend також перевіряє WM_GETMINMAXINFO limits.
+
+WSLg Wayland: Qt6.10.3/DPR1, minimum1100×720, hint36×54, resize(1,1)
+обмежується1100×720; раніше trace підтвердив xdg_toplevel.set_min_size.
+Фізичний owner resize все одно порушує цей limit. Дані вказують на шлях
+WSLg compositor/RDP, але точний компонент фізичного збою не встановлено.
+Немає доказів зникнення application minimum. Точний native
+mouse-resize outcome залишається перевіркою власника. Programmatic resize
+і native metadata не є фізичним dragging test.
+
+Безпечний тимчасовий варіант — нативний запуск або ручне maximize WSLg.
+Root scroll лишається fallback для зменшеного viewport, але не робить
+майже нульову рамку придатною до роботи. Fixed-size, resize feedback loops,
+Weston rebuild, global settings зміни не застосовуються.
+
+## Фізичне прийняття власником
+
+1. Запустіть launcher; по черзі ввійдіть трьома ролями, перевірте меню/logout.
+2. Потягніть усі краї/кут Windows рамки до мінімуму; перевірте Users/Groups
+   та доступність Save/Delete. Порівняйте з фізичним WSLg resize.
+3. У полях Ім’я/Назва/Опис перевірте Standard Ukrainian та Enhanced,
+   English, Ctrl+C/V/X/A й Shift+Insert. Username лишається ASCII-only.
+   Використовуйте синтетичний текст; password copy/cut не має видавати пароль.
+4. Перевірте читабельність і frame при доступних desktop DPI100/125/150/200%
+   та переході між моніторами; це ручні дії власника, не автоматичні зміни.
+5. Збережіть тестову групу, закрийте launcher і відкрийте знову: дані мають
+   зберегтися. Не запускайте init-demo для скидання наявних даних.
+
+Windows Enhanced не проходить через Weston, але фізичний успіх не заявляється
+без owner test. WSLg Enhanced залишається окремим upstream limitation.
+
+Офіційні джерела:
+[uv Python installs](https://docs.astral.sh/uv/concepts/python-versions/),
+[WM_GETMINMAXINFO](https://learn.microsoft.com/en-us/windows/win32/winmsg/wm-getminmaxinfo),
+[MINMAXINFO](https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-minmaxinfo),
+[QWidget geometry](https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/QWidget.html).

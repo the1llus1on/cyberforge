@@ -198,3 +198,15 @@ case-insensitive table identifiers, у тому числі для alternate uniq
 Windows CI відтворив окремий дефект redirected CP1252: CLI задає UTF-8
 тільки для перенаправлених stdout/stderr. Interactive console, stdin,
 системна locale та Windows host settings не змінюються.
+
+## Native Windows acceptance workspace
+
+Окремий tracked-source snapshot, portable uv/Python3.12 (no-bin/no-registry),
+locked venv і cache/temp ізольовано в дозволеному test root. Demo — в новому
+profile-каталозі з protected ACL user/SYSTEM/Administrators до створення БД.
+Launcher не seed-ить дані; наявні owner DB/credentials не копіюються.
+Native geometry probe використовує empty temporary DB та WM_GETMINMAXINFO,
+не записує account/clipboard/text. Initial client bounds не враховували
+Windows decorations: showEvent clamp коригує тільки початкову позицію рамки.
+Physical WSLg resize violation не приховується fixed size або force-resize loop.
+Повні межі automated/physical acceptance — diagnostics/native-windows.md.

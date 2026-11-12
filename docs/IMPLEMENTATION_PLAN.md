@@ -336,3 +336,17 @@ UTF-8 для pipes, не змінюючи interactive console. Historical FK gua
 Повторний matrix run43103905494 для60947fa — success: Linux119 passed,
 Windows117 passed/2 POSIX skips; locked sync, Ruff, import/Qt startup — success
 на обох OS. Native Windows11 gate не закрито. Phase 2 лишається REVIEW.
+
+### Native Windows 11 acceptance workspace (12.11.2026)
+
+SRS §§2–3,14–15,21–23; REVIEW. Власник підтвердив9/10 WSLg physical checks;
+відкритий physical minimum-size defect. План: tracked HEAD export → portable
+Windows uv/Python3.12 без PATH/registry → locked install → private profile demo
+з ACL → native geometry/probe/startup/tests → launcher і manual checklist.
+Workspace D:\Programs\Own\program\cyberforge-win-test, створено новим.
+Baseline04f01db: native Python3.12.16/Qt6.10.3/windows backend; pytest117/2skips,
+native shell14tests passed. Win32 tracking min1393×947 physical при125%.
+Виявлено initial-frame clipping6logical px; вузький showEvent positioning fix
+і regression без fixed size. Системні settings/owner existing data не змінено.
+Документація й обмеження: docs/diagnostics/native-windows.md. Physical native
+acceptance залишається власнику; без merge/Phase3.

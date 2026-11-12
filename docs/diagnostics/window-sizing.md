@@ -36,3 +36,15 @@ xdg_toplevel.set_min_size(1106, 753)
 Windows DPI або фізичного RDP resize. Не змінюйте глобальні WSL/Windows settings
 автоматично. Для повторного тесту в окремому WSL-сеансі можна задати
 QT_SCALE_FACTOR=1.5 або 2 тільки конкретній команді запуску.
+
+## Оновлення 12.11.2026
+
+Власник фізично підтвердив WSLg resize нижче minimum попри hints; це лишається
+невирішеним WSLg обмеженням (compositor/RDP path під підозрою, точний компонент
+не встановлено). Автоматизовано повторно перевірено
+Qt minimum1100×720 та resize clamp під Wayland. Native Windows11/125%:
+minimum1100×720, hint36×54; Win32 min tracking1393×947physical, Qt resizeclamp
+1100×720. Фізичний native dragging ще не перевіряв власник.
+Native probe знайшов initial frame clipping6logical px через decorations;
+showEvent clamp коригує стартову позицію. Розмір лишається змінним.
+[Native environment, докази й owner instructions](native-windows.md).

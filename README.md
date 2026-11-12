@@ -122,7 +122,7 @@ uv build
 працює через `offscreen`. Після встановлення залежностей перевірки працюють
 без мережі: `uv run --offline --locked pytest`. MockLLMProvider належить
 Phase 4; поточний код узагалі не викликає LLM або зовнішніх сервісів.
-GitHub Actions виконує Ruff та pytest для PR і push у main на Linux.
+GitHub Actions виконує Ruff та pytest для PR і push у main на Linux та Windows.
 
 WSLg Wayland:
 
@@ -133,9 +133,11 @@ QT_QPA_PLATFORM=wayland uv run pytest tests/ui -q
 
 Без дисплея використовуйте `QT_QPA_PLATFORM=offscreen`.
 У цьому WSL XCB потребує відсутньої системної залежності `libxcb-cursor0`;
-використовується Wayland. Windows 11 ще не перевірено: потрібні окремі
-перевірки запуску, шрифтів, DPI 100/125/150/200%, клавіатури та доступу до
-локальних файлів. Не задавайте `QT_QPA_PLATFORM=wayland` у Windows.
+використовується Wayland. Підготовлено [ізольований native Windows 11 workspace](docs/diagnostics/native-windows.md)
+з portable Python3.12, locked dependencies та подвійним кліком на
+`Launch-CyberForge.cmd`. Автоматизований native startup не замінює фізичні
+перевірки рамки, шрифтів, DPI100/125/150/200% і клавіатури.
+Не задавайте `QT_QPA_PLATFORM=wayland` у Windows.
 
 ## Структура
 
@@ -152,7 +154,9 @@ QT_QPA_PLATFORM=wayland uv run pytest tests/ui -q
 Нові каталоги БД на POSIX створюються з правами 0700, файли БД — 0600;
 SQLite journal/WAL/SHM успадковують права БД. Права наявних файлів і каталогів
 не змінюються: старі БД потребують окремої перевірки власником ОС.
-Це не є налаштуванням Windows ACL; їх фактична перевірка ще не виконана.
+Це не налаштовує Windows ACL автоматично. В окремому native test workspace
+створено приватний profile demo-каталог і перевірено ACL; це не змінює прав
+інших наявних Windows БД. Докладніше — у native Windows guide вище.
 
 Пошук у списках користувачів, груп і учасників зберігає поточний вибір та
 незбережені позначки учасників. «Новий запис» починає з ролі Учень.

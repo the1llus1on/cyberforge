@@ -39,6 +39,23 @@ def button(text: str, icon_name: str, tooltip: str) -> QPushButton:
 
 
 class MainWindow(QMainWindow):
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        # Native decorations are known after show; setGeometry used client bounds.
+        # Keep the initial frame visible without policing subsequent user resizes.
+        available = self.screen().availableGeometry()
+        frame = self.frameGeometry()
+        left = min(
+            max(frame.left(), available.left()),
+            max(available.left(), available.right() - frame.width() + 1),
+        )
+        top = min(
+            max(frame.top(), available.top()),
+            max(available.top(), available.bottom() - frame.height() + 1),
+        )
+        if frame.topLeft().toTuple() != (left, top):
+            self.move(left, top)
+
     def __init__(self, accounts: AccountService) -> None:
         super().__init__()
         self.accounts = accounts
