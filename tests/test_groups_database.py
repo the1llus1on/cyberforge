@@ -116,7 +116,7 @@ def test_database_constraints_and_migration_consistency(demo):
     with database.engine.connect() as connection:
         assert connection.exec_driver_sql("PRAGMA foreign_keys").scalar() == 1
         context = MigrationContext.configure(connection)
-        assert context.get_current_revision() == "0001_users_groups"
+        assert context.get_current_revision() == "0002_scenarios"
         assert compare_metadata(context, Base.metadata) == []
         assert set(inspect(connection).get_table_names()) == set(
             Base.metadata.tables

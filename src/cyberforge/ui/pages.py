@@ -112,11 +112,13 @@ class WorkspacePage(QWidget):
                 )
             )
         elif view == View.ANALYTICS:
+            self.scenario_info = label("Сценарій не вибрано.")
+            body.addWidget(self.scenario_info)
             body.addWidget(
                 card(
                     "Дані для аналізу відсутні",
-                    "Сценарій не вибрано. Показники та оцінки не обчислюються.\n\n"
-                    "Це попередній перегляд оболонки, без навчальних даних.",
+                    "Для цього сценарію поки немає результатів проходження. "
+                    "Показники та оцінки не обчислюються.",
                 )
             )
         if view in (View.HOME, View.CONSTRUCTOR, View.ANALYTICS):

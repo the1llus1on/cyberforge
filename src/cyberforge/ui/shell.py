@@ -1,12 +1,14 @@
 """Main desktop shell. Mode navigation grants no access to scenario data."""
 
-from PySide6.QtCore import QSize, Qt, QTimer
+from PySide6.QtCore import QSignalBlocker, QSize, Qt, QTimer
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
     QFrame,
     QHBoxLayout,
     QLineEdit,
+    QListWidget,
+    QListWidgetItem,
     QMainWindow,
     QPushButton,
     QScrollArea,
@@ -17,7 +19,14 @@ from PySide6.QtWidgets import (
 )
 
 from cyberforge.application.accounts import AccountService
-from cyberforge.domain.accounts import AccessDenied, ApplicationError, Role, Workspace
+from cyberforge.application.scenarios import ScenarioService
+from cyberforge.domain.accounts import (
+    AccessDenied,
+    ApplicationError,
+    Role,
+    Workspace,
+)
+from cyberforge.domain.scenarios import Scenario
 from cyberforge.groups.service import GroupService
 from cyberforge.ui.account_pages import AccountPage
 from cyberforge.ui.admin_page import AdminPage
@@ -25,6 +34,7 @@ from cyberforge.ui.clipboard_shortcuts import ClipboardShortcuts
 from cyberforge.ui.icons import icon
 from cyberforge.ui.navigation import AuthenticationState, NavigationState, View
 from cyberforge.ui.pages import WorkspacePage, label
+from cyberforge.ui.scenario_page import ScenarioPage
 from cyberforge.ui.window_geometry import window_geometry
 
 
@@ -60,6 +70,9 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.accounts = accounts
         self.groups = GroupService(accounts)
+        self.scenarios = ScenarioService(accounts)
+        self.selected_scenario_id: int | None = None
+        self._catalog: tuple[Scenario, ...] = ()
         self._token: str | None = None
         self.setWindowTitle("CyberForge")
         bounds, minimum = window_geometry(self.screen().availableGeometry())
@@ -153,18 +166,15 @@ class MainWindow(QMainWindow):
         self.new_scenario_button = QPushButton("+ Новий сценарій")
         self.new_scenario_button.setObjectName("newScenario")
         self.new_scenario_button.setEnabled(False)
-        self.new_scenario_button.setToolTip(
-            "Створення сценаріїв буде доступне після реалізації авторизації "
-            "та керування сценаріями."
-        )
+        self.new_scenario_button.setToolTip("Відкрити форму нового сценарію")
+        self.new_scenario_button.clicked.connect(self._new_scenario)
         catalog.addWidget(self.new_scenario_button)
         self.search = QLineEdit()
         self.search.setPlaceholderText("Пошук сценаріїв")
         self.search.setAccessibleName("Пошук сценаріїв")
         self.search.setEnabled(False)
-        self.search.setToolTip(
-            "Пошук буде доступний після входу та підключення каталогу."
-        )
+        self.search.setToolTip("Пошук за ID, темою або статусом")
+        self.search.textChanged.connect(self._filter_catalog)
         catalog.addWidget(self.search)
         catalog.addSpacing(18)
         self.catalog_title = label("Каталог недоступний", "heading")
@@ -173,15 +183,25 @@ class MainWindow(QMainWindow):
             "Увійдіть до облікового запису, щоб побачити ваші сценарії."
         )
         catalog.addWidget(self.catalog_hint)
-        catalog.addStretch()
-        catalog.addWidget(label("ПОПЕРЕДНІЙ ПЕРЕГЛЯД", "eyebrow"))
-        catalog.addWidget(label("Оболонка інтерфейсу\nБез сценаріїв і результатів"))
+        self.scenario_list = QListWidget()
+        self.scenario_list.setWordWrap(True)
+        self.scenario_list.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        self.scenario_list.currentItemChanged.connect(self._select_scenario)
+        catalog.addWidget(self.scenario_list, 1)
         body.addWidget(self.scenario_panel)
         self.workspace = QStackedWidget()
-        self.pages: dict[View, WorkspacePage | AccountPage | AdminPage] = {}
+        self.pages: dict[
+            View, WorkspacePage | AccountPage | AdminPage | ScenarioPage
+        ] = {}
         self.containers: dict[View, QScrollArea] = {}
         for view in View:
-            if view == View.PROFILE:
+            if view == View.CONSTRUCTOR:
+                page = ScenarioPage(self.scenarios, lambda: self._token)
+                self.scenario_page = page
+                page.saved.connect(self._scenario_saved)
+            elif view == View.PROFILE:
                 page = AccountPage(self.accounts)
                 self.account_page = page
                 page.authenticated.connect(self._authenticated)
@@ -234,6 +254,12 @@ class MainWindow(QMainWindow):
         self.navigation.reset()
         self.account_page.refresh(None)
         self.admin_page.clear()
+        self.scenario_page.clear()
+        self.selected_scenario_id = None
+        self._show_scenario()
+        self._catalog = ()
+        with QSignalBlocker(self.scenario_list):
+            self.scenario_list.clear()
         self.search.clear()
         self._render()
 
@@ -268,6 +294,9 @@ class MainWindow(QMainWindow):
         return True
 
     def closeEvent(self, event) -> None:
+        if not self.scenario_page.can_leave():
+            event.ignore()
+            return
         self.session_timer.stop()
         self._signed_out()
         super().closeEvent(event)
@@ -275,6 +304,12 @@ class MainWindow(QMainWindow):
     def navigate(self, view: View) -> None:
         if not self._allowed(view):
             self.statusBar().showMessage("Доступ заборонено.", 5000)
+            self._render()
+            return
+        if view == self.navigation.current:
+            self._render()
+            return
+        if not self.scenario_page.can_leave():
             self._render()
             return
         if view != View.PROFILE:
@@ -289,21 +324,142 @@ class MainWindow(QMainWindow):
                 self._sync_session()
                 return
         self.navigation.navigate(view)
+        self._show_scenario()
         self._render()
 
     def _back(self) -> None:
+        if not self.navigation.can_go_back or not self.scenario_page.can_leave():
+            return
         self.account_page.clear()
         self.navigation.back()
         if self.navigation.current == View.PROFILE and not self._refresh_profile():
             return
+        self._show_scenario()
         self._render()
 
     def _forward(self) -> None:
+        if not self.navigation.can_go_forward or not self.scenario_page.can_leave():
+            return
         self.account_page.clear()
         self.navigation.forward()
         if self.navigation.current == View.PROFILE and not self._refresh_profile():
             return
+        self._show_scenario()
         self._render()
+
+    def _filter_catalog(self) -> None:
+        query = self.search.text().casefold().strip()
+        for index in range(self.scenario_list.count()):
+            item = self.scenario_list.item(index)
+            item.setHidden(query not in item.toolTip().casefold())
+
+    def _refresh_catalog(self, user) -> None:
+        permitted = user is not None and user.role != Role.LEARNER
+        self.search.setEnabled(permitted)
+        self.new_scenario_button.setEnabled(permitted)
+        rows = self.scenarios.catalog(self._token) if permitted else ()
+        if rows != self._catalog:
+            self._catalog = rows
+            with QSignalBlocker(self.scenario_list):
+                self.scenario_list.clear()
+                for scenario in rows:
+                    item = QListWidgetItem(scenario.name)
+                    item.setData(Qt.ItemDataRole.UserRole, scenario.id)
+                    item.setToolTip(
+                        f"{scenario.name}\n{scenario.parameters.topic}\n{scenario.status.label}"
+                    )
+                    self.scenario_list.addItem(item)
+                    if scenario.id == self.selected_scenario_id:
+                        self.scenario_list.setCurrentItem(item)
+            self._filter_catalog()
+        if self.selected_scenario_id is not None and not any(
+            row.id == self.selected_scenario_id for row in rows
+        ):
+            self.selected_scenario_id = None
+            self.scenario_page.clear()
+        self.catalog_title.setText("Сценарії" if rows else "Сценаріїв поки немає")
+        self.catalog_hint.setText(
+            "Виберіть сценарій у каталозі."
+            if rows
+            else "Створіть перший сценарій у Конструкторі."
+            if permitted
+            else "Навчальні сценарії з’являться після їх публікації."
+            if user
+            else "Увійдіть до облікового запису, щоб побачити ваші сценарії."
+        )
+        if user is None:
+            self.catalog_title.setText("Каталог недоступний")
+
+    def _new_scenario(self) -> None:
+        if self.navigation.current != View.CONSTRUCTOR or not self._allowed(
+            View.CONSTRUCTOR
+        ):
+            return
+        if not self.scenario_page.can_leave():
+            return
+        self.selected_scenario_id = None
+        with QSignalBlocker(self.scenario_list):
+            self.scenario_list.setCurrentRow(-1)
+        self.scenario_page.new()
+
+    def _select_scenario(self, item, previous=None) -> None:
+        if item is None:
+            return
+        scenario_id = item.data(Qt.ItemDataRole.UserRole)
+        if not self.scenario_page.can_leave():
+            with QSignalBlocker(self.scenario_list):
+                self.scenario_list.setCurrentRow(
+                    next(
+                        (
+                            i
+                            for i in range(self.scenario_list.count())
+                            if self.scenario_list.item(i).data(Qt.ItemDataRole.UserRole)
+                            == self.selected_scenario_id
+                        ),
+                        -1,
+                    )
+                )
+            return
+        self.selected_scenario_id = scenario_id
+        self._show_scenario()
+        self._select_catalog_id()
+
+    def _scenario_saved(self, scenario: Scenario) -> None:
+        self.selected_scenario_id = scenario.id
+        self._render()
+        self._select_catalog_id()
+
+    def _select_catalog_id(self) -> None:
+        with QSignalBlocker(self.scenario_list):
+            for index in range(self.scenario_list.count()):
+                if (
+                    self.scenario_list.item(index).data(Qt.ItemDataRole.UserRole)
+                    == self.selected_scenario_id
+                ):
+                    self.scenario_list.setCurrentRow(index)
+
+    def _show_scenario(self) -> None:
+        analytics = self.pages[View.ANALYTICS]
+        analytics.title.setText("Аналіз сценарію")
+        analytics.scenario_info.setText("Сценарій не вибрано.")
+        if self.selected_scenario_id is None:
+            return
+        try:
+            scenario = self.scenarios.get(self._token, self.selected_scenario_id)
+            actor = self.accounts.current(self._token)
+        except ApplicationError as error:
+            self.selected_scenario_id = None
+            self.scenario_page.clear()
+            self.statusBar().showMessage(str(error), 5000)
+            return
+        if self.navigation.current == View.CONSTRUCTOR:
+            self.scenario_page.load(scenario, editable=actor.id == scenario.owner_id)
+        analytics.title.setText(f"Аналіз · {scenario.name}")
+        analytics.scenario_info.setText(
+            f"{scenario.name} · ID {scenario.id} · Версія {scenario.version}\n"
+            f"{scenario.parameters.topic}\n{scenario.parameters.difficulty.label} · "
+            f"{scenario.status.label}\nДані для аналізу відсутні."
+        )
 
     def _render(self) -> None:
         current = self.navigation.current
@@ -340,14 +496,12 @@ class MainWindow(QMainWindow):
         self.badge.setToolTip(
             f"{user.display_name} · {user.role.label}" if user else "Гостьовий режим"
         )
-        self.catalog_title.setText(
-            "Сценаріїв поки немає" if user else "Каталог недоступний"
-        )
-        self.catalog_hint.setText(
-            "Навчальні сценарії з’являться після їх публікації."
-            if user
-            else "Увійдіть до облікового запису, щоб побачити ваші сценарії."
-        )
+        try:
+            self._refresh_catalog(user)
+        except ApplicationError as error:
+            self._signed_out()
+            self.statusBar().showMessage(str(error), 5000)
+            return
         self.pages[View.HOME].session_hint.setText(
             (
                 "Відкрийте «Мої сценарії» або «Мої результати»."
@@ -364,7 +518,7 @@ class MainWindow(QMainWindow):
                 "до ваших сценаріїв."
             )
         )
-        for view in (View.HOME, View.CONSTRUCTOR, View.ANALYTICS):
+        for view in (View.HOME, View.ANALYTICS):
             self.pages[view].login_button.setVisible(user is None)
         self.workspace.setCurrentWidget(self.containers[current])
         self.nav_buttons[current].setChecked(True)
