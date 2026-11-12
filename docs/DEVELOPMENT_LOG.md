@@ -1070,3 +1070,21 @@ Phase3 переведено **IN PROGRESS → REVIEW**. Технічні лок�
 owner acceptance не надано, архівування потребує відповіді про межу,
 Windows11 Phase3 manual gate відкритий. Ні ACCEPTED, ні merge не виконано.
 Phase4 NOT STARTED. Git/PR/CI delivery evidence буде дописано після публікації.
+
+### Git/PR delivery — Phase 3 REVIEW
+
+Implementation commit `a94a00d9ecf8547c40e50f391a86c0ba44c3fd8b` відправлено
+звичайним push у `origin/feat/phase-3-scenario-management`. GitHub MCP створив
+[PR#4](https://github.com/the1llus1on/cyberforge/pull/4) до main; PR open,
+не draft, не merged. Base main залишається `5b15ff0…` (merge PR#3), scope21files.
+Дерево чисте, локальна й remote feature-гілки синхронні перед цим
+документаційним записом. SRS, user data і Phase2 branches не змінено.
+
+GitHub MCP branch/PR read та PR creation успішні. Combined-status endpoint
+основного MCP повернув403 через scope PAT; fallback — підключений GitHub app
+MCP `fetch_commit_workflow_runs`, який підтвердив run43171462386 Python checks,
+in_progress на момент запису (Linux/Windows matrix). Це не success і не
+native Windows11 acceptance. Credentials не читали/не змінювали. Фінальний
+стан CI після документаційного push доступний у
+[PR checks](https://github.com/the1llus1on/cyberforge/pull/4/checks) та буде
+повідомлено власнику окремо. Merge не виконано, Phase4 не починалася.
