@@ -1,6 +1,6 @@
 # ADR-0002 — Облікові записи, сесії та навчальні групи
 
-**Статус:** реалізовано для рев’ю Phase 2, 11.11.2026.
+**Статус:** реалізовано та прийнято власником разом із Phase 2, 12.11.2026.
 **Джерело:** SRS v3.0 §§2, 3, 14–16, 21–23; ADR-0001.
 
 ## Межі
@@ -216,3 +216,12 @@ admin actions за viewport при minimum size. AdminPage.heightForWidth пов
 layout.minimumHeightForWidth: inner forms scroll, а message/header wrap і
 структура існуючих контейнерів збережені. Регресія перевіряє повні bounds
 кнопок обох tabs та багаторядкове повідомлення, а не тільки center point.
+
+## Остаточне прийняття
+
+12.11.2026 власник прийняв Phase 2 й дозволив merge після фінального CI.
+Owner evidence: WSLg user/group/RBAC та Standard Ukrainian; native Windows11
+Enhanced input, shortcuts і physical minimum-size enforcement. Повна DPI/
+multi-monitor матриця не заявляється. WSLg Enhanced mapping та tiny-frame
+resize залишаються задокументованими environment limitations. Це рішення
+не змінює SRS або Windows settings і не відкриває Phase 3.

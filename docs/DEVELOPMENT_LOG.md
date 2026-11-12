@@ -1,5 +1,9 @@
 # CyberForge — журнал розробки
 
+**Поточний стан:** Phase 2 — **ACCEPTED власником 12.11.2026**;
+Phase 3 — **NOT STARTED**. Нижче збережено хронологію попередніх REVIEW;
+остаточне прийняття й дозвіл merge записано наприкінці журналу.
+
 ## 11.11.2026 — Phase 0: Project Foundation
 
 ### Обсяг і початкові умови
@@ -914,3 +918,46 @@ Private Windows profile demo зберігається між source snapshots; p
 launcher залежить тільки від Windows файлів у дозволеному root/profile dirs,
 не від WSL або IDE. Мінімальний physical Windows frame test лишається owner:
 WM_GETMINMAXINFO/programmatic resize не дорівнює ручному dragging. Phase2 REVIEW.
+
+## 12.11.2026 — Phase 2: остаточне прийняття та дозвіл merge
+
+Власник явно прийняв Users & Groups: **REVIEW → ACCEPTED**. Він дозволив
+документаційний commit/push у поточну гілку й merge PR#3 після перевірки
+фінального HEAD та CI. Це замінює попередні pending owner gates, не змінюючи
+історичні записи їх фактичних результатів.
+
+Початковий стан фіналізації: чиста feat/phase-2-users-groups, локальний і
+remote PR HEAD `50d89e970559d725ca0f603e3db220b130d55847`, base=main,
+PR відкритий/mergeable. CI run43131852256 completed/success: обидва jobs
+ubuntu-latest/windows-2022, locked sync, Ruff, pytest, import/Qt startup — success.
+Раніше: Linux121 passed, Windows119 passed/2 POSIX skips; local native GUI47
+і WSLg GUI75 passed. Новий документаційний HEAD проходить окремий CI перед merge.
+
+**Owner-reported physical evidence:**
+- WSLg: основні user/group operations; navigation/permissions Guest,
+  Administrator, Instructor, Learner; roles/membership controls;
+  persistence/logout; Standard Ukrainian input/shortcuts.
+- Native Windows11: Ukrainian Enhanced input, keyboard shortcuts та правильне
+  фізичне enforcement мінімального розміру вікна.
+
+Це повідомлення власника, не physical tests агента. Повну DPI100/125/150/200%
+та multi-monitor матрицю не заявлено як виконану. WSLg Enhanced mapping і
+фізичний tiny-frame resize лишаються відомими environment limitations;
+native Windows acceptance не означає виправлення Weston/WSLg.
+
+План/acceptance record/README/ADR/diagnostics оновлюються узгоджено. Історію
+власних ScenarioAttempt і learner result list/detail зафіксовано лише в
+існуючому Phase9–10 scope (SRS §§3.9,8,12,23). Код, schema, dependencies,
+SRS v3.0 та локальні demo/credentials/native workspace не змінюються.
+
+GitHub MCP Actions доступний; окремий MCP combined-status endpoint повернув
+403, app connector statuses=[] (Actions check-runs не є legacy statuses).
+Read-only gh API використано для branch/check metadata: main protected=false;
+rules endpoint повернув403 із вимогою GitHub Pro для цієї private repository
+feature. Нічого не вимикали; обидва видимі CI jobs мають пройти на фінальному SHA.
+Звичайний merge commit відповідає PR#1/#2, merge прив'язується до перевіреного
+HEAD без force/admin bypass. Feature branches зберігаються; main синхронізується
+лише fast-forward після merge. Фактичний merge SHA та фінальні CI доступні в PR#3.
+
+**Phase 3 — Scenario Management: NOT STARTED.** Жодної реалізації наступної
+фази не розпочато; acceptance/merge Phase2 не є її дозволом.

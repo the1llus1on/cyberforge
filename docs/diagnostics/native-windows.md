@@ -1,10 +1,14 @@
 # Нативне тестове середовище Windows 11 — Phase 2
 
-Статус REVIEW. Власник повідомив про 9/10 успішних фізичних WSLg перевірок:
+**Статус Phase 2: ACCEPTED власником 12.11.2026.** Власник підтвердив native
+Windows 11 Enhanced input, keyboard shortcuts і physical minimum-size limits.
+Докази прийняття — [окремий запис](../PHASE_2_ACCEPTANCE.md).
+
+Під час підготовки власник повідомив про 9/10 фізичних WSLg перевірок:
 ролі, CRUD, radio/checkbox interaction, Standard Ukrainian і English typing/
 shortcuts, Shift+Insert, persistence, logout та обмеження доступу. Невирішена
-WSLg перевірка — фізичне зменшення рамки нижче Qt minimum. Це не acceptance
-нативної Windows або дозвіл Phase 3.
+WSLg перевірка — фізичне зменшення рамки нижче Qt minimum. Це відоме WSLg
+обмеження зберігається після native acceptance. Phase 3 — NOT STARTED.
 
 ## Ізоляція та запуск
 
@@ -97,8 +101,9 @@ Code snapshot **1e11497c09c60ee4bd02b097d330f682d2ada420**:
 
 Фінальний snapshot/revision записані в test-root SOURCE_REVISION.txt та
 environment.json; documentation-only export після code snapshot не змінює
-production Python/lockfile. Поточні hosted checks — у PR#3. Фізичне прийняття
-власником ще потрібне.
+production Python/lockfile. Поточні hosted checks — у PR#3. Власник надав
+остаточне прийняття 12.11.2026. Windows workspace зберігає tested snapshot
+50d89e9; документаційна фіналізація не перевстановлює його й не змінює дані.
 
 Widget captures на native backend при125%, logical1100×720 (physical1375×900),
 тільки синтетичні temporary accounts, не owner demo/desktop:
@@ -110,16 +115,20 @@ WSLg Wayland: Qt6.10.3/DPR1, minimum1100×720, hint36×54, resize(1,1)
 обмежується1100×720; раніше trace підтвердив xdg_toplevel.set_min_size.
 Фізичний owner resize все одно порушує цей limit. Дані вказують на шлях
 WSLg compositor/RDP, але точний компонент фізичного збою не встановлено.
-Немає доказів зникнення application minimum. Точний native
-mouse-resize outcome залишається перевіркою власника. Programmatic resize
-і native metadata не є фізичним dragging test.
+Немає доказів зникнення application minimum. Native minimum-size enforcement
+тепер підтверджено фізично власником. Попередні programmatic resize і native
+metadata самі по собі не були фізичним dragging test.
 
 Безпечний тимчасовий варіант — нативний запуск або ручне maximize WSLg.
 Root scroll лишається fallback для зменшеного viewport, але не робить
 майже нульову рамку придатною до роботи. Fixed-size, resize feedback loops,
 Weston rebuild, global settings зміни не застосовуються.
 
-## Фізичне прийняття власником
+## Ручні кроки для наступних регресій
+
+Це інструкція для повторних перевірок, а не твердження, що кожен пункт
+або вся DPI/multi-monitor матриця виконані. Фактичний обсяг owner evidence
+наведено в acceptance record; native Enhanced/shortcuts/minimum уже підтверджено.
 
 1. Запустіть launcher; по черзі ввійдіть трьома ролями, перевірте меню/logout.
 2. Потягніть усі краї/кут Windows рамки до мінімуму; перевірте Users/Groups
@@ -132,8 +141,8 @@ Weston rebuild, global settings зміни не застосовуються.
 5. Збережіть тестову групу, закрийте launcher і відкрийте знову: дані мають
    зберегтися. Не запускайте init-demo для скидання наявних даних.
 
-Windows Enhanced не проходить через Weston, але фізичний успіх не заявляється
-без owner test. WSLg Enhanced залишається окремим upstream limitation.
+Windows Enhanced не проходить через Weston; його фізичний успіх підтверджено
+власником 12.11.2026. WSLg Enhanced залишається окремим upstream limitation.
 
 Офіційні джерела:
 [uv Python installs](https://docs.astral.sh/uv/concepts/python-versions/),

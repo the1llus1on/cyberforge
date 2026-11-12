@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phase 0 — ACCEPTED; Phase 1 — ACCEPTED власником 11.11.2026; Phase 2 — REVIEW.
+**State:** Phase 0 — ACCEPTED; Phase 1 — ACCEPTED власником 11.11.2026; Phase 2 — ACCEPTED власником 12.11.2026; Phase 3 — NOT STARTED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -18,15 +18,15 @@
 |---|---|---|---|
 | 0 | Project Foundation | ACCEPTED | Python 3.12/uv, src package, CLI, lockfile, pytest/Ruff; власник підтвердив перевірки у WSL Ubuntu та прийняв фазу 11.11.2026 |
 | 1 | Main UI Shell | ACCEPTED | Dark PySide6 shell, universal Home / Guest state, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
-| 2 | Users & Groups | REVIEW | Login, Argon2id, 3 roles, demo accounts/groups, permission enforcement; denied-access tests |
+| 2 | Users & Groups | ACCEPTED | Прийнято власником 12.11.2026: login, Argon2id, 3 roles, demo accounts/groups, RBAC; WSLg і native Windows 11 докази нижче |
 | 3 | Scenario Management | NOT STARTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
 | 4 | LLM Integration | NOT STARTED | LLMGateway, provider adapter, Gemini configuration, deterministic MockLLMProvider; schema and fallback tests |
 | 5 | Specialized Agents | NOT STARTED | Typed I/O contracts for four specialized agents and bounded orchestration; mock agent tests |
 | 6 | Email Constructor | NOT STARTED | Email shell, generation, preview, code view, regeneration, explicit save and validation; UI tests |
 | 7 | Web Constructor | NOT STARTED | Web templates, isolated Qt WebEngine, generation, preview, code view, explicit save; security and UI tests |
 | 8 | Scenario Integration | NOT STARTED | Shared Email→Web context, internal link validation, readiness gate, immutable publishing; integration tests |
-| 9 | Learner Simulation | NOT STARTED | Email and Web exercises, controlled navigation, recorded attempts/events, safe completion without Web; end-to-end tests |
-| 10 | Scoring & Mentor | NOT STARTED | Versioned deterministic rubrics, evaluation, result display, LLM explanations without score edits; reproducibility tests |
+| 9 | Learner Simulation | NOT STARTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
+| 10 | Scoring & Mentor | NOT STARTED | Versioned deterministic rubrics, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
 | 11 | Analytics Mode | NOT STARTED | Read-only scenario statistics, deduplicated learner table, missing-data rules, filters, CSV/JSON export, RBAC; analytics tests |
 | 12 | Finalization | NOT STARTED | Full regression/security checks, Windows 11 package, demonstration dataset, docs and release checklist |
 
@@ -201,6 +201,9 @@ The owner evaluates the working demonstration, diff, test evidence and SRS trace
 
 ## Phase 2 — Users & Groups (11.11.2026)
 
+**Поточний статус: ACCEPTED власником 12.11.2026.** Нижче збережено історію
+реалізації та REVIEW; остаточні докази прийняття наведено наприкінці фази.
+
 Власник явно погодив реалізацію, commit/push/PR. Початок: чиста `main`,
 `HEAD == origin/main == fc713837109b3a5b5cd9ad53e10d1fcb223764ee`,
 GitHub MCP підтвердив remote; створено `feat/phase-2-users-groups`.
@@ -216,8 +219,8 @@ Windows 11 потребує окремої перевірки. Сценарії 
 
 ### Реалізація та gate Phase 2
 
-**Статус: REVIEW.** Технічний gate у WSL пройдено; ACCEPTED потребує рев’ю
-власника. Phase 3–12 не розпочато.
+**Статус на момент первинного gate: REVIEW (11.11.2026).** Остаточне рішення
+власника 12.11.2026 — ACCEPTED. Phase 3–12 не розпочато.
 
 - Реалізовано login/logout, три ролі й Guest, Argon2id/rehash, власну зміну
   та адміністративне скидання паролів, відкликання сесій через auth_version.
@@ -361,3 +364,49 @@ WM_GETMINMAXINFO), Windows full119passed/2POSIX skips, local121passed,
 WSLg75passed. CMD startup і ACL checks успішні. Native125% widget captures
 додано в docs/screenshots; поточний desktop scale не змінювався. Owner physical
 resize/keyboard/Enhanced/DPI/restart gate лишається відкритим; Phase2 REVIEW.
+
+### Остаточне прийняття Phase 2 — 12.11.2026
+
+Власник явно прийняв Users & Groups та дозволив merge PR #3 після успішного
+CI фінального документаційного коміту. Стан **ACCEPTED** замінює попередній
+REVIEW; записи вище лишаються історичними. Прийнята реалізація —
+`50d89e970559d725ca0f603e3db220b130d55847`; далі змінюється лише документація.
+
+- За повідомленням власника у WSLg перевірено основні user/group operations,
+  Guest/Administrator/Instructor/Learner navigation і permissions, radio roles,
+  membership controls, persistence/logout, Standard Ukrainian typing/shortcuts.
+- За повідомленням власника native Windows 11 підтвердив Ukrainian Enhanced
+  input, keyboard shortcuts і фізичне дотримання мінімального розміру вікна.
+- Автоматизовані докази прийнятої ревізії: Linux121 passed, Windows119 passed/
+  2 POSIX skips; Ruff/locked install/migrations/import/startup та
+  [CI run43131852256](https://github.com/the1llus1on/cyberforge/actions/runs/43131852256)
+  — success. Окремий native Windows GUI suite47 passed; WSLg GUI75 passed.
+- WSLg Enhanced mapping і physical resize нижче minimum лишаються відомими
+  environment limitations; native Windows є цільовою платформою.
+- Повна фізична DPI100/125/150/200%/multi-monitor матриця не підтверджена
+  цим повідомленням власника й не позначається як пройдена.
+- SRS v3.0, runtime, schema, dependencies, owner demo/credentials та ізольоване
+  Windows environment не змінюються. Merge — звичайний merge commit, після
+  перевірки фінального HEAD/CI; branches і локальні дані зберігаються.
+
+**Phase 3 — Scenario Management: NOT STARTED.** Прийняття й merge Phase 2
+не є дозволом почати Phase 3 або іншу наступну фазу.
+
+## Phase 9–10 — історія спроб і подання результатів (лише план)
+
+Обидві фази — **NOT STARTED**. Цей запис уточнює вже наявний scope SRS
+§§3.9,8,12,23; жодних моделей, міграцій або екранів зараз не додається.
+
+- **Phase 9 — Learner Simulation:** кожне проходження має окрему
+  ScenarioAttempt, пов'язану з учнем і опублікованою версією сценарію;
+  зберігаються події та стан спроби. Історія власних спроб доступна учню
+  після перезапуску; чужі спроби не розкриваються. Безпечне завершення без
+  переходу до Web підтримується згідно §8.5.
+- **Phase 10 — Scoring & Mentor:** «Мої результати» представляє історію
+  власних результатів і деталі конкретної спроби: сценарій/версія, стан,
+  фактичні оцінки та пояснення. Відсутній результат, незавершена спроба й
+  фактичний нуль відрізняються; незастосовний Web не перетворюється на нуль.
+  ScoringService детерміновано обчислює та зберігає результат із прив'язкою
+  до версій рубрики/алгоритму й подій; LLM лише пояснює вже обчислене.
+- Поточні порожні learner views Phase 2 залишаються чесними заглушками;
+  історія спроб і scoring не є реалізованими можливостями прийнятої фази.

@@ -1,8 +1,9 @@
 # Діагностика українського введення WSLg
 
-**Актуально:** фізичні key/scan докази вже отримано, точну app-корекцію
-реалізовано; див. останній розділ. Нижче збережено історію діагностики.
-Enhanced лишається upstream limitation; нова фізична перевірка app очікується.
+**Актуально, 12.11.2026:** Phase2 ACCEPTED власником. WSLg Standard input/
+shortcuts підтверджено власником; native Windows11 Enhanced input і shortcuts
+також підтверджено. WSLg Enhanced лишається upstream limitation.
+Нижче збережено історію діагностики; остаточний owner report — наприкінці.
 
 Перевірено під час рев’ю PR #3. Середовище: WSLg 1.0.73, Qt/PySide6 6.10.3,
 Wayland; LANG=C.UTF-8; `/usr/share/X11/xkb/symbols/ua` наявний.
@@ -200,6 +201,8 @@ probe залишено без змін як baseline. Це не переприз
 English shortcuts та Shift+Insert у CyberForge під WSLg після correction.
 Цей звіт замінює попередній pending статус саме цих WSLg перевірок.
 WSLg Enhanced залишається upstream mapping limitation. Підготовлено окремий
-[native Windows workspace](native-windows.md), але Windows Standard/Enhanced
-physical keyboard acceptance ще не виконано; backendwindows не використовує
-WSLg-specific correction. Windows keyboard settings не змінено.
+[native Windows workspace](native-windows.md). Остаточним повідомленням
+12.11.2026 власник підтвердив Enhanced input та keyboard shortcuts у native
+Windows11 і прийняв Phase2. Це owner evidence, не synthetic test агента;
+backendwindows не використовує WSLg-specific correction. Windows keyboard
+settings у межах робіт агента не змінювалися.

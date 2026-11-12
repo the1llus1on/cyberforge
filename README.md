@@ -6,7 +6,8 @@
 
 ## Поточний стан
 
-Phase 0 та Phase 1 — ACCEPTED. Phase 2 — Users & Groups: REVIEW.
+Phase 0 та Phase 1 — ACCEPTED. Phase 2 — Users & Groups: **ACCEPTED власником
+12.11.2026**. Phase 3 — Scenario Management: **NOT STARTED**, очікує окремого дозволу.
 Реалізовано вхід/вихід, Argon2id, три ролі, зміну/скидання паролів,
 керування користувачами й навчальними групами, M:N-членство та SQLite/Alembic.
 Збережено українську темну оболонку й універсальну Головну Phase 1.
@@ -186,12 +187,13 @@ scroll fallback. [Деталі геометрії](docs/diagnostics/window-sizin
 для Standard Ukrainian під WSLg Wayland. Вона не змінює системну розкладку,
 English, Shift+Insert або Unicode typing; password copy/cut лишаються заборонені.
 12.11.2026 власник підтвердив Standard typing/shortcuts фізично у WSLg.
-Native Windows typing/resize/DPI потребують окремої перевірки; WSLg Enhanced
-не виправлено. [Готовий native launcher і checklist](docs/diagnostics/native-windows.md).
+Власник також підтвердив native Windows Enhanced input, shortcuts і minimum
+window size та прийняв Phase2. Повну DPI-матрицю не заявлено; WSLg Enhanced
+не виправлено. [Native launcher і межі перевірок](docs/diagnostics/native-windows.md).
 
 Перед прийняттям Phase 2 проведено [технічний аудит](docs/audits/phase-2-pre-acceptance.md).
-[Короткий checklist власника](docs/PHASE_2_ACCEPTANCE.md) містить лише залишкові
-фізичні desktop-перевірки. CI має Linux і Windows Server2022 offscreen jobs;
+[Запис прийняття власником](docs/PHASE_2_ACCEPTANCE.md) відділяє owner evidence
+від автоматизації та відомих environment limitations. CI має Linux і Windows Server2022 offscreen jobs;
 успіх такого job не означає фізичну Windows11 acceptance. Перевіряйте фактичний
 стан PR checks: queued не є success. Existing inactive memberships зберігаються
 при редагуванні групи; нове призначення inactive account заборонено.

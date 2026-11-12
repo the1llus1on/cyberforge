@@ -1,6 +1,9 @@
 # Phase 2 — незалежний pre-acceptance technical audit
 
-**Статус:** REVIEW. База порівняння — origin/main, поточний PR #3.
+**Поточний статус Phase2:** ACCEPTED власником 12.11.2026;
+[остаточне прийняття](../PHASE_2_ACCEPTANCE.md). Цей аудит проводився під час
+REVIEW; нижче збережено його історичні результати. База порівняння — main
+до Phase2, PR #3.
 Переглянуто SRS v3.0, AGENTS, план, журнал, ADR та Phase 2 diff: домен,
 identity/application/groups, persistence й міграцію, UI/navigation/geometry/
 clipboard, CLI/demo, тести, залежності, CI і документацію. Локальні owner
@@ -110,9 +113,9 @@ old runs не скасовували; нові jobs можуть чекати в
 нових залежностей. Перевірено uv sync --locked --offline, import, CLI smoke,
 build, пакетну міграцію й isolated wheel startup. Тести offline без LLM.
 
-Автотести не доводять фізичну Win11/WSLg поведінку. Залишкові owner tests —
-[окремий короткий checklist](../PHASE_2_ACCEPTANCE.md). Acceptance не надано;
-Phase 2 — REVIEW, merge/Phase 3 не виконуються.
+Автотести не доводять фізичну Win11/WSLg поведінку. На момент аудиту owner
+acceptance ще очікувалося; остаточне прийняття 12.11.2026 записано в
+[acceptance record](../PHASE_2_ACCEPTANCE.md). Дозвіл merge Phase2 не відкриває Phase3.
 
 Підсумок локального head: **119 pytest passed**, **73 WSLg GUI passed**,
 Ruff lint/format, locked sync/import/startup/build/isolated wheel — успіх.
