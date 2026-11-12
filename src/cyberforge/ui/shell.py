@@ -479,6 +479,8 @@ class MainWindow(QMainWindow):
         analytics.title.setText("Аналіз сценарію")
         analytics.scenario_info.setText("Сценарій не вибрано.")
         if self.selected_scenario_id is None:
+            if self.navigation.current == View.CONSTRUCTOR:
+                self.scenario_page.clear()
             return
         try:
             scenario = self.scenarios.get(self._token, self.selected_scenario_id)

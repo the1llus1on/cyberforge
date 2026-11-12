@@ -130,5 +130,10 @@ legacy strings через create не додаються — власні поб
 Перевірки й exact commands — IMPLEMENTATION_PLAN / DEVELOPMENT_LOG.
 Concurrency покриває незалежні Database/AccountService/sessions, два GUI
 вікна та два OS-процеси на одній temporary SQLite. Baseline без мережі/ключів.
-Native Windows11 нової форми/архіву/селектора потребує manual acceptance;
-WSLg і Windows Server2022 offscreen його не замінюють. Phase3 лишається REVIEW.
+За окремим рішенням власника 12.11.2026 основне manual acceptance Phases3–11
+виконується у WSLg; routine physical native Windows11 перевірку відкладено
+до Phase12. Конкретний Windows-specific дефект або суттєвий ризик дозволяє
+ранню native перевірку. Windows CI обов’язковий, але не замінює physical gate.
+Відкладення — відкритий ризик, не підтвердження Windows11; SRS §24 лишається
+чинним. Повний Phase12 gate і workflow — IMPLEMENTATION_PLAN та AGENTS.md.
+Існуючий native workspace Phase2 зберігається без оновлення. Phase3 REVIEW.

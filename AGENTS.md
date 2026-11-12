@@ -4,7 +4,8 @@
 
 CyberForge is a local Windows 11 educational simulator and constructor of social-engineering training scenarios. It is developed as part of a master's dissertation, using Python 3.12 and PySide6. Its training flow is Email → Web → Scoring → Feedback.
 
-Read these files before making changes:
+Before making changes, inspect the relevant sections of these sources and reuse
+already verified project context; do not repeatedly reread unrelated implementation:
 1. `TECHNICAL_SPECIFICATION.md` — authoritative SRS, version 3.0.
 2. `docs/IMPLEMENTATION_PLAN.md` — implementation phases, acceptance gates, progress.
 3. `docs/DEVELOPMENT_LOG.md` — previous implementation decisions and verification results.
@@ -57,6 +58,29 @@ For each relevant change:
 4. Confirm behavior under `MockLLMProvider` without external network access.
 5. On Windows-specific Qt/WebEngine behavior, state clearly whether it was actually verified on Windows 11; WSL tests alone are not Windows validation.
 6. Record evidence, limitations and remaining risks; never mark an untested requirement as completed.
+
+### Owner-approved verification workflow (12.11.2026)
+
+- Make narrow changes; run focused tests first. Once the change set is stable,
+  run full Ruff lint/format checks and the complete pytest suite before publishing.
+  Repeat the complete suite only when further code changes could affect verified behavior.
+- Keep existing regression/security tests. Do not omit relevant data-integrity,
+  RBAC, migration, or concurrent-write checks. Linux and Windows CI must both pass
+  for the final PR HEAD before any separately authorized merge.
+- Use relevant real WSLg GUI checks for visual/interaction changes and owner manual
+  WSLg functional acceptance. Avoid repeating unrelated manual scenarios or producing
+  redundant screenshots, diagnostics, or audit reports.
+- Build/package and isolated-wheel checks are required when packaging, dependencies,
+  migrations, startup, or installation behavior changes; a simple UI-only change
+  does not require repeating these checks. Keep concise evidence in the existing log.
+- For Phases 3–11, routine physical native Windows 11 acceptance is deferred to
+  Phase 12. Earlier native checks remain appropriate for a concrete platform defect
+  or significant technical risk. Do not refresh/copy source snapshots into the
+  existing Phase 2 native Windows test environment for each phase; preserve it.
+- Phase 12 must cover native Windows 11, packaging/executable/installer behavior,
+  DPI, keyboard, permissions, security, regression and end-to-end verification.
+  Windows CI is not physical Windows 11 acceptance. Track the deferral as a risk,
+  not a verified requirement; the SRS Windows 11 MVP criterion remains in force.
 
 ## Completion report
 

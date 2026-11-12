@@ -1171,3 +1171,65 @@ GitHub MCP використовується для PR4 read/update і final CI. 
 виконуються в поточну feature-гілку після scoped diff review. Final pushed
 SHA/CI run/обидва jobs будуть перевірені й наведені у PR description та
 фінальному звіті; саме посилання на checks не зараховується як success.
+
+## 12.11.2026 — Phase3: neutral Constructor і workflow refinement
+
+Власник повідомив про часткові manual WSLg перевірки й уточнив empty-state
+поведінку. GitHub MCP підтвердив PR4 open/unmerged/head d507f45; local clean,
+same feature branch. Переглянуто тільки relevant ScenarioPage/shell/tests,
+SRS §§3.5–3.8/4.2/21.3/23–24 та ADR/policy; owner credentials/DB не читали.
+
+Мінімальна зміна: existing form поміщена в editor container поряд із neutral
+empty card у QStackedWidget. Logical states: inactive/no selection; active
+new/no ID після явного New; active existing після selection/Save. _changed
+обирає екран, без service writes. _show_scenario очищає form при вході до
+Constructor без valid selected ID; повторний «+» та valid mode roundtrip
+зберігають вибір/архівний фільтр. Dirty guards і RBAC/archive services незмінні.
+Context7 підтвердив official QStackedWidget API. Focused new cases6passed,
+34deselected,15.17s; final full suite/WSLg виконується після стабілізації.
+
+Власник погодив Phases3–11 manual WSLg acceptance із routine physical native
+Windows11 deferral до Phase12. Early native checks — concrete platform defect
+або significant risk; existing Phase2 Windows workspace зберігається без refresh.
+Linux/Windows CI обов’язкові; Windows CI не physical Windows11. Це acknowledged
+risk, не claim виконання native вимоги. SRS §24 Windows11 MVP criterion чинний,
+§23 Phase12 Windows-build/finalization gate його покриє; конфлікту не виявлено,
+SRS не змінено. Phase12 включатиме packaging/executable/installer/DPI/keyboard/
+permissions/security/regression/end-to-end verification. Policy синхронізовано
+в AGENTS, плані, ADR0003 та PHASE3_ACCEPTANCE; старі результати історичні.
+
+Workflow: relevant context → focused checks → stable full pytest/Ruff → relevant
+real WSLg → push/обидва final CI jobs. Не прибирати existing security/regressions,
+не пропускати integrity/RBAC/migration/concurrency. Build/wheel не повторюються:
+тільки UI/policy, без package/dependency/migration/startup/install змін. Немає
+нових screenshots/reports у Git; один temporary QWidget preview для visual
+inspection допустимий. Final evidence/CI — нижче, Phase3 REVIEW без merge/Phase4.
+
+Проміжний WSLg run Constructor:39passed/1failed,149.41s. Existing regression
+виявив footer Save нижче viewport при1100×720 після додавання stack. Причина:
+preferred height editor у QStackedWidget замість попередньої minimumHeightForWidth.
+ScenarioPage.heightForWidth тепер використовує minimum layout активного content;
+виправлено без нового abstraction і без послаблення тесту. Focused layout/empty:
+4passed/36deselected,8.67s. Попередній full run перервано до завершення (не pass);
+повторний full обґрунтований цією UI code change. WSLg повтор focused layout/
+state/readonly subset, а не всіх unrelated/manual checks. Final results — нижче.
+
+Фінальна стабільна перевірка (UV_CACHE_DIR=.uv-cache):
+- `uv run --offline --locked ruff check .` — success.
+- `uv run --offline --locked ruff format --check .` —52files formatted.
+- `uv run --offline --locked pytest -q --tb=short` — **214passed**,460.94s;
+  усі208 попередні тести збережено, додано6 focused GUI cases.
+- `QT_QPA_PLATFORM=wayland uv run --offline --locked pytest tests/ui/test_scenarios_ui.py -k 'empty_state or explicit_new or selected_mode or unselected_new or invalid_selection or form_actions or archived_foreign' -q --tb=short`
+  — **9passed**,31deselected,26.75s; реальний WSLg після layout fix.
+- `/tmp/cyberforge-phase3-empty-preview.py`,backendWayland — visual inspection
+  одного temporary QWidget capture1100×720: centered neutral card, no editor/actions,
+  каталог/New доступні. Нових screenshots/diagnostics files у Git немає.
+- `git diff --check` — success. SRS/backend/persistence/dependencies/install
+  не змінено; owner .local DB/credentials/native Windows workspace не чіпали.
+  Build/wheel свідомо не повторено за погодженою UI-only policy.
+
+Змінено8файлів: ScenarioPage, shell, existing GUI test module, AGENTS, plan,
+цей log, PHASE3_ACCEPTANCE, ADR0003. PR4 оновлюється у тій самій гілці;
+фінальний HEAD/обидва Linux-Windows CI jobs перевіряються після push, actual
+run/results фіксуються в PR description і final report без зайвого doc-only
+commit/повторного CI циклу. Phase3 REVIEW; ні merge, ні Phase4 не виконуються.

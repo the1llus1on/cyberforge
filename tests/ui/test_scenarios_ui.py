@@ -597,3 +597,152 @@ def test_archive_failure_safe_message_and_real_confirmation(
     assert not page.archive()
     assert page.message.text() and "private SQL" not in page.message.text()
     assert window.scenarios.get(window._token, original.id) == original
+
+
+def test_constructor_empty_state_has_no_form_actions_or_database_writes(
+    qtbot, scenario_window
+):
+    from PySide6.QtWidgets import QLabel
+    from sqlalchemy import event, text
+
+    window = scenario_window
+    window.navigate(View.HOME)
+    writes = []
+
+    def observe_sql(connection, cursor, statement, parameters, context, executemany):
+        if statement.lstrip().split()[0].upper() in {
+            "INSERT",
+            "UPDATE",
+            "DELETE",
+            "REPLACE",
+            "CREATE",
+            "ALTER",
+            "DROP",
+        }:
+            writes.append(statement)
+
+    engine = window.accounts.database.engine
+    event.listen(engine, "before_cursor_execute", observe_sql)
+    try:
+        qtbot.mouseClick(
+            window.nav_buttons[View.CONSTRUCTOR], Qt.MouseButton.LeftButton
+        )
+        page = window.scenario_page
+        assert page.content_stack.currentWidget() == page.empty_state
+        assert page.empty_card.isVisible() and not page.editor.isVisible()
+        assert any(
+            label.text() == "Сценарій не вибрано"
+            for label in page.empty_card.findChildren(QLabel)
+        )
+        for control in (
+            page.tabs,
+            page.topic,
+            page.nist_cues,
+            page.save_button,
+            page.revert_button,
+            page.archive_button,
+            page.restore_button,
+        ):
+            assert not control.isVisible()
+        assert window.scenario_list.isVisible()
+        assert (
+            window.new_scenario_button.isVisible()
+            and window.new_scenario_button.isEnabled()
+        )
+        assert window.selected_scenario_id is None and not page.active
+        with engine.connect() as connection:
+            assert (
+                connection.execute(text("SELECT count(*) FROM scenarios")).scalar() == 0
+            )
+            assert (
+                connection.execute(
+                    text("SELECT count(*) FROM scenario_versions")
+                ).scalar()
+                == 0
+            )
+        assert writes == []
+    finally:
+        event.remove(engine, "before_cursor_execute", observe_sql)
+
+
+def test_explicit_new_opens_form_without_allocating_id(qtbot, scenario_window):
+    window = scenario_window
+    page = window.scenario_page
+    qtbot.mouseClick(window.new_scenario_button, Qt.MouseButton.LeftButton)
+    assert page.content_stack.currentWidget() == page.editor
+    assert not page.empty_state.isVisible()
+    assert (
+        page.tabs.isVisible()
+        and page.topic.isVisible()
+        and page.save_button.isVisible()
+    )
+    page.tabs.setCurrentIndex(1)
+    assert page.nist_cues.isVisible()
+    assert page.active and page.scenario is None and window.selected_scenario_id is None
+    assert window.scenarios.catalog(window._token) == ()
+    assert not page.save()
+    assert window.scenarios.catalog(window._token) == ()
+    page.topic.setPlainText("Явно створений синтетичний сценарій")
+    assert page.save()
+    assert page.scenario.id == window.selected_scenario_id
+    assert page.content_stack.currentWidget() == page.editor
+
+
+@pytest.mark.parametrize("archived", [False, True])
+def test_selected_mode_roundtrip_and_plus_preserve_editor_and_archive_filter(
+    qtbot, scenario_window, monkeypatch, archived
+):
+    window = scenario_window
+    saved = create(window)
+    page = window.scenario_page
+    if archived:
+        monkeypatch.setattr(page, "confirm_archive", lambda: True)
+        assert page.archive()
+    window.navigate(View.HOME)
+    qtbot.mouseClick(window.nav_buttons[View.CONSTRUCTOR], Qt.MouseButton.LeftButton)
+    assert page.content_stack.currentWidget() == page.editor
+    assert page.topic.toPlainText() == saved.parameters.topic
+    assert page.topic.isReadOnly() == archived
+    assert window.archive_filter.isChecked() == archived
+    window.navigate(View.ANALYTICS)
+    window.navigate(View.CONSTRUCTOR)
+    qtbot.mouseClick(window.nav_buttons[View.CONSTRUCTOR], Qt.MouseButton.LeftButton)
+    assert window.selected_scenario_id == saved.id and page.scenario.id == saved.id
+    assert page.editor.isVisible() and not page.empty_state.isVisible()
+    assert window.archive_filter.isChecked() == archived
+
+
+def test_unselected_new_draft_cancel_then_discard_returns_to_empty_state(
+    scenario_window, monkeypatch
+):
+    window = scenario_window
+    window._new_scenario()
+    page = window.scenario_page
+    page.topic.setPlainText("Незбережена синтетична тема")
+    monkeypatch.setattr(page, "ask_unsaved", lambda: QMessageBox.StandardButton.Cancel)
+    window.navigate(View.ANALYTICS)
+    assert window.navigation.current == View.CONSTRUCTOR
+    assert page.dirty and page.editor.isVisible()
+    assert page.topic.toPlainText() == "Незбережена синтетична тема"
+    monkeypatch.setattr(page, "ask_unsaved", lambda: QMessageBox.StandardButton.Discard)
+    window.navigate(View.ANALYTICS)
+    window.navigate(View.CONSTRUCTOR)
+    assert page.content_stack.currentWidget() == page.empty_state
+    assert not page.active and window.selected_scenario_id is None
+    assert window.scenarios.catalog(window._token) == ()
+
+
+def test_invalid_selection_returns_to_empty_without_changing_saved_data(
+    scenario_window,
+):
+    window = scenario_window
+    saved = create(window)
+    window.navigate(View.HOME)
+    window.selected_scenario_id = 99999
+    window.navigate(View.CONSTRUCTOR)
+    assert window.selected_scenario_id is None
+    assert (
+        window.scenario_page.content_stack.currentWidget()
+        == window.scenario_page.empty_state
+    )
+    assert window.scenarios.get(window._token, saved.id) == saved

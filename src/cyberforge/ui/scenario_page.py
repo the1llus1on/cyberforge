@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QRadioButton,
     QScrollArea,
+    QStackedWidget,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -23,7 +24,7 @@ from cyberforge.application.scenarios import ScenarioService
 from cyberforge.domain.accounts import ApplicationError
 from cyberforge.domain.scenarios import Difficulty, Scenario
 from cyberforge.ui.cue_picker import CuePicker
-from cyberforge.ui.pages import label
+from cyberforge.ui.pages import card, label
 
 
 class ScenarioPage(QWidget):
@@ -42,7 +43,30 @@ class ScenarioPage(QWidget):
         self.active = False
         self.editable = False
         self._baseline: tuple = ()
-        layout = QVBoxLayout(self)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        self.content_stack = QStackedWidget()
+        outer.addWidget(self.content_stack)
+        self.empty_state = QWidget()
+        empty = QVBoxLayout(self.empty_state)
+        empty.setContentsMargins(36, 32, 36, 32)
+        empty.addStretch()
+        self.empty_card = card(
+            "Сценарій не вибрано",
+            "Виберіть сценарій зі списку або натисніть «+ Новий сценарій», "
+            "щоб розпочати створення.",
+        )
+        self.empty_card.setMaximumWidth(760)
+        centered = QHBoxLayout()
+        centered.addStretch()
+        centered.addWidget(self.empty_card, 10)
+        centered.addStretch()
+        empty.addLayout(centered)
+        empty.addStretch()
+        self.editor = QWidget()
+        self.content_stack.addWidget(self.empty_state)
+        self.content_stack.addWidget(self.editor)
+        layout = QVBoxLayout(self.editor)
         layout.setContentsMargins(24, 20, 24, 20)
         self.title = label("Сценарій не вибрано", "title")
         layout.addWidget(self.title)
@@ -151,7 +175,10 @@ class ScenarioPage(QWidget):
         self.clear()
 
     def heightForWidth(self, width: int) -> int:
-        return self.layout().minimumHeightForWidth(width)
+        # The stack's preferred editor height must not push footer actions out
+        # of the viewport; keep the existing minimum-height scroll behavior.
+        content = self.editor if self.active else self.empty_state
+        return content.layout().minimumHeightForWidth(width)
 
     def _raw(self) -> tuple:
         return (
@@ -172,6 +199,9 @@ class ScenarioPage(QWidget):
         return self.active and self._raw() != self._baseline
 
     def _changed(self) -> None:
+        self.content_stack.setCurrentWidget(
+            self.editor if self.active else self.empty_state
+        )
         self.save_button.setEnabled(self.active and self.editable)
         self.revert_button.setEnabled(self.dirty)
         state = self.observed or self.scenario

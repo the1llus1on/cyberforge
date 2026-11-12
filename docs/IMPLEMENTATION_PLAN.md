@@ -518,3 +518,43 @@ NIST і GUI — 67passed/107.01s. Розширений GUI/regression викон
   архівування вирішене цим дорученням; нових owner decisions немає.
 - Доставка: та сама feature-гілка і PR#4; final CI Linux/Windows перевіряється
   після push і фіксується у PR description/final report. Без merge/Phase4.
+
+## Phase3 — final empty state і погоджений workflow (12.11.2026)
+
+Phase3 лишається REVIEW. Власник повідомив про ручні WSLg перевірки кількох
+функцій (не повне acceptance) і явно погодив вузьку UI-корекцію та політику.
+Baseline/PR4 head d507f45, дерево чисте, та сама feature-гілка.
+
+План: §§3.5–3.8/4.2 — neutral empty/New/existing states у ScenarioPage,
+один existing form і збереження selected ID/dirty guards; §21.3 — focused GUI
+regressions + final full pytest/Ruff + relevant real WSLg; §§23–24 — policy.
+Порожній стан використовує наявний card/label/style; жодного DB write.
+New відкриває форму без ID, Save/selection використовують існуючий workflow.
+
+### Рішення про прийняття та ефективність
+
+- Phases3–11: основне manual acceptance у WSLg Ubuntu; automated Linux і
+  Windows CI залишаються обов’язковими gates перед окремо дозволеним merge.
+- Routine physical native Windows11 acceptance перенесено до Phase12;
+  рання native перевірка можлива за конкретного platform defect/significant risk.
+  Існуючий native Phase2 workspace не оновлювати й не копіювати нові snapshots.
+- Phase12: comprehensive native Windows11, packaging/executable/installer,
+  DPI, keyboard, permissions, security, regression та end-to-end verification.
+- Це відкладений ризик, не verified Windows11 behavior. Суперечності з SRS
+  не виявлено: §24 задає Windows11 criterion завершеного MVP, §23 включає
+  Windows-збирання у Phase12. Вимогу не скасовано; SRS не редагується.
+- Focused tests спочатку; full pytest/Ruff один раз після стабілізації;
+  повтор full suite лише за relevant code changes. Relevant WSLg GUI checks,
+  без повтору всіх manual scenarios. Security/data/RBAC/migration/concurrency
+  regression tests зберігаються. Packaging/wheel лише за відповідних змін.
+- Постійна настанова — AGENTS.md; короткі докази — DEVELOPMENT_LOG.
+  Для цього UI-only change packaging/dependencies/migrations/startup не змінено,
+  тому build/wheel не повторюються. Final checks/доставка — у журналі.
+
+Результат вузького UI-кроку: logical empty/new/existing states реалізовано,
+valid selection/filter/dirty guards збережено, no SQL writes на entry доведено.
+Final full pytest214passed/460.94s; Ruff52files і diff check success; final
+relevant WSLg9passed/26.75s. Existing minimum-size regression виправлено після
+initial WSLg39passed/1failed; проміжний full run перервано, не зараховано як pass.
+Поточний крок готовий до review, Phase3 REVIEW. Build/wheel не повторено за
+погодженою UI-only policy. Final CI Linux/Windows — PR4 checks/final report.
