@@ -1,8 +1,8 @@
 # CyberForge — журнал розробки
 
 **Поточний стан:** Phase 2 — **ACCEPTED власником 12.11.2026**;
-Phase 3 — **NOT STARTED**. Нижче збережено хронологію попередніх REVIEW;
-остаточне прийняття й дозвіл merge записано наприкінці журналу.
+Phase 3 — **ACCEPTED власником 12.11.2026**. Нижче збережено хронологію попередніх REVIEW;
+історичні рішення Phase0–2 збережено, актуальні докази Phase3 — наприкінці журналу.
 
 ## 11.11.2026 — Phase 0: Project Foundation
 
@@ -961,3 +961,309 @@ HEAD без force/admin bypass. Feature branches зберігаються; main 
 
 **Phase 3 — Scenario Management: NOT STARTED.** Жодної реалізації наступної
 фази не розпочато; acceptance/merge Phase2 не є її дозволом.
+
+## 12.11.2026 — Phase 3: дозволений початок та перші інкременти
+
+Власник явно дозволив Scenario Management, feature commit/push/PR до main.
+Початкове дерево чисте; main і remote `5b15ff0…` підтверджено через GitHub MCP
+та локальний fetch/fast-forward. PR#3 merged. Нова feature-гілка
+`feat/phase-3-scenario-management`; не використано Phase2 branch.
+План перед кодом подано власнику, traceability — у IMPLEMENTATION_PLAN.
+
+Інкремент 1: Pydantic Scenario/ScenarioParameters, ScenarioService із ownership,
+RBAC, serialized writes та optimistic revision check; scenarios і
+scenario_versions у міграції 0002. Unique ID/автор/UTC identity відокремлено
+від змінних параметрів версії. Published update/delete заборонені DB triggers;
+fixture-перевірка fork не реалізує publishing. Поточний runtime створює
+лише draft. Немає генерації, cloud calls, artifacts, scoring чи publication API.
+
+Інкремент 2: ScenarioPage із двома scrollable вкладками та explicit save;
+єдиний каталог, пошук, selected ID між Constructor/Analytics, read-only empty
+state. Unsaved guard Save/Discard/Cancel, Cancel default, failed-save retention;
+втрата сесії очищає редактор і каталог. Чужі записи Administrator читає через
+readonly fields із доступними вкладками; Instructor не бачить їх навіть через
+прямий service ID. Подробиці й оборотні ліміти — ADR-0003.
+
+Додано тільки SRS-залежність Pydantic >=2.12.5,<3, lock **2.14.3** і її
+транзитивні пакети. Наявні залежності зберегли версії. Context7 перевірив
+офіційні API SQLAlchemy2, Pydantic2 та Qt QMessageBox Save/Discard/Cancel.
+Джерела: https://docs.sqlalchemy.org/en/20/orm/versioning.html,
+https://docs.pydantic.dev/latest/concepts/models/,
+https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/QMessageBox.html.
+GitHub MCP branch/PR read успішні. OpenAI-specific docs не потрібні.
+
+Sandbox не дозволяв запис .git/FETCH_HEAD та DNS PyPI; повторні дозволені
+команди успішні. Усі runtime перевірки використовують нові тимчасові БД;
+owner databases, credentials, Windows acceptance workspace та системні
+налаштування не змінено. Ruff initial formatting/line-length помилки усунено.
+Перший regression subset: 54 passed/199.32s; новий scenario suite ще виконується.
+Результати фінальних перевірок та gate будуть записані нижче.
+
+### Нові тести та проміжні виправлення harness
+
+Додано 42 scenario-перевірки: 24 domain/service/database/security та 18 GUI.
+Окремо `pytest tests/test_scenarios.py -q --tb=short` — 24 passed/17.48s;
+`pytest tests/ui/test_scenarios_ui.py -q --tb=short --durations=5
+-o faulthandler_timeout=30` — 18 passed/52.95s.
+
+Перший спільний новий прогін перервано: pytest-qt закривав навмисно dirty
+вікно до фіналізатора фікстури й відкривав справжній unsaved dialog. Це
+усунуто `before_close_func` тільки для test cleanup. Тест самого діалогу
+окремо перевіряє українські кнопки, Cancel default та реальний event loop.
+Довгі повторні repolish у apply_theme також усунуто для нової фікстури:
+ідентична тема не застосовується заново на кожному case. Runtime dirty guard
+і production theme не послаблені. Додатково виявлено й виправлено
+selection при Save з guard: catalog rebuild не інвалідує вибраний ID і
+не повертає виділення на попередній рядок; є regression test.
+
+Уточнення, поставлене власнику: SRS §2.3 дозволяє архівування, але не задає
+його наслідків для чернеток/публікацій. Запропоновано окреме завдання після
+узгодження правил; відповіді ще немає. Архівування не реалізовано й не
+заявлено виконаним. Це залишається відкритим пунктом owner review.
+
+### Перевірки пакування, запуску та GUI
+
+Усі команди uv: `UV_CACHE_DIR=$PWD/.uv-cache`; runtime/tests після встановлення
+залежностей — offline. Python3.12.3, PySide6/Qt6.10.3, Pydantic2.14.3,
+SQLAlchemy2.0.57, Alembic1.20.1, pytest8.4.2, Ruff0.14.14.
+
+| Команда | Результат |
+|---|---|
+| `uv sync --offline --locked` | 27 resolved, 26 checked, success |
+| `uv run --offline --locked ruff check .` | All checks passed |
+| `uv run --offline --locked ruff format --check .` | 47 files already formatted |
+| `QT_QPA_PLATFORM=wayland uv run --offline --locked pytest tests/ui -q --tb=short` | **93 passed**, 266.97s, WSLg |
+| `QT_QPA_PLATFORM=wayland QT_SCALE_FACTOR=1.5 uv run --offline --locked pytest tests/ui/test_scenarios_ui.py -k form_actions -q --tb=short` | **2 passed**, 16 deselected, 6.50s |
+| Та сама команда з `QT_SCALE_FACTOR=2` | **2 passed**, 16 deselected, 6.23s |
+| `uv build --offline` | wheel/sdist, success |
+| ZipFile/tarfile inspection | scenarios modules і migration0002 у wheel; local data/cache/credentials відсутні |
+| `QT_QPA_PLATFORM=offscreen uv run --offline --locked cyberforge --database /tmp/cyberforge-phase3-cli-smoke.sqlite3 --smoke-test` | exit0 |
+| `QT_QPA_PLATFORM=offscreen uv run --offline --locked python -m cyberforge --database /tmp/cyberforge-phase3-module-smoke.sqlite3 --smoke-test` | exit0 |
+| `QT_QPA_PLATFORM=wayland uv run --offline python /tmp/cyberforge_phase3_preview.py` | exit0, три знімки власного QWidget на temporary DB |
+| `QT_QPA_PLATFORM=offscreen /tmp/cyberforge-phase3-wheel-review/bin/python -I -m cyberforge --database /tmp/cyberforge-phase3-wheel-smoke.sqlite3 --smoke-test` з cwd=/tmp | exit0, isolated installed wheel |
+| `git diff --check`; diff SRS/AGENTS | success; SRS/AGENTS незмінні |
+
+Ізольоване середовище створено через `uv venv --python .venv/bin/python
+/tmp/cyberforge-phase3-wheel-review`. Перша offline wheel-install спроба
+не знайшла cached wheel Pydantic-core; повтор із мережею та constraints,
+згенерованими з uv.lock, успішний. Подальший isolated startup — без мережі.
+Це інсталяційний доступ PyPI, не runtime cloud/LLM виклик.
+
+Знімки WSLg: `docs/screenshots/phase-3-{constructor,advanced,analytics}.png`.
+Оглянуто компактну форму 1100×720: внутрішнє прокручування й Save доступні,
+вкладки показують поля, каталог має один ID в обох режимах, відсутні вигадані
+оцінки. Native Windows11 перевірки Phase3 ще не виконано. Існуючі Phase2
+Windows acceptance files/workspace збережено. Manual gate — PHASE_3_ACCEPTANCE.md.
+MockLLMProvider ще не існує (Phase4); scenario/runtime тести не потребують
+ключів, зовнішніх ресурсів або LLM. Повний Linux/CI результат — нижче.
+
+### Фінальний локальний gate
+
+`uv run --offline --locked pytest -q --tb=short` — **163 passed**, 335.36s.
+Усі 121 попередні тести збережено; додано 42. Ruff lint/format47files та
+повний WSLg GUI93passed успішні. Покрито create/validation/IDs/restart,
+draft updates/conflicts/concurrent creates, ownership/RBAC/revocation,
+immutable published fixture/fork, migrations/constraints, UI/shared ID,
+read-only view, усі unsaved decisions та Session cleanup.
+
+Phase3 переведено **IN PROGRESS → REVIEW**. Технічні локальні checks пройдені;
+owner acceptance не надано, архівування потребує відповіді про межу,
+Windows11 Phase3 manual gate відкритий. Ні ACCEPTED, ні merge не виконано.
+Phase4 NOT STARTED. Git/PR/CI delivery evidence буде дописано після публікації.
+
+### Git/PR delivery — Phase 3 REVIEW
+
+Implementation commit `a94a00d9ecf8547c40e50f391a86c0ba44c3fd8b` відправлено
+звичайним push у `origin/feat/phase-3-scenario-management`. GitHub MCP створив
+[PR#4](https://github.com/the1llus1on/cyberforge/pull/4) до main; PR open,
+не draft, не merged. Base main залишається `5b15ff0…` (merge PR#3), scope21files.
+Дерево чисте, локальна й remote feature-гілки синхронні перед цим
+документаційним записом. SRS, user data і Phase2 branches не змінено.
+
+GitHub MCP branch/PR read та PR creation успішні. Combined-status endpoint
+основного MCP повернув403 через scope PAT; fallback — підключений GitHub app
+MCP `fetch_commit_workflow_runs`, який підтвердив run43171462386 Python checks,
+in_progress на момент запису (Linux/Windows matrix). Це не success і не
+native Windows11 acceptance. Credentials не читали/не змінювали. Фінальний
+стан CI після документаційного push доступний у
+[PR checks](https://github.com/the1llus1on/cyberforge/pull/4/checks) та буде
+повідомлено власнику окремо. Merge не виконано, Phase4 не починалася.
+
+## 12.11.2026 — Phase3 pre-acceptance remediation F-01–F-03
+
+Власник явно погодив archive/restore в Phase3 та всі findings. Це замінює
+попереднє відкрите scope question; Phase3 лишається REVIEW. GitHub MCP:
+PR#4 open/unmerged, baseline7d2084d, base main5b15ff0, scope21files; local tree
+clean/same branch. Прочитано SRS/AGENTS/plan/log/ADR/acceptance/code/PR diff.
+План перед реалізацією подано з traceability до §§2–4,11,14,16–17,21–23.
+
+F01/F02: адитивна0003 додає archived_at/archive_revision; immutable identity
+trigger звужено до id/owner/created_at. Archive/restore — транзакційні,
+owner-only, read archived для owner/admin, edits blocked; усі version rows
+збережено. Counter захищає старі форми після archive→restore. Published
+snapshot guard не послаблено; DB guards блокують також writes до archived
+версій. Ізольовані тести upgrade з0002 перевіряють raw snapshots і table
+rootpage, fresh/0001 path лишається під regression. Міграцію0002 не редаговано.
+
+F03: офіційні NIST PDF/metadata перевірено через web; DOI redirect був
+недоступний у web, прямі nvlpubs.nist.gov PDF і nist.gov publication page
+успішні. Table1 p6 та AppendixB підтверджують23 cues/5 types; IDs — AppendixB
+section references, catalog namespace nist-tn-2276:2023. Оригінальні англійські
+назви збережено, українські labels власні. Unknown/duplicate IDs відхиляються.
+Desired selection окрема від legacy strings/custom tactics, не означає
+AI-declared/verified presence чи detection calculation. Read adapter не
+змінює stored JSON; legacy text зберігається після Save і під час fork.
+Джерела, алгоритм і обмеження — ADR0003. Context7 перевірив офіційні
+Alembic add_column (без batch recreation) та Pydantic enum validation APIs.
+Нових залежностей не додано.
+
+UI: один каталог + archive filter, explicit confirmation/restore; read-only
+архівний/чужий контент зі scrolling/copy. Зовнішня зміна archive state не
+стирає dirty recovery buffer. «Скасувати зміни» — явне discard confirmation,
+без Save у цьому діалозі. Усі інші переходи зберігають Save/Discard/Cancel.
+
+Проміжні результати: 36passed/37.08s service+migrations; 18passed/30.52s
+початковий archive suite; combined scenario/archive/NIST/GUI67passed/107.01s.
+Після цього додано expanded UI, restore rollback/deactivation/direct SQL
+негативні випадки. Final full suites/package/CI будуть наведені нижче.
+
+### Фінальні докази remediation
+
+Команди uv виконано з `UV_CACHE_DIR=$PWD/.uv-cache`. Усі baseline runtime
+тести offline, без LLM/ключів або зовнішніх ресурсів. Нових dependencies
+немає. Native Windows11 physical acceptance цього remediation не виконано.
+
+| Команда / перевірка | Результат |
+|---|---|
+| `uv sync --offline --locked` | success,27resolved/26checked |
+| `uv run --offline --locked ruff check .` | success |
+| `uv run --offline --locked ruff format --check .` |52files formatted |
+| `uv run --offline --locked pytest -q --tb=short` | **208passed**,450.19s |
+| `uv run --offline --locked pytest tests/test_scenario_archiving.py tests/test_nist_cues.py -q --tb=short` | **29passed**,44.33s |
+| `uv run --offline --locked pytest tests/test_nist_cues.py -q --tb=short` після safe stored-data read/update guard | **8passed**,8.30s |
+| `QT_QPA_PLATFORM=wayland uv run --offline --locked pytest tests/ui -q --tb=short` | **109passed**,339.44s |
+| `QT_QPA_PLATFORM=wayland QT_SCALE_FACTOR=1.5 uv run --offline --locked pytest tests/ui/test_scenarios_ui.py -k 'form_actions or cue_selector_keyboard' -q --tb=short` | **3passed**,31deselected,8.71s |
+| Та сама команда з `QT_SCALE_FACTOR=2` | **3passed**,31deselected,8.85s |
+| `uv build --offline` | success,wheel/sdist |
+| `uv pip install --offline --reinstall-package cyberforge --python /tmp/cyberforge-phase3-wheel-review/bin/python --no-deps dist/cyberforge-0.1.0-py3-none-any.whl` |success,final package installed |
+| `QT_QPA_PLATFORM=offscreen uv run --offline --locked cyberforge --database /tmp/cyberforge-phase3-remediation-cli.sqlite3 --smoke-test` |exit0 |
+| `QT_QPA_PLATFORM=offscreen uv run --offline --locked python -m cyberforge --database /tmp/cyberforge-phase3-remediation-module.sqlite3 --smoke-test` |exit0 |
+| `QT_QPA_PLATFORM=offscreen /tmp/cyberforge-phase3-wheel-review/bin/python -I -m cyberforge --database /tmp/cyberforge-phase3-remediation-wheel-final.sqlite3 --smoke-test`,cwd=/tmp |exit0 |
+| Isolated wheel `python -I` management smoke: packaged migration→create B.4.4→archive→restore |success,stableID/revision/cue |
+| wheel/sdist inspection |newcatalog/selector/migration0003 packaged; no localDB/credentials/cache |
+| `git diff --check`; diff SRS/AGENTS/0002 |success; all three unchanged |
+
+Перший запит дозволу на WSLg timeout-нув в automatic approval review до
+запуску процесу. Один дозволений повтор успішний; це не залишковий blocker.
+Знімки `phase-3-remediation-{cues,archive,analytics}.png` отримано на справжньому
+WSLg через QWidget.grab лише власного вікна, temporary synthetic DB. Оглянуто
+1100×720: cue list/вкладки scroll, archive marker/filter/restore видимі,
+identity між режимами спільна. Це не physical Windows11/DPI evidence.
+
+F01/F02/F03 закриті реалізацією й локальними тестами. Додатково safe error
+для непідтримуваного збереженого каталогу не змінює дані. Збережено всі163
+попередні тести, додано45. Scope question архівування погоджено власником;
+нових продуктових рішень, що потребують owner approval, немає. Legacy
+mapping навмисно ручний, downgrade після archive history заборонений для
+захисту даних. Phase3 **REVIEW**, не ACCEPTED; Phase4 NOT STARTED.
+
+GitHub MCP використовується для PR4 read/update і final CI. Commit/push
+виконуються в поточну feature-гілку після scoped diff review. Final pushed
+SHA/CI run/обидва jobs будуть перевірені й наведені у PR description та
+фінальному звіті; саме посилання на checks не зараховується як success.
+
+## 12.11.2026 — Phase3: neutral Constructor і workflow refinement
+
+Власник повідомив про часткові manual WSLg перевірки й уточнив empty-state
+поведінку. GitHub MCP підтвердив PR4 open/unmerged/head d507f45; local clean,
+same feature branch. Переглянуто тільки relevant ScenarioPage/shell/tests,
+SRS §§3.5–3.8/4.2/21.3/23–24 та ADR/policy; owner credentials/DB не читали.
+
+Мінімальна зміна: existing form поміщена в editor container поряд із neutral
+empty card у QStackedWidget. Logical states: inactive/no selection; active
+new/no ID після явного New; active existing після selection/Save. _changed
+обирає екран, без service writes. _show_scenario очищає form при вході до
+Constructor без valid selected ID; повторний «+» та valid mode roundtrip
+зберігають вибір/архівний фільтр. Dirty guards і RBAC/archive services незмінні.
+Context7 підтвердив official QStackedWidget API. Focused new cases6passed,
+34deselected,15.17s; final full suite/WSLg виконується після стабілізації.
+
+Власник погодив Phases3–11 manual WSLg acceptance із routine physical native
+Windows11 deferral до Phase12. Early native checks — concrete platform defect
+або significant risk; existing Phase2 Windows workspace зберігається без refresh.
+Linux/Windows CI обов’язкові; Windows CI не physical Windows11. Це acknowledged
+risk, не claim виконання native вимоги. SRS §24 Windows11 MVP criterion чинний,
+§23 Phase12 Windows-build/finalization gate його покриє; конфлікту не виявлено,
+SRS не змінено. Phase12 включатиме packaging/executable/installer/DPI/keyboard/
+permissions/security/regression/end-to-end verification. Policy синхронізовано
+в AGENTS, плані, ADR0003 та PHASE3_ACCEPTANCE; старі результати історичні.
+
+Workflow: relevant context → focused checks → stable full pytest/Ruff → relevant
+real WSLg → push/обидва final CI jobs. Не прибирати existing security/regressions,
+не пропускати integrity/RBAC/migration/concurrency. Build/wheel не повторюються:
+тільки UI/policy, без package/dependency/migration/startup/install змін. Немає
+нових screenshots/reports у Git; один temporary QWidget preview для visual
+inspection допустимий. Final evidence/CI — нижче, Phase3 REVIEW без merge/Phase4.
+
+Проміжний WSLg run Constructor:39passed/1failed,149.41s. Existing regression
+виявив footer Save нижче viewport при1100×720 після додавання stack. Причина:
+preferred height editor у QStackedWidget замість попередньої minimumHeightForWidth.
+ScenarioPage.heightForWidth тепер використовує minimum layout активного content;
+виправлено без нового abstraction і без послаблення тесту. Focused layout/empty:
+4passed/36deselected,8.67s. Попередній full run перервано до завершення (не pass);
+повторний full обґрунтований цією UI code change. WSLg повтор focused layout/
+state/readonly subset, а не всіх unrelated/manual checks. Final results — нижче.
+
+Фінальна стабільна перевірка (UV_CACHE_DIR=.uv-cache):
+- `uv run --offline --locked ruff check .` — success.
+- `uv run --offline --locked ruff format --check .` —52files formatted.
+- `uv run --offline --locked pytest -q --tb=short` — **214passed**,460.94s;
+  усі208 попередні тести збережено, додано6 focused GUI cases.
+- `QT_QPA_PLATFORM=wayland uv run --offline --locked pytest tests/ui/test_scenarios_ui.py -k 'empty_state or explicit_new or selected_mode or unselected_new or invalid_selection or form_actions or archived_foreign' -q --tb=short`
+  — **9passed**,31deselected,26.75s; реальний WSLg після layout fix.
+- `/tmp/cyberforge-phase3-empty-preview.py`,backendWayland — visual inspection
+  одного temporary QWidget capture1100×720: centered neutral card, no editor/actions,
+  каталог/New доступні. Нових screenshots/diagnostics files у Git немає.
+- `git diff --check` — success. SRS/backend/persistence/dependencies/install
+  не змінено; owner .local DB/credentials/native Windows workspace не чіпали.
+  Build/wheel свідомо не повторено за погодженою UI-only policy.
+
+Змінено8файлів: ScenarioPage, shell, existing GUI test module, AGENTS, plan,
+цей log, PHASE3_ACCEPTANCE, ADR0003. PR4 оновлюється у тій самій гілці;
+фінальний HEAD/обидва Linux-Windows CI jobs перевіряються після push, actual
+run/results фіксуються в PR description і final report без зайвого doc-only
+commit/повторного CI циклу. Phase3 REVIEW; ні merge, ні Phase4 не виконуються.
+
+
+## 12.11.2026 — Phase3: остаточне прийняття та дозвіл merge
+
+Власник явно прийняв Scenario Management: **REVIEW → ACCEPTED**,12.11.2026.
+Дозволено лише documentation-only фіналізацію поточної branch, push і PR4
+merge після перевірки exact final HEAD та обох CI jobs. Phase4 NOT STARTED.
+Початковий стан: clean feat/phase-3-scenario-management; GitHub MCP підтвердив
+PR4 open/unmerged/clean, base main5b15ff0, HEAD3b31210d8678738f677d8effce9130a7002d6e12.
+CI43296448273 completed/success: Linux214passed, Windows212passed/2POSIX skips;
+locked sync/Ruff/pytest/import/Qt startup success на обох OS. Локальний source
+цього HEAD:214passed, final relevant WSLg9passed. Наявна Git історія PR3
+підтвердила звичайний merge commit; майбутній merge прив’язується до final SHA.
+
+Owner-reported evidence: часткова ручна WSLg перевірка й схвалення результатів;
+власник підтвердив реалізацію create/validation/edit/persistence/versioning,
+ownership/service RBAC, archive/restore/concurrency, NIST selector/legacy,
+Constructor empty state, закриття F01–F03 і незалежне review. Це не твердження
+агента про виконання всіх manual scenarios. Checklist залишається reference;
+непідтверджені boxes не заповнюються.
+
+Routine physical native Windows11 verification Phases3–11 deferred to Phase12
+за погодженою політикою. Це acknowledged risk, не completed verification;
+Windows Server2022/offscreen CI не замінює Windows11 desktop/DPI/input/ACL/
+security/package/E2E evidence. Phase2 native workspace/owner data зберігаються.
+SRS v3.0, runtime, dependencies, migrations і tests не змінюються. README,
+plan, acceptance record та ADR синхронізуються зі статусом ACCEPTED.
+
+Новий documentation-only diff перевіряється git diff --check і scoped diff;
+локальні повні тести/build/wheel не повторюються без code changes. Фінальний
+PR HEAD обов’язково проходить Linux/Windows CI перед merge. CI failure,
+конфлікт або неочікуваний HEAD зупинить merge без bypass/force. Після merge:
+fetch → switch main → merge --ff-only origin/main, перевірка SHA/clean tree;
+feature branch не видаляється. Merge SHA та actual final CI — PR4/final report.

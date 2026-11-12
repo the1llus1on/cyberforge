@@ -1,6 +1,17 @@
-"""Phase 2 storage only. No scenario or scoring tables."""
+"""Identity, groups, and versioned scenario storage."""
 
-from sqlalchemy import Boolean, CheckConstraint, ForeignKey, Integer, String
+from datetime import datetime
+
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -58,3 +69,37 @@ class GroupLearner(Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )
+
+
+class ScenarioRecord(Base):
+    __tablename__ = "scenarios"
+    __table_args__ = {"sqlite_autoincrement": True}
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime())
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
+    archive_revision: Mapped[int] = mapped_column(
+        Integer,
+        CheckConstraint("archive_revision >= 0", name="archive_revision_positive"),
+        default=0,
+        server_default="0",
+    )
+
+
+class ScenarioVersion(Base):
+    __tablename__ = "scenario_versions"
+    __table_args__ = (
+        UniqueConstraint("scenario_id", "number", name="scenario_version_number"),
+        CheckConstraint("number > 0 AND revision > 0", name="positive_version"),
+        CheckConstraint("status IN ('draft', 'published')", name="scenario_status"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    scenario_id: Mapped[int] = mapped_column(ForeignKey("scenarios.id"))
+    number: Mapped[int] = mapped_column(Integer)
+    revision: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(20))
+    parameters: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime())
+    updated_at: Mapped[datetime] = mapped_column(DateTime())

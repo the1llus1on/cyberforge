@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phase 0 — ACCEPTED; Phase 1 — ACCEPTED власником 11.11.2026; Phase 2 — ACCEPTED власником 12.11.2026; Phase 3 — NOT STARTED.
+**State:** Phase 0 — ACCEPTED; Phase 1 — ACCEPTED власником 11.11.2026; Phase 2 — ACCEPTED власником 12.11.2026; Phase 3 — ACCEPTED власником 12.11.2026.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -19,7 +19,7 @@
 | 0 | Project Foundation | ACCEPTED | Python 3.12/uv, src package, CLI, lockfile, pytest/Ruff; власник підтвердив перевірки у WSL Ubuntu та прийняв фазу 11.11.2026 |
 | 1 | Main UI Shell | ACCEPTED | Dark PySide6 shell, universal Home / Guest state, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
 | 2 | Users & Groups | ACCEPTED | Прийнято власником 12.11.2026: login, Argon2id, 3 roles, demo accounts/groups, RBAC; WSLg і native Windows 11 докази нижче |
-| 3 | Scenario Management | NOT STARTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
+| 3 | Scenario Management | ACCEPTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
 | 4 | LLM Integration | NOT STARTED | LLMGateway, provider adapter, Gemini configuration, deterministic MockLLMProvider; schema and fallback tests |
 | 5 | Specialized Agents | NOT STARTED | Typed I/O contracts for four specialized agents and bounded orchestration; mock agent tests |
 | 6 | Email Constructor | NOT STARTED | Email shell, generation, preview, code view, regeneration, explicit save and validation; UI tests |
@@ -410,3 +410,177 @@ REVIEW; записи вище лишаються історичними. При�
   до версій рубрики/алгоритму й подій; LLM лише пояснює вже обчислене.
 - Поточні порожні learner views Phase 2 залишаються чесними заглушками;
   історія спроб і scoring не є реалізованими можливостями прийнятої фази.
+
+## Phase 3 — Scenario Management (12.11.2026)
+
+**Статус: REVIEW.** Власник окремо дозволив початок Phase 3,
+commit/push/PR до main, без merge або ACCEPTED. Phase 4 не розпочато.
+
+- Передумови: чиста main, GitHub MCP підтвердив merge PR#3 та remote main
+  `5b15ff0a9a963202075b0ed9c652ef4df4b9846a`; fetch/merge --ff-only успішні;
+  створено нову `feat/phase-3-scenario-management`.
+- План/SRS: §§4.2–4.5/11.1/14.1–14.3 — поля Pydantic, ID та міграція;
+  §§2.2–2.4/4.9/11.7/16.6 — ownership, RBAC, версії й захист конфліктів;
+  §§3.5–3.8/3.13/21.3 — єдиний каталог, картка, пошук, dirty guard;
+  §§21/23 Phase3 — regression, persistence, security/GUI, докази й PR.
+- Інкремент 1: domain/scenarios, application/scenarios, ORM і міграція 0002;
+  BEGIN IMMEDIATE, draft revision, immutable published fixture/fork.
+- Інкремент 2: ScenarioPage, каталог у shell, shared selected ID, read-only
+  Analytics empty state, Save/Discard/Cancel і session cleanup.
+- Технічні рішення: [ADR-0003](adr/0003-scenario-drafts.md). Відкрите owner
+  уточнення: межа архівування §2.3 (правила SRS не деталізовані, питання
+  поставлено; функцію не позначено виконаною). Генерація/публікація/оцінювання й
+  аналітичні обчислення поза обсягом. Наявні owner DB/credentials/native
+  Windows acceptance files не використовуються для тестів і не змінюються.
+- Проміжні докази: `uv run --offline pytest tests/test_groups_database.py
+  tests/ui/test_shell.py tests/ui/test_accounts_ui.py -q --tb=short` —
+  **54 passed**, 199.32s; Ruff lint — success. Нові scenario-тести виконуються.
+- Gate: валідне створення/відмова невалідним полям; унікальні ID й restart;
+  update без зміни draft number, stale-edit conflict; RBAC для кожної ролі;
+  published fixture immutable/fork; один каталог/ID між режимами;
+  guard на переходах/New/selection/close; регресії Phase0–2; owner demo.
+
+### Фінальні докази початкової Phase 3 (baseline7d2084d)
+
+- `uv run --offline --locked pytest -q --tb=short` — **163 passed**, 335.36s;
+  містить 121 попередню й 42 нові перевірки.
+- WSLg повний GUI — **93 passed**, 266.97s; form_actions Qt150% і Qt200% —
+  по **2 passed**. Ruff lint/format47files, locked sync, build, CLI/module,
+  isolated wheel startup, migration packaging і diff check — success.
+- Нові файли: `domain/scenarios.py`, `application/scenarios.py`,
+  `ui/scenario_page.py`, `persistence/migrations/versions/0002_scenarios.py`,
+  `tests/test_scenarios.py`, `tests/ui/test_scenarios_ui.py`, ADR-0003,
+  PHASE_3_ACCEPTANCE.md, три phase-3 screenshots.
+- Змінені: `persistence/models.py`, `ui/{shell,pages}.py`, `tests/conftest.py`,
+  `tests/test_groups_database.py`, `pyproject.toml`, `uv.lock`, README,
+  IMPLEMENTATION_PLAN і DEVELOPMENT_LOG. SRS/AGENTS незмінні.
+- Design: незмінна identity + version snapshot; draft number стабільний,
+  revision захищає конкурентні правки; published boundary/fork протестовано
+  fixture, публікації у runtime немає. Деталі — ADR-0003.
+- Технічні локальні checks пройдено; owner acceptance ще не надано.
+  Native Windows11 Phase3 не перевірено. Уточнення межі архівування очікує
+  відповіді; не позначено реалізованим. Phase 3 — REVIEW, не ACCEPTED.
+- Наступна дія: PR review і ручна демонстрація за PHASE_3_ACCEPTANCE.md,
+  погодження відкритої межі. Merge і Phase4 не виконувати автоматично.
+
+**Доставка:** implementation `a94a00d`, feature-гілку відправлено;
+[PR#4](https://github.com/the1llus1on/cyberforge/pull/4) відкрито до main.
+Phase3 REVIEW. CI Linux/Windows запущено (run43171462386); на момент
+запису ще in_progress, не зараховано як success. Поточний результат —
+[checks](https://github.com/the1llus1on/cyberforge/pull/4/checks).
+
+## Phase 3 — pre-acceptance remediation F-01–F-03
+
+**Статус: REVIEW — готово до повторного незалежного review.** Власник явно включив archive/
+restore та схвалив remediation. Попередню відкриту межу архівування закрито.
+Baseline7d2084d і PR#4 head підтверджено GitHub MCP; дерево чисте, та сама гілка.
+
+План/SRS: F01/F02 (§§2.3/4.9/14/16.6) — адитивна міграція0003, identity guards,
+soft archive, RBAC, archive counter; F03 (§§4.3/11.5/17) — verified desired-cue
+catalog і lossless legacy adapter; UI (§§3.5–3.8/21.3) — один каталог/filter,
+confirmation, restore, dirty/session safety; §§21–23 — migration/concurrency/
+security/UI/regression/package/CI. Рішення — оновлений ADR-0003.
+
+Інкремент persistence/service: archive metadata відокремлена від content
+версій, no-op повтори, archive→restore ABA protection, legacy read adapter
+без переписування snapshots. Перевірки: 36 попередніх service/migration tests
+і 18 початкових нових archive tests пройдено. Наступний combined subset із
+NIST і GUI — 67passed/107.01s. Розширений GUI/regression виконується.
+
+Міграція0002/SRS/owner DB/credentials/native Windows acceptance files незмінні.
+Немає LLM, publishing, assignment, scoring або Phase4. Final evidence — нижче.
+
+### Підсумок remediation
+
+- **F01 — реалізовано:** soft archive/restore, persistence/restart, owner RBAC,
+  readonly inspection/admin, один каталог/filter/search, confirm/dirty safety.
+- **F02 — реалізовано:** additive0003, targeted identity trigger, archive state
+  guards, immutable published/archived snapshots. Fresh/0001/0002 paths,
+  raw snapshot/table preservation, SQL negatives і metadata consistency пройдено.
+- **F03 — реалізовано:** verified23-cue catalog/AppendixB IDs, Ukrainian selector,
+  strict unknown/duplicate rejection, desired/legacy/custom separation,
+  no text mapping і жодного переписування published JSON.
+- Concurrency: незалежні Database/AccountService/session, два OS processes,
+  два GUI windows, content/metadata conflicts та archive→restore ABA; losing
+  buffer збережено, duplicate versions немає. Cancel/revert/session safety перевірено.
+- `uv run --offline --locked pytest -q --tb=short`: **208passed**,450.19s.
+- WSLg GUI: **109passed**,339.44s; Qt150%/200% form+cue — по **3passed**.
+- Targeted archive/migration/NIST: **29passed**,44.33s. Додаткова safe malformed
+  stored-data read/update перевірка: NIST suite **8passed**,8.30s.
+- Locked sync, Ruff52files, build, CLI/module, packaged migration/catalog,
+  isolated wheel startup+archive/restore, diff check — success.
+- Змінено21файл remediation відносно baseline: existing domain/service/ORM/UI,
+  tests, README і чотири docs; нові nist_cues.py, cue_picker.py, migration0003,
+  два test modules і три remediation screenshots. Нових dependencies немає.
+- Джерела/рішення: ADR0003. Actual commands/limitations: DEVELOPMENT_LOG.
+- Phase3 лишається **REVIEW**, не ACCEPTED. Native Windows11 physical gate
+  ще відкритий (PHASE_3_ACCEPTANCE). Попереднє owner scope question про
+  архівування вирішене цим дорученням; нових owner decisions немає.
+- Доставка: та сама feature-гілка і PR#4; final CI Linux/Windows перевіряється
+  після push і фіксується у PR description/final report. Без merge/Phase4.
+
+## Phase3 — final empty state і погоджений workflow (12.11.2026)
+
+Phase3 лишається REVIEW. Власник повідомив про ручні WSLg перевірки кількох
+функцій (не повне acceptance) і явно погодив вузьку UI-корекцію та політику.
+Baseline/PR4 head d507f45, дерево чисте, та сама feature-гілка.
+
+План: §§3.5–3.8/4.2 — neutral empty/New/existing states у ScenarioPage,
+один existing form і збереження selected ID/dirty guards; §21.3 — focused GUI
+regressions + final full pytest/Ruff + relevant real WSLg; §§23–24 — policy.
+Порожній стан використовує наявний card/label/style; жодного DB write.
+New відкриває форму без ID, Save/selection використовують існуючий workflow.
+
+### Рішення про прийняття та ефективність
+
+- Phases3–11: основне manual acceptance у WSLg Ubuntu; automated Linux і
+  Windows CI залишаються обов’язковими gates перед окремо дозволеним merge.
+- Routine physical native Windows11 acceptance перенесено до Phase12;
+  рання native перевірка можлива за конкретного platform defect/significant risk.
+  Існуючий native Phase2 workspace не оновлювати й не копіювати нові snapshots.
+- Phase12: comprehensive native Windows11, packaging/executable/installer,
+  DPI, keyboard, permissions, security, regression та end-to-end verification.
+- Це відкладений ризик, не verified Windows11 behavior. Суперечності з SRS
+  не виявлено: §24 задає Windows11 criterion завершеного MVP, §23 включає
+  Windows-збирання у Phase12. Вимогу не скасовано; SRS не редагується.
+- Focused tests спочатку; full pytest/Ruff один раз після стабілізації;
+  повтор full suite лише за relevant code changes. Relevant WSLg GUI checks,
+  без повтору всіх manual scenarios. Security/data/RBAC/migration/concurrency
+  regression tests зберігаються. Packaging/wheel лише за відповідних змін.
+- Постійна настанова — AGENTS.md; короткі докази — DEVELOPMENT_LOG.
+  Для цього UI-only change packaging/dependencies/migrations/startup не змінено,
+  тому build/wheel не повторюються. Final checks/доставка — у журналі.
+
+Результат вузького UI-кроку: logical empty/new/existing states реалізовано,
+valid selection/filter/dirty guards збережено, no SQL writes на entry доведено.
+Final full pytest214passed/460.94s; Ruff52files і diff check success; final
+relevant WSLg9passed/26.75s. Existing minimum-size regression виправлено після
+initial WSLg39passed/1failed; проміжний full run перервано, не зараховано як pass.
+Поточний крок готовий до review, Phase3 REVIEW. Build/wheel не повторено за
+погодженою UI-only policy. Final CI Linux/Windows — PR4 checks/final report.
+
+
+## 12.11.2026 — остаточне прийняття Phase3 власником
+
+**Phase3 — ACCEPTED власником 12.11.2026.** Явне рішення власника замінює
+попередні REVIEW/pending записи цієї фази; хронологію перевірок збережено.
+Погоджено документаційний commit/push у поточну Phase3 branch та звичайний
+merge commit PR4 після success Linux/Windows CI фінального PR HEAD.
+
+Прийнятий обсяг: create/validation/edit/persistence/versioning, service RBAC/
+ownership, archive/restore/archive revision concurrency, NIST TN2276 desired
+cue selector/legacy compatibility, neutral Constructor empty state. Власник
+підтвердив закриття F01–F03 та незалежне review. Owner evidence — часткові
+manual WSLg перевірки й схвалення результатів, не виконання всього checklist.
+Automated implementation HEAD3b31210: local214passed, relevant WSLg9passed;
+CI43296448273 success: Linux214passed, Windows212passed/2POSIX skips, locked
+sync/Ruff/import/Qt startup успішні. Новий documentation-only HEAD проходить
+окремий обов’язковий CI перед merge; SHA/run/result — PR4 і фінальний звіт.
+
+Routine physical native Windows11 verification Phases3–11 лишається відкладеним
+до Phase12, як acknowledged risk. Windows CI не є physical Windows11 evidence;
+повний DPI/input/permissions/security/packaging/E2E gate ще не виконано.
+Старі manual checklist items не позначаються автоматично виконаними.
+SRS/функціональність/owner data не змінюються; Phase2 native workspace збережено.
+**Phase4 — NOT STARTED**, потрібен окремий дозвіл; acceptance/merge Phase3
+не є дозволом початку LLM Integration.
