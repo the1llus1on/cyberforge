@@ -20,7 +20,7 @@
 | 1 | Main UI Shell | ACCEPTED | Dark PySide6 shell, universal Home / Guest state, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
 | 2 | Users & Groups | ACCEPTED | Прийнято власником 12.11.2026: login, Argon2id, 3 roles, demo accounts/groups, RBAC; WSLg і native Windows 11 докази нижче |
 | 3 | Scenario Management | ACCEPTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
-| 4 | LLM Integration | NOT STARTED | LLMGateway, provider adapter, Gemini configuration, deterministic MockLLMProvider; schema and fallback tests |
+| 4 | LLM Integration | REVIEW | Gateway/Gemini Interactions/Groq/Mock/Runnable; 314 local tests; packaging/WSLg startup success; owner acceptance pending; ADR-0004 |
 | 5 | Specialized Agents | NOT STARTED | Typed I/O contracts for four specialized agents and bounded orchestration; mock agent tests |
 | 6 | Email Constructor | NOT STARTED | Email shell, generation, preview, code view, regeneration, explicit save and validation; UI tests |
 | 7 | Web Constructor | NOT STARTED | Web templates, isolated Qt WebEngine, generation, preview, code view, explicit save; security and UI tests |
@@ -584,3 +584,48 @@ Routine physical native Windows11 verification Phases3–11 лишається �
 SRS/функціональність/owner data не змінюються; Phase2 native workspace збережено.
 **Phase4 — NOT STARTED**, потрібен окремий дозвіл; acceptance/merge Phase3
 не є дозволом початку LLM Integration.
+
+
+## Phase 4 — LLM Integration (13.11.2026)
+
+Власник явно дозволив фазу та окремо погодив архітектурне уточнення SRS §10.2.
+Baseline main d0b407c, branch feat/phase-4-llm-integration. Історичні записи
+NOT STARTED/pending у попередніх секціях описують стан до цього дозволу.
+
+План і traceability:
+
+| SRS | Реалізований increment / gate |
+| --- | --- |
+| §§10.1–10.4, §23 Phase4 | Єдиний LLMGateway; Gemini Interactions v1; Groq SDK; functional LangChain Core Runnable; без LangGraph agents |
+| §§10.4,10.7 | Typed text/structured generation, explicit selection, deterministic mock, bounded retries/quota/fallback та normalized metadata |
+| §§10.8,11.1 | Safe explicit dotenv, synthetic-only caller contract, versioned Pydantic content slots, local validation, privacy-safe logging/telemetry |
+| §21 / AGENTS verification | Focused fake-transport tests, complete pytest/Ruff, sdist/wheel/isolated install, startup/WSLg, final Linux/Windows CI |
+
+Документи: [ADR-0004](adr/0004-llm-provider-boundary.md),
+[Phase4 acceptance](PHASE_4_ACCEPTANCE.md), README та DEVELOPMENT_LOG.
+SRS змінено тільки в §10.2 точним текстом власника; решта bytes/CRLF збережені.
+Наявні сценарії/версії, RBAC, scoring, migrations і user data не змінювалися.
+
+Доступні Gemini3.8Flash/Gemini3.5FlashLite/Groq GPT-OSS120B; activation лише
+через explicit config/request. Mock — offline default. AUTO не потрібен цій фазі.
+Fallback default-off, лише Gemini→Groq після timeout/selected transient5xx;
+429/quota/access/safety/config/schema/data failures його не дозволяють.
+Локальні provider+model rolling budgets враховують input/schema/output reservation;
+Retry-After cooldown діє також між requests/models. Counters лише in-memory.
+
+Live diagnostics реалізовано, але НЕ виконано: остання інструкція власника
+вимагає окремого дозволу на API usage. Model access/account quotas unknown;
+це явний remaining risk і не fabricated success. Durable telemetry/quota,
+comparative experiments, specialized agents, UI generation, Email/Web rendering
+та publication/approval workflows відкладено. Phase5 не розпочато.
+
+Після локальних gates — commit/push/PR до main та перевірка Linux/Windows CI
+фінального HEAD. Phase4 передається тільки на REVIEW, не ACCEPTED, без merge.
+Owner manual acceptance ще не виконане. Physical native Windows11 gate лишається
+Phase12; WSLg і Windows CI не замінюють фізичної acceptance матриці.
+
+Локальний final gate: **314passed/341.67s**, focused LLM100passed/5.30s,
+Ruff lint/format72files success, sdist/wheel та isolated installed wheel
+mock/async/guard/startup success. Реальний WSLg startup/close success;
+це не owner visual/functional acceptance. Phase4 **REVIEW**. Final PR HEAD
+і Linux/Windows CI results фіксуються в PR та фінальному звіті після push.

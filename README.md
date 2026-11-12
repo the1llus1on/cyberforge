@@ -17,7 +17,7 @@ Phase 0 та Phase 1 — ACCEPTED. Phase 2 — Users & Groups: **ACCEPTED вла
 [ADR-0003](docs/adr/0003-scenario-drafts.md).
 У Конструкторі доступні створення, пошук і редагування власних сценаріїв,
 постійні ID, SQLite persistence, чернеткові версії та зворотне архівування. Аналіз використовує
-ті самі ID та показує відсутність результатів. AI, обчислення оцінок і
+ті самі ID та показує відсутність результатів. AI-генерація в UI, обчислення оцінок і
 Qt WebEngine ще не реалізовано. Ключі API та `.env` не потрібні.
 
 ## Встановлення й звичайний запуск
@@ -238,4 +238,69 @@ Phase3 прийнята після automated checks, незалежного revi
 owner manual WSLg verification; усі manual scenarios не заявляються виконаними.
 Routine physical Windows11 verification Phases3–11 відкладено до Phase12 як
 acknowledged risk; Windows CI не є native desktop acceptance. Phase4 —
-**NOT STARTED**, потребує окремого дозволу. Деталі — план/журнал/acceptance record.
+LLM Integration: реалізацію передано на REVIEW; прийняття власником ще не виконано.
+Деталі — план/журнал/acceptance record.
+
+## Phase 4 — LLM Integration
+
+Архітектуру погоджено власником у [ADR-0004](docs/adr/0004-llm-provider-boundary.md)
+та SRS §10.2. Python integration layer `cyberforge.llm`:
+
+`GatewayRunnable → LLMGateway → GeminiProvider / GroqProvider / MockLLMProvider`
+
+Gemini: official google-genai 2.34.0, Interactions v1, stateless store=false,
+без background/continuation. Groq: official SDK, strict JSON Schema з explicit
+bounded compatibility check. Provider SDK типи не входять до domain/services/UI.
+Канонічна structured validation — локальна Pydantic v2; це ще не предметна
+перевірка навчального контенту або публікація артефакту.
+
+Звичайний GUI startup не створює cloud clients, не викликає LLM і не потребує
+API keys. `.env` не завантажується при імпорті або запуску GUI. `load_config()`
+явно читає `.env` з поточної директорії; process environment має пріоритет
+включно з порожніми значеннями. Interpolation `${...}` вимкнено. Існуючі
+`GOOGLE_API_KEY`/`GROQ_API_KEY` зберігаються лише локально; налаштування без
+секретів наведено в [`.env.example`](.env.example).
+
+Без налаштувань — mock/mock-v1. Дозволені cloud combinations:
+
+| Provider | Model | Thinking |
+| --- | --- | --- |
+| gemini | gemini-3.8-flash | low, medium, high |
+| gemini | gemini-3.5-flash-lite | minimal, low, medium, high |
+| groq | openai/gpt-oss-120b | low, medium, high |
+
+Вибір provider/model явний; AUTO відкладено. `configured_request(config, ...)`
+застосовує defaults конфігурації; direct GenerationRequest містить власний вибір.
+Fallback вимкнено за замовчуванням; optional Gemini→Groq дозволений лише після
+класифікованих тимчасових timeout/selected 5xx. 429, policy refusals,
+authorization, missing keys, configuration/schema/validation і permanent
+request errors fallback не спричиняють. Retry-After діє між викликами й моделями.
+Локальні rolling RPM/TPM/RPD/TPD budgets діють у межах gateway/process;
+це не account quotas чи billing controls. Restart не зберігає counters.
+
+GatewayRunnable підтримує invoke/ainvoke, batch/abatch і stream/astream
+одного повного результату; token streaming не передбачено. Retry/quota/fallback
+існують лише в gateway. Tracing/callbacks на цьому boundary вимкнено; майбутні
+outer workflows теж не повинні trace prompts/results. Для observability є
+metadata-only TelemetrySink; prompts/responses за замовчуванням не зберігаються.
+
+### Live connectivity — тільки після окремого дозволу
+
+Поточна реалізація не підтверджує доступ ключа до опублікованих моделей.
+Live calls не виконувалися. Не запускайте приклади нижче без окремого дозволу
+власника на API usage. Кожна команда робить максимум один запит без retries
+і fallback, із коротким synthetic input, 256 output tokens і timeout 20s:
+
+```console
+uv run cyberforge-llm-check --live --provider gemini --model gemini-3.8-flash
+uv run cyberforge-llm-check --live --provider gemini --model gemini-3.5-flash-lite
+uv run cyberforge-llm-check --live --provider groq --model openai/gpt-oss-120b
+```
+
+Відсутність --live блокує виконання до читання ключів. Діагностика друкує лише
+provider/model/outcome/elapsed/available usage, без prompts/responses/secrets.
+При quota/access/network failure offline baseline залишається доступним.
+
+[Phase 4 acceptance](docs/PHASE_4_ACCEPTANCE.md) містить offline перевірку
+контрактів і короткі WSLg кроки. Specialized agents, UI generation і LangGraph
+workflows — Phase 5 та пізніше; вони не реалізовані цією фазою.

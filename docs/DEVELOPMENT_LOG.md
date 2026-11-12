@@ -1267,3 +1267,121 @@ PR HEAD обов’язково проходить Linux/Windows CI перед m
 конфлікт або неочікуваний HEAD зупинить merge без bypass/force. Після merge:
 fetch → switch main → merge --ff-only origin/main, перевірка SHA/clean tree;
 feature branch не видаляється. Merge SHA та actual final CI — PR4/final report.
+# 13.11.2026 — Phase 4: початковий незалежний increment
+
+Власник явно дозволив Phase 4 LLM Integration. Перед кодом перевірено AGENTS,
+SRS §§10–11/23, релевантні plan/log/ADRs, структуру source/tests, dependencies,
+clean working tree та ignored `.env`. GitHub MCP підтвердив Phase 3 merge
+d0b407cbb13cf9e10f5bd65904eef978c321ab7e. Fetch + ff-only check: main already
+up to date. Створено `feat/phase-4-llm-integration`. Owner DB/credentials/.env
+і Phase 2 native Windows environment не змінювалися.
+
+Подано план: §§10.4/10.7/10.8/11.1 — contracts/config/mock/telemetry;
+§§10.1–10.5 — provider adapters/retries/quotas/fallback; §23 — diagnostics,
+verification і PR REVIEW. Context7 функціонально відповів для Google SDK/Groq;
+офіційні web docs і source перевірено, findings/links у ADR-0004.
+
+Виявлено material conflict: §10.2 вимагає `langchain-google-genai`, але його
+ChatGoogleGenerativeAI використовує generateContent. Водночас Interactions
+GA/recommended і `store=false` затверджені власником для нового адаптера.
+Надіслано запит погодити direct google-genai + provider-neutral LangChain
+Runnable. **Рішення ще не отримано.** Точний proposed SRS текст у ADR-0004;
+сам SRS не змінено. Спірні GeminiProvider/Runnable не реалізовано до рішення.
+
+Незалежна частина: provider-neutral Pydantic contracts/errors/versioned content
+slots; safe explicit dotenv loading; deterministic offline mock; gateway із
+selection validation, bounded backoff/jitter/Retry-After, quota reservations,
+optional Gemini→Groq fallback лише timeout/selected 5xx; Groq SDK adapter і
+bounded strict-schema checker; privacy-safe telemetry та best-effort sink.
+AUTO, durable generation persistence, full artifact workflows/agents/UI — deferred.
+Config/model allowlist не підтверджує account access. Дані й обмеження schema
+subset, in-memory quota scope, synchronous worker requirement — ADR-0004.
+
+Додано SDK google-genai 2.34.0, groq 1.7.0, langchain-core 1.8.0,
+python-dotenv 1.2.4; актуалізовано pyproject/uv.lock, .env.example і README.
+Внутрішні retry/continuation особливості SDK інспектовано без реальних keys.
+
+Перевірки незалежного increment (UV_CACHE_DIR=/tmp/cyberforge-uv-cache):
+
+- `uv run --offline ruff check .` — success.
+- `uv run --offline ruff format --check .` — success, 63 files.
+- `uv run --offline pytest tests/test_llm_gateway.py tests/test_llm_groq.py -q --tb=short`
+  — **51 passed**. Реальний Groq SDK тестується тільки через httpx.MockTransport;
+  fake clocks/sleep використовуються для retry і budget tests. Спочатку 38
+  gateway tests, потім 50 з Groq, після sink regression — 51.
+
+Live Gemini/Groq requests не виконувалися; доступ до моделей/квоти account не
+підтверджено. Повний pytest, package/isolated-wheel/startup checks та Linux/
+Windows CI залишаються обов'язковими після завершення реалізації перед push/PR.
+Жодного commit/push/PR/merge не виконано. UI не змінювався; WSLg acceptance
+instructions будуть із завершеною фазою. Native Windows11 — Phase12 deferral,
+не verified evidence. Phase4 **IN PROGRESS**, gate не пройдено; Phase5 не почато.
+
+
+## 13.11.2026 — Phase 4: погоджена архітектура і завершення реалізації
+
+Власник явно погодив direct google-genai Interactions та provider-neutral
+LangChain Runnable і дозволив точну вузьку зміну SRS §10.2. Це замінює
+pending decision попереднього increment. ADR-0004 — ACCEPTED як архітектурне
+рішення; сама реалізація Phase4 — **REVIEW**, не ACCEPTED.
+
+Реалізовано GeminiProvider (Interactions v1, store/background/stream=False,
+automatic_continuation=False, text/JSON Schema, thinking per model, usage і
+normalized errors); functional GatewayRunnable (invoke/ainvoke, batch/abatch,
+whole-result stream/astream); lazy factory/config defaults; guarded CLI
+cyberforge-llm-check. Немає generateContent adapter, duplicate policy layer,
+LangGraph agents, UI generation чи domain/persistence modifications.
+SRS byte comparison підтвердив незмінність усього поза §10.2, включно з CRLF.
+
+Офіційні джерела/альтернативи/наслідки — ADR-0004. Google SDK pinned2.34.0
+через перевірену особливість retry translation: attempts=0→1→extra retry.
+Generated Interactions retry strategy явно none; відсутність config fail-closed.
+Real SDK/fake HTTP тести доводять single request на failures і disabled continuation.
+Groq1.7.0, LangChain Core1.8.0, python-dotenv1.2.4; SDK types лише в adapters.
+
+Фінальні security/reliability corrections: DEBUG SDK payload/exception logs
+фільтруються context-local під час generation; Retry-After створює provider-wide
+cooldown між моделями/requests; Retry-After залишається у normalized failure;
+input + serialized schema + output reservation враховуються у локальних квотах;
+unknown quota keys/non-JSON Pydantic schemas fail before transport. Telemetry
+не експортує content/keys, invalid model strings redacted; unknown usage=None.
+Сам synthetic flag не є PII detector; future domain validation обов'язкова.
+
+Перевірки (UV_CACHE_DIR=/tmp/cyberforge-uv-cache):
+
+| Команда / перевірка | Результат |
+| --- | --- |
+| uv run --offline --locked ruff check . | success |
+| uv run --offline --locked ruff format --check . | success,72files |
+| uv run --offline pytest tests/test_llm_gateway.py tests/test_llm_gemini.py tests/test_llm_groq.py tests/test_llm_runnable.py tests/test_llm_diagnostics.py tests/test_llm_integration.py -q --tb=short | **100passed,5.30s** |
+| GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false uv run --offline --locked pytest -q --tb=short | **314passed,341.67s**; усі214 Phase0–3 tests збережено |
+| uv build --offline --out-dir /tmp/cyberforge-phase4-dist | sdist + wheel success, final code |
+| uv export --offline --locked --no-dev --no-emit-project --format requirements-txt та uv pip install --require-hashes у /tmp/cyberforge-phase4-wheel-env |53 exact runtime dependencies + installed wheel; success |
+| isolated wheel python -I з /tmp: import path, mock structured invoke/ainvoke, disabled-live exit2, archive privacy | success |
+| isolated wheel cyberforge --database /tmp/cyberforge-phase4-final-wheel-smoke.sqlite3 --smoke-test,QT_QPA_PLATFORM=offscreen | success |
+| QT_QPA_PLATFORM=wayland uv run --offline --locked cyberforge --database /tmp/cyberforge-phase4-wslg-smoke.sqlite3 --smoke-test | real WSLg startup/close success; appearance не інспектувалася |
+| git -c core.whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol diff --check | success; збережено original SRS CRLF |
+| working diff29files + local API-value scan | success; значення не виводились; .env ignored; accepted service/domain/persistence/UI unchanged |
+
+Перші SDK tests виявили retry/continuation-warning issues, виправлені до final
+focused100. Два проміжні full runs перервано під час privacy/quota review;
+вони не зараховуються як success (Qt interrupt diagnostics також не є final
+regression result). Async executor tests у sandbox зависали на event-loop wakeup;
+поза sandbox100focused і314full пройшли. Live network до провайдерів не було:
+тільки mock/fake HTTP; install network використовувалася лише для PyPI packages.
+Початкова offline isolated install не знайшла uncached wheels; exact hashed
+runtime dependencies отримано з PyPI, final wheel reinstall виконано offline.
+
+Live diagnostic реалізовано, але **НЕ запускалося**: поточна інструкція
+власника вимагає окремого дозволу на API quota execution. Доступ до approved
+models і account-specific quotas не підтверджено. Інші remaining risks:
+SDK-specific retry config під pinned version; in-memory quota scope, bounded
+Groq schema subset, external future workflow tracing, native Windows11 Phase12.
+Durable telemetry/quota records і experiments відкладено. Phase5 не розпочато.
+
+Підготовлено docs/PHASE_4_ACCEPTANCE.md; owner manual acceptance pending.
+Після final diff/staged secret verification — commit/push і PR→main, без merge.
+Linux/Windows CI exact final HEAD обов'язково перевіряються після публікації;
+actual SHA/run/results будуть у PR description і final report без зайвого
+code-free commit/повтору CI. Наявні .env, credentials, DB і Phase2 native
+Windows environment збережено. Відсутність live tests не позначається success.
