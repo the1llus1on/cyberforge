@@ -1,7 +1,8 @@
 """Main desktop shell. Mode navigation grants no access to scenario data."""
 
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtWidgets import (
+    QApplication,
     QButtonGroup,
     QFrame,
     QHBoxLayout,
@@ -15,9 +16,16 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from cyberforge.application.accounts import AccountService
+from cyberforge.domain.accounts import AccessDenied, ApplicationError, Role, Workspace
+from cyberforge.groups.service import GroupService
+from cyberforge.ui.account_pages import AccountPage
+from cyberforge.ui.admin_page import AdminPage
+from cyberforge.ui.clipboard_shortcuts import ClipboardShortcuts
 from cyberforge.ui.icons import icon
 from cyberforge.ui.navigation import AuthenticationState, NavigationState, View
 from cyberforge.ui.pages import WorkspacePage, label
+from cyberforge.ui.window_geometry import window_geometry
 
 
 def button(text: str, icon_name: str, tooltip: str) -> QPushButton:
@@ -31,19 +39,49 @@ def button(text: str, icon_name: str, tooltip: str) -> QPushButton:
 
 
 class MainWindow(QMainWindow):
-    def __init__(self) -> None:
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        # Native decorations are known after show; setGeometry used client bounds.
+        # Keep the initial frame visible without policing subsequent user resizes.
+        available = self.screen().availableGeometry()
+        frame = self.frameGeometry()
+        left = min(
+            max(frame.left(), available.left()),
+            max(available.left(), available.right() - frame.width() + 1),
+        )
+        top = min(
+            max(frame.top(), available.top()),
+            max(available.top(), available.bottom() - frame.height() + 1),
+        )
+        if frame.topLeft().toTuple() != (left, top):
+            self.move(left, top)
+
+    def __init__(self, accounts: AccountService) -> None:
         super().__init__()
+        self.accounts = accounts
+        self.groups = GroupService(accounts)
+        self._token: str | None = None
         self.setWindowTitle("CyberForge")
-        self.resize(1280, 800)
-        self.setMinimumSize(860, 620)
+        bounds, minimum = window_geometry(self.screen().availableGeometry())
+        self.setMinimumSize(minimum)
+        self.setGeometry(bounds)
+        self.clipboard_shortcuts = ClipboardShortcuts(self)
+        QApplication.instance().installEventFilter(self.clipboard_shortcuts)
         self.authentication_state = AuthenticationState.GUEST
         self.navigation = NavigationState()
         root = QWidget()
+        root.setMinimumSize(860, 620)
         outer = QVBoxLayout(root)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
-        self.setCentralWidget(root)
+        # RDP/compositors may force a frame below advertised minimum hints.
+        # A root scroll area keeps navigation and content reachable in that case.
+        self.root_scroll = QScrollArea()
+        self.root_scroll.setWidgetResizable(True)
+        self.root_scroll.setWidget(root)
+        self.setCentralWidget(self.root_scroll)
         topbar = QFrame()
+        self.topbar = topbar
         topbar.setObjectName("topbar")
         top = QHBoxLayout(topbar)
         top.setContentsMargins(16, 10, 24, 10)
@@ -63,6 +101,7 @@ class MainWindow(QMainWindow):
         top.addWidget(self.context_label)
         top.addSpacing(16)
         badge = label("Гостьовий режим")
+        self.badge = badge
         badge.setObjectName("badge")
         badge.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
         top.addWidget(badge)
@@ -72,6 +111,7 @@ class MainWindow(QMainWindow):
         body.setSpacing(0)
         outer.addLayout(body, 1)
         rail = QFrame()
+        self.rail = rail
         rail.setObjectName("rail")
         rail.setFixedWidth(76)
         rail_layout = QVBoxLayout(rail)
@@ -83,6 +123,9 @@ class MainWindow(QMainWindow):
             (View.HOME, "home", "Головна"),
             (View.CONSTRUCTOR, "plus", "Конструктор — перегляд оболонки"),
             (View.ANALYTICS, "chart", "Аналіз — перегляд оболонки"),
+            (View.MY_SCENARIOS, "book", "Мої сценарії"),
+            (View.MY_RESULTS, "chart", "Мої результати"),
+            (View.ADMIN, "settings", "Адміністрування"),
             (View.SETTINGS, "settings", "Налаштування"),
             (View.PROFILE, "profile", "Профіль"),
         )
@@ -124,20 +167,34 @@ class MainWindow(QMainWindow):
         )
         catalog.addWidget(self.search)
         catalog.addSpacing(18)
-        catalog.addWidget(label("Каталог недоступний", "heading"))
-        catalog.addWidget(
-            label("Увійдіть до облікового запису, щоб побачити ваші сценарії.")
+        self.catalog_title = label("Каталог недоступний", "heading")
+        catalog.addWidget(self.catalog_title)
+        self.catalog_hint = label(
+            "Увійдіть до облікового запису, щоб побачити ваші сценарії."
         )
+        catalog.addWidget(self.catalog_hint)
         catalog.addStretch()
         catalog.addWidget(label("ПОПЕРЕДНІЙ ПЕРЕГЛЯД", "eyebrow"))
         catalog.addWidget(label("Оболонка інтерфейсу\nБез сценаріїв і результатів"))
         body.addWidget(self.scenario_panel)
         self.workspace = QStackedWidget()
-        self.pages: dict[View, WorkspacePage] = {}
+        self.pages: dict[View, WorkspacePage | AccountPage | AdminPage] = {}
         self.containers: dict[View, QScrollArea] = {}
         for view in View:
-            page = WorkspacePage(view)
-            page.profile_requested.connect(lambda: self.navigate(View.PROFILE))
+            if view == View.PROFILE:
+                page = AccountPage(self.accounts)
+                self.account_page = page
+                page.authenticated.connect(self._authenticated)
+                page.signed_out.connect(self._signed_out)
+                page.close_requested.connect(lambda: self.navigate(View.HOME))
+            elif view == View.ADMIN:
+                page = AdminPage(
+                    self.accounts, self.groups, lambda: self._token, self._sync_session
+                )
+                self.admin_page = page
+            else:
+                page = WorkspacePage(view)
+                page.profile_requested.connect(lambda: self.navigate(View.PROFILE))
             scroll = QScrollArea()
             scroll.setWidgetResizable(True)
             scroll.setWidget(page)
@@ -148,31 +205,181 @@ class MainWindow(QMainWindow):
             self.containers[view] = scroll
             self.workspace.addWidget(scroll)
         body.addWidget(self.workspace, 1)
+        self.session_timer = QTimer(self)
+        self.session_timer.setInterval(1000)
+        self.session_timer.timeout.connect(self._sync_session)
+        self.session_timer.start()
         self._render()
 
+    def _authenticated(self, token: str) -> None:
+        self._token = token
+        self.authentication_state = AuthenticationState.AUTHENTICATED
+        self.navigation.reset()
+        if self._refresh_profile():
+            self._render()
+
+    def _refresh_profile(self) -> bool:
+        try:
+            self.account_page.refresh(self._token)
+        except ApplicationError as error:
+            self._signed_out()
+            self.statusBar().showMessage(str(error), 5000)
+            return False
+        return True
+
+    def _signed_out(self) -> None:
+        self.accounts.logout(self._token)
+        self._token = None
+        self.authentication_state = AuthenticationState.GUEST
+        self.navigation.reset()
+        self.account_page.refresh(None)
+        self.admin_page.clear()
+        self.search.clear()
+        self._render()
+
+    def _sync_session(self) -> None:
+        if self._token:
+            try:
+                self.accounts.current(self._token)
+            except ApplicationError as error:
+                self._signed_out()
+                self.statusBar().showMessage(str(error), 5000)
+            else:
+                self._render()
+
+    def _allowed(self, view: View) -> bool:
+        if self._token is None:
+            return view in (View.HOME, View.PROFILE, View.SETTINGS)
+        try:
+            self.accounts.current(self._token)
+        except ApplicationError as error:
+            self._signed_out()
+            self.statusBar().showMessage(str(error), 5000)
+            return False
+        if view.value in {workspace.value for workspace in Workspace}:
+            try:
+                self.accounts.authorize_workspace(self._token, Workspace(view.value))
+            except AccessDenied:
+                return False
+            except ApplicationError as error:
+                self._signed_out()
+                self.statusBar().showMessage(str(error), 5000)
+                return False
+        return True
+
+    def closeEvent(self, event) -> None:
+        self.session_timer.stop()
+        self._signed_out()
+        super().closeEvent(event)
+
     def navigate(self, view: View) -> None:
+        if not self._allowed(view):
+            self.statusBar().showMessage("Доступ заборонено.", 5000)
+            self._render()
+            return
+        if view != View.PROFILE:
+            self.account_page.clear()
+        if view == View.PROFILE and not self._refresh_profile():
+            return
+        if view == View.ADMIN:
+            try:
+                self.admin_page.refresh()
+            except ApplicationError as error:
+                self.statusBar().showMessage(str(error), 5000)
+                self._sync_session()
+                return
         self.navigation.navigate(view)
         self._render()
 
     def _back(self) -> None:
+        self.account_page.clear()
         self.navigation.back()
+        if self.navigation.current == View.PROFILE and not self._refresh_profile():
+            return
         self._render()
 
     def _forward(self) -> None:
+        self.account_page.clear()
         self.navigation.forward()
+        if self.navigation.current == View.PROFILE and not self._refresh_profile():
+            return
         self._render()
 
     def _render(self) -> None:
         current = self.navigation.current
+        user = None
+        if self._token:
+            try:
+                user = self.accounts.current(self._token)
+            except ApplicationError as error:
+                self._signed_out()
+                self.statusBar().showMessage(str(error), 5000)
+                return
+        login_form = current == View.PROFILE and user is None
+        self.topbar.setVisible(not login_form)
+        self.rail.setVisible(not login_form)
+        learner = user is not None and user.role == Role.LEARNER
+        for view in (View.CONSTRUCTOR, View.ANALYTICS):
+            self.nav_buttons[view].setVisible(user is not None and not learner)
+        for view in (View.MY_SCENARIOS, View.MY_RESULTS):
+            self.nav_buttons[view].setVisible(learner)
+        self.nav_buttons[View.ADMIN].setVisible(
+            user is not None and user.role == Role.ADMINISTRATOR
+        )
+        for view, title in (
+            (View.CONSTRUCTOR, "Конструктор"),
+            (View.ANALYTICS, "Аналіз"),
+        ):
+            tooltip = title if user else title + " — перегляд оболонки"
+            self.nav_buttons[view].setToolTip(tooltip)
+            self.nav_buttons[view].setAccessibleName(tooltip)
+        self.badge.setText(
+            f"{user.username} · {user.role.label}" if user else "Гостьовий режим"
+        )
+        self.badge.setMaximumWidth(300)
+        self.badge.setToolTip(
+            f"{user.display_name} · {user.role.label}" if user else "Гостьовий режим"
+        )
+        self.catalog_title.setText(
+            "Сценаріїв поки немає" if user else "Каталог недоступний"
+        )
+        self.catalog_hint.setText(
+            "Навчальні сценарії з’являться після їх публікації."
+            if user
+            else "Увійдіть до облікового запису, щоб побачити ваші сценарії."
+        )
+        self.pages[View.HOME].session_hint.setText(
+            (
+                "Відкрийте «Мої сценарії» або «Мої результати»."
+                if learner
+                else (
+                    "«+» відкриває Конструктор, іконка графіка — Аналіз. Кнопка "
+                    "будинку повертає на Головну."
+                )
+            )
+            if user
+            else (
+                "«+» відкриває Конструктор, іконка графіка — Аналіз. Кнопка "
+                "будинку повертає на Головну.\nУвійдіть, щоб отримати доступ "
+                "до ваших сценаріїв."
+            )
+        )
+        for view in (View.HOME, View.CONSTRUCTOR, View.ANALYTICS):
+            self.pages[view].login_button.setVisible(user is None)
         self.workspace.setCurrentWidget(self.containers[current])
         self.nav_buttons[current].setChecked(True)
         self.back_button.setEnabled(self.navigation.can_go_back)
         self.forward_button.setEnabled(self.navigation.can_go_forward)
-        self.scenario_panel.setVisible(current in (View.CONSTRUCTOR, View.ANALYTICS))
+        self.scenario_panel.setVisible(
+            current in (View.CONSTRUCTOR, View.ANALYTICS, View.MY_SCENARIOS)
+        )
         self.new_scenario_button.setVisible(current == View.CONSTRUCTOR)
         self.context_label.setText(
             {
                 View.HOME: "Головна",
+                View.MY_SCENARIOS: "Мої сценарії",
+                View.MY_RESULTS: "Мої результати",
+                View.ADMIN: "Адміністрування",
                 View.CONSTRUCTOR: "Конструктор",
                 View.ANALYTICS: "Аналіз",
                 View.SETTINGS: "Налаштування",

@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phase 0 — ACCEPTED; Phase 1 — ACCEPTED власником 11.11.2026 після особистого запуску та візуального рев’ю.
+**State:** Phase 0 — ACCEPTED; Phase 1 — ACCEPTED власником 11.11.2026; Phase 2 — ACCEPTED власником 12.11.2026; Phase 3 — NOT STARTED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -18,15 +18,15 @@
 |---|---|---|---|
 | 0 | Project Foundation | ACCEPTED | Python 3.12/uv, src package, CLI, lockfile, pytest/Ruff; власник підтвердив перевірки у WSL Ubuntu та прийняв фазу 11.11.2026 |
 | 1 | Main UI Shell | ACCEPTED | Dark PySide6 shell, universal Home / Guest state, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
-| 2 | Users & Groups | NOT STARTED | Login, Argon2id, 3 roles, demo accounts/groups, permission enforcement; denied-access tests |
+| 2 | Users & Groups | ACCEPTED | Прийнято власником 12.11.2026: login, Argon2id, 3 roles, demo accounts/groups, RBAC; WSLg і native Windows 11 докази нижче |
 | 3 | Scenario Management | NOT STARTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
 | 4 | LLM Integration | NOT STARTED | LLMGateway, provider adapter, Gemini configuration, deterministic MockLLMProvider; schema and fallback tests |
 | 5 | Specialized Agents | NOT STARTED | Typed I/O contracts for four specialized agents and bounded orchestration; mock agent tests |
 | 6 | Email Constructor | NOT STARTED | Email shell, generation, preview, code view, regeneration, explicit save and validation; UI tests |
 | 7 | Web Constructor | NOT STARTED | Web templates, isolated Qt WebEngine, generation, preview, code view, explicit save; security and UI tests |
 | 8 | Scenario Integration | NOT STARTED | Shared Email→Web context, internal link validation, readiness gate, immutable publishing; integration tests |
-| 9 | Learner Simulation | NOT STARTED | Email and Web exercises, controlled navigation, recorded attempts/events, safe completion without Web; end-to-end tests |
-| 10 | Scoring & Mentor | NOT STARTED | Versioned deterministic rubrics, evaluation, result display, LLM explanations without score edits; reproducibility tests |
+| 9 | Learner Simulation | NOT STARTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
+| 10 | Scoring & Mentor | NOT STARTED | Versioned deterministic rubrics, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
 | 11 | Analytics Mode | NOT STARTED | Read-only scenario statistics, deduplicated learner table, missing-data rules, filters, CSV/JSON export, RBAC; analytics tests |
 | 12 | Finalization | NOT STARTED | Full regression/security checks, Windows 11 package, demonstration dataset, docs and release checklist |
 
@@ -198,3 +198,215 @@ The owner evaluates the working demonstration, diff, test evidence and SRS trace
   власника в повідомленні про прийняття не вказана.
 - **Наступна дія:** Phase 2 готова до окремого погодження, залишається
   **NOT STARTED**. Прийняття Phase 1 та дозвіл merge не дозволяють її початок.
+
+## Phase 2 — Users & Groups (11.11.2026)
+
+**Поточний статус: ACCEPTED власником 12.11.2026.** Нижче збережено історію
+реалізації та REVIEW; остаточні докази прийняття наведено наприкінці фази.
+
+Власник явно погодив реалізацію, commit/push/PR. Початок: чиста `main`,
+`HEAD == origin/main == fc713837109b3a5b5cd9ad53e10d1fcb223764ee`,
+GitHub MCP підтвердив remote; створено `feat/phase-2-users-groups`.
+
+План: моделі Users/LearningGroups/GroupInstructors/GroupLearners і міграція
+(§§2.5,14–15) → Argon2id, сесії, service-level RBAC (§§2.7–2.8,16.6) →
+рольова оболонка, login/profile/admin (§3, ADR-0001) → явний demo setup (§2.6) →
+позитивні/негативні тести, CI, WSLg, документація (§§21–23).
+Gate: входи всіх ролей, ізоляція logout/reset, persistence та M:N,
+заборонені service/UI шляхи, Alembic consistency, Ruff/pytest/GUI.
+Windows 11 потребує окремої перевірки. Сценарії та LLM не входять у фазу.
+
+
+### Реалізація та gate Phase 2
+
+**Статус на момент первинного gate: REVIEW (11.11.2026).** Остаточне рішення
+власника 12.11.2026 — ACCEPTED. Phase 3–12 не розпочато.
+
+- Реалізовано login/logout, три ролі й Guest, Argon2id/rehash, власну зміну
+  та адміністративне скидання паролів, відкликання сесій через auth_version.
+- SQLite/SQLAlchemy/Alembic: Users, LearningGroups, GroupInstructors,
+  GroupLearners; M:N, FK, constraints, role-тригери, транзакційні записи.
+- Administrator керує користувачами, ролями, активністю, групами й складом;
+  Instructor/Learner мають лише scoped читання груп. Прямі service-виклики
+  та навігація перевіряються незалежно від видимості кнопок.
+- Рольова оболонка з універсальною Home, повновіконним login, профілем,
+  адмінформами й порожніми сценаріями/результатами; logout очищає UI/історію.
+- Явна normal/bootstrap/demo ініціалізація; сім точних demo-логінів та дві
+  групи SRS §2.6; незалежні випадкові паролі у приватному файлі поза Git.
+- Нові модулі domain/identity/application/groups/persistence та дві UI-сторінки;
+  README, ADR-0001/0002, журнал, CI й чотири WSLg-знімки оновлено.
+- `uv sync --locked --offline`, `uv run --offline ruff check .`,
+  `uv run --offline ruff format --check .` — успіх.
+- `uv run --offline pytest --tb=short -q` — **68 passed** (147.71 s),
+  включно з 8 integration/database/demo-тестами та негативними RBAC-шляхами.
+- `QT_QPA_PLATFORM=wayland uv run --offline pytest tests/ui -q --tb=short`
+  — **37 passed** (103.62 s); справжній WSLg, не Windows.
+- `uv build --offline` — wheel/sdist; міграції присутні, БД/секретів/кешів
+  немає; ізольований wheel встановлено і запущено з `/tmp`, exit 0.
+- CLI smoke offscreen й WSLg Wayland, login/admin/learner screenshots;
+  подробиці команд — DEVELOPMENT_LOG.
+- Тести та runtime не використовують мережу/LLM; MockLLMProvider — Phase 4.
+  Windows 11/DPI/ACL не перевірено. Міграція перевірена на SQLite у WSL;
+  GitHub Actions виконує окрему Linux-перевірку після відкриття PR.
+
+**Наступна дія:** рев’ю PR і демонстрація Phase 2 власником. Не виконувати merge
+або Phase 3 без окремого явного дозволу.
+
+**Доставка:** реалізація `83e803d`, гілка відправлена;
+[PR #3](https://github.com/the1llus1on/cyberforge/pull/3) відкрито до `main`.
+Remote CI запущено; актуальний результат — у checks PR. Merge не виконано.
+
+### Уточнення security review — права SQLite
+
+Phase 2 залишається REVIEW. SRS §§2.8,14.9,16,21.4: нові каталоги БД 0700,
+файл 0600 на POSIX без зміни umask або прав наявних файлів. Додано
+subprocess-тести з umask 000 для DELETE journal і WAL/SHM та preservation.
+Windows ACL не перевірено; див. ADR-0002.
+
+### Повторний owner UI review PR #3
+
+Phase 2 — REVIEW. Погоджено вісім корекцій у коментарі 6804044603:
+видалення користувачів із захистами, негайний вибір popup ролі, діагностика
+української клавіатури, атомарне збереження групи/складу, чотири фільтри,
+Learner default, активний/неактивний selection і deselect, заборона Guest
+Constructor/Analytics. План: сервісні зміни (§§2,14.9,16.6) → UI/фільтри
+(§3, ADR-0001/0002) → unit/integration/GUI/WSLg (§21) → CI та той самий PR.
+SRS незмінний. Фізична клавіатура власника після environment remediation
+потребує окремого підтвердження; докази Weston — docs/diagnostics/wslg-keyboard.md.
+
+### Повторна перевірка чотирьох залишкових дефектів
+
+Phase 2 — REVIEW. SRS §§2–3,16.6,21: стандартний QComboBox замість custom
+popup, однакові EditableList з focus-out selection cleanup, display name
+у Users/search/tooltip та responsive elision. Окремі тести обох списків,
+mouse/keyboard dismissal і explicit Save. Для фізичного вводу mapping error
+Weston 0x20422 підтверджений повторно; додано незалежний Qt probe й план
+native Windows порівняння. Фізичне введення й Windows залишаються неперевіреними.
+Owner demo-БД/credentials не змінюються; PR #3 без merge, Phase 3 не починається.
+
+Докази поточного уточнення: Ruff check/format — успіх; повний pytest —
+74 passed; WSLg GUI — 34 passed, 3 synthetic-mouse skips із поясненням.
+Native mouse selection/dismissal — offscreen/CI; keyboard popup — також WSLg.
+Прийняття фізичного UI та українського вводу потребує власника.
+
+### Owner refinement: radio roles / checkbox pickers / shortcut metadata
+
+Phase 2 — REVIEW. План у межах §§2–3,16,21: QRadioButton exclusive role choice
+→ NoSelection membership pickers → safe probe фізичних Ctrl events →
+unit/GUI/WSLg/CI → той самий PR #3. Сценарії/Phase 3 не починати.
+Standard Ukrainian typing підтверджено власником; фізичні shortcut mapping
+та Enhanced лишаються окремими відкритими пунктами. Систему не змінювати.
+
+Докази: Ruff — успіх; pytest 79 passed; WSLg GUI 42 passed, без skips.
+UI-пункти реалізовано; фізична перевірка radio/checkbox залишається власнику.
+Ctrl shortcuts: діагностика готова, корекція відкладена до фактичних event
+метаданих, а не synthetic mapping. Enhanced fix у офіційному релізі не
+підтверджений. Owner acceptance не надається автоматично.
+
+### Indicator-only / geometry / confirmed clipboard mapping
+
+Phase 2 — REVIEW. SRS §§2–3,16,21: default Qt indicator hit testing замість
+row toggle; screen-bounded 1400×900 / 1100×720 і root fallback; sticky admin
+actions; exact WSLg Wayland Ctrl mappings на owner physical evidence.
+Порядок: UI/Qt geometry → scoped native editing operations → positive/negative
+unit+GUI → WSLg 100/150/200% → docs/screenshots/CI → existing PR #3.
+Ні Enhanced fix, ні Windows DPI acceptance не заявляються. Phase 3 не починати.
+
+Результат уточнення: Ruff — успіх; pytest106 passed; WSLg GUI69 passed;
+layout/indicator tests при 150% і200% Qt scale — по16 passed. Qt minimum hints
+передаються на перевіреному WSLg шляху; надано незалежний root fallback.
+Знімки1400×900/1100×720 актуальні. Physical acceptance shortcuts/manual resize
+та Windows11 DPI лишаються власнику; Enhanced не виправлено. REVIEW збережено.
+
+### Pre-acceptance technical audit
+
+Phase 2 — REVIEW. Прочитано Phase2 diff проти origin/main і SRS/ADR.
+Вузькі виправлення data loss (partial save, inactive memberships), active flag,
+session filter cleanup, DB error handling і historical FK deletion guard,
+правдиві cancel statuses; додано негативні й concurrency тести.
+CI matrix Linux/Windows Server2022: locked sync, Ruff, pytest/DB/GUI/import/smoke.
+6ba0a6a queued узгоджується з офіційним major outage GitHub Actions; не success.
+Повний звіт docs/audits/phase-2-pre-acceptance.md; тільки залишкові фізичні
+owner тести — docs/PHASE_2_ACCEPTANCE.md. Phase3/merge заборонені без дозволу.
+
+Підсумок audit head: 119 pytest passed; WSLg73 passed; Ruff/locked sync/
+startup/build/isolated wheel — успіх. Стан Windows hosted jobs перевіряється
+окремо; до фактичного завершення Windows CI verification не зараховується.
+
+Перший Windows run виявив redirected CP1252 CLI defect; виправлено явним
+UTF-8 для pipes, не змінюючи interactive console. Historical FK guard
+додатково перевірено з parent NOCASE collation та mixed-case table name.
+Повторний matrix run43103905494 для60947fa — success: Linux119 passed,
+Windows117 passed/2 POSIX skips; locked sync, Ruff, import/Qt startup — success
+на обох OS. Native Windows11 gate не закрито. Phase 2 лишається REVIEW.
+
+### Native Windows 11 acceptance workspace (12.11.2026)
+
+SRS §§2–3,14–15,21–23; REVIEW. Власник підтвердив9/10 WSLg physical checks;
+відкритий physical minimum-size defect. План: tracked HEAD export → portable
+Windows uv/Python3.12 без PATH/registry → locked install → private profile demo
+з ACL → native geometry/probe/startup/tests → launcher і manual checklist.
+Workspace D:\Programs\Own\program\cyberforge-win-test, створено новим.
+Baseline04f01db: native Python3.12.16/Qt6.10.3/windows backend; pytest117/2skips,
+native shell14tests passed. Win32 tracking min1393×947 physical при125%.
+Виявлено initial-frame clipping6logical px; вузький showEvent positioning fix
+і regression без fixed size. Системні settings/owner existing data не змінено.
+Документація й обмеження: docs/diagnostics/native-windows.md. Physical native
+acceptance залишається власнику; без merge/Phase3.
+
+Native GUI розширення виявило clipping admin action row при1100×720,
+непомітний offscreen: preferred page height730 приviewport656. Вузький
+minimumHeightForWidth override зберігає internal scrolling і sticky actions;
+регресія посилена до повних bounds та message wrapping. Без redesign/RBAC змін.
+
+Code1e11497: native Windows GUI47passed (включно з admin/roles/buttons і
+WM_GETMINMAXINFO), Windows full119passed/2POSIX skips, local121passed,
+WSLg75passed. CMD startup і ACL checks успішні. Native125% widget captures
+додано в docs/screenshots; поточний desktop scale не змінювався. Owner physical
+resize/keyboard/Enhanced/DPI/restart gate лишається відкритим; Phase2 REVIEW.
+
+### Остаточне прийняття Phase 2 — 12.11.2026
+
+Власник явно прийняв Users & Groups та дозволив merge PR #3 після успішного
+CI фінального документаційного коміту. Стан **ACCEPTED** замінює попередній
+REVIEW; записи вище лишаються історичними. Прийнята реалізація —
+`50d89e970559d725ca0f603e3db220b130d55847`; далі змінюється лише документація.
+
+- За повідомленням власника у WSLg перевірено основні user/group operations,
+  Guest/Administrator/Instructor/Learner navigation і permissions, radio roles,
+  membership controls, persistence/logout, Standard Ukrainian typing/shortcuts.
+- За повідомленням власника native Windows 11 підтвердив Ukrainian Enhanced
+  input, keyboard shortcuts і фізичне дотримання мінімального розміру вікна.
+- Автоматизовані докази прийнятої ревізії: Linux121 passed, Windows119 passed/
+  2 POSIX skips; Ruff/locked install/migrations/import/startup та
+  [CI run43131852256](https://github.com/the1llus1on/cyberforge/actions/runs/43131852256)
+  — success. Окремий native Windows GUI suite47 passed; WSLg GUI75 passed.
+- WSLg Enhanced mapping і physical resize нижче minimum лишаються відомими
+  environment limitations; native Windows є цільовою платформою.
+- Повна фізична DPI100/125/150/200%/multi-monitor матриця не підтверджена
+  цим повідомленням власника й не позначається як пройдена.
+- SRS v3.0, runtime, schema, dependencies, owner demo/credentials та ізольоване
+  Windows environment не змінюються. Merge — звичайний merge commit, після
+  перевірки фінального HEAD/CI; branches і локальні дані зберігаються.
+
+**Phase 3 — Scenario Management: NOT STARTED.** Прийняття й merge Phase 2
+не є дозволом почати Phase 3 або іншу наступну фазу.
+
+## Phase 9–10 — історія спроб і подання результатів (лише план)
+
+Обидві фази — **NOT STARTED**. Цей запис уточнює вже наявний scope SRS
+§§3.9,8,12,23; жодних моделей, міграцій або екранів зараз не додається.
+
+- **Phase 9 — Learner Simulation:** кожне проходження має окрему
+  ScenarioAttempt, пов'язану з учнем і опублікованою версією сценарію;
+  зберігаються події та стан спроби. Історія власних спроб доступна учню
+  після перезапуску; чужі спроби не розкриваються. Безпечне завершення без
+  переходу до Web підтримується згідно §8.5.
+- **Phase 10 — Scoring & Mentor:** «Мої результати» представляє історію
+  власних результатів і деталі конкретної спроби: сценарій/версія, стан,
+  фактичні оцінки та пояснення. Відсутній результат, незавершена спроба й
+  фактичний нуль відрізняються; незастосовний Web не перетворюється на нуль.
+  ScoringService детерміновано обчислює та зберігає результат із прив'язкою
+  до версій рубрики/алгоритму й подій; LLM лише пояснює вже обчислене.
+- Поточні порожні learner views Phase 2 залишаються чесними заглушками;
+  історія спроб і scoring не є реалізованими можливостями прийнятої фази.

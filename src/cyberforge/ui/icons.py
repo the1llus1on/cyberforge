@@ -11,6 +11,15 @@ def icon(name: str) -> QIcon:
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
     painter.setPen(QPen(QColor("#c2c6d1"), 1.7))
     lines = {
+        "book": [
+            (3, 5, 11, 7),
+            (11, 7, 21, 5),
+            (3, 5, 3, 19),
+            (21, 5, 21, 19),
+            (3, 19, 11, 21),
+            (11, 21, 21, 19),
+            (11, 7, 11, 21),
+        ],
         "plus": [(5, 12, 19, 12), (12, 5, 12, 19)],
         "chart": [
             (5, 4, 5, 20),
