@@ -81,6 +81,31 @@ Candidate native measurement: page656px, кнопки закінчуються �
 вікні720px. Архітектура вкладок/scroll areas та explicit atomic Save збережена.
 Регресія перевіряє повні rectangles кнопок і багаторядкове повідомлення.
 
+## Перевірений результат після обох fixes
+
+Code snapshot **1e11497c09c60ee4bd02b097d330f682d2ada420**:
+- Native Windows11 Pro build26300, backendwindows: **47 GUI passed** (65.62s),
+  включно з ролями, CRUD, membership, повними bounds кнопок і Win32 min limits.
+- Windows full pytest offscreen: **119 passed,2 POSIX skips** (82.52s).
+- Local full pytest: **121 passed** (96.99s); WSLg Wayland GUI: **75 passed**
+  (75.01s). Ruff lint/format41files, locked sync, migrations/startup — success.
+- Усі69tracked files Windows snapshot побайтово відповідають git archive;
+  local DB/credentials/WSL venv не копіювалися.
+- Root CMD launcher startup перевірено, конфліктні diagnostic flags відхилено.
+  Native demo/credentials збережено при switch між snapshots. Наявний Python3.13.5
+  read-only запуском підтверджено окремо, його установки не змінено.
+
+Фінальний snapshot/revision записані в test-root SOURCE_REVISION.txt та
+environment.json; documentation-only export після code snapshot не змінює
+production Python/lockfile. Поточні hosted checks — у PR#3. Фізичне прийняття
+власником ще потрібне.
+
+Widget captures на native backend при125%, logical1100×720 (physical1375×900),
+тільки синтетичні temporary accounts, не owner demo/desktop:
+[Users](../screenshots/phase-2-native-admin-users-min.png),
+[Groups](../screenshots/phase-2-native-admin-groups-min.png).
+Це не physical mouse/keyboard або compositor screenshot test.
+
 WSLg Wayland: Qt6.10.3/DPR1, minimum1100×720, hint36×54, resize(1,1)
 обмежується1100×720; раніше trace підтвердив xdg_toplevel.set_min_size.
 Фізичний owner resize все одно порушує цей limit. Дані вказують на шлях

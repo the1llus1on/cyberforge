@@ -355,3 +355,9 @@ Native GUI розширення виявило clipping admin action row при1
 непомітний offscreen: preferred page height730 приviewport656. Вузький
 minimumHeightForWidth override зберігає internal scrolling і sticky actions;
 регресія посилена до повних bounds та message wrapping. Без redesign/RBAC змін.
+
+Code1e11497: native Windows GUI47passed (включно з admin/roles/buttons і
+WM_GETMINMAXINFO), Windows full119passed/2POSIX skips, local121passed,
+WSLg75passed. CMD startup і ACL checks успішні. Native125% widget captures
+додано в docs/screenshots; поточний desktop scale не змінювався. Owner physical
+resize/keyboard/Enhanced/DPI/restart gate лишається відкритим; Phase2 REVIEW.

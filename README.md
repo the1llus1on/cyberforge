@@ -70,7 +70,8 @@ Setup створить сім облікових записів SRS §2.6 і д�
 `.local/demo-credentials.json` у редакторі й візьміть пароль потрібного логіна.
 Застосунок не друкує паролі й не записує їх у логи; `.local/` і файли
 `*credentials*.json` виключені з Git. POSIX-права нового файлу — 0600.
-У Windows зберігайте файл у приватному каталозі профілю; ACL ще не перевірено.
+У Windows зберігайте файл у приватному каталозі профілю. ACL окремого native
+test demo перевірено; права інших Windows БД автоматично не змінюються.
 Не копіюйте цей файл у PR, документацію або спільні каталоги.
 
 Повторення тієї самої setup-команди не змінює існуючі demo-акаунти,
@@ -184,7 +185,9 @@ scroll fallback. [Деталі геометрії](docs/diagnostics/window-sizin
 Після отримання фізичних key/scan доказів додано вузьку корекцію Ctrl+C/V/X/A
 для Standard Ukrainian під WSLg Wayland. Вона не змінює системну розкладку,
 English, Shift+Insert або Unicode typing; password copy/cut лишаються заборонені.
-Підтвердження нової поведінки фізично — за власником. Enhanced не виправлено.
+12.11.2026 власник підтвердив Standard typing/shortcuts фізично у WSLg.
+Native Windows typing/resize/DPI потребують окремої перевірки; WSLg Enhanced
+не виправлено. [Готовий native launcher і checklist](docs/diagnostics/native-windows.md).
 
 Перед прийняттям Phase 2 проведено [технічний аудит](docs/audits/phase-2-pre-acceptance.md).
 [Короткий checklist власника](docs/PHASE_2_ACCEPTANCE.md) містить лише залишкові

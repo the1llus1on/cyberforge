@@ -896,3 +896,21 @@ Final suites/новий tracked export виконуються до публік�
 GUI75passed,75.01s; Ruff41files і diff check — success. CI дляпопереднього
 eb6cf79 завершивсяsuccess наобох OS (run43130028480), але не доводить новий
 layout fix; його native regression виконується на окремому наступному snapshot.
+
+Committed code1e11497c09c60ee4bd02b097d330f682d2ada420 перевірено окремо:
+- Native Windows backend GUI47passed,65.62s (accounts/admin/shell/geometry).
+- Full Windows pytest119passed/2POSIX skips,82.52s.
+- Locked offline sync, Ruff lint/format41files, packaged migrations і launcher
+  startup — success. Усі69tracked files побайтово відповідають git archive.
+- Frame(68,0,1400,798), client1400×768 приavailable1536×816/DPR1.25;
+  declared minimum1100×720, native tracking1393×947physical.
+- Existing Python3.13.5 успішно запущено read-only через py launcher, без змін.
+- Native125% synthetic widget captures Users/Groups на1100×720 збережено й
+  переглянуто: кнопки повністю видимі; inner scroll доступний, стиль збережено.
+  Це QWidget.grab лише власного вікна, не desktop/credentials screenshot.
+
+Private Windows profile demo зберігається між source snapshots; password values
+не читали/не логували; WSL owner data не копіювали/не змінювали. Root PS/CMD
+launcher залежить тільки від Windows файлів у дозволеному root/profile dirs,
+не від WSL або IDE. Мінімальний physical Windows frame test лишається owner:
+WM_GETMINMAXINFO/programmatic resize не дорівнює ручному dragging. Phase2 REVIEW.

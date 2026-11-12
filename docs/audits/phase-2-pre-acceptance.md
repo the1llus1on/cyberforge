@@ -118,3 +118,8 @@ Phase 2 — REVIEW, merge/Phase 3 не виконуються.
 Ruff lint/format, locked sync/import/startup/build/isolated wheel — успіх.
 Hosted matrix для code commit60947fa — success; докази й межі Windows
 перевірки наведено вище. Поточний стан PR перевіряється у checks PR #3.
+
+Оновлення12.11.2026: окреме native Windows11 середовище, actual desktop
+automation і дві виявлені geometry/layout помилки описано в
+[native Windows guide](../diagnostics/native-windows.md). Попередні hosted
+результати вище не підміняють ці нативні докази або owner physical acceptance.

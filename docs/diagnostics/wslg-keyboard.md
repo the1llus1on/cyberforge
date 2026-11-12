@@ -193,3 +193,13 @@ probe залишено без змін як baseline. Це не переприз
 Автотести використовують точні owner key/scan/modifier дані, окремі негативні
 сценарії, QLineEdit/QTextEdit/QPlainTextEdit native operations, signal count
 та English/Shift+Insert. Фізичне виконання після зміни ще перевіряє власник.
+
+## Owner confirmation 12.11.2026
+
+Власник фізично підтвердив Standard Ukrainian typing, Ctrl+C/V/X/A,
+English shortcuts та Shift+Insert у CyberForge під WSLg після correction.
+Цей звіт замінює попередній pending статус саме цих WSLg перевірок.
+WSLg Enhanced залишається upstream mapping limitation. Підготовлено окремий
+[native Windows workspace](native-windows.md), але Windows Standard/Enhanced
+physical keyboard acceptance ще не виконано; backendwindows не використовує
+WSLg-specific correction. Windows keyboard settings не змінено.
