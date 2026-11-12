@@ -4,6 +4,7 @@ from PySide6.QtCore import QSignalBlocker, QSize, Qt, QTimer
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
+    QCheckBox,
     QFrame,
     QHBoxLayout,
     QLineEdit,
@@ -176,6 +177,9 @@ class MainWindow(QMainWindow):
         self.search.setToolTip("Пошук за ID, темою або статусом")
         self.search.textChanged.connect(self._filter_catalog)
         catalog.addWidget(self.search)
+        self.archive_filter = QCheckBox("Архівні сценарії")
+        self.archive_filter.toggled.connect(self._archive_filter_changed)
+        catalog.addWidget(self.archive_filter)
         catalog.addSpacing(18)
         self.catalog_title = label("Каталог недоступний", "heading")
         catalog.addWidget(self.catalog_title)
@@ -201,6 +205,7 @@ class MainWindow(QMainWindow):
                 page = ScenarioPage(self.scenarios, lambda: self._token)
                 self.scenario_page = page
                 page.saved.connect(self._scenario_saved)
+                page.archive_changed.connect(self._scenario_archive_changed)
             elif view == View.PROFILE:
                 page = AccountPage(self.accounts)
                 self.account_page = page
@@ -261,6 +266,8 @@ class MainWindow(QMainWindow):
         with QSignalBlocker(self.scenario_list):
             self.scenario_list.clear()
         self.search.clear()
+        with QSignalBlocker(self.archive_filter):
+            self.archive_filter.setChecked(False)
         self._render()
 
     def _sync_session(self) -> None:
@@ -351,27 +358,49 @@ class MainWindow(QMainWindow):
         query = self.search.text().casefold().strip()
         for index in range(self.scenario_list.count()):
             item = self.scenario_list.item(index)
-            item.setHidden(query not in item.toolTip().casefold())
+            item.setHidden(
+                query not in item.toolTip().casefold()
+                or item.data(Qt.ItemDataRole.UserRole + 1)
+                != self.archive_filter.isChecked()
+            )
+
+    def _archive_filter_changed(self, checked: bool) -> None:
+        if not self.scenario_page.can_leave():
+            with QSignalBlocker(self.archive_filter):
+                self.archive_filter.setChecked(not checked)
+            return
+        self._filter_catalog()
 
     def _refresh_catalog(self, user) -> None:
         permitted = user is not None and user.role != Role.LEARNER
         self.search.setEnabled(permitted)
+        self.archive_filter.setEnabled(permitted)
         self.new_scenario_button.setEnabled(permitted)
-        rows = self.scenarios.catalog(self._token) if permitted else ()
+        rows = self.scenarios.catalog(self._token, archived=None) if permitted else ()
         if rows != self._catalog:
             self._catalog = rows
             with QSignalBlocker(self.scenario_list):
                 self.scenario_list.clear()
                 for scenario in rows:
-                    item = QListWidgetItem(scenario.name)
+                    item = QListWidgetItem(
+                        scenario.name + (" · Архів" if scenario.archived else "")
+                    )
                     item.setData(Qt.ItemDataRole.UserRole, scenario.id)
+                    item.setData(Qt.ItemDataRole.UserRole + 1, scenario.archived)
                     item.setToolTip(
                         f"{scenario.name}\n{scenario.parameters.topic}\n{scenario.status.label}"
+                        + ("\nАрхівовано" if scenario.archived else "\nАктивний")
                     )
                     self.scenario_list.addItem(item)
                     if scenario.id == self.selected_scenario_id:
                         self.scenario_list.setCurrentItem(item)
             self._filter_catalog()
+        if self.selected_scenario_id is not None:
+            current = next(
+                (row for row in rows if row.id == self.selected_scenario_id), None
+            )
+            if current is not None:
+                self.scenario_page.observe(current)
         if self.selected_scenario_id is not None and not any(
             row.id == self.selected_scenario_id for row in rows
         ):
@@ -429,6 +458,13 @@ class MainWindow(QMainWindow):
         self._render()
         self._select_catalog_id()
 
+    def _scenario_archive_changed(self, scenario: Scenario) -> None:
+        with QSignalBlocker(self.archive_filter):
+            self.archive_filter.setChecked(scenario.archived)
+        self._scenario_saved(scenario)
+        self._filter_catalog()
+        self._show_scenario()
+
     def _select_catalog_id(self) -> None:
         with QSignalBlocker(self.scenario_list):
             for index in range(self.scenario_list.count()):
@@ -459,6 +495,7 @@ class MainWindow(QMainWindow):
             f"{scenario.name} · ID {scenario.id} · Версія {scenario.version}\n"
             f"{scenario.parameters.topic}\n{scenario.parameters.difficulty.label} · "
             f"{scenario.status.label}\nДані для аналізу відсутні."
+            + ("\nАрхівовано" if scenario.archived else "")
         )
 
     def _render(self) -> None:

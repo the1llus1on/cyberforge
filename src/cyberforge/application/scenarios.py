@@ -8,7 +8,12 @@ from sqlalchemy.orm import Session
 
 from cyberforge.application.accounts import AccountService
 from cyberforge.domain.accounts import AccessDenied, ApplicationError, Role
-from cyberforge.domain.scenarios import Scenario, ScenarioParameters, ScenarioStatus
+from cyberforge.domain.scenarios import (
+    Scenario,
+    ScenarioParameters,
+    ScenarioStatus,
+    stored_parameters,
+)
 from cyberforge.persistence.models import ScenarioRecord, ScenarioVersion, User
 
 
@@ -41,16 +46,27 @@ class ScenarioService:
 
     @staticmethod
     def _value(record: ScenarioRecord, version: ScenarioVersion) -> Scenario:
+        try:
+            parameters = stored_parameters(version.parameters)
+        except (ValidationError, ValueError, TypeError):
+            raise ApplicationError(
+                "Збережені параметри сценарію не підтримуються або пошкоджені. "
+                "Дані не змінено."
+            ) from None
         return Scenario(
             id=record.id,
             owner_id=record.owner_id,
             created_at=record.created_at.replace(tzinfo=UTC),
+            archived_at=record.archived_at.replace(tzinfo=UTC)
+            if record.archived_at
+            else None,
+            archive_revision=record.archive_revision,
             version=version.number,
             revision=version.revision,
             version_created_at=version.created_at.replace(tzinfo=UTC),
             updated_at=version.updated_at.replace(tzinfo=UTC),
             status=ScenarioStatus(version.status),
-            parameters=ScenarioParameters.model_validate(version.parameters),
+            parameters=parameters,
         )
 
     @staticmethod
@@ -69,6 +85,7 @@ class ScenarioService:
                 "виберіть складність. Аудиторія — до 1000, опис і мета — до "
                 "10000, кожна тактика/ознака — до 200 символів (до 100 записів). "
                 "Додаткові параметри — JSON-об’єкт; загалом до 50 000 символів."
+                " Ознаки NIST обирайте за ідентифікаторами перевіреного каталогу."
             ) from None
 
     def create(
@@ -79,6 +96,10 @@ class ScenarioService:
                 db, token, Role.ADMINISTRATOR, Role.INSTRUCTOR
             )
             payload = self._parameters(parameters)
+            if payload["legacy_nist_cues"]:
+                raise ApplicationError(
+                    "Власні тактики вводьте окремо від офіційних ознак NIST."
+                )
             now = datetime.now(UTC).replace(tzinfo=None)
             record = ScenarioRecord(owner_id=actor.id, created_at=now)
             db.add(record)
@@ -118,7 +139,9 @@ class ScenarioService:
                 raise ApplicationError("Версію сценарію не знайдено.")
             return self._value(record, row)
 
-    def catalog(self, token: str | None) -> tuple[Scenario, ...]:
+    def catalog(
+        self, token: str | None, *, archived: bool | None = False
+    ) -> tuple[Scenario, ...]:
         with self.accounts.transaction() as db:
             actor = self.accounts.require(
                 db, token, Role.ADMINISTRATOR, Role.INSTRUCTOR
@@ -143,6 +166,12 @@ class ScenarioService:
             )
             if actor.role != Role.ADMINISTRATOR:
                 query = query.where(ScenarioRecord.owner_id == actor.id)
+            if archived is not None:
+                query = query.where(
+                    ScenarioRecord.archived_at.is_not(None)
+                    if archived
+                    else ScenarioRecord.archived_at.is_(None)
+                )
             return tuple(self._value(record, row) for record, row in db.execute(query))
 
     def update(
@@ -153,20 +182,34 @@ class ScenarioService:
         *,
         expected_version: int,
         expected_revision: int,
+        expected_archive_revision: int = 0,
     ) -> Scenario:
         with self.accounts.transaction(write=True) as db:
             actor = self.accounts.require(
                 db, token, Role.ADMINISTRATOR, Role.INSTRUCTOR
             )
             record = self._record(db, actor, scenario_id, write=True)
+            if record.archived_at is not None:
+                raise ApplicationError(
+                    "Сценарій архівовано. Відновіть його перед редагуванням."
+                )
             row = self._latest(db, scenario_id)
-            if (row.number, row.revision) != (expected_version, expected_revision):
+            if (row.number, row.revision, record.archive_revision) != (
+                expected_version,
+                expected_revision,
+                expected_archive_revision,
+            ):
                 raise ApplicationError(
                     "Сценарій уже змінено. Ваші правки збережено у формі. "
                     "Скопіюйте їх і повторно відкрийте актуальну версію."
                 )
             payload = self._parameters(parameters)
-            if payload == row.parameters:
+            previous = self._value(record, row).parameters
+            if tuple(payload["legacy_nist_cues"]) != previous.legacy_nist_cues:
+                raise ApplicationError(
+                    "Збережені некласифіковані ознаки не можна змінювати або видаляти."
+                )
+            if payload == previous.model_dump(mode="json"):
                 return self._value(record, row)
             now = datetime.now(UTC).replace(tzinfo=None)
             if row.status == ScenarioStatus.PUBLISHED:
@@ -187,3 +230,71 @@ class ScenarioService:
                 row.updated_at = now
             db.flush()
             return self._value(record, row)
+
+    def _archive_state(
+        self,
+        token: str | None,
+        scenario_id: int,
+        *,
+        archived: bool,
+        expected_version: int,
+        expected_revision: int,
+        expected_archive_revision: int,
+    ) -> Scenario:
+        with self.accounts.transaction(write=True) as db:
+            actor = self.accounts.require(
+                db, token, Role.ADMINISTRATOR, Role.INSTRUCTOR
+            )
+            record = self._record(db, actor, scenario_id, write=True)
+            row = self._latest(db, scenario_id)
+            if (row.number, row.revision, record.archive_revision) != (
+                expected_version,
+                expected_revision,
+                expected_archive_revision,
+            ):
+                raise ApplicationError(
+                    "Сценарій уже змінено. Повторно відкрийте його картку."
+                )
+            if (record.archived_at is not None) != archived:
+                record.archived_at = (
+                    datetime.now(UTC).replace(tzinfo=None) if archived else None
+                )
+                record.archive_revision += 1
+                db.flush()
+            return self._value(record, row)
+
+    def archive(
+        self,
+        token: str | None,
+        scenario_id: int,
+        *,
+        expected_version: int,
+        expected_revision: int,
+        expected_archive_revision: int,
+    ) -> Scenario:
+        return self._archive_state(
+            token,
+            scenario_id,
+            archived=True,
+            expected_version=expected_version,
+            expected_revision=expected_revision,
+            expected_archive_revision=expected_archive_revision,
+        )
+
+    def restore(
+        self,
+        token: str | None,
+        scenario_id: int,
+        *,
+        expected_version: int,
+        expected_revision: int,
+        expected_archive_revision: int,
+    ) -> Scenario:
+        return self._archive_state(
+            token,
+            scenario_id,
+            archived=False,
+            expected_version=expected_version,
+            expected_revision=expected_revision,
+            expected_archive_revision=expected_archive_revision,
+        )

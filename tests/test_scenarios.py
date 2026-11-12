@@ -59,7 +59,7 @@ def test_create_unique_persistent_ids_and_complete_parameters(
         description="Навчальна ситуація",
         learning_objective="Розпізнати підозріле повідомлення",
         tactics=("Терміновість",),
-        nist_cues=("Spelling and grammar irregularities",),
+        nist_cues=("B.1.1",),
         generation_parameters={"language": "uk", "nested": [1, True, None]},
     )
     first = env.service.create(env.tokens["teacher"], payload)

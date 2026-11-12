@@ -87,6 +87,7 @@ def test_cancel_protects_unsaved_changes(scenario_window, monkeypatch, action):
     page = window.scenario_page
     page.topic.setPlainText("Незбережена тема")
     monkeypatch.setattr(page, "ask_unsaved", lambda: QMessageBox.StandardButton.Cancel)
+    monkeypatch.setattr(page, "confirm_revert", lambda: False)
     if action == "mode":
         window.navigate(View.ANALYTICS)
     elif action == "home":
@@ -276,3 +277,323 @@ def test_form_actions_and_internal_scroll(qtbot, scenario_window, size):
             )
         scroll = page.tabs.widget(index)
         assert scroll.widget().width() <= scroll.viewport().width()
+
+
+def test_archive_restore_catalog_and_shared_identity(
+    qtbot, scenario_window, monkeypatch
+):
+    window = scenario_window
+    create(window, "Активний запис")
+    saved = create(window, "Архівний приклад")
+    page = window.scenario_page
+    monkeypatch.setattr(page, "confirm_archive", lambda: True)
+    qtbot.mouseClick(page.archive_button, Qt.MouseButton.LeftButton)
+    assert page.scenario.archived and not page.editable
+    assert page.topic.isReadOnly() and not page.save()
+    assert window.archive_filter.isChecked()
+    assert sum(not window.scenario_list.item(i).isHidden() for i in range(2)) == 1
+    window.search.setText("архівовано")
+    assert not window.scenario_list.currentItem().isHidden()
+    window.search.setText("неіснуючий")
+    assert window.scenario_list.currentItem().isHidden()
+    window.search.clear()
+    window.navigate(View.ANALYTICS)
+    assert window.selected_scenario_id == saved.id
+    assert "Архівовано" in window.pages[View.ANALYTICS].scenario_info.text()
+    window.navigate(View.CONSTRUCTOR)
+    qtbot.mouseClick(page.restore_button, Qt.MouseButton.LeftButton)
+    assert page.editable and not page.scenario.archived
+    assert not window.archive_filter.isChecked()
+    assert (page.scenario.id, page.scenario.version, page.scenario.revision) == (
+        saved.id,
+        1,
+        1,
+    )
+    assert page.scenario.archive_revision == 2
+    assert sum(not window.scenario_list.item(i).isHidden() for i in range(2)) == 2
+
+
+@pytest.mark.parametrize("decision", ["Save", "Discard", "Cancel"])
+def test_archive_unsaved_decisions(scenario_window, monkeypatch, decision):
+    window = scenario_window
+    original = create(window)
+    page = window.scenario_page
+    page.topic.setPlainText("Незбережена правка")
+    monkeypatch.setattr(page, "confirm_archive", lambda: True)
+    monkeypatch.setattr(
+        page, "ask_unsaved", lambda: getattr(QMessageBox.StandardButton, decision)
+    )
+    assert page.archive() == (decision != "Cancel")
+    saved = window.scenarios.get(window._token, original.id)
+    assert saved.archived == (decision != "Cancel")
+    assert saved.parameters.topic == (
+        "Незбережена правка" if decision == "Save" else original.parameters.topic
+    )
+    if decision == "Cancel":
+        assert page.dirty and page.topic.toPlainText() == "Незбережена правка"
+
+
+def test_declined_archive_confirmation_does_not_touch_edits(
+    scenario_window, monkeypatch
+):
+    window = scenario_window
+    original = create(window)
+    page = window.scenario_page
+    page.topic.setPlainText("Моя правка")
+    monkeypatch.setattr(page, "confirm_archive", lambda: False)
+    assert not page.archive()
+    assert page.dirty and page.topic.toPlainText() == "Моя правка"
+    assert window.scenarios.get(window._token, original.id) == original
+
+
+def test_archive_filter_guard_and_revert_match_labels(scenario_window, monkeypatch):
+    window = scenario_window
+    original = create(window)
+    page = window.scenario_page
+    page.topic.setPlainText("Моя правка")
+    monkeypatch.setattr(page, "ask_unsaved", lambda: QMessageBox.StandardButton.Cancel)
+    window.archive_filter.setChecked(True)
+    assert not window.archive_filter.isChecked() and page.dirty
+    monkeypatch.setattr(page, "confirm_revert", lambda: False)
+    page.revert()
+    assert page.dirty
+    monkeypatch.setattr(page, "confirm_revert", lambda: True)
+    page.revert()
+    assert not page.dirty and page.topic.toPlainText() == original.parameters.topic
+    assert window.scenarios.get(window._token, original.id) == original
+
+
+def test_invalid_and_stale_saves_block_archive(scenario_window, monkeypatch):
+    window = scenario_window
+    original = create(window)
+    page = window.scenario_page
+    monkeypatch.setattr(page, "confirm_archive", lambda: True)
+    monkeypatch.setattr(page, "ask_unsaved", lambda: QMessageBox.StandardButton.Save)
+    page.generation_parameters.setPlainText("{invalid")
+    assert not page.archive() and page.dirty
+    assert not window.scenarios.get(window._token, original.id).archived
+    page.generation_parameters.setPlainText("{}")
+    page.topic.setPlainText("Локальна правка")
+    window.scenarios.update(
+        window._token,
+        original.id,
+        original.parameters.model_dump() | {"topic": "Зовнішня правка"},
+        expected_version=1,
+        expected_revision=1,
+    )
+    assert not page.archive()
+    assert page.dirty and page.topic.toPlainText() == "Локальна правка"
+    assert not window.scenarios.get(window._token, original.id).archived
+
+
+def test_archived_foreign_record_is_inspectable_but_not_mutable(
+    scenario_window, scenario_env
+):
+    window = scenario_window
+    original = create(window)
+    archived = window.scenarios.archive(
+        window._token,
+        original.id,
+        expected_version=1,
+        expected_revision=1,
+        expected_archive_revision=0,
+    )
+    window._signed_out()
+    window._authenticated(scenario_env.tokens["other"])
+    window.navigate(View.CONSTRUCTOR)
+    window.archive_filter.setChecked(True)
+    assert window.scenario_list.count() == 0
+    window._signed_out()
+    window._authenticated(scenario_env.tokens["admin"])
+    window.navigate(View.CONSTRUCTOR)
+    assert window.scenario_list.item(0).isHidden()
+    window.archive_filter.setChecked(True)
+    window.scenario_list.setCurrentRow(0)
+    page = window.scenario_page
+    assert page.scenario == archived and not page.owned
+    assert not page.archive_button.isVisible() and not page.restore_button.isVisible()
+    page.tabs.setCurrentIndex(1)
+    assert page.nist_cues.isEnabled()
+    assert all(
+        not page.nist_cues.item(i).flags() & Qt.ItemFlag.ItemIsUserCheckable
+        for i in range(page.nist_cues.count())
+    )
+    assert not page.archive() and not page.restore()
+
+
+def test_external_archive_retains_edits_and_rejects_archive_restore_aba(
+    scenario_window,
+):
+    window = scenario_window
+    original = create(window)
+    page = window.scenario_page
+    page.topic.setPlainText("Для ручного відновлення")
+    archived = window.scenarios.archive(
+        window._token,
+        original.id,
+        expected_version=1,
+        expected_revision=1,
+        expected_archive_revision=0,
+    )
+    window._sync_session()
+    assert page.dirty and page.topic.isReadOnly()
+    assert page.topic.toPlainText() == "Для ручного відновлення"
+    window.scenarios.restore(
+        window._token,
+        original.id,
+        expected_version=1,
+        expected_revision=1,
+        expected_archive_revision=archived.archive_revision,
+    )
+    window._sync_session()
+    assert page.dirty and not page.save()
+    assert "уже змінено" in page.message.text()
+    assert page.topic.toPlainText() == "Для ручного відновлення"
+
+
+def test_independent_windows_keep_losing_editor_buffer(
+    qtbot, scenario_window, scenario_env
+):
+    from pathlib import Path
+
+    from cyberforge.application.accounts import AccountService
+    from cyberforge.persistence.database import Database
+
+    first = scenario_window
+    saved = create(first)
+    database = Database(Path(scenario_env.database.engine.url.database))
+    accounts = AccountService(database)
+    other = MainWindow(accounts)
+    qtbot.addWidget(
+        other, before_close_func=lambda widget: widget.scenario_page.clear()
+    )
+    try:
+        other.show()
+        other._authenticated(accounts.login("teacher", scenario_env.password))
+        other.navigate(View.CONSTRUCTOR)
+        other.scenario_list.setCurrentRow(0)
+        other.scenario_page.topic.setPlainText("Правка другого вікна")
+        first.scenario_page.topic.setPlainText("Збереження першого вікна")
+        assert first.scenario_page.save()
+        assert not other.scenario_page.save()
+        assert other.scenario_page.dirty
+        assert other.scenario_page.topic.toPlainText() == "Правка другого вікна"
+        assert (
+            first.scenarios.get(first._token, saved.id).parameters.topic
+            == "Збереження першого вікна"
+        )
+    finally:
+        other.scenario_page.clear()
+        other.close()
+        database.close()
+
+
+def test_cue_selector_keyboard_save_and_reopen(qtbot, scenario_window):
+    window = scenario_window
+    window._new_scenario()
+    page = window.scenario_page
+    page.topic.setPlainText("Бажані ознаки листа")
+    page.tabs.setCurrentIndex(1)
+    picker = page.nist_cues
+    picker.setFocus()
+    picker.setCurrentRow(0)
+    qtbot.keyClick(picker, Qt.Key.Key_Space)
+    picker.setCurrentRow(22)
+    qtbot.keyClick(picker, Qt.Key.Key_Space)
+    assert tuple(picker.selected()) == ("B.1.1", "B.5.6")
+    assert page.save()
+    saved = page.scenario
+    window.navigate(View.ANALYTICS)
+    window.navigate(View.CONSTRUCTOR)
+    assert picker.selected() == saved.parameters.nist_cues
+    assert "Spelling and grammar irregularities" in picker.item(0).toolTip()
+
+
+def test_legacy_cues_visible_and_preserved(scenario_window):
+    import json
+
+    from sqlalchemy import text
+
+    window = scenario_window
+    saved = create(window)
+    with window.accounts.database.engine.begin() as db:
+        db.execute(
+            text("UPDATE scenario_versions SET parameters=:p WHERE scenario_id=:id"),
+            dict(
+                p=json.dumps(
+                    dict(
+                        topic="Історична тема",
+                        difficulty="beginner",
+                        nist_cues=["Довільна ознака"],
+                    )
+                ),
+                id=saved.id,
+            ),
+        )
+    window._show_scenario()
+    page = window.scenario_page
+    page.tabs.setCurrentIndex(1)
+    assert page.legacy_cues.toPlainText() == "Довільна ознака"
+    assert page.legacy_cues.isReadOnly() and page.nist_cues.selected() == ()
+    page.description.setPlainText("Уточнення")
+    assert page.save()
+    assert page.scenario.parameters.legacy_nist_cues == ("Довільна ознака",)
+
+
+@pytest.mark.parametrize("decision", ["Save", "Discard", "Cancel"])
+def test_restore_never_silently_discards_external_archive_buffer(
+    scenario_window, monkeypatch, decision
+):
+    window = scenario_window
+    original = create(window)
+    page = window.scenario_page
+    page.topic.setPlainText("Текст для ручного перенесення")
+    window.scenarios.archive(
+        window._token,
+        original.id,
+        expected_version=1,
+        expected_revision=1,
+        expected_archive_revision=0,
+    )
+    window._sync_session()
+    monkeypatch.setattr(
+        page, "ask_unsaved", lambda: getattr(QMessageBox.StandardButton, decision)
+    )
+    assert page.restore() == (decision == "Discard")
+    current = window.scenarios.get(window._token, original.id)
+    assert current.parameters.topic == original.parameters.topic
+    assert current.archived == (decision != "Discard")
+    if decision != "Discard":
+        assert (
+            page.dirty and page.topic.toPlainText() == "Текст для ручного перенесення"
+        )
+
+
+def test_archive_failure_safe_message_and_real_confirmation(
+    scenario_window, monkeypatch
+):
+    from sqlalchemy import text
+
+    window = scenario_window
+    original = create(window)
+    page = window.scenario_page
+
+    def dismiss():
+        box = page.findChild(QMessageBox)
+        assert box.defaultButton().text() == "Залишитися"
+        box.defaultButton().click()
+
+    QTimer.singleShot(0, dismiss)
+    assert not page.archive()
+    assert window.scenarios.get(window._token, original.id) == original
+    with window.accounts.database.engine.begin() as db:
+        db.execute(
+            text(
+                "CREATE TRIGGER synthetic_failure BEFORE UPDATE ON scenarios "
+                "BEGIN SELECT RAISE(ABORT, 'private SQL failure'); END"
+            )
+        )
+    monkeypatch.setattr(page, "confirm_archive", lambda: True)
+    assert not page.archive()
+    assert page.message.text() and "private SQL" not in page.message.text()
+    assert window.scenarios.get(window._token, original.id) == original

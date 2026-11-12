@@ -440,7 +440,7 @@ commit/push/PR до main, без merge або ACCEPTED. Phase 4 не розпо�
   published fixture immutable/fork; один каталог/ID між режимами;
   guard на переходах/New/selection/close; регресії Phase0–2; owner demo.
 
-### Фінальні докази Phase 3
+### Фінальні докази початкової Phase 3 (baseline7d2084d)
 
 - `uv run --offline --locked pytest -q --tb=short` — **163 passed**, 335.36s;
   містить 121 попередню й 42 нові перевірки.
@@ -468,3 +468,53 @@ commit/push/PR до main, без merge або ACCEPTED. Phase 4 не розпо�
 Phase3 REVIEW. CI Linux/Windows запущено (run43171462386); на момент
 запису ще in_progress, не зараховано як success. Поточний результат —
 [checks](https://github.com/the1llus1on/cyberforge/pull/4/checks).
+
+## Phase 3 — pre-acceptance remediation F-01–F-03
+
+**Статус: REVIEW — готово до повторного незалежного review.** Власник явно включив archive/
+restore та схвалив remediation. Попередню відкриту межу архівування закрито.
+Baseline7d2084d і PR#4 head підтверджено GitHub MCP; дерево чисте, та сама гілка.
+
+План/SRS: F01/F02 (§§2.3/4.9/14/16.6) — адитивна міграція0003, identity guards,
+soft archive, RBAC, archive counter; F03 (§§4.3/11.5/17) — verified desired-cue
+catalog і lossless legacy adapter; UI (§§3.5–3.8/21.3) — один каталог/filter,
+confirmation, restore, dirty/session safety; §§21–23 — migration/concurrency/
+security/UI/regression/package/CI. Рішення — оновлений ADR-0003.
+
+Інкремент persistence/service: archive metadata відокремлена від content
+версій, no-op повтори, archive→restore ABA protection, legacy read adapter
+без переписування snapshots. Перевірки: 36 попередніх service/migration tests
+і 18 початкових нових archive tests пройдено. Наступний combined subset із
+NIST і GUI — 67passed/107.01s. Розширений GUI/regression виконується.
+
+Міграція0002/SRS/owner DB/credentials/native Windows acceptance files незмінні.
+Немає LLM, publishing, assignment, scoring або Phase4. Final evidence — нижче.
+
+### Підсумок remediation
+
+- **F01 — реалізовано:** soft archive/restore, persistence/restart, owner RBAC,
+  readonly inspection/admin, один каталог/filter/search, confirm/dirty safety.
+- **F02 — реалізовано:** additive0003, targeted identity trigger, archive state
+  guards, immutable published/archived snapshots. Fresh/0001/0002 paths,
+  raw snapshot/table preservation, SQL negatives і metadata consistency пройдено.
+- **F03 — реалізовано:** verified23-cue catalog/AppendixB IDs, Ukrainian selector,
+  strict unknown/duplicate rejection, desired/legacy/custom separation,
+  no text mapping і жодного переписування published JSON.
+- Concurrency: незалежні Database/AccountService/session, два OS processes,
+  два GUI windows, content/metadata conflicts та archive→restore ABA; losing
+  buffer збережено, duplicate versions немає. Cancel/revert/session safety перевірено.
+- `uv run --offline --locked pytest -q --tb=short`: **208passed**,450.19s.
+- WSLg GUI: **109passed**,339.44s; Qt150%/200% form+cue — по **3passed**.
+- Targeted archive/migration/NIST: **29passed**,44.33s. Додаткова safe malformed
+  stored-data read/update перевірка: NIST suite **8passed**,8.30s.
+- Locked sync, Ruff52files, build, CLI/module, packaged migration/catalog,
+  isolated wheel startup+archive/restore, diff check — success.
+- Змінено21файл remediation відносно baseline: existing domain/service/ORM/UI,
+  tests, README і чотири docs; нові nist_cues.py, cue_picker.py, migration0003,
+  два test modules і три remediation screenshots. Нових dependencies немає.
+- Джерела/рішення: ADR0003. Actual commands/limitations: DEVELOPMENT_LOG.
+- Phase3 лишається **REVIEW**, не ACCEPTED. Native Windows11 physical gate
+  ще відкритий (PHASE_3_ACCEPTANCE). Попереднє owner scope question про
+  архівування вирішене цим дорученням; нових owner decisions немає.
+- Доставка: та сама feature-гілка і PR#4; final CI Linux/Windows перевіряється
+  після push і фіксується у PR description/final report. Без merge/Phase4.

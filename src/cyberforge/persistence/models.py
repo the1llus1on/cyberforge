@@ -78,6 +78,13 @@ class ScenarioRecord(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime())
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
+    archive_revision: Mapped[int] = mapped_column(
+        Integer,
+        CheckConstraint("archive_revision >= 0", name="archive_revision_positive"),
+        default=0,
+        server_default="0",
+    )
 
 
 class ScenarioVersion(Base):

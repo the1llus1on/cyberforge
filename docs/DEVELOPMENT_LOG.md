@@ -2,7 +2,7 @@
 
 **Поточний стан:** Phase 2 — **ACCEPTED власником 12.11.2026**;
 Phase 3 — **REVIEW**, докази підготовлено 12.11.2026. Нижче збережено хронологію попередніх REVIEW;
-остаточне прийняття й дозвіл merge записано наприкінці журналу.
+історичні рішення Phase0–2 збережено, актуальні докази Phase3 — наприкінці журналу.
 
 ## 11.11.2026 — Phase 0: Project Foundation
 
@@ -1088,3 +1088,86 @@ native Windows11 acceptance. Credentials не читали/не змінювал
 стан CI після документаційного push доступний у
 [PR checks](https://github.com/the1llus1on/cyberforge/pull/4/checks) та буде
 повідомлено власнику окремо. Merge не виконано, Phase4 не починалася.
+
+## 12.11.2026 — Phase3 pre-acceptance remediation F-01–F-03
+
+Власник явно погодив archive/restore в Phase3 та всі findings. Це замінює
+попереднє відкрите scope question; Phase3 лишається REVIEW. GitHub MCP:
+PR#4 open/unmerged, baseline7d2084d, base main5b15ff0, scope21files; local tree
+clean/same branch. Прочитано SRS/AGENTS/plan/log/ADR/acceptance/code/PR diff.
+План перед реалізацією подано з traceability до §§2–4,11,14,16–17,21–23.
+
+F01/F02: адитивна0003 додає archived_at/archive_revision; immutable identity
+trigger звужено до id/owner/created_at. Archive/restore — транзакційні,
+owner-only, read archived для owner/admin, edits blocked; усі version rows
+збережено. Counter захищає старі форми після archive→restore. Published
+snapshot guard не послаблено; DB guards блокують також writes до archived
+версій. Ізольовані тести upgrade з0002 перевіряють raw snapshots і table
+rootpage, fresh/0001 path лишається під regression. Міграцію0002 не редаговано.
+
+F03: офіційні NIST PDF/metadata перевірено через web; DOI redirect був
+недоступний у web, прямі nvlpubs.nist.gov PDF і nist.gov publication page
+успішні. Table1 p6 та AppendixB підтверджують23 cues/5 types; IDs — AppendixB
+section references, catalog namespace nist-tn-2276:2023. Оригінальні англійські
+назви збережено, українські labels власні. Unknown/duplicate IDs відхиляються.
+Desired selection окрема від legacy strings/custom tactics, не означає
+AI-declared/verified presence чи detection calculation. Read adapter не
+змінює stored JSON; legacy text зберігається після Save і під час fork.
+Джерела, алгоритм і обмеження — ADR0003. Context7 перевірив офіційні
+Alembic add_column (без batch recreation) та Pydantic enum validation APIs.
+Нових залежностей не додано.
+
+UI: один каталог + archive filter, explicit confirmation/restore; read-only
+архівний/чужий контент зі scrolling/copy. Зовнішня зміна archive state не
+стирає dirty recovery buffer. «Скасувати зміни» — явне discard confirmation,
+без Save у цьому діалозі. Усі інші переходи зберігають Save/Discard/Cancel.
+
+Проміжні результати: 36passed/37.08s service+migrations; 18passed/30.52s
+початковий archive suite; combined scenario/archive/NIST/GUI67passed/107.01s.
+Після цього додано expanded UI, restore rollback/deactivation/direct SQL
+негативні випадки. Final full suites/package/CI будуть наведені нижче.
+
+### Фінальні докази remediation
+
+Команди uv виконано з `UV_CACHE_DIR=$PWD/.uv-cache`. Усі baseline runtime
+тести offline, без LLM/ключів або зовнішніх ресурсів. Нових dependencies
+немає. Native Windows11 physical acceptance цього remediation не виконано.
+
+| Команда / перевірка | Результат |
+|---|---|
+| `uv sync --offline --locked` | success,27resolved/26checked |
+| `uv run --offline --locked ruff check .` | success |
+| `uv run --offline --locked ruff format --check .` |52files formatted |
+| `uv run --offline --locked pytest -q --tb=short` | **208passed**,450.19s |
+| `uv run --offline --locked pytest tests/test_scenario_archiving.py tests/test_nist_cues.py -q --tb=short` | **29passed**,44.33s |
+| `uv run --offline --locked pytest tests/test_nist_cues.py -q --tb=short` після safe stored-data read/update guard | **8passed**,8.30s |
+| `QT_QPA_PLATFORM=wayland uv run --offline --locked pytest tests/ui -q --tb=short` | **109passed**,339.44s |
+| `QT_QPA_PLATFORM=wayland QT_SCALE_FACTOR=1.5 uv run --offline --locked pytest tests/ui/test_scenarios_ui.py -k 'form_actions or cue_selector_keyboard' -q --tb=short` | **3passed**,31deselected,8.71s |
+| Та сама команда з `QT_SCALE_FACTOR=2` | **3passed**,31deselected,8.85s |
+| `uv build --offline` | success,wheel/sdist |
+| `uv pip install --offline --reinstall-package cyberforge --python /tmp/cyberforge-phase3-wheel-review/bin/python --no-deps dist/cyberforge-0.1.0-py3-none-any.whl` |success,final package installed |
+| `QT_QPA_PLATFORM=offscreen uv run --offline --locked cyberforge --database /tmp/cyberforge-phase3-remediation-cli.sqlite3 --smoke-test` |exit0 |
+| `QT_QPA_PLATFORM=offscreen uv run --offline --locked python -m cyberforge --database /tmp/cyberforge-phase3-remediation-module.sqlite3 --smoke-test` |exit0 |
+| `QT_QPA_PLATFORM=offscreen /tmp/cyberforge-phase3-wheel-review/bin/python -I -m cyberforge --database /tmp/cyberforge-phase3-remediation-wheel-final.sqlite3 --smoke-test`,cwd=/tmp |exit0 |
+| Isolated wheel `python -I` management smoke: packaged migration→create B.4.4→archive→restore |success,stableID/revision/cue |
+| wheel/sdist inspection |newcatalog/selector/migration0003 packaged; no localDB/credentials/cache |
+| `git diff --check`; diff SRS/AGENTS/0002 |success; all three unchanged |
+
+Перший запит дозволу на WSLg timeout-нув в automatic approval review до
+запуску процесу. Один дозволений повтор успішний; це не залишковий blocker.
+Знімки `phase-3-remediation-{cues,archive,analytics}.png` отримано на справжньому
+WSLg через QWidget.grab лише власного вікна, temporary synthetic DB. Оглянуто
+1100×720: cue list/вкладки scroll, archive marker/filter/restore видимі,
+identity між режимами спільна. Це не physical Windows11/DPI evidence.
+
+F01/F02/F03 закриті реалізацією й локальними тестами. Додатково safe error
+для непідтримуваного збереженого каталогу не змінює дані. Збережено всі163
+попередні тести, додано45. Scope question архівування погоджено власником;
+нових продуктових рішень, що потребують owner approval, немає. Legacy
+mapping навмисно ручний, downgrade після archive history заборонений для
+захисту даних. Phase3 **REVIEW**, не ACCEPTED; Phase4 NOT STARTED.
+
+GitHub MCP використовується для PR4 read/update і final CI. Commit/push
+виконуються в поточну feature-гілку після scoped diff review. Final pushed
+SHA/CI run/обидва jobs будуть перевірені й наведені у PR description та
+фінальному звіті; саме посилання на checks не зараховується як success.
