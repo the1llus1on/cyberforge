@@ -7,7 +7,7 @@
 ## Поточний стан
 
 Phase 0 та Phase 1 — ACCEPTED. Phase 2 — Users & Groups: **ACCEPTED власником
-12.11.2026**. Phase 3 — Scenario Management: **REVIEW**, реалізацію й докази підготовлено 12.11.2026.
+12.11.2026**. Phase 3 — Scenario Management: **ACCEPTED власником 12.11.2026**.
 Реалізовано вхід/вихід, Argon2id, три ролі, зміну/скидання паролів,
 керування користувачами й навчальними групами, M:N-членство та SQLite/Alembic.
 Збережено українську темну оболонку й універсальну Головну Phase 1.
@@ -232,3 +232,10 @@ Instructor працює лише зі своїми сценаріями. Adminis
 автоматичного mapping. Desired selection не означає фактичної наявності
 ознак; detection difficulty не обчислюється. Джерела/правила — ADR-0003.
 «Скасувати зміни» запитує підтвердження відкидання й не виконує Save.
+
+
+Phase3 прийнята після automated checks, незалежного review F01–F03 та часткового
+owner manual WSLg verification; усі manual scenarios не заявляються виконаними.
+Routine physical Windows11 verification Phases3–11 відкладено до Phase12 як
+acknowledged risk; Windows CI не є native desktop acceptance. Phase4 —
+**NOT STARTED**, потребує окремого дозволу. Деталі — план/журнал/acceptance record.

@@ -1,6 +1,7 @@
 # Phase 3 — ручне прийняття Scenario Management
 
-**Статус:** очікує перевірки власником. Цей checklist не означає ACCEPTED.
+**Статус: ACCEPTED власником 12.11.2026.** Рішення й межі доказів наведено нижче;
+цей reference checklist не є твердженням, що виконано всі його пункти.
 Обсяг: SRS §§2.2–2.4, 3.5–3.8/3.13, 4.2–4.5/4.9, 11.1/11.7,
 14.1–14.3/14.9, 16.6, 21, 23 Phase 3. Рішення — ADR-0003.
 
@@ -113,6 +114,16 @@ credentials-файлу. Не додавайте його, БД або знімк
 
 ## Запис рішення
 
-Власник фіксує платформу, commit SHA, виконані пункти, зауваження й рішення.
-До явного рішення Phase 3 залишається REVIEW; PR не об’єднується.
-Прийняття Phase 3 не запускає Phase 4 автоматично.
+12.11.2026 власник явно прийняв Phase3 та дозволив merge PR4 після успішного
+CI фінального documentation-only HEAD. Власник провів **часткові** manual
+WSLg перевірки й схвалив результати; повне виконання checklist не заявляється.
+F01–F03 закриті та незалежно reviewed за підтвердженням власника.
+Implementation HEAD3b31210: local214passed, relevant WSLg9passed; CI43296448273
+Linux214passed, Windows212passed/2POSIX skips. Final PR HEAD CI перевіряється
+окремо перед merge; actual SHA/run/result — PR4/final report.
+
+Routine physical Windows11 verification Phases3–11 відкладено до Phase12 як
+acknowledged risk. Windows CI не дорівнює native Windows11 acceptance;
+непідтверджені manual items вище навмисно не позначені виконаними.
+SRS та accepted requirements незмінні. Phase4 — NOT STARTED, окремий дозвіл
+обов’язковий; прийняття/merge Phase3 не запускає LLM Integration.

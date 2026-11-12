@@ -1,7 +1,7 @@
 # CyberForge — журнал розробки
 
 **Поточний стан:** Phase 2 — **ACCEPTED власником 12.11.2026**;
-Phase 3 — **REVIEW**, докази підготовлено 12.11.2026. Нижче збережено хронологію попередніх REVIEW;
+Phase 3 — **ACCEPTED власником 12.11.2026**. Нижче збережено хронологію попередніх REVIEW;
 історичні рішення Phase0–2 збережено, актуальні докази Phase3 — наприкінці журналу.
 
 ## 11.11.2026 — Phase 0: Project Foundation
@@ -1233,3 +1233,37 @@ state/readonly subset, а не всіх unrelated/manual checks. Final results �
 фінальний HEAD/обидва Linux-Windows CI jobs перевіряються після push, actual
 run/results фіксуються в PR description і final report без зайвого doc-only
 commit/повторного CI циклу. Phase3 REVIEW; ні merge, ні Phase4 не виконуються.
+
+
+## 12.11.2026 — Phase3: остаточне прийняття та дозвіл merge
+
+Власник явно прийняв Scenario Management: **REVIEW → ACCEPTED**,12.11.2026.
+Дозволено лише documentation-only фіналізацію поточної branch, push і PR4
+merge після перевірки exact final HEAD та обох CI jobs. Phase4 NOT STARTED.
+Початковий стан: clean feat/phase-3-scenario-management; GitHub MCP підтвердив
+PR4 open/unmerged/clean, base main5b15ff0, HEAD3b31210d8678738f677d8effce9130a7002d6e12.
+CI43296448273 completed/success: Linux214passed, Windows212passed/2POSIX skips;
+locked sync/Ruff/pytest/import/Qt startup success на обох OS. Локальний source
+цього HEAD:214passed, final relevant WSLg9passed. Наявна Git історія PR3
+підтвердила звичайний merge commit; майбутній merge прив’язується до final SHA.
+
+Owner-reported evidence: часткова ручна WSLg перевірка й схвалення результатів;
+власник підтвердив реалізацію create/validation/edit/persistence/versioning,
+ownership/service RBAC, archive/restore/concurrency, NIST selector/legacy,
+Constructor empty state, закриття F01–F03 і незалежне review. Це не твердження
+агента про виконання всіх manual scenarios. Checklist залишається reference;
+непідтверджені boxes не заповнюються.
+
+Routine physical native Windows11 verification Phases3–11 deferred to Phase12
+за погодженою політикою. Це acknowledged risk, не completed verification;
+Windows Server2022/offscreen CI не замінює Windows11 desktop/DPI/input/ACL/
+security/package/E2E evidence. Phase2 native workspace/owner data зберігаються.
+SRS v3.0, runtime, dependencies, migrations і tests не змінюються. README,
+plan, acceptance record та ADR синхронізуються зі статусом ACCEPTED.
+
+Новий documentation-only diff перевіряється git diff --check і scoped diff;
+локальні повні тести/build/wheel не повторюються без code changes. Фінальний
+PR HEAD обов’язково проходить Linux/Windows CI перед merge. CI failure,
+конфлікт або неочікуваний HEAD зупинить merge без bypass/force. Після merge:
+fetch → switch main → merge --ff-only origin/main, перевірка SHA/clean tree;
+feature branch не видаляється. Merge SHA та actual final CI — PR4/final report.

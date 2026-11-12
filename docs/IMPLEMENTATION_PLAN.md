@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phase 0 — ACCEPTED; Phase 1 — ACCEPTED власником 11.11.2026; Phase 2 — ACCEPTED власником 12.11.2026; Phase 3 — REVIEW (12.11.2026).
+**State:** Phase 0 — ACCEPTED; Phase 1 — ACCEPTED власником 11.11.2026; Phase 2 — ACCEPTED власником 12.11.2026; Phase 3 — ACCEPTED власником 12.11.2026.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -19,7 +19,7 @@
 | 0 | Project Foundation | ACCEPTED | Python 3.12/uv, src package, CLI, lockfile, pytest/Ruff; власник підтвердив перевірки у WSL Ubuntu та прийняв фазу 11.11.2026 |
 | 1 | Main UI Shell | ACCEPTED | Dark PySide6 shell, universal Home / Guest state, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
 | 2 | Users & Groups | ACCEPTED | Прийнято власником 12.11.2026: login, Argon2id, 3 roles, demo accounts/groups, RBAC; WSLg і native Windows 11 докази нижче |
-| 3 | Scenario Management | REVIEW | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
+| 3 | Scenario Management | ACCEPTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
 | 4 | LLM Integration | NOT STARTED | LLMGateway, provider adapter, Gemini configuration, deterministic MockLLMProvider; schema and fallback tests |
 | 5 | Specialized Agents | NOT STARTED | Typed I/O contracts for four specialized agents and bounded orchestration; mock agent tests |
 | 6 | Email Constructor | NOT STARTED | Email shell, generation, preview, code view, regeneration, explicit save and validation; UI tests |
@@ -558,3 +558,29 @@ relevant WSLg9passed/26.75s. Existing minimum-size regression виправлен
 initial WSLg39passed/1failed; проміжний full run перервано, не зараховано як pass.
 Поточний крок готовий до review, Phase3 REVIEW. Build/wheel не повторено за
 погодженою UI-only policy. Final CI Linux/Windows — PR4 checks/final report.
+
+
+## 12.11.2026 — остаточне прийняття Phase3 власником
+
+**Phase3 — ACCEPTED власником 12.11.2026.** Явне рішення власника замінює
+попередні REVIEW/pending записи цієї фази; хронологію перевірок збережено.
+Погоджено документаційний commit/push у поточну Phase3 branch та звичайний
+merge commit PR4 після success Linux/Windows CI фінального PR HEAD.
+
+Прийнятий обсяг: create/validation/edit/persistence/versioning, service RBAC/
+ownership, archive/restore/archive revision concurrency, NIST TN2276 desired
+cue selector/legacy compatibility, neutral Constructor empty state. Власник
+підтвердив закриття F01–F03 та незалежне review. Owner evidence — часткові
+manual WSLg перевірки й схвалення результатів, не виконання всього checklist.
+Automated implementation HEAD3b31210: local214passed, relevant WSLg9passed;
+CI43296448273 success: Linux214passed, Windows212passed/2POSIX skips, locked
+sync/Ruff/import/Qt startup успішні. Новий documentation-only HEAD проходить
+окремий обов’язковий CI перед merge; SHA/run/result — PR4 і фінальний звіт.
+
+Routine physical native Windows11 verification Phases3–11 лишається відкладеним
+до Phase12, як acknowledged risk. Windows CI не є physical Windows11 evidence;
+повний DPI/input/permissions/security/packaging/E2E gate ще не виконано.
+Старі manual checklist items не позначаються автоматично виконаними.
+SRS/функціональність/owner data не змінюються; Phase2 native workspace збережено.
+**Phase4 — NOT STARTED**, потрібен окремий дозвіл; acceptance/merge Phase3
+не є дозволом початку LLM Integration.

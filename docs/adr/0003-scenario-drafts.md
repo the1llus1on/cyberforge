@@ -1,6 +1,7 @@
 # ADR-0003 — Ідентичність, версії, архів і бажані ознаки листа
 
-**Статус:** реалізація Phase 3 — REVIEW, очікує незалежного review/прийняття.
+**Статус:** прийнято власником разом із Phase3 12.11.2026; F01–F03 незалежно
+reviewed за підтвердженням власника. Manual WSLg evidence — часткове.
 **Джерело:** SRS v3.0 §§2.2–2.4, 3.5–3.8, 4, 11, 14, 16.6, 17, 21–23.
 **Дата:** 12.11.2026. SRS не змінено.
 
@@ -136,4 +137,6 @@ Concurrency покриває незалежні Database/AccountService/sessions
 ранню native перевірку. Windows CI обов’язковий, але не замінює physical gate.
 Відкладення — відкритий ризик, не підтвердження Windows11; SRS §24 лишається
 чинним. Повний Phase12 gate і workflow — IMPLEMENTATION_PLAN та AGENTS.md.
-Існуючий native workspace Phase2 зберігається без оновлення. Phase3 REVIEW.
+Існуючий native workspace Phase2 зберігається без оновлення. Phase3 ACCEPTED
+власником 12.11.2026; це не означає виконання всіх manual checks або фізичної
+Windows11 перевірки. Phase4 — NOT STARTED до окремого дозволу.
