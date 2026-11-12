@@ -75,6 +75,12 @@ class MembershipPicker(QListWidget):
 
 
 class AdminPage(QWidget):
+    def heightForWidth(self, width: int) -> int:
+        # Inner forms scroll; preferred form heights must not push actions below
+        # the outer viewport. Keep width-dependent header/message wrapping.
+        layout = self.layout()
+        return layout.minimumHeightForWidth(width) if layout is not None else -1
+
     def __init__(
         self,
         accounts: AccountService,

@@ -210,3 +210,9 @@ Native geometry probe використовує empty temporary DB та WM_GETMIN
 Windows decorations: showEvent clamp коригує тільки початкову позицію рамки.
 Physical WSLg resize violation не приховується fixed size або force-resize loop.
 Повні межі automated/physical acceptance — diagnostics/native-windows.md.
+
+Native font metrics виявили outer preferred heightForWidth, який відсував
+admin actions за viewport при minimum size. AdminPage.heightForWidth повертає
+layout.minimumHeightForWidth: inner forms scroll, а message/header wrap і
+структура існуючих контейнерів збережені. Регресія перевіряє повні bounds
+кнопок обох tabs та багаторядкове повідомлення, а не тільки center point.

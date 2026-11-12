@@ -350,3 +350,8 @@ native shell14tests passed. Win32 tracking min1393×947 physical при125%.
 і regression без fixed size. Системні settings/owner existing data не змінено.
 Документація й обмеження: docs/diagnostics/native-windows.md. Physical native
 acceptance залишається власнику; без merge/Phase3.
+
+Native GUI розширення виявило clipping admin action row при1100×720,
+непомітний offscreen: preferred page height730 приviewport656. Вузький
+minimumHeightForWidth override зберігає internal scrolling і sticky actions;
+регресія посилена до повних bounds та message wrapping. Без redesign/RBAC змін.

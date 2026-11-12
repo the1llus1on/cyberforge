@@ -70,6 +70,17 @@ decorations; він не фіксує розмір і не примушує resi
 Регресія перевіряє frame containment і можливість подальшого resize; під
 native backend також перевіряє WM_GETMINMAXINFO limits.
 
+Додатковий native admin suite знайшов clipping sticky actions при1100×720:
+1failed/30passed, хоча offscreen suite був успішний. При native font metrics
+зовнішній QScrollArea використовував preferred heightForWidth730px, а його
+viewport мав656px; нижній ряд кнопок опинявся за межами вікна. Стан незмінний
+після30/300ms, це не asynchronous-resize test timing. AdminPage.heightForWidth
+тепер делегує minimumHeightForWidth стандартного layout: внутрішні форми
+прокручуються, header/message wrap зберігається, обидва ряди дій у viewport.
+Candidate native measurement: page656px, кнопки закінчуються на685px при
+вікні720px. Архітектура вкладок/scroll areas та explicit atomic Save збережена.
+Регресія перевіряє повні rectangles кнопок і багаторядкове повідомлення.
+
 WSLg Wayland: Qt6.10.3/DPR1, minimum1100×720, hint36×54, resize(1,1)
 обмежується1100×720; раніше trace підтвердив xdg_toplevel.set_min_size.
 Фізичний owner resize все одно порушує цей limit. Дані вказують на шлях
@@ -103,4 +114,5 @@ Windows Enhanced не проходить через Weston, але фізичн�
 [uv Python installs](https://docs.astral.sh/uv/concepts/python-versions/),
 [WM_GETMINMAXINFO](https://learn.microsoft.com/en-us/windows/win32/winmsg/wm-getminmaxinfo),
 [MINMAXINFO](https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-minmaxinfo),
-[QWidget geometry](https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/QWidget.html).
+[QWidget geometry](https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/QWidget.html),
+[Qt scroll-area layout behavior](https://github.com/qt/qtbase/blob/6.10/src/widgets/widgets/qscrollarea.cpp).

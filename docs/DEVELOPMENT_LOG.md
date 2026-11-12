@@ -876,3 +876,23 @@ Final snapshot/export і результати після source fix фіксую
 WSLg Wayland. PowerShell5 parser прийняв launcher (UTF-8 BOM навмисно).
 Native OS caption підтвердив Windows11 Pro, build26300; automation не є
 physical acceptance. Результат source fix на native backend ще не зараховано.
+
+Snapshoteb6cf79 експортували окремо; native frame тепер(68,0,1400,798) замість
+(68,-6,1400,798), min1100×720 не змінено. Full Windows pytest118passed/2skips,
+94.44s; native geometry/shell15passed,9.12s. WSLg suite74passed,73.51s.
+Root CMD/PS launcher smoke пройшов із Windows cwd; contradictory modes rejected.
+
+Додатковий native account/admin suite:30passed/1failed (53.58s), failure —
+test_admin_actions_stay_visible. Діагностика на empty temporary DB показала
+page730px приviewport656px; preferred heightForWidth outer scroll відсував
+нижні actions за viewport.30/300ms дали однаковий стан: це реальний layout
+дефект native metrics, не timing. Вузький AdminPage.heightForWidth override
+делегує layout.minimumHeightForWidth, зберігає існуючі containers/inner scroll.
+Candidate native measurement: page656px і нижня кнопка закінчується685px при
+window720px. Регресія тепер перевіряє повні bounds і multiline message.
+Final suites/новий tracked export виконуються до публікації цього уточнення.
+
+Після minimumHeightForWidth fix: local pytest121passed,96.99s; справжній WSLg
+GUI75passed,75.01s; Ruff41files і diff check — success. CI дляпопереднього
+eb6cf79 завершивсяsuccess наобох OS (run43130028480), але не доводить новий
+layout fix; його native regression виконується на окремому наступному snapshot.

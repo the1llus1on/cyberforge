@@ -3,7 +3,7 @@
 from secrets import token_urlsafe
 
 import pytest
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QRect, Qt
 from PySide6.QtWidgets import QLabel
 
 from cyberforge.application.accounts import AccountService
@@ -412,7 +412,8 @@ def test_checkbox_picker_indicator_only(qtbot, authenticated_window, member_list
     assert item.checkState() == Qt.CheckState.Checked
 
 
-def test_admin_actions_stay_visible(qtbot, authenticated_window):
+@pytest.mark.parametrize("message", ["", "Помилка збереження. Перевірте дані. " * 8])
+def test_admin_actions_stay_visible(qtbot, authenticated_window, message):
     from PySide6.QtCore import QPoint
     from PySide6.QtWidgets import QPushButton, QTabWidget
 
@@ -421,14 +422,18 @@ def test_admin_actions_stay_visible(qtbot, authenticated_window):
     window.navigate(View.ADMIN)
     window.resize(1100, 720)
     page = window.admin_page
+    page.message.setText(message)
     tabs = page.findChild(QTabWidget)
     for index in (0, 1):
         tabs.setCurrentIndex(index)
         qtbot.wait(30)
         for control in tabs.currentWidget().findChildren(QPushButton, "adminAction"):
-            center = control.mapTo(window, control.rect().center())
-            assert window.rect().contains(center)
+            bounds = QRect(control.mapTo(window, QPoint(0, 0)), control.size())
+            assert window.rect().contains(bounds)
             assert control.isVisible()
+        assert page.message.height() >= page.message.heightForWidth(
+            page.message.width()
+        )
     # Model a compositor violating the minimum rather than relying on hints.
     window.setMinimumSize(1, 1)
     window.resize(640, 480)
