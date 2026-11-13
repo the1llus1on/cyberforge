@@ -1538,3 +1538,53 @@ safety/consistency/approval workflows. Backup ніколи не активуєт
 Перед commit/push — scoped diff і staged secret-value scan; final SHA/CI run
 будуть у PR5 та final report після обох jobs без redundant doc-only CI cycle.
 Ні merge/ACCEPTED, ні Phase5 не дозволені. Owner acceptance instructions оновлено.
+
+
+## 2026-11-13 — Phase4 остаточно ACCEPTED власником; PR5 merge дозволено
+
+Власник явно прийняв Phase4 LLM Integration: **REVIEW → ACCEPTED**,2026-11-13.
+Це рішення замінює попередні pending/REVIEW записи. Прийнято gateway, Gemini
+Interactions/Groq/Mock, LangChain Runnable, structured/Pydantic validation,
+model/thinking config, bounded timeout/retry/rates/fallback, privacy telemetry/
+secrets, verified Hydrogen backup configuration та F-01/F-02. Підтверджено
+independent architectural/code reviews. Phase5 **NOT STARTED**, окремий дозвіл.
+
+Початкові перевірки: clean feat/phase-4-llm-integration; local HEAD та GitHub
+MCP PR5 HEAD98a019ce99df992c7ad54bc4f4a49ca02f6516b2 збігаються; PR open/unmerged/
+clean, base main d0b407cbb13cf9e10f5bd65904eef978c321ab7e. Workflow43391679188
+completed/success: Linux467passed, Windows465passed/2skipped; locked sync,
+Ruff lint/format, pytest, package import і Qt startup success на обох OS.
+Власник також повідомив Hydrogen focused offline acceptance61passed.
+
+Новий live evidence — **owner-run/owner-reported**, не agent повтор:
+`uv run cyberforge-llm-check --live --provider gemini --model gemini-4-hydrogen`
+→ success, elapsed5.148s, input39/output5/reasoning25. Groq120B та Gemini3.5Lite
+live connectivity SUCCESS підтверджено. Контент/ключі/private account data не
+зберігаються. Agent не виконує жодного нового API call.
+
+Approved policy: Groq/openai/gpt-oss-120b primary cloud;
+Gemini/gemini-4-hydrogen preferred verified backup. Existing controlled policy
+можна enabled при explicit local env configuration; actual .env/keys/config
+flags у цьому documentation-only step не змінюються. Без explicit cloud config
+Mock offline default, startup/ordinary tests не використовують cloud API.
+
+Прийняті власником residual risks: Gemini3.8 availability unresolved; live
+complex Email/Web Structured Outputs unverified; account-wide quotas не
+встановлено; rate counters process-local; production workflows next phases;
+manual GUI checklist not fully executed; physical native Windows11 deferred
+Phase12. Не робиться припущень про повну manual acceptance чи всі native gates.
+Owner approval явно визнає ці обмеження такими, що не блокують Phase4.
+
+Scope: тільки acceptance documentation — plan/log/PHASE4 record/ADR, README
+і AGENTS policy wording. Code/dependencies/migrations/SRS/.env/API keys/DB/
+Windows workspace не змінюються. Локальний full pytest, packaging і manual GUI
+не повторюються без code changes. Scoped diff і secret checks перед commit.
+
+Власник явно дозволив documentation commit/push у наявну branch і **ordinary
+merge commit** PR5 після successful Linux/Windows CI exact FINAL PR HEAD.
+Після push checks очікуються без bypass; failure/pending/conflict/unexpected
+HEAD або base зупинить merge. Merge pin до verified expected_head_sha.
+Після merge: fetch origin → switch main → merge --ff-only origin/main;
+перевірка equal SHAs/merge parents/clean tree, feature branch зберігається.
+Actual final HEAD/CI run/merge SHA і sync evidence — PR5/final report без
+circular doc commit. Phase5 не починати. Ніякого force/reset/clean/reseed.

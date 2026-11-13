@@ -344,3 +344,31 @@ CLI low/256tokens/20s, retries=0, legacy=false та backup=None, store/backgroun
 automatic continuation=false. Будь-які additional requests потребують дозволу.
 У цьому завданні live calls НЕ виконуються. Сам positive fake transport test
 не підтверджує access, cost, quota чи educational content quality.
+
+
+## 2026-11-13 — owner verification і Phase4 ACCEPTED
+
+Власник явно прийняв реалізацію Phase4 та підтвердив незалежні reviews.
+Reviewed implementation HEAD98a019ce99df992c7ad54bc4f4a49ca02f6516b2:
+Linux467passed/Windows465passed,2skipped; focused Hydrogen61passed повідомлено
+власником. Цей запис supersedes попередній UNKNOWN/candidate access status
+для поточного owner-tested Hydrogen key, не видаляє історичні evidence.
+
+Hydrogen live command уже виконав **власник**, результат повідомлений ним:
+success,5.148seconds,input39/output5/reasoning25. Агент цей запит не повторює,
+не має підстав заявляти live validation complex Email/Web schemas або повний
+manual GUI checklist. Groq120B та Gemini3.5Lite live connectivity також SUCCESS.
+Це connectivity evidence, не comparative educational-content experiment.
+
+Primary Groq/openai/gpt-oss-120b; preferred **verified backup**
+Gemini/gemini-4-hydrogen. Власник дозволив увімкнення existing controlled backup
+при explicit local env configuration. Runtime config/defaults/.env не змінено
+цим docs-only step; правила denylist/one-hop/privacy і per-key confirmation
+залишаються чинними. Не можна переносити owner success на довільний інший ключ.
+
+Прийняті residual risks: unresolvedFlash3.8; complex Email/Web live structured
+outputs unverified; account-wide quotas unknown; process-local counters;
+production workflows later; incomplete manual GUI; native physical Windows11
+Phase12. Вони не блокують явно надане owner acceptance. Погоджено ordinary
+PR5 merge тільки після final-head Linux/Windows CI, без bypass/force. Phase5
+**NOT STARTED**; окремий дозвіл обов'язковий. SRS/код/залежності не змінюються.

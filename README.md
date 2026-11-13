@@ -238,7 +238,7 @@ Phase3 прийнята після automated checks, незалежного revi
 owner manual WSLg verification; усі manual scenarios не заявляються виконаними.
 Routine physical Windows11 verification Phases3–11 відкладено до Phase12 як
 acknowledged risk; Windows CI не є native desktop acceptance. Phase4 —
-LLM Integration: реалізацію передано на REVIEW; прийняття власником ще не виконано.
+LLM Integration: **ACCEPTED власником 13.11.2026** із прийнятими залишковими ризиками.
 Деталі — план/журнал/acceptance record.
 
 ## Phase 4 — LLM Integration
@@ -267,7 +267,7 @@ API keys. `.env` не завантажується при імпорті або 
 | Роль | Provider / model | Thinking |
 | --- | --- | --- |
 | Primary cloud | groq / openai/gpt-oss-120b | low, medium, high |
-| Preferred backup candidate, disabled до owner verification | gemini / gemini-4-hydrogen | low, medium, high, xhigh |
+| Preferred verified backup; explicit activation | gemini / gemini-4-hydrogen | low, medium, high, xhigh |
 | Optional lightweight, explicit selection | gemini / gemini-3.5-flash-lite | minimal, low, medium, high |
 | Earlier approved, unresolved access | gemini / gemini-3.8-flash | low, medium, high |
 
@@ -318,16 +318,20 @@ GatewayRunnable підтримує invoke/ainvoke, batch/abatch і stream/astrea
 outer workflows теж не повинні trace prompts/results. Для observability є
 metadata-only TelemetrySink; prompts/responses за замовчуванням не зберігаються.
 
-### Hydrogen connectivity — власник запускає перший тест після review
+### Hydrogen connectivity — SUCCESS підтверджено власником 13.11.2026
 
 Попередня bounded live перевірка на reviewed32e6de1 підтвердила доступ до
 Groq GPT-OSS120B та Gemini3.5FlashLite. Gemini3.8Flash повернув unavailable;
 власник повідомив про два такі результати. Це не доводить access/quota restriction.
 Попереднє Hydrogen повідомлення про allowlist було локальним rejection, без
 Google API request. Published availability не підтверджує доступ конкретного
-ключа. **Hydrogen live не викликався в цьому завданні.**
+ключа. Власник повідомив Hydrogen **success**:5.148s, input39/output5/reasoning25.
+Це owner-run evidence; агент не повторює live calls. Live complex Email/Web
+Structured Outputs/account-wide quotas не перевірені; counters process-local.
+Manual GUI checklist неповний; physical native Windows11 gate — Phase12.
+Ризики прийняті власником і не блокують Phase4 acceptance.
 
-Після review власник виконує один synthetic connectivity request:
+Власник уже виконав цей synthetic connectivity command (не повторювати автоматично):
 
 ```console
 uv run cyberforge-llm-check --live --provider gemini --model gemini-4-hydrogen

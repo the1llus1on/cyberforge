@@ -1,13 +1,17 @@
 # Phase 4 — LLM Integration: перевірка власником
 
-Статус: **REVIEW**, не ACCEPTED. Архітектура ADR-0004 погоджена окремо;
-прийняття реалізації ще очікується. Phase 5 не розпочато. Hydrogen live access ще не перевірено; актуальні evidence — нижче.
+Статус: **ACCEPTED власником 2026-11-13**. Реалізацію прийнято після
+independent architectural/code reviews; ordinary merge PR5 дозволено лише після
+success Linux/Windows CI фінального HEAD. Phase5 — **NOT STARTED**.
+Hydrogen connectivity підтверджено owner-run test; повний GUI checklist не
+виконаний. Історичні інструкції нижче не є заявою про виконання всіх кроків.
 
 ## Вимоги та межі
 
 SRS §§10.1–10.8/11.1/23 Phase4: provider-neutral LLMGateway, Gemini Interactions,
 Groq/Mock, text/structured contracts, retries/errors/usage та synthetic privacy.
-Погоджений нормативний diff обмежено §10.2. Scenario ownership/RBAC/versioning,
+Погоджені SRS clarifications: §10.2 та narrow Groq-primary policy references,
+зафіксовані в ADR-0004; це acceptance step без нових SRS changes. Scenario ownership/RBAC/versioning,
 scoring і migrations не змінювалися. Генерація з UI та спеціалізовані агенти
 відкладені; ця фаза надає перевірений Python integration layer.
 
@@ -89,13 +93,13 @@ Groq structured artifacts без live API. Усі prior Phase0–4 tests збе�
 
 - [ ] Offline контракти та normalized telemetry перевірено власником.
 - [ ] Короткий WSLg startup/close та disabled-live guard перевірено власником.
-- [ ] Власник явно приймає Phase4 (поки не підтверджено).
+- [x] Власник явно прийняв Phase4 2026-11-13; accepted residual risks нижче.
 
 Автоматичні докази наведено в DEVELOPMENT_LOG та final PR checks. Цей checklist
 не заповнюється автоматично й не заявляє невиконаних owner перевірок.
 
 
-## Groq primary / Hydrogen backup: поточне owner acceptance
+## Groq primary / Hydrogen backup: reference процедури до acceptance
 
 Попередню Gemini-primary policy superseded. Primary cloud — Groq GPT-OSS120B;
 Hydrogen — preferred backup candidate, Lite optional, Flash3.8 access unresolved.
@@ -125,3 +129,50 @@ parameters зберігаються. Existing F-01/F-02 і local Pydantic valida
 власник повідомив про другий unavailable3.8. Це не підтверджує його access/quota
 restriction і не доводить Hydrogen access. У цьому завданні agent не робить
 live calls. Native Windows11/Phase12 deferral та owner acceptance gate незмінні.
+
+
+## Остаточне рішення власника — 2026-11-13
+
+**Phase4 ACCEPTED власником.** Reviewed implementation HEAD:
+98a019ce99df992c7ad54bc4f4a49ca02f6516b2. Пройдено independent architecture/code
+review; F-01/F-02 усунено. Власник дозволив docs-only фіналізацію та ordinary
+merge commit PR5 після final-head CI. Це рішення supersedes pending/REVIEW
+формулювання ранніх sections; reference checklist збережено без автоматичного
+позначення невиконаних ручних перевірок.
+
+| Тип доказу | Підтверджено |
+| --- | --- |
+| Automated implementation CI | Linux467passed; Windows465passed,2skipped; run43391679188 success; Ruff/locked install/import/Qt startup success |
+| Hydrogen offline acceptance |61passed, owner-reported; agent повтор не виконує |
+| Groq openai/gpt-oss-120b live |SUCCESS; попередня bounded connectivity evidence збережена в ADR/log |
+| Gemini3.5FlashLite live |SUCCESS; попередня bounded connectivity evidence збережена в ADR/log |
+| Gemini4Hydrogen live |SUCCESS, owner-run/owner-reported:5.148s; input39/output5/reasoning25 |
+| Manual GUI |Повний owner checklist не виконано; не заявляється як pass |
+| Physical native Windows11 |Deferred Phase12; Windows CI не є physical acceptance |
+
+Owner Hydrogen command (вже виконано власником; агент НЕ повторює):
+
+```console
+uv run cyberforge-llm-check --live --provider gemini --model gemini-4-hydrogen
+```
+
+Approved primary Groq/openai/gpt-oss-120b; preferred **verified** backup
+Gemini/gemini-4-hydrogen. Власник погодив activation existing controlled policy
+при explicit local environment configuration. .env/keys/default-off runtime
+flags не змінюються цим documentation-only acceptance. Access confirmation
+стосується перевіреного ключа, не всіх акаунтів/моделей/Structured Outputs.
+
+### Прийняті залишкові ризики
+
+- Gemini3.8Flash availability unresolved.
+- Live complex Email/Web structured schema generation ще не перевірено.
+- Account-wide provider quotas незалежно не встановлено.
+- Rate-limit counters process-local.
+- Production Email/Web generation workflows належать наступним фазам.
+- Manual GUI checklist неповний; непідтверджені boxes залишаються unchecked.
+- Physical native Windows11 acceptance лишається Phase12 gate.
+
+Власник визнав ці ризики такими, що не блокують Phase4 acceptance. Подальші
+live calls/розширення implementation scope тут не дозволені. Final docs-only
+HEAD проходить обидва CI jobs до merge; actual SHA/run/merge commit — PR5/final
+report. Phase5 NOT STARTED і потребує окремого дозволу.

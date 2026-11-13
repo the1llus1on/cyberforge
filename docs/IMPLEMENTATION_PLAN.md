@@ -20,7 +20,7 @@
 | 1 | Main UI Shell | ACCEPTED | Dark PySide6 shell, universal Home / Guest state, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
 | 2 | Users & Groups | ACCEPTED | Прийнято власником 12.11.2026: login, Argon2id, 3 roles, demo accounts/groups, RBAC; WSLg і native Windows 11 докази нижче |
 | 3 | Scenario Management | ACCEPTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
-| 4 | LLM Integration | REVIEW | Groq primary; verified-gated Hydrogen backup candidate; Mock offline; F-01/F-02 preserved; 467 local tests; REVIEW; ADR-0004 |
+| 4 | LLM Integration | ACCEPTED | Прийнято власником 13.11.2026; Groq primary/Hydrogen verified backup, explicit activation; Mock offline; F-01/F-02; accepted residual risks; ADR-0004 |
 | 5 | Specialized Agents | NOT STARTED | Typed I/O contracts for four specialized agents and bounded orchestration; mock agent tests |
 | 6 | Email Constructor | NOT STARTED | Email shell, generation, preview, code view, regeneration, explicit save and validation; UI tests |
 | 7 | Web Constructor | NOT STARTED | Web templates, isolated Qt WebEngine, generation, preview, code view, explicit save; security and UI tests |
@@ -698,3 +698,47 @@ mock-tested; owner запускає перший реальний тест пі�
 Ruff74files success. Усі prior406 regressions збережено. Final HEAD та обидва
 Linux/Windows CI jobs будуть підтверджені після push у PR5/final report.
 Hydrogen live — owner acceptance step після review, не виконаний агентом.
+
+
+## 13.11.2026 — Phase4 ACCEPTED власником; merge PR5 дозволено
+
+Власник явно прийняв Phase4 LLM Integration: **REVIEW → ACCEPTED**,2026-11-13.
+Це рішення замінює попередні REVIEW/pending записи поточного milestone;
+історію реалізації та її перевірок збережено. Дозволено лише documentation-only
+acceptance commit/push і ordinary merge commit PR5 після обох successful CI
+jobs exact FINAL PR HEAD. Baseline98a019ce99df992c7ad54bc4f4a49ca02f6516b2.
+
+Прийнято provider-independent gateway, Gemini Interactions/Groq/Mock adapters,
+LangChain Runnable, structured/Pydantic validation, per-model thinking/config,
+bounded retries/timeouts/limits/fallback, privacy-safe telemetry/secret handling,
+Groq→Hydrogen backup configuration та F-01/F-02. Незалежні architecture/code
+reviews і попередній CI підтверджені; поточний owner approval є acceptance.
+
+Докази розділено:
+- Automated reviewed HEAD: Linux467passed, Windows465passed/2skipped, Ruff,
+  locked install, package import/Qt startup success (run43391679188).
+- Hydrogen focused offline acceptance:61passed, повідомлено власником;
+  попередній stable combined gate253passed і full local467passed збережено.
+- Live connectivity: Groq GPT-OSS120B SUCCESS, Gemini3.5Lite SUCCESS;
+  Hydrogen SUCCESS **owner-run/owner-reported**,5.148s,39input/5output/25reasoning.
+- Manual GUI: повний checklist власником не виконувався; непідтверджені пункти
+  не позначаються виконаними. WSLg/CI не є physical native Windows11 acceptance.
+
+Approved policy: Groq/openai/gpt-oss-120b primary cloud; Gemini/gemini-4-hydrogen
+preferred verified backup. Existing controlled backup дозволено enabled лише
+через explicit local configuration; runtime defaults/flags і actual .env цим
+acceptance step не змінюються. Mock — safe offline default.
+
+Accepted residual risks: Flash3.8 availability unresolved; live complex
+Email/Web Structured Outputs не перевірено; account-wide quotas не встановлено;
+rate counters process-local; production generation workflows наступних фаз;
+manual GUI checklist incomplete; physical native Windows11 gate Phase12.
+Ці обмеження acknowledged owner acceptance і не блокують Phase4.
+
+Фінальна docs-only branch обов'язково проходить Linux/Windows CI перед merge;
+failed/pending checks, conflicts або unexpected HEAD зупиняють merge без bypass.
+Після merge — clean checkout main + fetch/ff-only sync, перевірка merge SHA та
+clean tree; owner data/native workspace збережено. Actual final SHA/CI/merge
+result — PR5 і фінальний звіт, без circular documentation commit.
+**Phase5 — NOT STARTED**, потрібен окремий дозвіл; Phase4 acceptance/merge
+не є дозволом Specialized Agents.
