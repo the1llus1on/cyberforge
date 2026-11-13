@@ -21,7 +21,7 @@
 | 2 | Users & Groups | ACCEPTED | Прийнято власником 12.11.2026: login, Argon2id, 3 roles, demo accounts/groups, RBAC; WSLg і native Windows 11 докази нижче |
 | 3 | Scenario Management | ACCEPTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
 | 4 | LLM Integration | ACCEPTED | Прийнято власником 13.11.2026; Groq primary/Hydrogen verified backup, explicit activation; Mock offline; F-01/F-02; accepted residual risks; ADR-0004 |
-| 5 | Specialized Agents | REVIEW | Four typed agents, bounded LangGraph, offline tests; готовність REVIEW вимагає successful Linux/Windows CI exact final PR HEAD; owner acceptance очікується |
+| 5 | Specialized Agents | ACCEPTED | Прийнято власником 13.11.2026: four agents, typed contracts, bounded LangGraph, provenance/F-01, offline/provider-neutral integration; PHASE_5_ACCEPTANCE.md |
 | 6 | Email Constructor | NOT STARTED | Email shell, generation, preview, code view, regeneration, explicit save and validation; UI tests |
 | 7 | Web Constructor | NOT STARTED | Web templates, isolated Qt WebEngine, generation, preview, code view, explicit save; security and UI tests |
 | 8 | Scenario Integration | NOT STARTED | Shared Email→Web context, internal link validation, readiness gate, immutable publishing; integration tests |
@@ -796,3 +796,16 @@ digest. Додано positive regression для Email refinement без змін
 Final focused155passed/5.07s (104prior+51new); остаточний full
 **622passed/447.22s**, Ruff lint/format success,82files. Попередній full621pass
 був до цієї поправки. Final-head Linux/Windows CI evidence — PR6/final report.
+
+
+## Phase 5 — ACCEPTED власником 13.11.2026
+
+Власник явно прийняв Phase5 після independent review/F-01 remediation та
+успішного **owner-run/owner-reported offline agent demo**. Це рішення замінює
+попередні REVIEW/pending записи Phase5; історичні докази збережено.
+Reviewed HEAD `37a0f5e290a9068c8b24255acf276b826022c231`, PR6.
+Прийнятий scope/обмеження — [PHASE_5_ACCEPTANCE.md](PHASE_5_ACCEPTANCE.md).
+Дозволено documentation-only acceptance commit/push, звичайний merge commit
+PR6 лише після successful Linux/Windows CI exact final HEAD, потім local main
+fetch/ff-only sync. Final SHA/CI/merge evidence — PR6 і фінальний звіт.
+Phase6 **NOT STARTED**: потрібен окремий дозвіл. SRS/runtime/.env/DB не змінено.

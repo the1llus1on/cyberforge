@@ -1,6 +1,7 @@
 # ADR-0005: спеціалізовані агенти та перевірювані чернетки
 
-Дата: 13.11.2026. Статус: реалізовано для **Phase 5 REVIEW**, прийняття власником очікується.
+Дата: 13.11.2026. Статус: **ACCEPTED власником 13.11.2026**, включно з F-01 remediation.
+Acceptance scope/evidence/limitations — [PHASE_5_ACCEPTANCE.md](../PHASE_5_ACCEPTANCE.md).
 
 SRS §§5–6, 9–13, 23, 26.1 деталізовано в межах явно дозволеної Phase 5.
 ADR-0004, SRS і provider policy не змінюються.

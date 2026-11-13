@@ -1766,3 +1766,24 @@ F-01 остаточний stable gate після request-token correction:
 - final diff/staged secret scan перед follow-up commit/push; історія не переписується.
 Final SHA та обидва successful exact-head CI jobs/log evidence фіксуються в PR6
 і фінальному звіті після push. Phase5 REVIEW, не ACCEPTED; merge/Phase6 відсутні.
+
+
+## 13.11.2026 — Phase 5 ACCEPTED власником; PR6 merge дозволено
+
+Власник явно прийняв Phase5, включно з independent review/F-01 resolved та
+успішним owner-run/owner-reported offline demo. ACCEPTED supersedes попередні
+Phase5 REVIEW записи. Accepted scope/limitations — PHASE_5_ACCEPTANCE.md.
+GitHub MCP підтвердив clean/open/unmerged PR6, base main6683f6e, reviewed HEAD
+37a0f5e290a9068c8b24255acf276b826022c231; local feature branch clean/equal.
+Reviewed CI43407344393: Linux622passed, Windows620passed/2POSIXskipped;
+обидва jobs success, locked install/Ruff/package import/Qt smoke success.
+
+План acceptance scope: SRS §23/§§9–11 — тільки plan/log/acceptance record/ADR
+status. Runtime, tests, dependencies, SRS, .env/keys/DB/user/native environment
+не змінюються. Нові live calls/local full suites/build/GUI не потрібні.
+Owner authorization: docs commit/push existing branch, обидва CI exact FINAL
+HEAD, ordinary merge commit із pinned expected head, local fetch/switch main/
+merge --ff-only origin/main, перевірка SHAs/parents/clean tree. Failed/pending CI,
+unexpected head/base/scope або conflicts зупинять merge без bypass. Staged
+secret/diff checks перед commit. Actual final HEAD/CI/merge outcome — PR6/final
+report після виконання, без circular doc commit. Phase6 NOT STARTED.
