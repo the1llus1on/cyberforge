@@ -21,7 +21,7 @@
 | 2 | Users & Groups | ACCEPTED | Прийнято власником 12.11.2026: login, Argon2id, 3 roles, demo accounts/groups, RBAC; WSLg і native Windows 11 докази нижче |
 | 3 | Scenario Management | ACCEPTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
 | 4 | LLM Integration | ACCEPTED | Прийнято власником 13.11.2026; Groq primary/Hydrogen verified backup, explicit activation; Mock offline; F-01/F-02; accepted residual risks; ADR-0004 |
-| 5 | Specialized Agents | NOT STARTED | Typed I/O contracts for four specialized agents and bounded orchestration; mock agent tests |
+| 5 | Specialized Agents | REVIEW | Four typed agents, bounded LangGraph, offline tests; готовність REVIEW вимагає successful Linux/Windows CI exact final PR HEAD; owner acceptance очікується |
 | 6 | Email Constructor | NOT STARTED | Email shell, generation, preview, code view, regeneration, explicit save and validation; UI tests |
 | 7 | Web Constructor | NOT STARTED | Web templates, isolated Qt WebEngine, generation, preview, code view, explicit save; security and UI tests |
 | 8 | Scenario Integration | NOT STARTED | Shared Email→Web context, internal link validation, readiness gate, immutable publishing; integration tests |
@@ -742,3 +742,32 @@ clean tree; owner data/native workspace збережено. Actual final SHA/CI/
 result — PR5 і фінальний звіт, без circular documentation commit.
 **Phase5 — NOT STARTED**, потрібен окремий дозвіл; Phase4 acceptance/merge
 не є дозволом Specialized Agents.
+
+
+## Phase 5 — Specialized Agents (13.11.2026)
+
+Власник явно дозволив Phase 5 після ACCEPTED Phase 4 / merge PR #5
+`6683f6e2569de05c57995eb5f7b1b3f6f603cce7`. GitHub MCP підтвердив main;
+clean tree, fetch/ff-only check і feature branch `feat/phase-5-specialized-agents`.
+
+План: SRS §§5–6/9/11/26.1 — four typed specialists і draft contracts;
+§§10.1–10.4 — bounded LangGraph через existing GatewayRunnable;
+§§11–13 — structural linkage, NIST claim separation та grounded explanations;
+§21 — offline focused/full tests, package gate після new dependency, Linux/Windows
+CI final HEAD, owner REVIEW. Phase 6–12 implementation не дозволено.
+
+Реалізовано input validation, closed slots, versioned prompts, mandatory local
+validation, pending_review, до одного explicit content correction; ніяких
+persistent graph state, UI/DB mutations, publication чи live API calls.
+Деталі, обмеження й наступні integration points — ADR-0005.
+Stable local gate: Ruff lint/format success (81 files); agents104passed/1.24s;
+combined agents+Phase4 LLM355passed/5.37s перед2додатковими command-refusal cases;
+full **571passed/205.14s** після остаточних code changes. Build/sdist/wheel,
+exact hashed58runtime dependencies install у /tmp, isolated wheel demo чотирьох
+agents, package privacy/source match і Qt startup smoke — success.
+
+Перед публікацією — final diff/staged secret scan. PR→main без merge;
+цей milestone подано на REVIEW, readiness gate завершується лише successful
+Linux/Windows CI на exact final PR HEAD. Actual SHA, CI run/jobs і результати
+фіксуються в PR та фінальному звіті після push без circular doc commits.
+ACCEPTED — тільки окреме рішення власника; Phase6 NOT STARTED.

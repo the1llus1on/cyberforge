@@ -1588,3 +1588,99 @@ HEAD або base зупинить merge. Merge pin до verified expected_head_s
 перевірка equal SHAs/merge parents/clean tree, feature branch зберігається.
 Actual final HEAD/CI run/merge SHA і sync evidence — PR5/final report без
 circular doc commit. Phase5 не починати. Ніякого force/reset/clean/reseed.
+
+
+## 13.11.2026 — Phase 5 Specialized Agents
+
+Власник явно дозволив Phase 5 після прийнятої Phase 4. Baseline main
+`6683f6e2569de05c57995eb5f7b1b3f6f603cce7` підтверджено GitHub MCP; clean
+working tree, fetch/ff-only synchronization і гілка
+`feat/phase-5-specialized-agents`. .env/ключі/local SQLite/user files та native
+Windows acceptance environment не змінювалися. SRS збережено без змін.
+
+Перед coding представлено план SRS §§5–6,9–13,23,26.1: four typed specialists,
+existing scenario/gateway reuse, minimal LangGraph, independent validation,
+offline tests, packaging і exact-head CI. Офіційні LangGraph overview/Context7
+підтвердили StateGraph/conditional edges/compile(checkpointer=False)/recursion_limit.
+NIST TN2276 official page підтверджує email detection difficulty boundary.
+
+Реалізовано `agents/{contracts,prompts,workflow,specialized,demo}.py` та exports.
+Email/Web slots композиційно доповнюють canonical V1 artifacts у draft V2,
+не створюють нової Scenario entity/repository. Input revalidation/deep copy,
+scenario/version/parameters/context/internal-resource/template gates, synthetic
+.invalid addresses, bounded text/arrays, no markup/executable slots/commands.
+Selected NIST IDs copied from existing catalog; claims перевіряються як subset,
+verified cues порожні з explicit instructor-review requirement. Повна semantic
+cue detection та publishing readiness — не Phase 5.
+
+Mentor/Assistant використовують model-selected supplied fact IDs і дозволені
+topics; deterministic composer повертає trusted explanations/defensive behavior
+та curated recommendations. Немає довільного generated prose для score/metrics/
+psychological claims. Supplied result/aggregate copied unchanged, missing,
+incomplete, actual0 і correctly_skipped Web розрізняються. Розширення facts і
+catalog можливе наступними фазами; caller відповідає за sanitized synthetic
+inputs, походження фактів та application RBAC. Agents не читають/пишуть БД.
+
+ADR-0005 пояснює consequential grounded-output design і explicit wire/local
+validation split. Нові output schemas проходять unchanged Groq strict subset
+без projections; mandatory local Pydantic validators перевіряють усі bounds і
+semantic rules. F-01/F-02, gateway/provider/config/domain/application код не
+змінено. Versioned policy/task prompts відмежовують trusted policy й untrusted
+refinements/previous drafts. No payload telemetry; graph tracing disabled для
+всього run. Result default export приховує draft, metadata-only gateway telemetry
+збережено. State per invocation, no checkpoint/store/tools/supervisor.
+
+Graph START→generate→validate→END; optional один content correction лише після
+VALIDATION, default0, max2 generations, recursion_limit6. Safety/refusal/auth/
+transport/quota не запускають agent retries. Gateway залишається єдиною retry/
+fallback/limits межею. Перший incremental run виявив, що дві генерації в межах
+strict default budgets можуть бути зупинені BUDGET — це очікувана поведінка.
+Scripted Mock fixtures отримали explicit великі provider+model budgets, production
+caps не змінено; окремий тест доводить quota stop для correction.
+
+Dependency: langgraph>=1,<2, lock1.2.21 та4transitive packages; existing locked
+versions не оновлювалися. Initial restricted PyPI DNS failure вирішено approved
+network execution для dependency installation. Offline isolated install спершу
+не мав cached wheels; exact hashed58 runtime dependencies завантажені з PyPI
+в /tmp environment. Це dependency transport, не live LLM API calls.
+
+Перевірки incremental/focused: initial91passed/4failed через mock budget keys,
+виправлено лише test/demo budgets; final agents104passed/1.24s; prior combined
+agents+allPhase4LLM355passed/5.37s перед додаванням2command-refusal cases.
+Реальні Groq SDK fakeHTTP tests для всіх4agents підтвердили strict wire schemas,
+mandatory local validation, no schema_projection і payload/key log redaction.
+No unintended cloud/network/DB access перевірено guards; state isolation,
+regeneration immutability, input tampering, invalid schemas/content, score/
+aggregate grounding, safety/errors, transport retry ownership covered.
+
+Sandbox limitation: unchanged baseline Runnable async test зависає в asyncio
+selector/wakeup; відтворено окремо, interrupted. Позасandbox combined gate
+348passed/4.62s, потім355passed/5.37s. Перший partial full run перервано для
+завершення command safety check; interrupted-run warnings не є stable result.
+Final full suite запущено без sandbox із blank API keys/LANGSMITH_TRACING=false.
+Нових live Groq/Gemini requests не виконано. GUI не змінено, WSLg visual checks
+не потрібні; native Windows11 лишається Phase12 risk, не verified requirement.
+
+Фінальні stable перевірки:
+
+| Команда / перевірка | Результат |
+| --- | --- |
+| uv run --offline --locked ruff check . | success |
+| uv run --offline --locked ruff format --check . | success,81files |
+| uv run --offline --locked pytest tests/test_agents.py -q --tb=short | **104passed,1.24s**, final code |
+| combined tests/test_agents.py tests/test_llm*.py -q --tb=short | **355passed,5.37s**, перед2final command-refusal cases |
+| GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false uv run --offline --locked pytest -q --tb=short | **571passed,205.14s**, final code, усі467baseline regressions |
+| uv build --offline --out-dir /tmp/cyberforge-phase5-dist | sdist+wheel success |
+| uv export --offline --locked --no-dev --no-emit-project --format requirements-txt; uv pip install --require-hashes -r exported file |58exact runtime dependencies, isolated /tmp wheel environment success |
+| uv pip install --offline --no-deps --reinstall final wheel |success |
+| /tmp/cyberforge-phase5-wheel-env/bin/python -I -m cyberforge.agents.demo, cwd=/tmp |4agents pending_review, offline success |
+| wheel/sdist inspection |6agent modules source match, no DB/.env/credentials |
+| QT_QPA_PLATFORM=offscreen isolated wheel cyberforge --database /tmp/cyberforge-phase5-wheel-smoke.sqlite3 --smoke-test |exit0 |
+| git diff --check |success |
+
+Phase5 подано на **REVIEW**, не ACCEPTED. Готовність REVIEW gate залежить від
+successful Linux/Windows CI exact final PR HEAD; actual final SHA/CI run/jobs
+фіксуються в PR і фінальному звіті після push, без circular documentation commit.
+Перед commit/push: final diff і staged secret scan, включно з порівнянням actual
+local secret values без їх виведення. PR→main; merge заборонено цим завданням.
+Phase6 NOT STARTED; physical native Windows11 acceptance лишається Phase12.
