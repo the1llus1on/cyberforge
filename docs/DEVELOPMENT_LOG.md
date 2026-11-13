@@ -2059,5 +2059,29 @@ Final full command (PTY, outside the socket-restricted sandbox):
 **698passed/323.50s**, exit0;
 `/tmp/cyberforge-phase6-ux-final-layout-pytest.log`. Ruff lint/format pass92files;
 `git diff --check` passes. This supersedes the previous local full-suite evidence.
-No further production edits follow this gate. PR7 will record the exact pushed
-HEAD and Linux/Windows CI job/log results without an extra documentation commit.
+This verifies commitf8e1417; the final padding adjustment below supersedes it.
+PR7 records exact pushed HEADs and Linux/Windows CI job/log results without an
+extra documentation-only commit.
+
+### Windows CI outer-padding correction
+
+Run43520321517 atf8e1417 passed Linux (698passed/324.42s). Windows passed every
+critical-control visibility assertion but found **2pixels** of outer vertical
+scrolling under the newly added stricter assertion (1failed,695passed,
+2POSIX-only skips/479.10s). Kept that assertion and reduced EmailPage's vertical
+padding from8px to4px; no controls/text/font sizes or workflow behavior changed.
+This adds8px of layout headroom at the minimum size. The focused compact and
+Save/reopen check passes **3cases/5.05s** offscreen and **3cases/7.79s** WSLg.
+An isolated Segoe UI WSLg probe with a650px viewport (matching Windows CI) passes
+all control visibility/zero-outer-scroll assertions. Only the temporary probe's
+window minimum was reduced; the application's1100×720 minimum is unchanged.
+The three review screenshots were refreshed; the compact image was inspected.
+Final full/CI evidence follows. The additional commit is a verified correction in
+PR7, not a separate phase or documentation-only change.
+
+Final full command (PTY, local-socket access):
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**698passed/327.86s**, exit0; `/tmp/cyberforge-phase6-ux-padding-pytest.log`.
+This is final local evidence after both Windows CI findings. Ruff lint/format
+pass92Python files and `git diff --check` passes. No further production edits
+follow this gate; exact final HEAD/CI evidence is recorded in PR7/final report.

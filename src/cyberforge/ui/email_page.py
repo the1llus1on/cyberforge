@@ -52,7 +52,7 @@ class EmailPage(QWidget):
         self.watchdog.timeout.connect(self._timed_out)
         self._refinement_baseline = ""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 8, 16, 8)
+        layout.setContentsMargins(16, 4, 16, 4)
         layout.setSpacing(3)
         top = QHBoxLayout()
         self.back_button = QPushButton("← До картки сценарію")
