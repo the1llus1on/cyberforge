@@ -22,6 +22,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--smoke-test", action="store_true", help="Перевірити запуск і закрити вікно"
     )
     parser.add_argument("--database", type=Path, help="Шлях до спільної локальної БД")
+    parser.add_argument(
+        "--email-demo",
+        action="store_true",
+        help="Явне офлайн-демо конструктора листа; синтетичний шаблон без AI та мережі",
+    )
     setup = parser.add_mutually_exclusive_group()
     setup.add_argument(
         "--init-admin",
@@ -103,11 +108,25 @@ def main(argv: Sequence[str] | None = None) -> int:
             accounts.bootstrap(username, "Адміністратор", password)
             print("Обліковий запис адміністратора створено.")
             return 0
+        from cyberforge.application.email_materials import EmailMaterialService
+        from cyberforge.application.scenarios import ScenarioService
+        from cyberforge.llm.config import GatewayConfig, load_config
+        from cyberforge.llm.contracts import GenerationError
+        from cyberforge.llm.factory import create_gateway
         from cyberforge.ui.shell import MainWindow
         from cyberforge.ui.theme import apply_theme
 
         apply_theme(app)
-        window = MainWindow(accounts)
+        try:
+            config = GatewayConfig() if args.email_demo else load_config()
+        except GenerationError:
+            raise ApplicationError(
+                "Некоректна конфігурація LLM. Перевірте локальні налаштування."
+            ) from None
+        emails = EmailMaterialService(
+            ScenarioService(accounts), create_gateway(config), demo=args.email_demo
+        )
+        window = MainWindow(accounts, emails)
         window.show()
         if args.smoke_test:
             QTimer.singleShot(500, window.close)

@@ -1787,3 +1787,144 @@ merge --ff-only origin/main, перевірка SHAs/parents/clean tree. Failed/
 unexpected head/base/scope або conflicts зупинять merge без bypass. Staged
 secret/diff checks перед commit. Actual final HEAD/CI/merge outcome — PR6/final
 report після виконання, без circular doc commit. Phase6 NOT STARTED.
+
+## 13.11.2026 — Phase 6 Email Constructor: початок та інкременти
+
+Власник окремо дозволив Phase 6 з реалізацією, offline перевірками та PR, без
+merge/Phase 7. GitHub MCP підтвердив merged/ACCEPTED PR6; clean local main
+містить accepted merge 8a6beabf13ec4da43d2ce26bb78bccc9fce64340. Fetch/ff-only
+успішні; створено feat/phase-6-email-constructor. Sandbox read-only .git вимагав
+escalation; user changes відсутні. Наявні .env, keys, databases і Windows
+acceptance environment не змінювалися. Старі NOT STARTED записи — історичні.
+
+План перед coding зіставлено з SRS §§4.5–4.9,5.1–5.8,9.2,10,11,14.4,21,23–24.
+Context7 функціонально доступний; офіційні Qt QRunnable/QThreadPool/queued
+signals перевірено. GitHub MCP доступний. Інші MCP для цієї зміни не потрібні;
+нових runtime dependencies немає. SRS незмінний, матеріальних відкритих рішень
+не виявлено. Boundary/schema/context/lifecycle — ADR-0006.
+
+Інкремент persistence: additive 0004 без зміни старих rows, EmailMaterialService
+із наявним RBAC/BEGIN IMMEDIATE, independent material revision, exact scenario
+revision/archive revision/provenance, full validated envelope. Детермінований
+контекст v1 — лише trusted scenario ID/version. Stale/corrupt records не стираються,
+повертаються як requires-review; valid replacement лише явним Save. Нові versions
+не копіюють material. Downgrade nonempty table відмовляє без втрати даних.
+
+Інкремент UI: ScenarioPage materials + EmailPage у наявному stack, приблизно 90%
+preview, native plain-text inbox/detail/read state, JSON modal/copy/highlighting,
+refinement та explicit Save/reopen/green. Accepted real EmailScenarioAgent і
+gateway; no fixture-based normal generation. --email-demo явно синтетичний,
+повністю offline і не читає .env. Default Mock unavailable показано чесно.
+Workers QRunnable/QThreadPool, queued GUI slots, request/session/scenario/revision
+identity; navigation/logout/version/archive/timeout відхиляють стару доставку.
+Закриття з worker асинхронно очікує завершення; backend cancellation не заявлено.
+
+Проміжні перевірки: existing scenario UI/database focus 51passed,1failed через
+очікування попереднього Alembic head; test оновлено. New service focus
+39passed,2failed через test-only str замість Path; fixtures виправлено.
+Ці3cases повторно: 3passed/6.65s. New GUI focus:22passed/78.27s. Перший GUI
+прогін перервано через assertion у modal test callback без finally-close;
+harness виправлено, production dialog не змінено. Усі tests без live API.
+Остаточні результати наведено нижче після стабілізації.
+
+### Phase 6 — стабілізація та WSLg
+
+- `UV_CACHE_DIR=/tmp/cyberforge-phase6-uv-cache uv run --offline --locked pytest tests/test_email_materials.py tests/ui/test_email_constructor.py -q --tb=short`:
+  **67passed/156.71s** перед останнім session-epoch case і візуальною поправкою.
+- WSLg screenshot review виявив обрізані другі рядки sender/resource; додано
+  minimum height і regression assertion. Додано явно synthetic 09:30/09:25…
+  timestamps у developer template згідно §5.3. Final layout/source cases:
+  **2passed/7.27s** (такий самий focus до timestamps:2passed/7.81s).
+- `QT_QPA_PLATFORM=wayland GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-uv-cache uv run --offline --locked pytest tests/ui/test_email_constructor.py -q --tb=short`:
+  **25passed/115.29s**, код до остаточних header/layout поправок нижче,
+  real WSLg/Wayland.
+- Реальний Wayland probe з ізольованою temporary DB: generation → preview →
+  explicit Save → card; saved=true, scenario_status=draft, horizontal_overflow=0.
+  Фінальні screenshots `phase-6-email-preview.png` (1400×900) та
+  `phase-6-email-saved.png` (1100×720) візуально перевірено. Це Codex automation,
+  не owner manual acceptance й не фізична Windows11 перевірка.
+- Final `uv run --offline --locked ruff check .`, `ruff format --check .`:
+  success,90Python files. Cache перенаправлено в /tmp, бо default uv cache
+  read-only у sandbox. `git diff --check`:success.
+- `uv build --offline --out-dir /tmp/cyberforge-phase6-dist`: sdist+wheel success.
+  Archive inspection:61Python sources byte-identical тому code snapshot, packaged
+  0004 migration присутня, private DB/.env artifacts відсутні.
+- Fresh isolated wheel environment: offline dependency install виявив cache miss
+  Alembic; дозволене завантаження58exact runtime dependencies із locked export
+  та --require-hashes. Це package downloads, не LLM API calls. Остаточний
+  installability/runtime outcome наведено нижче після завершення.
+
+Змінені файли: README; IMPLEMENTATION_PLAN/DEVELOPMENT_LOG; main.py;
+persistence/models.py; ui/scenario_page.py,shell.py; migration-head expectation
+у test_groups_database.py. Додані: application/email_materials.py,email_demo.py;
+migrations/versions/0004_email_materials.py; ui/email_page.py,email_source.py,
+email_worker.py; tests/test_email_materials.py,ui/test_email_constructor.py;
+ADR-0006,PHASE_6_ACCEPTANCE та2WSLg screenshots. Pyproject/uv.lock і SRS незмінні.
+
+### Phase 6 — пауза власника та завершення layout remediation
+
+До паузи власника повний прогін завершився **689passed,1failed/725.80s**:
+`test_form_actions_and_internal_scroll[size0]` — кнопка Save виходила за viewport
+1100×720. Focus із новими header widgets також відтворив цю регресію:
+**18passed,1failed/72.07s**. Публікації за failing checks не було. Власник
+зупинив роботу, потім окремо попросив продовжити; commit/push/PR до паузи відсутні.
+
+Гранична тема без пробілів показала обмеження QLabel wrapping: headers переведено
+на native read-only QPlainTextEdit зі scrolling і Tab focus navigation. Після
+відновлення роботи root cause footer regression підтверджено: стандартний
+QStackedWidget застосовував minimum size прихованої EmailPage до картки.
+Локальний _WorkspaceStack тепер бере sizeHint/minimumSizeHint активної сторінки
+і повідомляє layout про перехід. Global shell/theme не змінювалися.
+Офіційні QWidget layout/updateGeometry API додатково перевірено Context7.
+
+Focused existing footer (2sizes) + new Email save/source/long-header cases:
+**4passed/6.68s**; після доповнення Save→card viewport assertions:
+**1passed/1.84s**. Ці перевірки залишаються у загальній suite.
+
+Final `QT_QPA_PLATFORM=wayland GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-uv-cache uv run --offline --locked pytest tests/ui/test_email_constructor.py tests/ui/test_scenarios_ui.py::test_form_actions_and_internal_scroll -q --tb=short`:
+**27passed/66.89s**. Оновлений real WSLg probe: saved=true,
+scenario_status=draft, horizontal_overflow=0, save_visible=true на1100×720.
+Обидва screenshots оновлено й візуально перевірено. Headers та body мають власне
+прокручування; за потреби доступне прокручування всієї центральної панелі.
+Owner manual acceptance не виконано; Windows11 native verification — Phase12 risk.
+
+Остаточне пакування після layout fix: `uv build --offline --out-dir /tmp/cyberforge-phase6-dist`;
+`uv export --offline --locked --no-dev --no-emit-project --format requirements-txt --output-file /tmp/cyberforge-phase6-requirements.txt --quiet`;
+`uv venv --offline --python .venv/bin/python /tmp/cyberforge-phase6-wheel-env`;
+`uv pip install --offline --python /tmp/cyberforge-phase6-wheel-env/bin/python --require-hashes -r /tmp/cyberforge-phase6-requirements.txt`;
+`uv pip install --offline --python /tmp/cyberforge-phase6-wheel-env/bin/python --no-deps /tmp/cyberforge-phase6-dist/cyberforge-0.1.0-py3-none-any.whl`:
+успішно,58locked runtime dependencies встановлено офлайн.61Python sources у
+wheel/sdist byte-identical остаточному src; міграція присутня, private artifacts
+відсутні. Isolated installed wheel, `python -I`, cwd=/tmp: packaged migration
+0004, foreign_key_check, real offline Email agent, Save/reopen — success;
+`python -I -m cyberforge --email-demo --database /tmp/cyberforge-phase6-wheel-smoke.sqlite3 --smoke-test`
+з QT_QPA_PLATFORM=offscreen та blank keys — exit0.
+
+GitHub MCP після resume: main лишається8a6beabf13ec4da43d2ce26bb78bccc9fce64340;
+попереднього Phase6 PR немає. Final lint/format — success,90files; final full
+pytest та exact-final-head CI результати фіксуються після їх завершення.
+
+### Phase 6 — final local gate / REVIEW
+
+Один попередній final-code pytest процес перервався кодом143/SIGTERM без pytest
+summary; його не зараховано як success. Повторено в PTY з постійним /tmp log:
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**690passed/305.56s**, exit0. Збережено всі622accepted tests, додано68cases.
+Обидва existing footer regression sizes і Save→card viewport assertions пройдено.
+Фінальні lint/format (`uv run --offline --locked ruff check .`,
+`uv run --offline --locked ruff format --check .`, з UV_CACHE_DIR у/tmp) — success,
+90files; `git diff --check` — success. Production code після цього не змінюється.
+
+Phase6 подано на **REVIEW**, не ACCEPTED. Повний local gate, real WSLg27cases,
+packaging/migration/installability gates пройдено. Owner manual checklist — pending;
+physical native Windows11 — acknowledged Phase12 risk. Live API calls відсутні;
+Groq/Hydrogen integration selection перевірено scripted provider через existing
+gateway, не реальними account requests. Offline demo чесно позначено synthetic.
+
+Перед publishing — complete diff/staged secret/private-path scan. Feature branch
+commit/push та PR→main дозволені початковим запитом. Exact final HEAD, PR URL,
+обидва successful Linux/Windows CI jobs/log evidence фіксуються в PR/final report
+після push, без circular documentation-only commit. CI failure не обходиться.
+Merge/force/history rewriting/Phase7 заборонені цим завданням. GitHub/Context7
+MCP доступні; fallback для цих перевірок не потрібний. SRS/.env/owner databases/
+keys/native Windows acceptance environment незмінні.

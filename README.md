@@ -124,8 +124,9 @@ uv build
 
 Тести використовують тимчасові БД й масковані форми; за замовчуванням Qt
 працює через `offscreen`. Після встановлення залежностей перевірки працюють
-без мережі: `uv run --offline --locked pytest`. MockLLMProvider належить
-Phase 4; поточний код узагалі не викликає LLM або зовнішніх сервісів.
+без мережі: `uv run --offline --locked pytest`. MockLLMProvider забезпечує
+офлайн-перевірки; звичайні тести та GUI startup не викликають cloud API.
+У Phase 6 хмарна генерація потребує явної конфігурації та дії викладача.
 GitHub Actions виконує Ruff та pytest для PR і push у main на Linux та Windows.
 
 WSLg Wayland:
@@ -214,8 +215,8 @@ ID і назва `Сценарій {id}` виникають тільки піс�
 Instructor працює лише зі своїми сценаріями. Administrator бачить усі,
 редагує й архівує власні; чужі картки й архів доступні для читання. Learner не бачить чернеток.
 Конструктор і Аналіз мають один каталог та зберігають вибраний ID.
-Режим Аналізу показує відсутність результатів. Email/Web генерація,
-публікація й обчислення аналітики ще не реалізовані.
+Режим Аналізу показує відсутність результатів. Email Constructor додано у Phase 6
+(див. нижче); Web, публікація й обчислення аналітики залишаються наступними фазами.
 
 Повна демонстрація й manual Windows gate:
 [PHASE_3_ACCEPTANCE](docs/PHASE_3_ACCEPTANCE.md).
@@ -350,7 +351,8 @@ continuation off. Виводить лише provider/model/outcome/elapsed/avail
 
 [Phase4 acceptance](docs/PHASE_4_ACCEPTANCE.md) містить offline перевірку
 контрактів і короткі WSLg кроки. Нового graphical model selector немає;
-agents/LangGraph workflows та Email/Web generation UI лишаються наступними фазами.
+Agents/LangGraph workflows додано у Phase 5, Email UI — у Phase 6; Web UI
+залишається Phase 7.
 
 
 ### Phase 5: спеціалізовані агенти (офлайн)
@@ -379,3 +381,19 @@ Default `max_corrections=0`; явне `1` дозволяє максимум од
 лише після validation failure та в межах чинних gateway budgets. Transport
 retry/fallback і model selection залишаються політикою Phase 4; demo не змінює
 cloud configuration. Нових live API-викликів для Phase 5 не дозволено.
+
+### Phase 6: конструктор електронного листа
+
+Збережений сценарій → «Створити електронний лист»: фоновий EmailScenarioAgent,
+native mail preview, JSON «Переглянути код», refinement та явне «Зберегти».
+Save повертає на картку з зеленою Email рамкою; reopen читає повний artifact
+із SQLite. Повторна генерація не переписує saved content, перехід захищений
+unsaved dialog. Published/archived матеріали — лише перегляд; інші автори й
+Learner не можуть записувати. Web і публікація ще недоступні.
+
+Звичайний GUI використовує наявну явну `.env` конфігурацію, показує provider/model
+і викликає cloud лише кнопкою генерації. Без конфігурації генерація unavailable.
+Для позначеного офлайн-демо додайте `--email-demo`; це синтетичний шаблон через
+Mock без `.env`, ключів і мережі. Не підміняє результат хмарного AI.
+Ізольовані setup/launch commands та короткий owner checklist:
+[PHASE_6_ACCEPTANCE](docs/PHASE_6_ACCEPTANCE.md).
