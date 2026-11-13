@@ -351,3 +351,31 @@ continuation off. Виводить лише provider/model/outcome/elapsed/avail
 [Phase4 acceptance](docs/PHASE_4_ACCEPTANCE.md) містить offline перевірку
 контрактів і короткі WSLg кроки. Нового graphical model selector немає;
 agents/LangGraph workflows та Email/Web generation UI лишаються наступними фазами.
+
+
+### Phase 5: спеціалізовані агенти (офлайн)
+
+```bash
+uv run --locked python -m cyberforge.agents.demo
+```
+
+Демонстрація чотирьох агентів використовує scripted `MockLLMProvider`, реальні
+`LLMGateway`/`GatewayRunnable` і LangGraph, синтетичні fixtures; не читає `.env`,
+не викликає cloud API і не працює з БД. Усі результати — `pending_review`.
+
+Python API: `cyberforge.agents` експортує `EmailScenarioAgent`, `WebScenarioAgent`,
+`MentorAgent`, `AssistantAgent`. Передайте existing gateway у constructor і
+відповідний `*InputV1` із `cyberforge.agents.contracts` у `.run(input)`.
+`result.status`, `.error`, `.telemetry` — metadata; лише за `pending_review`
+використовуйте `.draft` (виключено з default serialization). Нічого автоматично
+не зберігається й не публікується. Див. повний executable приклад у
+`src/cyberforge/agents/demo.py` та [ADR-0005](docs/adr/0005-specialized-agent-drafts.md).
+
+Inputs мають походити з авторизованих application services і бути синтетичними;
+scenario ID не надає агенту прав доступу. Mentor/Assistant обирають supplied facts
+і контрольовані рекомендації, не генерують нові score/analytics assertions.
+Selected/claimed NIST cues не є verified. Semantic review викладачем обов'язковий.
+Default `max_corrections=0`; явне `1` дозволяє максимум одне content correction
+лише після validation failure та в межах чинних gateway budgets. Transport
+retry/fallback і model selection залишаються політикою Phase 4; demo не змінює
+cloud configuration. Нових live API-викликів для Phase 5 не дозволено.

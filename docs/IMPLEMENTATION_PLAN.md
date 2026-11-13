@@ -21,7 +21,7 @@
 | 2 | Users & Groups | ACCEPTED | Прийнято власником 12.11.2026: login, Argon2id, 3 roles, demo accounts/groups, RBAC; WSLg і native Windows 11 докази нижче |
 | 3 | Scenario Management | ACCEPTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
 | 4 | LLM Integration | ACCEPTED | Прийнято власником 13.11.2026; Groq primary/Hydrogen verified backup, explicit activation; Mock offline; F-01/F-02; accepted residual risks; ADR-0004 |
-| 5 | Specialized Agents | NOT STARTED | Typed I/O contracts for four specialized agents and bounded orchestration; mock agent tests |
+| 5 | Specialized Agents | ACCEPTED | Прийнято власником 13.11.2026: four agents, typed contracts, bounded LangGraph, provenance/F-01, offline/provider-neutral integration; PHASE_5_ACCEPTANCE.md |
 | 6 | Email Constructor | NOT STARTED | Email shell, generation, preview, code view, regeneration, explicit save and validation; UI tests |
 | 7 | Web Constructor | NOT STARTED | Web templates, isolated Qt WebEngine, generation, preview, code view, explicit save; security and UI tests |
 | 8 | Scenario Integration | NOT STARTED | Shared Email→Web context, internal link validation, readiness gate, immutable publishing; integration tests |
@@ -742,3 +742,70 @@ clean tree; owner data/native workspace збережено. Actual final SHA/CI/
 result — PR5 і фінальний звіт, без circular documentation commit.
 **Phase5 — NOT STARTED**, потрібен окремий дозвіл; Phase4 acceptance/merge
 не є дозволом Specialized Agents.
+
+
+## Phase 5 — Specialized Agents (13.11.2026)
+
+Власник явно дозволив Phase 5 після ACCEPTED Phase 4 / merge PR #5
+`6683f6e2569de05c57995eb5f7b1b3f6f603cce7`. GitHub MCP підтвердив main;
+clean tree, fetch/ff-only check і feature branch `feat/phase-5-specialized-agents`.
+
+План: SRS §§5–6/9/11/26.1 — four typed specialists і draft contracts;
+§§10.1–10.4 — bounded LangGraph через existing GatewayRunnable;
+§§11–13 — structural linkage, NIST claim separation та grounded explanations;
+§21 — offline focused/full tests, package gate після new dependency, Linux/Windows
+CI final HEAD, owner REVIEW. Phase 6–12 implementation не дозволено.
+
+Реалізовано input validation, closed slots, versioned prompts, mandatory local
+validation, pending_review, до одного explicit content correction; ніяких
+persistent graph state, UI/DB mutations, publication чи live API calls.
+Деталі, обмеження й наступні integration points — ADR-0005.
+Stable local gate: Ruff lint/format success (81 files); agents104passed/1.24s;
+combined agents+Phase4 LLM355passed/5.37s перед2додатковими command-refusal cases;
+full **571passed/205.14s** після остаточних code changes. Build/sdist/wheel,
+exact hashed58runtime dependencies install у /tmp, isolated wheel demo чотирьох
+agents, package privacy/source match і Qt startup smoke — success.
+
+Перед публікацією — final diff/staged secret scan. PR→main без merge;
+цей milestone подано на REVIEW, readiness gate завершується лише successful
+Linux/Windows CI на exact final PR HEAD. Actual SHA, CI run/jobs і результати
+фіксуються в PR та фінальному звіті після push без circular doc commits.
+ACCEPTED — тільки окреме рішення власника; Phase6 NOT STARTED.
+
+### Phase 5 F-01 — independent review remediation
+
+Phase5 лишається **REVIEW**, owner acceptance не надано. Scope: SRS §§5.6–5.7,
+11.4–11.7 — previous draft provenance, identity/version/context і stale inputs.
+Resource ID не є scenario identity. Додано additive local DraftProvenanceV1 та
+повні previous envelopes; refinement відокремлено від stable source digest.
+Web також прив'язаний до associated Email content/metadata без request token. Legacy envelopes readable,
+але reuse без provenance/відомої identity відхиляється до LLM. RBAC unchanged.
+
+На reviewed HEAD8 deterministic cases відтворили помилку. Focused final:
+`pytest tests/test_agent_provenance.py tests/test_agents.py -q --tb=short` —
+154passed/2.45s (104existing +50new). Original provider schemas і Groq strict
+conversion порівняно з reviewed commit: identical. Offline demo success.
+Stable full gate: Ruff lint/format success,82files; **621passed/210.74s**,
+усі571prior tests збережено. Exact-final-head Linux/Windows CI evidence та HEAD
+фіксуються після push в PR6/final report; merge/ACCEPTED/Phase6 заборонені.
+
+
+F-01 final audit: вкладений Email request token також виключено зі stable Web
+digest. Додано positive regression для Email refinement без зміни content з
+подальшим Web refinement; content/identity/context changes усе ще stale.
+Final focused155passed/5.07s (104prior+51new); остаточний full
+**622passed/447.22s**, Ruff lint/format success,82files. Попередній full621pass
+був до цієї поправки. Final-head Linux/Windows CI evidence — PR6/final report.
+
+
+## Phase 5 — ACCEPTED власником 13.11.2026
+
+Власник явно прийняв Phase5 після independent review/F-01 remediation та
+успішного **owner-run/owner-reported offline agent demo**. Це рішення замінює
+попередні REVIEW/pending записи Phase5; історичні докази збережено.
+Reviewed HEAD `37a0f5e290a9068c8b24255acf276b826022c231`, PR6.
+Прийнятий scope/обмеження — [PHASE_5_ACCEPTANCE.md](PHASE_5_ACCEPTANCE.md).
+Дозволено documentation-only acceptance commit/push, звичайний merge commit
+PR6 лише після successful Linux/Windows CI exact final HEAD, потім local main
+fetch/ff-only sync. Final SHA/CI/merge evidence — PR6 і фінальний звіт.
+Phase6 **NOT STARTED**: потрібен окремий дозвіл. SRS/runtime/.env/DB не змінено.

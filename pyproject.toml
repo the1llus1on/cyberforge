@@ -10,6 +10,7 @@ dependencies = [
     "google-genai==2.34.0",
     "groq>=0.30,<2",
     "langchain-core>=1,<2",
+    "langgraph>=1,<2",
     "pydantic>=2.12.5,<3",
     "pyside6>=6.10.1,<6.11",
     "python-dotenv>=1,<2",

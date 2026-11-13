@@ -1588,3 +1588,202 @@ HEAD або base зупинить merge. Merge pin до verified expected_head_s
 перевірка equal SHAs/merge parents/clean tree, feature branch зберігається.
 Actual final HEAD/CI run/merge SHA і sync evidence — PR5/final report без
 circular doc commit. Phase5 не починати. Ніякого force/reset/clean/reseed.
+
+
+## 13.11.2026 — Phase 5 Specialized Agents
+
+Власник явно дозволив Phase 5 після прийнятої Phase 4. Baseline main
+`6683f6e2569de05c57995eb5f7b1b3f6f603cce7` підтверджено GitHub MCP; clean
+working tree, fetch/ff-only synchronization і гілка
+`feat/phase-5-specialized-agents`. .env/ключі/local SQLite/user files та native
+Windows acceptance environment не змінювалися. SRS збережено без змін.
+
+Перед coding представлено план SRS §§5–6,9–13,23,26.1: four typed specialists,
+existing scenario/gateway reuse, minimal LangGraph, independent validation,
+offline tests, packaging і exact-head CI. Офіційні LangGraph overview/Context7
+підтвердили StateGraph/conditional edges/compile(checkpointer=False)/recursion_limit.
+NIST TN2276 official page підтверджує email detection difficulty boundary.
+
+Реалізовано `agents/{contracts,prompts,workflow,specialized,demo}.py` та exports.
+Email/Web slots композиційно доповнюють canonical V1 artifacts у draft V2,
+не створюють нової Scenario entity/repository. Input revalidation/deep copy,
+scenario/version/parameters/context/internal-resource/template gates, synthetic
+.invalid addresses, bounded text/arrays, no markup/executable slots/commands.
+Selected NIST IDs copied from existing catalog; claims перевіряються як subset,
+verified cues порожні з explicit instructor-review requirement. Повна semantic
+cue detection та publishing readiness — не Phase 5.
+
+Mentor/Assistant використовують model-selected supplied fact IDs і дозволені
+topics; deterministic composer повертає trusted explanations/defensive behavior
+та curated recommendations. Немає довільного generated prose для score/metrics/
+psychological claims. Supplied result/aggregate copied unchanged, missing,
+incomplete, actual0 і correctly_skipped Web розрізняються. Розширення facts і
+catalog можливе наступними фазами; caller відповідає за sanitized synthetic
+inputs, походження фактів та application RBAC. Agents не читають/пишуть БД.
+
+ADR-0005 пояснює consequential grounded-output design і explicit wire/local
+validation split. Нові output schemas проходять unchanged Groq strict subset
+без projections; mandatory local Pydantic validators перевіряють усі bounds і
+semantic rules. F-01/F-02, gateway/provider/config/domain/application код не
+змінено. Versioned policy/task prompts відмежовують trusted policy й untrusted
+refinements/previous drafts. No payload telemetry; graph tracing disabled для
+всього run. Result default export приховує draft, metadata-only gateway telemetry
+збережено. State per invocation, no checkpoint/store/tools/supervisor.
+
+Graph START→generate→validate→END; optional один content correction лише після
+VALIDATION, default0, max2 generations, recursion_limit6. Safety/refusal/auth/
+transport/quota не запускають agent retries. Gateway залишається єдиною retry/
+fallback/limits межею. Перший incremental run виявив, що дві генерації в межах
+strict default budgets можуть бути зупинені BUDGET — це очікувана поведінка.
+Scripted Mock fixtures отримали explicit великі provider+model budgets, production
+caps не змінено; окремий тест доводить quota stop для correction.
+
+Dependency: langgraph>=1,<2, lock1.2.21 та4transitive packages; existing locked
+versions не оновлювалися. Initial restricted PyPI DNS failure вирішено approved
+network execution для dependency installation. Offline isolated install спершу
+не мав cached wheels; exact hashed58 runtime dependencies завантажені з PyPI
+в /tmp environment. Це dependency transport, не live LLM API calls.
+
+Перевірки incremental/focused: initial91passed/4failed через mock budget keys,
+виправлено лише test/demo budgets; final agents104passed/1.24s; prior combined
+agents+allPhase4LLM355passed/5.37s перед додаванням2command-refusal cases.
+Реальні Groq SDK fakeHTTP tests для всіх4agents підтвердили strict wire schemas,
+mandatory local validation, no schema_projection і payload/key log redaction.
+No unintended cloud/network/DB access перевірено guards; state isolation,
+regeneration immutability, input tampering, invalid schemas/content, score/
+aggregate grounding, safety/errors, transport retry ownership covered.
+
+Sandbox limitation: unchanged baseline Runnable async test зависає в asyncio
+selector/wakeup; відтворено окремо, interrupted. Позасandbox combined gate
+348passed/4.62s, потім355passed/5.37s. Перший partial full run перервано для
+завершення command safety check; interrupted-run warnings не є stable result.
+Final full suite запущено без sandbox із blank API keys/LANGSMITH_TRACING=false.
+Нових live Groq/Gemini requests не виконано. GUI не змінено, WSLg visual checks
+не потрібні; native Windows11 лишається Phase12 risk, не verified requirement.
+
+Фінальні stable перевірки:
+
+| Команда / перевірка | Результат |
+| --- | --- |
+| uv run --offline --locked ruff check . | success |
+| uv run --offline --locked ruff format --check . | success,81files |
+| uv run --offline --locked pytest tests/test_agents.py -q --tb=short | **104passed,1.24s**, final code |
+| combined tests/test_agents.py tests/test_llm*.py -q --tb=short | **355passed,5.37s**, перед2final command-refusal cases |
+| GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false uv run --offline --locked pytest -q --tb=short | **571passed,205.14s**, final code, усі467baseline regressions |
+| uv build --offline --out-dir /tmp/cyberforge-phase5-dist | sdist+wheel success |
+| uv export --offline --locked --no-dev --no-emit-project --format requirements-txt; uv pip install --require-hashes -r exported file |58exact runtime dependencies, isolated /tmp wheel environment success |
+| uv pip install --offline --no-deps --reinstall final wheel |success |
+| /tmp/cyberforge-phase5-wheel-env/bin/python -I -m cyberforge.agents.demo, cwd=/tmp |4agents pending_review, offline success |
+| wheel/sdist inspection |6agent modules source match, no DB/.env/credentials |
+| QT_QPA_PLATFORM=offscreen isolated wheel cyberforge --database /tmp/cyberforge-phase5-wheel-smoke.sqlite3 --smoke-test |exit0 |
+| git diff --check |success |
+
+Phase5 подано на **REVIEW**, не ACCEPTED. Готовність REVIEW gate залежить від
+successful Linux/Windows CI exact final PR HEAD; actual final SHA/CI run/jobs
+фіксуються в PR і фінальному звіті після push, без circular documentation commit.
+Перед commit/push: final diff і staged secret scan, включно з порівнянням actual
+local secret values без їх виведення. PR→main; merge заборонено цим завданням.
+Phase6 NOT STARTED; physical native Windows11 acceptance лишається Phase12.
+
+
+## Phase 5 F-01 — previous draft provenance remediation
+
+Independent review: Phase5 REVIEW, PR6, baseline
+`1d8ac8cdec5e84cca1713e3d801246ba21691d05`; clean existing feature branch,
+GitHub MCP підтвердив PR open/unmerged/base main/exact reviewed HEAD.
+План перед coding: відтворити resource-ID collision; відокремити stable provenance
+від request refinement; закрити Email/Web previous і canonical Email binding;
+focused first, one stable full gate, final-head Linux/Windows CI без live API.
+SRS §§5.6–5.7,11.4–11.7; SRS/RBAC/provider policy не змінюються.
+
+Root cause: previous inputs містили лише slots; resource ID/template не доводять
+scenario identity/version/context.8baseline regressions (2agents × differentID,
+version,context,parameters із однаковим resource) усі failed: generation викликано
+замість input rejection. Після fix попередні full envelopes перевіряються через
+local DraftProvenanceV1. Digest включає identity/version, усі parameters,context,
+language; Web також template і exact associated Email. Поточний refinement і
+previous виключено, existing request context_token незмінний. Email envelope
+self-consistency перевіряє provenance після relabeling metadata. Bare slots та
+legacy envelopes без provenance readable, але reuse fail-closed; unknown identity
+не допускається для reuse/Email→Web. Caller передає previous=result.draft.
+Fingerprint не є authorization/signature; trusted application service/RBAC intact.
+
+Changed: agents/contracts.py, specialized.py (local provenance stamping),
+prompts.py (тільки slots previous у prompt), existing valid-regeneration test
+оновлено на full envelope; new test_agent_provenance.py, ADR0005, plan/log.
+Provider-facing schemas порівняно з reviewed commit через isolated module load:
+EmailSlotsV1/WebSlotsV1/ExplanationSelectionV1 schemas та Groq strict conversion
+**identical**. Phase4 gateway/adapters/config/domain/services не змінювалися.
+
+Focused final:154passed/2.45s,104prior+50new. Cases: same-resource cross-scenario/
+version,changedcontext/all relevant parameter fields/language,canonicalEmail
+mismatch,relabelledidentity,exactEmail main/body/background changes forWeb,
+changed/tamperedtemplate,missingidentity,legacy inputs,JSON roundtrip,
+legitimate same-source regeneration з None/двома refinements для обох agents,
+immutability. Rejected inputs:REQUEST,0generations/0Mock calls; network guarded.
+Intermediate fixture issues (enum/model_copy,strictJSON,staticmockNIST claims)
+виправлено у tests без послаблення production validation. Offline demo4agents
+pending_review success. Ніяких live API, UI/DB/migration/dependency/startup changes;
+packaging/GUI checks не повторюються без зміни відповідних integration points.
+Native Windows11 physical verification лишається Phase12 acknowledged risk.
+
+Перший local gate (до final audit нижче):
+
+| Команда / перевірка | Результат |
+| --- | --- |
+| uv run --offline --locked pytest tests/test_agent_provenance.py tests/test_agents.py -q --tb=short | **154passed/2.45s** |
+| uv run --offline --locked ruff check . | success |
+| uv run --offline --locked ruff format --check . | success,82files |
+| GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false uv run --offline --locked pytest -q --tb=short | **621passed/210.74s**, усі571prior regressions збережено |
+| baseline/current provider schema + Groq strict conversion comparison |3schemas identical |
+| uv run --offline --locked python -m cyberforge.agents.demo |success,4agents offline |
+| git diff --check |success |
+
+Full pytest виконано поза sandbox через відоме й раніше відтворене baseline
+asyncio wakeup limitation, без live API. Перед commit/push — staged diff/secret
+scan. Final HEAD і Linux/Windows exact-head CI jobs/log results будуть у PR6 та
+фінальному звіті після push, без circular doc-only commits. Phase5 REVIEW, не
+ACCEPTED; без merge/force/history rewriting/Phase6. .env/ключі/SQLite/user data
+і native Windows acceptance environment збережено.
+
+
+F-01 final audit перед completion виявив зайву залежність: exact associated
+Email snapshot включав context_token з Email refinement. Виключено тільки цей
+request-specific token, зі збереженням повної content/metadata binding. Новий
+positive regression доводить Web regeneration після Email refinement без зміни
+content, разом зі зміною Web refinement; existing stale-email cases лишаються.
+Перший full621passed/210.74s і commit f155dc6 — перед цією додатковою поправкою,
+не остаточне verification evidence. Final focused155passed,104prior+51new.
+Остаточні full Ruff/pytest та exact-final-head CI фіксуються нижче/у PR6.
+
+
+F-01 остаточний stable gate після request-token correction:
+- focused `uv run --offline --locked pytest tests/test_agent_provenance.py tests/test_agents.py -q --tb=short`: **155passed/5.07s**,104prior+51new;
+- `uv run --offline --locked ruff check .`: success;
+- `uv run --offline --locked ruff format --check .`: success,82files;
+- `GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false uv run --offline --locked pytest -q --tb=short`: **622passed/447.22s**; усі571reviewed-HEAD tests preserved;
+- provider-schema/Groq strict conversion comparison повторено після остаточної code change:3schemas identical;
+- final diff/staged secret scan перед follow-up commit/push; історія не переписується.
+Final SHA та обидва successful exact-head CI jobs/log evidence фіксуються в PR6
+і фінальному звіті після push. Phase5 REVIEW, не ACCEPTED; merge/Phase6 відсутні.
+
+
+## 13.11.2026 — Phase 5 ACCEPTED власником; PR6 merge дозволено
+
+Власник явно прийняв Phase5, включно з independent review/F-01 resolved та
+успішним owner-run/owner-reported offline demo. ACCEPTED supersedes попередні
+Phase5 REVIEW записи. Accepted scope/limitations — PHASE_5_ACCEPTANCE.md.
+GitHub MCP підтвердив clean/open/unmerged PR6, base main6683f6e, reviewed HEAD
+37a0f5e290a9068c8b24255acf276b826022c231; local feature branch clean/equal.
+Reviewed CI43407344393: Linux622passed, Windows620passed/2POSIXskipped;
+обидва jobs success, locked install/Ruff/package import/Qt smoke success.
+
+План acceptance scope: SRS §23/§§9–11 — тільки plan/log/acceptance record/ADR
+status. Runtime, tests, dependencies, SRS, .env/keys/DB/user/native environment
+не змінюються. Нові live calls/local full suites/build/GUI не потрібні.
+Owner authorization: docs commit/push existing branch, обидва CI exact FINAL
+HEAD, ordinary merge commit із pinned expected head, local fetch/switch main/
+merge --ff-only origin/main, перевірка SHAs/parents/clean tree. Failed/pending CI,
+unexpected head/base/scope або conflicts зупинять merge без bypass. Staged
+secret/diff checks перед commit. Actual final HEAD/CI/merge outcome — PR6/final
+report після виконання, без circular doc commit. Phase6 NOT STARTED.
