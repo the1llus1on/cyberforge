@@ -6,6 +6,7 @@ from threading import Event, get_ident
 
 import pytest
 from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import QApplication, QMessageBox, QPlainTextEdit
 from sqlalchemy import text
 
@@ -18,7 +19,7 @@ from cyberforge.llm.contracts import (
     ProviderResponse,
 )
 from cyberforge.llm.factory import create_gateway
-from cyberforge.ui.email_source import EmailSourceDialog
+from cyberforge.ui.email_source import EmailSourceDialog, render_email_html
 from cyberforge.ui.navigation import View
 from cyberforge.ui.shell import MainWindow
 from cyberforge.ui.theme import apply_theme
@@ -66,14 +67,24 @@ def test_mail_navigation_source_copy_explicit_save_reopen(email_window, qtbot):
     assert page.status.text() == MaterialState.UNSAVED
     assert not card.email_material.property("saved")
     assert page.messages.count() == len(page.draft.slots.background) + 1
+    assert page.preview.views.currentIndex() == 0
+    qtbot.mouseClick(
+        page.messages.viewport(),
+        Qt.MouseButton.LeftButton,
+        pos=page.messages.visualItemRect(page.messages.item(0)).center(),
+    )
+    assert page.preview.views.currentWidget() == page.preview.reading
     assert page.subject.toPlainText() == page.draft.slots.main.subject
     assert page.body.toPlainText() == page.draft.slots.main.body_text
     assert page.sender.height() >= page.sender.fontMetrics().lineSpacing() * 2
     assert page.timestamp.text() == "09:30 · навчальний час"
     assert not page.messages.item(0).font().bold()
     assert page.messages.item(1).font().bold()
+    page.preview.inbox_back.click()
+    assert page.preview.views.currentIndex() == 0
     page.messages.setFocus()
     qtbot.keyClick(page.messages, Qt.Key.Key_Down)
+    qtbot.keyClick(page.messages, Qt.Key.Key_Return)
     assert page.messages.currentRow() == 1
     assert page.body.toPlainText() == page.draft.slots.background[0].body_text
     assert page.sender.toPlainText().endswith(
@@ -99,6 +110,19 @@ def test_mail_navigation_source_copy_explicit_save_reopen(email_window, qtbot):
             assert dialog.source.document().firstBlock().next().layout().formats()
             dialog.copy_button.click()
             assert QApplication.clipboard().text() == dialog.source.toPlainText()
+            assert dialog.tabs.count() == 2
+            assert "канонічний" in dialog.explanation.text()
+            assert "Qt його не використовує" in dialog.explanation.text()
+            dialog.tabs.setCurrentIndex(1)
+            assert dialog.html_source.isReadOnly()
+            html = dialog.html_source.toPlainText()
+            assert html == render_email_html(draft, 1)
+            assert "<h1>" in html and draft.slots.background[0].subject in html
+            qtbot.keyClicks(dialog.html_source, "must-not-edit")
+            assert dialog.html_source.toPlainText() == html
+            dialog.copy_button.click()
+            assert dialog.copy_button.text() == "Копіювати HTML"
+            assert QApplication.clipboard().text() == html
         finally:
             if dialog:
                 dialog.accept()
@@ -125,7 +149,8 @@ def test_mail_navigation_source_copy_explicit_save_reopen(email_window, qtbot):
     assert page.status.text() == MaterialState.SAVED
     assert window.emails.load(window._token, card.scenario).draft == draft
     assert card.scenario.status == "draft"
-    assert "Web" in page.resource.text()
+    page.preview.open_message(0)
+    assert "перехід вимкнено" in page.resource.text()
 
 
 def test_refinement_new_candidate_never_overwrites_and_failed_save_keeps_it(
@@ -136,11 +161,22 @@ def test_refinement_new_candidate_never_overwrites_and_failed_save_keeps_it(
     original = page.draft
     assert page.save()
     window.scenario_page.open_email()
+    page.preview.open_message(0)
+    assert "для перегенерації" in page.refinement_label.text()
+    assert "а не пряме редагування" in page.refinement_help.text()
+    assert "лише після «Зберегти»" in page.refinement_help.text()
+    assert page.generate_button.text() == "Перегенерувати"
     page.refinement.setPlainText("Додай стислий навчальний вступ")
+    assert page.body.toPlainText() == original.slots.main.body_text
+    assert page.draft == original and not page.unsaved
+    assert not page.save_button.isEnabled()
+    page.preview.search.setText(original.slots.main.sender_address)
     page.generate_button.click()
     qtbot.waitUntil(lambda: not page.running, timeout=10000)
     assert page.draft != original and page.unsaved
     assert page.draft.provenance == original.provenance
+    assert page.preview.search.text() == ""
+    assert page.messages.count() == len(page.draft.slots.background) + 1
     workspace = page.workspace
     assert window.emails.load(window._token, workspace.scenario).draft == original
 
@@ -152,6 +188,67 @@ def test_refinement_new_candidate_never_overwrites_and_failed_save_keeps_it(
     assert page.unsaved and page.draft != original
     assert "неможливо" in page.message.text()
     assert window.emails.load(window._token, workspace.scenario).draft == original
+
+
+def test_light_mailbox_search_and_browser_boundary(email_window, qtbot):
+    page = open_generated(email_window, qtbot)
+    preview = page.preview
+    assert "Gmail" in preview.browser_tab.text()
+    assert preview.palette().color(QPalette.ColorRole.Window).name() == "#f6f8fc"
+    assert preview.body.palette().color(QPalette.ColorRole.Base).name() == "#ffffff"
+    assert email_window.palette().color(QPalette.ColorRole.Window).name() == "#191b20"
+    assert preview.address.isReadOnly()
+    assert "mail.training.invalid" in preview.address.text()
+    assert not preview.compose.isEnabled() and not preview.reply.isEnabled()
+    before = page.draft.model_dump_json()
+    preview.address.setFocus()
+    qtbot.keyClick(preview.address, Qt.Key.Key_Return)
+    assert page.draft.model_dump_json() == before
+    assert preview.views.currentIndex() == 0
+    assert not preview.read_messages
+    preview.search.setText(page.draft.slots.background[0].sender_address)
+    assert preview.messages.item(0).isHidden()
+    assert not preview.messages.item(1).isHidden()
+    preview.messages.setCurrentRow(1)
+    preview.messages.setFocus()
+    qtbot.keyClick(preview.messages, Qt.Key.Key_Return)
+    assert preview.selected_index == 1
+    assert preview.body.toPlainText() == page.draft.slots.background[0].body_text
+    assert "participant@training.invalid" in preview.recipient.text()
+    preview.inbox_button.click()
+    assert preview.views.currentIndex() == 0
+    preview.search.clear()
+    assert all(
+        not preview.messages.item(i).isHidden() for i in range(preview.messages.count())
+    )
+    assert not preview.messages.item(1).font().bold()
+
+
+@pytest.mark.parametrize("opened", [False, True])
+def test_compact_mailbox_keeps_critical_controls_visible(email_window, qtbot, opened):
+    window = email_window
+    window.resize(1100, 720)
+    page = open_generated(window, qtbot)
+    if opened:
+        page.preview.open_message(0)
+    qtbot.wait(20)
+    viewport = window.containers[View.CONSTRUCTOR].viewport()
+    for control in (
+        page.back_button,
+        page.refinement,
+        page.code_button,
+        page.generate_button,
+        page.save_button,
+    ):
+        assert control.isVisible()
+        assert viewport.rect().contains(
+            control.mapTo(viewport, control.rect().topLeft())
+        )
+        assert viewport.rect().contains(
+            control.mapTo(viewport, control.rect().bottomRight())
+        )
+    assert window.containers[View.CONSTRUCTOR].horizontalScrollBar().maximum() == 0
+    assert page.preview.folders.width() < 60
 
 
 @pytest.mark.parametrize("choice", ["Save", "Discard", "Cancel"])
@@ -374,6 +471,7 @@ def test_long_unicode_wrap_and_layout_at_supported_sizes(
     monkeypatch.setattr(email_demo, "demo_gateway", long_mail)
     page = open_generated(email_window, qtbot)
     assert page.messages.count() == 9
+    page.preview.open_message(0)
     assert "ї є ґ" in page.body.toPlainText()
     assert page.body.lineWrapMode() == QPlainTextEdit.LineWrapMode.WidgetWidth
     for width, height in [(1100, 720), (1400, 900), (1920, 1080)]:
@@ -386,7 +484,7 @@ def test_long_unicode_wrap_and_layout_at_supported_sizes(
         assert page.subject.horizontalScrollBar().maximum() == 0
         assert page.subject.verticalScrollBar().maximum() > 0
         assert page.sender.horizontalScrollBar().maximum() == 0
-        ratio = page.preview.width() / (page.width() - 48)
+        ratio = page.preview.width() / (page.width() - 32)
         assert 0.8 <= ratio <= 0.96
 
 

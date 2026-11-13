@@ -1928,3 +1928,97 @@ commit/push та PR→main дозволені початковим запито�
 Merge/force/history rewriting/Phase7 заборонені цим завданням. GitHub/Context7
 MCP доступні; fallback для цих перевірок не потрібний. SRS/.env/owner databases/
 keys/native Windows acceptance environment незмінні.
+
+## 13.11.2026 — Phase 6 owner-requested Gmail-style UX revision (PR #7)
+
+The owner did not accept the previous Email Constructor UX and authorized this
+change in the existing Phase 6 branch/PR only. Communication/new technical notes
+are English; application text remains Ukrainian. Phase 7, live LLM requests and
+manual native Windows 11 validation remain excluded. The existing owner demo
+database/credentials were not read, reset or modified by development probes.
+
+Initial state: clean feat/phase-6-email-constructor at
+61e766830c4a31929f2942a6fd4345b58bb4c281; GitHub MCP confirmed PR7 open/unmerged,
+base main8a6beab, matching HEAD. Reviewed SRS §§5.2–5.7, current source/view code,
+acceptance record and ADR-0006. Context7 supplied official native QListWidget/
+delegate/activation and QStackedWidget documentation. No new dependencies.
+
+Plan before implementation: scope light styling to the preview; add native
+browser/mail chrome, inbox/search and reading view; clarify regeneration;
+provide canonical JSON plus an honest inert HTML content projection under §5.5;
+focused UI/security tests, then one stable full gate, WSLg and exact-head CI.
+
+Implementation: MailPreview owns only native presentation/read state. Its data
+comes from current EmailDraftV2 slots. Inbox click/Enter opens a message, search
+filters real fields, back returns to the inbox. The read-only `.invalid` address
+bar and disabled sending/navigation controls cannot open a website or send mail.
+The surrounding application theme/catalog are unchanged. Native active-view
+minimum-height sizing and compact folders preserve critical controls at1100×720;
+early compact-layout failures were fixed before the final gate.
+
+The refinement label/helper and Generate/Regenerate button now explain the
+instruction → new unsaved candidate → explicit Save flow. Canonical JSON stays
+unchanged. A second source tab contains escaped deterministic HTML for the
+selected message's content only, not AI HTML or Qt interface source. It is not
+rendered/executed/persisted. Both tabs are read-only, highlighted and copyable;
+UI clearing clears both. Fixed-template escaping/allowed-tags tests include
+validation-bypass injection cases. This source-view trade-off is recorded in
+the existing ADR-0006; no new architectural document or SRS change was needed.
+
+Focused final-code checks:
+`UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest tests/test_email_source.py tests/ui/test_email_constructor.py -q --tb=short`:
+**33 passed / 48.43s**. Covers both source tabs/copy/read-only semantics, escaped
+HTML, inbox/reading/search/read state, refinement guidance, Save/reopen/failure,
+stale/session/version/archive/timeout delivery rejection and responsive controls.
+Ruff lint/format pass,92Python files. Final full/WSLg/CI evidence follows below.
+
+This is UI/source-inspection-only: application services, agents/gateway,
+threading/identity code, schema/migrations, dependencies/lockfile and startup
+configuration are unchanged. Packaging/wheel checks are not repeated under the
+approved UI-only verification policy; standard CI import/startup checks remain.
+Documentation is limited to README, this log, PHASE_6_ACCEPTANCE and the focused
+ADR amendment, plus updated WSLg screenshots. No documentation-only commit is
+planned. Phase6 stays REVIEW and awaits the owner's UX review/acceptance.
+
+### Gmail-style UX revision — final local verification
+
+- `UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked ruff check .`
+  and `ruff format --check .`: success,92Python files.
+- `GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+  Initial full pass before the final search-reset correction below:
+  **698 passed / 341.97s**, exit0, PTY log in /tmp. All690previous tests retained;
+  eight new cases cover the light/native mailbox, compact inbox/reading controls
+  and deterministic/safe HTML content projection.
+- `QT_QPA_PLATFORM=wayland GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest tests/ui/test_email_constructor.py tests/ui/test_scenarios_ui.py::test_form_actions_and_internal_scroll -q --tb=short`:
+  **30 passed / 73.76s**, real WSLg. The isolated offline screenshot probe confirms
+  3real artifact messages, opened index0, unsaved=true, zero horizontal overflow
+  and all critical controls visible at1100×720. Inbox, opened-message and compact
+  screenshots were inspected. These are Codex checks, not owner acceptance.
+- `git diff --check`: success. Before commit/push, review staged diff and scan
+  actual local secret values/private paths without printing those values.
+
+Changed in this revision: ui/email_preview.py (new), ui/email_page.py,
+ui/email_source.py; tests/test_email_source.py (new),
+tests/ui/test_email_constructor.py; README, PHASE_6_ACCEPTANCE, this log,
+ADR-0006; screenshots phase-6-email-preview.png, phase-6-gmail-inbox.png (new),
+phase-6-gmail-compact.png (new). No services, agents, workers, schema, lockfile,
+global theme or main shell edits. One combined implementation/docs commit goes
+to the current PR7 branch. Exact final HEAD and final Linux/Windows CI job/log
+evidence will be recorded in PR7 and the final English report after push;
+no circular documentation-only commit. No merge or Phase7 work is authorized.
+
+Final diff review caught an active-search regeneration edge case: clearing a
+nonempty search query could call the filter between clearing/rebuilding inbox
+rows. QSignalBlocker now prevents that intermediate callback. The refinement
+test explicitly regenerates with an active query and checks the rebuilt inbox.
+Focused final regression: **1 passed / 1.77s** offscreen, **1 passed / 2.50s**
+real WSLg. The 30-case WSLg visual/interaction pass above remains the renderer
+evidence; the final change affects only search callback delivery during reset.
+
+Required final full suite repeated because code changed:
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**698 passed / 324.13s**, exit0, PTY log
+`/tmp/cyberforge-phase6-ux-after-reset-pytest.log`. This supersedes the earlier
+full-pass timing as final-code evidence. No production edits follow this gate;
+only documentation/evidence and PR metadata are finalized. No live LLM calls,
+native Windows manual tests or owner-database operations were performed.

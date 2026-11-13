@@ -382,18 +382,30 @@ Default `max_corrections=0`; явне `1` дозволяє максимум од
 retry/fallback і model selection залишаються політикою Phase 4; demo не змінює
 cloud configuration. Нових live API-викликів для Phase 5 не дозволено.
 
-### Phase 6: конструктор електронного листа
+### Phase 6: Email Constructor (REVIEW)
 
-Збережений сценарій → «Створити електронний лист»: фоновий EmailScenarioAgent,
-native mail preview, JSON «Переглянути код», refinement та явне «Зберегти».
-Save повертає на картку з зеленою Email рамкою; reopen читає повний artifact
-із SQLite. Повторна генерація не переписує saved content, перехід захищений
-unsaved dialog. Published/archived матеріали — лише перегляд; інші автори й
-Learner не можуть записувати. Web і публікація ще недоступні.
+Open a saved scenario → «Створити електронний лист». The native Qt preview now
+resembles a Gmail mailbox inside a browser frame, with a light mail area inside
+the dark CyberForge shell. Search the generated inbox, click a message (or press
+Enter) to open it, and use the mailbox back button to return. Addresses and
+timestamps are synthetic; browser controls and sending actions do not navigate
+or send mail. No browser engine or external web content is used.
 
-Звичайний GUI використовує наявну явну `.env` конфігурацію, показує provider/model
-і викликає cloud лише кнопкою генерації. Без конфігурації генерація unavailable.
-Для позначеного офлайн-демо додайте `--email-demo`; це синтетичний шаблон через
-Mock без `.env`, ключів і мережі. Не підміняє результат хмарного AI.
-Ізольовані setup/launch commands та короткий owner checklist:
-[PHASE_6_ACCEPTANCE](docs/PHASE_6_ACCEPTANCE.md).
+«Уточнення викладача для перегенерації» supplies an instruction for the next
+generation. It does not edit the current preview or saved email directly:
+«Перегенерувати» creates an unsaved candidate; «Зберегти» explicitly persists it
+and returns to the scenario card. Reopening restores the stored artifact.
+
+«Структура / код» opens two read-only tabs: canonical EmailDraftV2 JSON and an
+escaped, deterministic HTML projection of the selected message's content.
+The projection is not AI-generated HTML or the source of the native Qt mailbox;
+it is never executed or stored. Both representations support highlighting/copy.
+
+Existing RBAC, archive/published restrictions, worker identity guards, provenance
+and SQLite behavior remain in force. Configured cloud generation requires an
+explicit instructor action; startup/navigation do not call a model. Without
+cloud configuration generation is unavailable. `--email-demo` explicitly selects
+the synthetic offline Mock demonstration and ignores `.env`/cloud keys.
+
+Safe isolated setup/launch commands and the updated owner review checklist:
+[PHASE_6_ACCEPTANCE](docs/PHASE_6_ACCEPTANCE.md). Phase 7 remains out of scope.

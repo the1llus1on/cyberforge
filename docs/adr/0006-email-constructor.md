@@ -72,3 +72,38 @@ scripted Mock. Це позначене демо, не AI і не fallback піс
 [QThreadPool](https://doc.qt.io/qtforpython-6/PySide6/QtCore/QThreadPool.html),
 [queued signals](https://doc.qt.io/qtforpython-6/overviews/qtdoc-threads-qobject.html).
 Native Windows 11 acceptance лишається ризиком до Phase 12.
+
+## Owner-requested UI/source revision — 13.11.2026
+
+The owner explicitly requested a Gmail-inspired light work area in the existing
+Phase 6 PR. A local native Qt stylesheet/palette applies only to MailPreview;
+the accepted dark application shell stays intact. The browser/address strip is
+visual data, using a reserved `.invalid` address in a read-only QLineEdit. There
+is no browser engine, external navigation, SMTP or JavaScript.
+
+Inbox rows use a native delegate, real artifact fields and in-memory read state.
+A separate reading view provides sender, synthetic recipient/time and plain-text
+body. Active-view minimum-height calculation keeps critical controls visible
+at 1100×720 without letting hidden views impose their preferred size.
+
+SRS §5.5 forbids fabricated HTML claimed as the source of native Qt widgets.
+The owner prefers inspectable email markup where honest, so the source dialog
+now provides **two explicitly different representations**:
+
+- Canonical full EmailDraftV2 JSON, unchanged and still the only stored format.
+- A deterministic, standalone HTML **content projection** of the selected
+  message. `render_email_html` escapes every data field into a fixed, inert
+  template. No scripts, styles, forms, navigable links or external resources
+  are emitted. It is viewed only in QPlainTextEdit, never executed or saved.
+
+The HTML projection is neither AI output nor the source of the Gmail-like Qt
+interface. The dialog says this explicitly. Recipient and training time are the
+same synthetic presentation context shown in the native view, not account data
+or model claims. Copy uses the active tab; forced UI clearing clears both buffers.
+This resolves the UX expectation without changing the canonical artifact/schema
+or weakening structured-output validation. The SRS itself is not edited.
+
+Refinement is labelled as a next-generation instruction. It does not mutate
+preview/persistence directly; regeneration creates a candidate and Save remains
+explicit. Existing services, worker/request identity, RBAC, provenance, archived/
+published restrictions and database schema are unchanged by this follow-up.
