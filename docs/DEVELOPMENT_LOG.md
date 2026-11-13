@@ -1267,3 +1267,324 @@ PR HEAD обов’язково проходить Linux/Windows CI перед m
 конфлікт або неочікуваний HEAD зупинить merge без bypass/force. Після merge:
 fetch → switch main → merge --ff-only origin/main, перевірка SHA/clean tree;
 feature branch не видаляється. Merge SHA та actual final CI — PR4/final report.
+# 13.11.2026 — Phase 4: початковий незалежний increment
+
+Власник явно дозволив Phase 4 LLM Integration. Перед кодом перевірено AGENTS,
+SRS §§10–11/23, релевантні plan/log/ADRs, структуру source/tests, dependencies,
+clean working tree та ignored `.env`. GitHub MCP підтвердив Phase 3 merge
+d0b407cbb13cf9e10f5bd65904eef978c321ab7e. Fetch + ff-only check: main already
+up to date. Створено `feat/phase-4-llm-integration`. Owner DB/credentials/.env
+і Phase 2 native Windows environment не змінювалися.
+
+Подано план: §§10.4/10.7/10.8/11.1 — contracts/config/mock/telemetry;
+§§10.1–10.5 — provider adapters/retries/quotas/fallback; §23 — diagnostics,
+verification і PR REVIEW. Context7 функціонально відповів для Google SDK/Groq;
+офіційні web docs і source перевірено, findings/links у ADR-0004.
+
+Виявлено material conflict: §10.2 вимагає `langchain-google-genai`, але його
+ChatGoogleGenerativeAI використовує generateContent. Водночас Interactions
+GA/recommended і `store=false` затверджені власником для нового адаптера.
+Надіслано запит погодити direct google-genai + provider-neutral LangChain
+Runnable. **Рішення ще не отримано.** Точний proposed SRS текст у ADR-0004;
+сам SRS не змінено. Спірні GeminiProvider/Runnable не реалізовано до рішення.
+
+Незалежна частина: provider-neutral Pydantic contracts/errors/versioned content
+slots; safe explicit dotenv loading; deterministic offline mock; gateway із
+selection validation, bounded backoff/jitter/Retry-After, quota reservations,
+optional Gemini→Groq fallback лише timeout/selected 5xx; Groq SDK adapter і
+bounded strict-schema checker; privacy-safe telemetry та best-effort sink.
+AUTO, durable generation persistence, full artifact workflows/agents/UI — deferred.
+Config/model allowlist не підтверджує account access. Дані й обмеження schema
+subset, in-memory quota scope, synchronous worker requirement — ADR-0004.
+
+Додано SDK google-genai 2.34.0, groq 1.7.0, langchain-core 1.8.0,
+python-dotenv 1.2.4; актуалізовано pyproject/uv.lock, .env.example і README.
+Внутрішні retry/continuation особливості SDK інспектовано без реальних keys.
+
+Перевірки незалежного increment (UV_CACHE_DIR=/tmp/cyberforge-uv-cache):
+
+- `uv run --offline ruff check .` — success.
+- `uv run --offline ruff format --check .` — success, 63 files.
+- `uv run --offline pytest tests/test_llm_gateway.py tests/test_llm_groq.py -q --tb=short`
+  — **51 passed**. Реальний Groq SDK тестується тільки через httpx.MockTransport;
+  fake clocks/sleep використовуються для retry і budget tests. Спочатку 38
+  gateway tests, потім 50 з Groq, після sink regression — 51.
+
+Live Gemini/Groq requests не виконувалися; доступ до моделей/квоти account не
+підтверджено. Повний pytest, package/isolated-wheel/startup checks та Linux/
+Windows CI залишаються обов'язковими після завершення реалізації перед push/PR.
+Жодного commit/push/PR/merge не виконано. UI не змінювався; WSLg acceptance
+instructions будуть із завершеною фазою. Native Windows11 — Phase12 deferral,
+не verified evidence. Phase4 **IN PROGRESS**, gate не пройдено; Phase5 не почато.
+
+
+## 13.11.2026 — Phase 4: погоджена архітектура і завершення реалізації
+
+Власник явно погодив direct google-genai Interactions та provider-neutral
+LangChain Runnable і дозволив точну вузьку зміну SRS §10.2. Це замінює
+pending decision попереднього increment. ADR-0004 — ACCEPTED як архітектурне
+рішення; сама реалізація Phase4 — **REVIEW**, не ACCEPTED.
+
+Реалізовано GeminiProvider (Interactions v1, store/background/stream=False,
+automatic_continuation=False, text/JSON Schema, thinking per model, usage і
+normalized errors); functional GatewayRunnable (invoke/ainvoke, batch/abatch,
+whole-result stream/astream); lazy factory/config defaults; guarded CLI
+cyberforge-llm-check. Немає generateContent adapter, duplicate policy layer,
+LangGraph agents, UI generation чи domain/persistence modifications.
+SRS byte comparison підтвердив незмінність усього поза §10.2, включно з CRLF.
+
+Офіційні джерела/альтернативи/наслідки — ADR-0004. Google SDK pinned2.34.0
+через перевірену особливість retry translation: attempts=0→1→extra retry.
+Generated Interactions retry strategy явно none; відсутність config fail-closed.
+Real SDK/fake HTTP тести доводять single request на failures і disabled continuation.
+Groq1.7.0, LangChain Core1.8.0, python-dotenv1.2.4; SDK types лише в adapters.
+
+Фінальні security/reliability corrections: DEBUG SDK payload/exception logs
+фільтруються context-local під час generation; Retry-After створює provider-wide
+cooldown між моделями/requests; Retry-After залишається у normalized failure;
+input + serialized schema + output reservation враховуються у локальних квотах;
+unknown quota keys/non-JSON Pydantic schemas fail before transport. Telemetry
+не експортує content/keys, invalid model strings redacted; unknown usage=None.
+Сам synthetic flag не є PII detector; future domain validation обов'язкова.
+
+Перевірки (UV_CACHE_DIR=/tmp/cyberforge-uv-cache):
+
+| Команда / перевірка | Результат |
+| --- | --- |
+| uv run --offline --locked ruff check . | success |
+| uv run --offline --locked ruff format --check . | success,72files |
+| uv run --offline pytest tests/test_llm_gateway.py tests/test_llm_gemini.py tests/test_llm_groq.py tests/test_llm_runnable.py tests/test_llm_diagnostics.py tests/test_llm_integration.py -q --tb=short | **100passed,5.30s** |
+| GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false uv run --offline --locked pytest -q --tb=short | **314passed,341.67s**; усі214 Phase0–3 tests збережено |
+| uv build --offline --out-dir /tmp/cyberforge-phase4-dist | sdist + wheel success, final code |
+| uv export --offline --locked --no-dev --no-emit-project --format requirements-txt та uv pip install --require-hashes у /tmp/cyberforge-phase4-wheel-env |53 exact runtime dependencies + installed wheel; success |
+| isolated wheel python -I з /tmp: import path, mock structured invoke/ainvoke, disabled-live exit2, archive privacy | success |
+| isolated wheel cyberforge --database /tmp/cyberforge-phase4-final-wheel-smoke.sqlite3 --smoke-test,QT_QPA_PLATFORM=offscreen | success |
+| QT_QPA_PLATFORM=wayland uv run --offline --locked cyberforge --database /tmp/cyberforge-phase4-wslg-smoke.sqlite3 --smoke-test | real WSLg startup/close success; appearance не інспектувалася |
+| git -c core.whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol diff --check | success; збережено original SRS CRLF |
+| working diff29files + local API-value scan | success; значення не виводились; .env ignored; accepted service/domain/persistence/UI unchanged |
+
+Перші SDK tests виявили retry/continuation-warning issues, виправлені до final
+focused100. Два проміжні full runs перервано під час privacy/quota review;
+вони не зараховуються як success (Qt interrupt diagnostics також не є final
+regression result). Async executor tests у sandbox зависали на event-loop wakeup;
+поза sandbox100focused і314full пройшли. Live network до провайдерів не було:
+тільки mock/fake HTTP; install network використовувалася лише для PyPI packages.
+Початкова offline isolated install не знайшла uncached wheels; exact hashed
+runtime dependencies отримано з PyPI, final wheel reinstall виконано offline.
+
+Live diagnostic реалізовано, але **НЕ запускалося**: поточна інструкція
+власника вимагає окремого дозволу на API quota execution. Доступ до approved
+models і account-specific quotas не підтверджено. Інші remaining risks:
+SDK-specific retry config під pinned version; in-memory quota scope, bounded
+Groq schema subset, external future workflow tracing, native Windows11 Phase12.
+Durable telemetry/quota records і experiments відкладено. Phase5 не розпочато.
+
+Підготовлено docs/PHASE_4_ACCEPTANCE.md; owner manual acceptance pending.
+Після final diff/staged secret verification — commit/push і PR→main, без merge.
+Linux/Windows CI exact final HEAD обов'язково перевіряються після публікації;
+actual SHA/run/results будуть у PR description і final report без зайвого
+code-free commit/повтору CI. Наявні .env, credentials, DB і Phase2 native
+Windows environment збережено. Відсутність live tests не позначається success.
+
+
+## 13.11.2026 — Phase4 independent review remediation F-01/F-02
+
+Власник дозволив вузькі fixes у тій самій branch feat/phase-4-llm-integration,
+PR5, reviewed HEAD5913183500bbaa03bee4d800a5f7fdedf02661de. Початкове дерево
+чисте; GitHub MCP підтвердив open/unmerged PR→main з тим самим HEAD.
+Phase4 лишається REVIEW, не ACCEPTED. План перед кодом — SRS §§10.4–10.8/11.1:
+parameter compatibility + observability, bounded schema projection + original
+local validator, focused tests → один stable full Ruff/pytest → final-head CI.
+
+Обидва findings підтверджено до fixes: нові3 focused tests очікувано FAILED
+(configuration для FlashLite minimal fallback, unsupported_schema для обох
+EmailArtifactV1/WebArtifactV1). Actual model_json_schema містить pattern
+^[a-zA-Z0-9_-]{1,64}$ у $defs.ScenarioContextV1.properties.internal_resource_id.
+Official Groq docs/SDK через Context7 підтвердили GPT-OSS low/medium/high та
+strict schema contract; source links, alternatives і consequences — ADR0004.
+
+F-01: тільки enabled allowlisted transient Gemini→Groq fallback maps minimal
+до explicit low; low/medium/high/None зберігаються. Temperature/output limit/
+timeout не змінюються. Original request і params immutable; telemetry додає
+requested_parameters/effective_parameters. Invalid original config не ремонтується.
+Safety/auth/credentials/schema/validation/quota/rate-limit/permanent errors
+не обходять existing denylist. Retries, budgets і cooldown logic не змінені.
+
+F-02: canonical models і regex незмінені. Тільки gateway, який має original
+output_type та mandatory local validation, застосовує explicit Groq V1-artifact
+projection. У копії лише exact known resource-ID pattern делегується локально;
+provider strict checker зберігає types/required/closed objects/version enum.
+Інші patterns/constraints і changed expected regex fail-closed. Raw adapter
+не отримує автоматичного lossy transformer. Schema projection позначено в
+telemetry, зокрема errors. Original Pydantic strict validation завжди відхиляє
+invalid ID до повернення result. Provider compliance не є content safety,
+consistency або instructor approval. Agents/constructors не реалізовувалися.
+
+Перевірки (UV_CACHE_DIR=/tmp/cyberforge-uv-cache):
+
+| Команда | Результат |
+| --- | --- |
+| uv run --offline --locked pytest tests/test_llm_review.py -q --tb=short | до fix3failed (reproduction); після fix92passed,0.73s |
+| uv run --offline --locked pytest tests/test_llm*.py -q --tb=short |192passed,3.74s; попередні100 LLM tests збережено |
+| uv run --offline --locked ruff check . | success |
+| uv run --offline --locked ruff format --check . | success,73files |
+| GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false uv run --offline --locked pytest -q --tb=short | **406passed,203.92s**; усі prior314 tests збережено |
+| git diff --check | success |
+
+Focused matrix: усі9 valid Gemini model/thinking combinations × timeout/5xx;
+10 denied categories ×2canonical artifacts; disabled fallback/invalid thinking;
+actual schema snapshots/non-mutation/fail-closed projection; real Groq SDK на
+httpx.MockTransport direct та fallback; valid ID boundaries, empty/overlong/
+path/URL/space/non-ASCII/newline/non-string ID і local validation failures.
+Фінальний full suite виконано один раз після стабілізації. Async/full checks
+поза sandbox для раніше встановленого event-loop wakeup limitation; requests
+лише fake/offline. Live API не виконувалися, model access/quotas досі unknown.
+
+Змінено8files: contracts/gateway/schemas, новий test_llm_review.py, ADR0004,
+plan/log/acceptance. SRS, dependencies/uv.lock, packaging/startup, migrations,
+UI та accepted application/domain services не змінено; wheel/WSLg повтори
+не потрібні за погодженим workflow. .env/credentials/DB/Phase2 Windows workspace
+збережено. Native Windows11 physical acceptance — Phase12, не CI evidence.
+
+Перед commit/push — final diff/staged secret-value scan. Linux/Windows CI
+перевіряються для exact нового PR HEAD; SHA/run/results будуть у PR description
+та final report без зайвого documentation-only CI циклу. Owner acceptance
+очікується; ні merge PR5, ні Phase5 не дозволені цим remediation.
+
+
+## 13.11.2026 — Groq primary / Hydrogen backup candidate
+
+Власник явно погодив нову operational policy та narrow SRS clarification.
+Baseline32e6de1090d819c06fa7d1bd2e79100eef0af501, чиста existing feature branch,
+PR5 open/unmerged→main підтверджено GitHub MCP. Phase4 лишається REVIEW.
+План перед кодом: §§10.2–10.8/11.1 — Hydrogen catalog/capabilities і model-specific
+request config, explicit verified backup через existing retry/fallback loop,
+neutral telemetry/validation; §21 — focused then one stable full Ruff/pytest,
+final-head Linux/Windows CI; owner-only first Hydrogen live test після review.
+
+Нова primary policy: Groq/openai/gpt-oss-120b; preferred backup candidate
+Gemini/gemini-4-hydrogen після owner verification+enable. Lite3.5 optional;
+Flash3.8 unresolved. Mock лишається default без explicit cloud config.
+Actual .env не редагувалася; рекомендовані несекретні поля в .env.example/README.
+Попередній Gemini-primary вибір superseded, історичні acceptance/evidence збережено.
+
+Використано4 official Google links власника, Developer API Interactions v1
+reference, AI Studio thinking/structured outputs/rate limits docs і installed
+SDK source. Blog прямо підтверджує AI Studio/Gemini API applicability. v1
+reference має model ID; structured guide показує Hydrogen response_format.
+Деякі individual AI Studio model pages web tool не відкрив; заміна — official
+API reference/feature guides, не сторонні джерела. Context7 index повертав
+legacy examples; direct installed SDK + fake transport доводять serialization.
+Cloud long-decode v1beta1 restriction не застосовується до обраного bounded
+Developer API v1 mode. Джерела/деталі/наслідки — ADR0004.
+
+GeminiProvider той самий: Hydrogen low/medium/high/xhigh, minimal denied;
+xhigh rejected для інших approved models. Temperature/top_p/top_k не
+передаються Hydrogen; original requested temperature збережена, effective=None
+означає omission. Older Gemini formats збережено. SDK pinned2.34.0 уже сумісний;
+ніякої dependency/lock зміни. store/background/continuation off, timeout bounded,
+retry compatibility safeguard strategy=none та privacy filter збережені.
+
+BackupConfig provider/model/enabled/access_verified — explicit optional config;
+обидва flags default false, enabled без verification fail-closed. Owner attests
+access для поточного ключа; config не робить live verification сам. Route лише
+для configured cloud primary; mock/mismatched request не переадресовується.
+Single hop/один existing execution loop; per-provider/model limits незалежні,
+allowlisted transient errors only, denylist/cooldowns незмінні. Legacy
+fallback_to_groq/env FALLBACK збережено deprecated; simultaneous new BACKUP +
+legacy=true reject ambiguous config. Unsupported minimal→low/xhigh→high mapping
+явні; original params immutable. Після Groq→Hydrogen schema projection reset,
+full canonical schema/local strict validation збережені (F-01/F-02 regressions).
+Telemetry має requested_provider і effective_model разом із prior metadata.
+
+CLI приймає Hydrogen лише з --live; low/256tokens/20s, retries0, legacyfalse,
+backupNone, single synchronous request без background/continuation. Command
+підготовлена та offline tested, але **НЕ запускалася проти Google**. Current
+scope забороняє додаткову API quota. Перший Hydrogen test виконує власник після
+review; до success backup лишається disabled/unverified. Старе allowlist
+rejection було local, не provider response. Published availability не означає
+owner access. Попередні bounded3live calls на32e6de1 зафіксовані в ADR: Groq/Lite
+success, Flash3.8unavailable; другий Flash unavailable — owner-reported.
+
+Перевірки (UV_CACHE_DIR=/tmp/cyberforge-uv-cache):
+
+| Команда / перевірка | Результат |
+| --- | --- |
+| uv run --offline --locked pytest tests/test_llm_hydrogen.py -q --tb=short | incremental49/58cases passed; final61cases у combined run |
+| uv run --offline --locked pytest tests/test_llm*.py -q --tb=short | **253passed,4.49s**, prior192 preserved +61new |
+| uv run --offline --locked ruff check . | success |
+| uv run --offline --locked ruff format --check . | success,74files |
+| GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false uv run --offline --locked pytest -q --tb=short | **467passed,232.84s**, усі prior406 preserved, один stable full run |
+| SRS narrow byte-scope review | header/§10.5/criterion23/conclusion only, surrounding CRLF preserved |
+| git -c core.whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol diff --check | success; header hard breaks represented without trailing spaces |
+
+Matrix: real google-genai2.34 fake HTTP for4thinking×text/schema, xhigh
+serialization, v1 endpoint/privacy/usage, single request on401/403/429/503,
+no continuation; exclusive thinking rejects; offline default/Groq config;
+verification gate/disabled states/legacy conflict/cycle prevention;2transient
+categories×4Groq thinking settings; all10denied errors; independent budgets,
+missing keys, bounded retries with fake clock; valid/invalid canonical artifacts
+across fallback, no fallback for invalid primary data/schema; telemetry/redaction;
+Hydrogen CLI --live guard and mocked success/errors. Ніяких live API у тестах/CI.
+
+Packaging/entrypoints/dependencies/install/startup/migrations/UI не зачеплено:
+build/isolated-wheel та unrelated WSLg не повторено за AGENTS policy. CI виконує
+locked install/import/Qt startup на обох OS. Native Windows11 acceptance лишається
+Phase12 risk, не completed evidence. Domain/RBAC/scoring/user data/native Phase2
+workspace не змінювалися. Remaining risks: Hydrogen actual access/quotas unknown,
+pinned SDK retry compatibility point, in-memory counters, future full artifact
+safety/consistency/approval workflows. Backup ніколи не активується сам.
+
+Перед commit/push — scoped diff і staged secret-value scan; final SHA/CI run
+будуть у PR5 та final report після обох jobs без redundant doc-only CI cycle.
+Ні merge/ACCEPTED, ні Phase5 не дозволені. Owner acceptance instructions оновлено.
+
+
+## 2026-11-13 — Phase4 остаточно ACCEPTED власником; PR5 merge дозволено
+
+Власник явно прийняв Phase4 LLM Integration: **REVIEW → ACCEPTED**,2026-11-13.
+Це рішення замінює попередні pending/REVIEW записи. Прийнято gateway, Gemini
+Interactions/Groq/Mock, LangChain Runnable, structured/Pydantic validation,
+model/thinking config, bounded timeout/retry/rates/fallback, privacy telemetry/
+secrets, verified Hydrogen backup configuration та F-01/F-02. Підтверджено
+independent architectural/code reviews. Phase5 **NOT STARTED**, окремий дозвіл.
+
+Початкові перевірки: clean feat/phase-4-llm-integration; local HEAD та GitHub
+MCP PR5 HEAD98a019ce99df992c7ad54bc4f4a49ca02f6516b2 збігаються; PR open/unmerged/
+clean, base main d0b407cbb13cf9e10f5bd65904eef978c321ab7e. Workflow43391679188
+completed/success: Linux467passed, Windows465passed/2skipped; locked sync,
+Ruff lint/format, pytest, package import і Qt startup success на обох OS.
+Власник також повідомив Hydrogen focused offline acceptance61passed.
+
+Новий live evidence — **owner-run/owner-reported**, не agent повтор:
+`uv run cyberforge-llm-check --live --provider gemini --model gemini-4-hydrogen`
+→ success, elapsed5.148s, input39/output5/reasoning25. Groq120B та Gemini3.5Lite
+live connectivity SUCCESS підтверджено. Контент/ключі/private account data не
+зберігаються. Agent не виконує жодного нового API call.
+
+Approved policy: Groq/openai/gpt-oss-120b primary cloud;
+Gemini/gemini-4-hydrogen preferred verified backup. Existing controlled policy
+можна enabled при explicit local env configuration; actual .env/keys/config
+flags у цьому documentation-only step не змінюються. Без explicit cloud config
+Mock offline default, startup/ordinary tests не використовують cloud API.
+
+Прийняті власником residual risks: Gemini3.8 availability unresolved; live
+complex Email/Web Structured Outputs unverified; account-wide quotas не
+встановлено; rate counters process-local; production workflows next phases;
+manual GUI checklist not fully executed; physical native Windows11 deferred
+Phase12. Не робиться припущень про повну manual acceptance чи всі native gates.
+Owner approval явно визнає ці обмеження такими, що не блокують Phase4.
+
+Scope: тільки acceptance documentation — plan/log/PHASE4 record/ADR, README
+і AGENTS policy wording. Code/dependencies/migrations/SRS/.env/API keys/DB/
+Windows workspace не змінюються. Локальний full pytest, packaging і manual GUI
+не повторюються без code changes. Scoped diff і secret checks перед commit.
+
+Власник явно дозволив documentation commit/push у наявну branch і **ordinary
+merge commit** PR5 після successful Linux/Windows CI exact FINAL PR HEAD.
+Після push checks очікуються без bypass; failure/pending/conflict/unexpected
+HEAD або base зупинить merge. Merge pin до verified expected_head_sha.
+Після merge: fetch origin → switch main → merge --ff-only origin/main;
+перевірка equal SHAs/merge parents/clean tree, feature branch зберігається.
+Actual final HEAD/CI run/merge SHA і sync evidence — PR5/final report без
+circular doc commit. Phase5 не починати. Ніякого force/reset/clean/reseed.

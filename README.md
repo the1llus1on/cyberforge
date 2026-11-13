@@ -17,7 +17,7 @@ Phase 0 та Phase 1 — ACCEPTED. Phase 2 — Users & Groups: **ACCEPTED вла
 [ADR-0003](docs/adr/0003-scenario-drafts.md).
 У Конструкторі доступні створення, пошук і редагування власних сценаріїв,
 постійні ID, SQLite persistence, чернеткові версії та зворотне архівування. Аналіз використовує
-ті самі ID та показує відсутність результатів. AI, обчислення оцінок і
+ті самі ID та показує відсутність результатів. AI-генерація в UI, обчислення оцінок і
 Qt WebEngine ще не реалізовано. Ключі API та `.env` не потрібні.
 
 ## Встановлення й звичайний запуск
@@ -238,4 +238,116 @@ Phase3 прийнята після automated checks, незалежного revi
 owner manual WSLg verification; усі manual scenarios не заявляються виконаними.
 Routine physical Windows11 verification Phases3–11 відкладено до Phase12 як
 acknowledged risk; Windows CI не є native desktop acceptance. Phase4 —
-**NOT STARTED**, потребує окремого дозволу. Деталі — план/журнал/acceptance record.
+LLM Integration: **ACCEPTED власником 13.11.2026** із прийнятими залишковими ризиками.
+Деталі — план/журнал/acceptance record.
+
+## Phase 4 — LLM Integration
+
+Архітектуру погоджено власником у [ADR-0004](docs/adr/0004-llm-provider-boundary.md)
+та SRS §10.2. Python integration layer `cyberforge.llm`:
+
+`GatewayRunnable → LLMGateway → GeminiProvider / GroqProvider / MockLLMProvider`
+
+Gemini: official google-genai 2.34.0, Interactions v1, stateless store=false,
+без background/continuation. Groq: official SDK, strict JSON Schema з explicit
+bounded compatibility check. Provider SDK типи не входять до domain/services/UI.
+Канонічна structured validation — локальна Pydantic v2; це ще не предметна
+перевірка навчального контенту або публікація артефакту.
+
+Звичайний GUI startup не створює cloud clients, не викликає LLM і не потребує
+API keys. `.env` не завантажується при імпорті або запуску GUI. `load_config()`
+явно читає `.env` з поточної директорії; process environment має пріоритет
+включно з порожніми значеннями. Interpolation `${...}` вимкнено. Існуючі
+`GOOGLE_API_KEY`/`GROQ_API_KEY` зберігаються лише локально; налаштування без
+секретів наведено в [`.env.example`](.env.example).
+
+Без явної cloud-конфігурації — mock/mock-v1. Operational priority, погоджена
+власником 13.11.2026, замінює попередню Gemini-primary preference:
+
+| Роль | Provider / model | Thinking |
+| --- | --- | --- |
+| Primary cloud | groq / openai/gpt-oss-120b | low, medium, high |
+| Preferred verified backup; explicit activation | gemini / gemini-4-hydrogen | low, medium, high, xhigh |
+| Optional lightweight, explicit selection | gemini / gemini-3.5-flash-lite | minimal, low, medium, high |
+| Earlier approved, unresolved access | gemini / gemini-3.8-flash | low, medium, high |
+
+Hydrogen використовує той самий Interactions v1 adapter; temperature/top_p/top_k
+не передаються. max_output_tokens/timeout залишаються bounded; automatic
+continuation/background вимкнені. Existing Gemini3 request formats збережено.
+
+### Явна primary/backup конфігурація
+
+Додайте лише несекретні поля до свого existing .env, не перезаписуючи ключів:
+
+```dotenv
+CYBERFORGE_LLM_PROVIDER=groq
+CYBERFORGE_LLM_MODEL=openai/gpt-oss-120b
+CYBERFORGE_LLM_FALLBACK=false
+CYBERFORGE_LLM_BACKUP={"provider":"gemini","model":"gemini-4-hydrogen","enabled":false,"access_verified":false}
+```
+
+`configured_request(config, ...)` застосовує ці primary defaults; direct
+GenerationRequest має власний явний вибір. Backup застосовується лише для
+запиту, що відповідає configured primary, і лише після owner-verified access
+та explicit enabled=true. Після успішного owner live test для поточного ключа
+можна вручну встановити обидва flags true; підтвердження не робиться автоматично.
+Можна зберегти access_verified=true із enabled=false, щоб fallback лишався off.
+Invalid/unapproved target, enabled без verification, однаковий primary/backup
+або cloud fallback із configured mock primary відхиляються.
+
+Один fallback hop, без циклів і AUTO. Дозволені лише classified timeout/selected
+5xx після bounded retries; 429, quota/budget, refusals, auth, missing keys,
+configuration/schema/validation та permanent failures fallback не запускають.
+Mock requests ніколи не перенаправляються у cloud. Provider/model budgets
+незалежні; Retry-After cooldown діє між requests/models. Budgets in-memory,
+не замінюють account quotas і не зберігаються після restart.
+
+`CYBERFORGE_LLM_FALLBACK=true` збережено як **deprecated** Gemini→Groq path із
+попередньою поведінкою. Це той самий execution/retry loop. Для нового BACKUP
+legacy flag має бути false/unset; одночасне налаштування відхиляється, а не
+мовчки змінює маршрут. Сумісні thinking levels/None зберігаються; unsupported
+minimal→low і xhigh→high mappings явні. На Hydrogen effective temperature=None
+означає omission; original requested parameters не змінюються. Telemetry містить
+requested_provider/model/parameters, effective provider/model/parameters та
+actual_model (або None, якщо відповідь його не надала). При переході до Gemini
+Groq artifact schema projection не переноситься: діє original full schema.
+
+GatewayRunnable підтримує invoke/ainvoke, batch/abatch і stream/astream
+одного повного результату; token streaming не передбачено. Retry/quota/fallback
+існують лише в gateway. Tracing/callbacks на цьому boundary вимкнено; майбутні
+outer workflows теж не повинні trace prompts/results. Для observability є
+metadata-only TelemetrySink; prompts/responses за замовчуванням не зберігаються.
+
+### Hydrogen connectivity — SUCCESS підтверджено власником 13.11.2026
+
+Попередня bounded live перевірка на reviewed32e6de1 підтвердила доступ до
+Groq GPT-OSS120B та Gemini3.5FlashLite. Gemini3.8Flash повернув unavailable;
+власник повідомив про два такі результати. Це не доводить access/quota restriction.
+Попереднє Hydrogen повідомлення про allowlist було локальним rejection, без
+Google API request. Published availability не підтверджує доступ конкретного
+ключа. Власник повідомив Hydrogen **success**:5.148s, input39/output5/reasoning25.
+Це owner-run evidence; агент не повторює live calls. Live complex Email/Web
+Structured Outputs/account-wide quotas не перевірені; counters process-local.
+Manual GUI checklist неповний; physical native Windows11 gate — Phase12.
+Ризики прийняті власником і не блокують Phase4 acceptance.
+
+Власник уже виконав цей synthetic connectivity command (не повторювати автоматично):
+
+```console
+uv run cyberforge-llm-check --live --provider gemini --model gemini-4-hydrogen
+```
+
+Explicit --live обов'язковий. Ця команда має low thinking, 256 output tokens,
+timeout20s; max_retries=0, обидва fallback config paths off, store/background/
+continuation off. Виводить лише provider/model/outcome/elapsed/available usage,
+без key/prompt/response. Incomplete output є normalized validation failure;
+малі token caps можуть обмежити thinking, команда ніколи не продовжує generation.
+Не змінюйте flags verification/enabled на true до успішного результату для
+поточного ключа. При failures не повторюйте API usage автоматично.
+
+Інші approved models можна перевірити тим самим CLI лише за окремого дозволу
+на відповідні виклики. GUI startup/pytest/CI live diagnostics не запускають.
+
+[Phase4 acceptance](docs/PHASE_4_ACCEPTANCE.md) містить offline перевірку
+контрактів і короткі WSLg кроки. Нового graphical model selector немає;
+agents/LangGraph workflows та Email/Web generation UI лишаються наступними фазами.

@@ -20,7 +20,7 @@
 | 1 | Main UI Shell | ACCEPTED | Dark PySide6 shell, universal Home / Guest state, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
 | 2 | Users & Groups | ACCEPTED | Прийнято власником 12.11.2026: login, Argon2id, 3 roles, demo accounts/groups, RBAC; WSLg і native Windows 11 докази нижче |
 | 3 | Scenario Management | ACCEPTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
-| 4 | LLM Integration | NOT STARTED | LLMGateway, provider adapter, Gemini configuration, deterministic MockLLMProvider; schema and fallback tests |
+| 4 | LLM Integration | ACCEPTED | Прийнято власником 13.11.2026; Groq primary/Hydrogen verified backup, explicit activation; Mock offline; F-01/F-02; accepted residual risks; ADR-0004 |
 | 5 | Specialized Agents | NOT STARTED | Typed I/O contracts for four specialized agents and bounded orchestration; mock agent tests |
 | 6 | Email Constructor | NOT STARTED | Email shell, generation, preview, code view, regeneration, explicit save and validation; UI tests |
 | 7 | Web Constructor | NOT STARTED | Web templates, isolated Qt WebEngine, generation, preview, code view, explicit save; security and UI tests |
@@ -584,3 +584,161 @@ Routine physical native Windows11 verification Phases3–11 лишається �
 SRS/функціональність/owner data не змінюються; Phase2 native workspace збережено.
 **Phase4 — NOT STARTED**, потрібен окремий дозвіл; acceptance/merge Phase3
 не є дозволом початку LLM Integration.
+
+
+## Phase 4 — LLM Integration (13.11.2026)
+
+Власник явно дозволив фазу та окремо погодив архітектурне уточнення SRS §10.2.
+Baseline main d0b407c, branch feat/phase-4-llm-integration. Історичні записи
+NOT STARTED/pending у попередніх секціях описують стан до цього дозволу.
+
+План і traceability:
+
+| SRS | Реалізований increment / gate |
+| --- | --- |
+| §§10.1–10.4, §23 Phase4 | Єдиний LLMGateway; Gemini Interactions v1; Groq SDK; functional LangChain Core Runnable; без LangGraph agents |
+| §§10.4,10.7 | Typed text/structured generation, explicit selection, deterministic mock, bounded retries/quota/fallback та normalized metadata |
+| §§10.8,11.1 | Safe explicit dotenv, synthetic-only caller contract, versioned Pydantic content slots, local validation, privacy-safe logging/telemetry |
+| §21 / AGENTS verification | Focused fake-transport tests, complete pytest/Ruff, sdist/wheel/isolated install, startup/WSLg, final Linux/Windows CI |
+
+Документи: [ADR-0004](adr/0004-llm-provider-boundary.md),
+[Phase4 acceptance](PHASE_4_ACCEPTANCE.md), README та DEVELOPMENT_LOG.
+SRS змінено тільки в §10.2 точним текстом власника; решта bytes/CRLF збережені.
+Наявні сценарії/версії, RBAC, scoring, migrations і user data не змінювалися.
+
+Доступні Gemini3.8Flash/Gemini3.5FlashLite/Groq GPT-OSS120B; activation лише
+через explicit config/request. Mock — offline default. AUTO не потрібен цій фазі.
+Fallback default-off, лише Gemini→Groq після timeout/selected transient5xx;
+429/quota/access/safety/config/schema/data failures його не дозволяють.
+Локальні provider+model rolling budgets враховують input/schema/output reservation;
+Retry-After cooldown діє також між requests/models. Counters лише in-memory.
+
+Live diagnostics реалізовано, але НЕ виконано: остання інструкція власника
+вимагає окремого дозволу на API usage. Model access/account quotas unknown;
+це явний remaining risk і не fabricated success. Durable telemetry/quota,
+comparative experiments, specialized agents, UI generation, Email/Web rendering
+та publication/approval workflows відкладено. Phase5 не розпочато.
+
+Після локальних gates — commit/push/PR до main та перевірка Linux/Windows CI
+фінального HEAD. Phase4 передається тільки на REVIEW, не ACCEPTED, без merge.
+Owner manual acceptance ще не виконане. Physical native Windows11 gate лишається
+Phase12; WSLg і Windows CI не замінюють фізичної acceptance матриці.
+
+Локальний final gate: **314passed/341.67s**, focused LLM100passed/5.30s,
+Ruff lint/format72files success, sdist/wheel та isolated installed wheel
+mock/async/guard/startup success. Реальний WSLg startup/close success;
+це не owner visual/functional acceptance. Phase4 **REVIEW**. Final PR HEAD
+і Linux/Windows CI results фіксуються в PR та фінальному звіті після push.
+
+
+## Phase 4 — independent review remediation F-01/F-02 (13.11.2026)
+
+Phase4 **REVIEW**. Reviewed baseline5913183, та сама feature branch/PR5.
+План перед кодом: §§10.4–10.8 — deterministic minimal→low fallback,
+immutable original request та requested/effective parameter telemetry;
+§11.1 — bounded Groq projection лише V1 artifact resource-ID pattern,
+незмінена canonical validation; §21 — focused then one stable full Ruff/pytest,
+Linux/Windows CI exact final HEAD. Packaging/startup/dependencies/UI не
+зачеплено, тому повтор wheel/WSLg checks не потрібний за AGENTS workflow.
+
+Початкові3 regression cases відтворили обидва findings. Виправлення не знімає
+local security rule і не змінює SRS/архітектуру: provider checks structure;
+canonical Pydantic завжди додатково перевіряє original regex. Telemetry позначає
+schema projection та параметри. Generic unsupported schemas і fallback denylist
+залишаються чинними. Details/alternatives — ADR0004, acceptance — PHASE4 record.
+Live API не виконувати; owner acceptance/merge/Phase5 не дозволені цим кроком.
+Final counts/CI будуть у журналі та описі PR5 після завершення перевірок.
+
+Remediation final local gate: Ruff73files success, focused192passed/3.74s
+(100prior +92new), one full pytest406passed/203.92s. Final SHA та Linux/Windows
+CI results оновлюються в PR5/final report після push. Phase4 лишається REVIEW.
+
+
+## Phase4 — Groq primary та Hydrogen backup candidate (13.11.2026)
+
+Нова owner-approved policy supersedes Gemini3.8 primary: Groq GPT-OSS120B
+primary cloud, Hydrogen preferred backup candidate після owner access verification,
+Lite optional, Flash3.8 unresolved; Mock offline default. Phase4 **REVIEW**.
+Baseline32e6de1, existing branch/PR5. Owner повідомив local Hydrogen allowlist
+rejection, не Google failure, і два unavailable дляFlash3.8. Попередній bounded
+live run підтвердив Groq/Lite; у цьому завданні live API заборонені.
+
+План перед реалізацією: SRS §§10.2–10.8/11.1 — model catalog/capabilities,
+Hydrogen sampling omission у existing Interactions adapter, explicit primary/
+verified backup config, один shared fallback loop/telemetry/local validation;
+§21 — focused first, one stable full Ruff/pytest, Linux/Windows CI final HEAD;
+нормативні narrow policy references і owner acceptance command. LangGraph,
+AUTO engine, new GUI selector/agents/constructors — поза scope.
+
+Виконано: Hydrogen low/medium/high/xhigh, no minimal; xhigh відхиляється для
+інших моделей. Температура дляHydrogen omitted/effective=None, requested
+збережена. Single-hop backup enabled/access_verified за замовчуванням false;
+маршрут лише для configured cloud primary, ніколи mock→cloud. Legacy
+CYBERFORGE_LLM_FALLBACK Gemini→Groq збережено deprecated через той самий loop;
+конфлікт із новим BACKUP fail-closed. Denylist/cooldowns/budgets/F-01/F-02
+збережено; full original schema повертається після Groq→Hydrogen.
+
+Нормативний SRS scope: header primary/model, §10.5 policy, gateway MVP
+criterion23 і conclusion primary sentence; інші sections/CRLF збережено.
+AGENTS, README, safe .env.example та ADR0004 синхронізовані. Actual owner .env
+не змінюється: рекомендовані primary provider/model задаються явно користувачем.
+
+Dependencies/lock, installation metadata/entrypoints, main startup та UI не
+змінені. Installed pinned google-genai2.34.0 сумісний із bounded Hydrogen
+Interactions у fake HTTP tests; retry safeguard збережено. Packaging/wheel та
+unrelated WSLg не повторюються за AGENTS gates. CI включає locked install,
+package import і Qt startup на обох OS. Physical native Windows11 — Phase12.
+
+Focused gate:253passed/4.49s (усі prior192 +61new). Full gate/CI results
+додаються після завершення. Hydrogen live command лише підготовлена й
+mock-tested; owner запускає перший реальний тест після review. Жодної
+автоматичної активації backup до success/confirmation і explicit enable.
+
+Фінальний local gate: **467passed/232.84s**, focused253passed/4.49s,
+Ruff74files success. Усі prior406 regressions збережено. Final HEAD та обидва
+Linux/Windows CI jobs будуть підтверджені після push у PR5/final report.
+Hydrogen live — owner acceptance step після review, не виконаний агентом.
+
+
+## 13.11.2026 — Phase4 ACCEPTED власником; merge PR5 дозволено
+
+Власник явно прийняв Phase4 LLM Integration: **REVIEW → ACCEPTED**,2026-11-13.
+Це рішення замінює попередні REVIEW/pending записи поточного milestone;
+історію реалізації та її перевірок збережено. Дозволено лише documentation-only
+acceptance commit/push і ordinary merge commit PR5 після обох successful CI
+jobs exact FINAL PR HEAD. Baseline98a019ce99df992c7ad54bc4f4a49ca02f6516b2.
+
+Прийнято provider-independent gateway, Gemini Interactions/Groq/Mock adapters,
+LangChain Runnable, structured/Pydantic validation, per-model thinking/config,
+bounded retries/timeouts/limits/fallback, privacy-safe telemetry/secret handling,
+Groq→Hydrogen backup configuration та F-01/F-02. Незалежні architecture/code
+reviews і попередній CI підтверджені; поточний owner approval є acceptance.
+
+Докази розділено:
+- Automated reviewed HEAD: Linux467passed, Windows465passed/2skipped, Ruff,
+  locked install, package import/Qt startup success (run43391679188).
+- Hydrogen focused offline acceptance:61passed, повідомлено власником;
+  попередній stable combined gate253passed і full local467passed збережено.
+- Live connectivity: Groq GPT-OSS120B SUCCESS, Gemini3.5Lite SUCCESS;
+  Hydrogen SUCCESS **owner-run/owner-reported**,5.148s,39input/5output/25reasoning.
+- Manual GUI: повний checklist власником не виконувався; непідтверджені пункти
+  не позначаються виконаними. WSLg/CI не є physical native Windows11 acceptance.
+
+Approved policy: Groq/openai/gpt-oss-120b primary cloud; Gemini/gemini-4-hydrogen
+preferred verified backup. Existing controlled backup дозволено enabled лише
+через explicit local configuration; runtime defaults/flags і actual .env цим
+acceptance step не змінюються. Mock — safe offline default.
+
+Accepted residual risks: Flash3.8 availability unresolved; live complex
+Email/Web Structured Outputs не перевірено; account-wide quotas не встановлено;
+rate counters process-local; production generation workflows наступних фаз;
+manual GUI checklist incomplete; physical native Windows11 gate Phase12.
+Ці обмеження acknowledged owner acceptance і не блокують Phase4.
+
+Фінальна docs-only branch обов'язково проходить Linux/Windows CI перед merge;
+failed/pending checks, conflicts або unexpected HEAD зупиняють merge без bypass.
+Після merge — clean checkout main + fetch/ff-only sync, перевірка merge SHA та
+clean tree; owner data/native workspace збережено. Actual final SHA/CI/merge
+result — PR5 і фінальний звіт, без circular documentation commit.
+**Phase5 — NOT STARTED**, потрібен окремий дозвіл; Phase4 acceptance/merge
+не є дозволом Specialized Agents.
