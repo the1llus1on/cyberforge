@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QPlainTextEdit,
     QPushButton,
+    QSizePolicy,
     QStackedWidget,
     QStyle,
     QStyledItemDelegate,
@@ -329,6 +330,11 @@ class MailPreview(QFrame):
         reading.addWidget(self.recipient)
         self.body = self._plain("Текст вибраного листа")
         self.body.setMinimumHeight(65)
+        # Nested height-for-width layouts otherwise reserve the editor's large
+        # preferred height. Give it the remaining space and scroll long mail.
+        self.body.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored
+        )
         reading.addWidget(self.body, 1)
         self.resource = _text("", "resource")
         self.resource.setWordWrap(True)

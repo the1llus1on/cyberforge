@@ -2019,6 +2019,45 @@ Required final full suite repeated because code changed:
 `GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
 **698 passed / 324.13s**, exit0, PTY log
 `/tmp/cyberforge-phase6-ux-after-reset-pytest.log`. This supersedes the earlier
-full-pass timing as final-code evidence. No production edits follow this gate;
-only documentation/evidence and PR metadata are finalized. No live LLM calls,
+full-pass timing for commit45d1318. The subsequent Windows CI correction below
+supersedes this as final-code evidence. No live LLM calls,
 native Windows manual tests or owner-database operations were performed.
+
+### Windows CI compact reading-view correction
+
+CI run43517074528 at45d1318 passed Linux (698passed/355.49s) but failed Windows
+(1failed,695passed,2POSIX-only skips/400.33s). The existing 1100×720 reading-view
+test caught a real issue: Segoe UI metrics plus nested height-for-width sizing
+reserved the body's preferred editor height and pushed refinement/actions below
+the viewport. The assertion was retained and strengthened to require no outer
+vertical scrolling and a usable body minimum height.
+
+Reproduced with locally loaded Segoe UI fonts in an isolated Linux/offscreen
+probe; the correction ignores only the body's preferred vertical size while
+retaining its minimum, stretch allocation and internal scrolling. No font files
+are copied into the repository. Context7 confirmed native layout sizing APIs.
+A custom-layout experiment was discarded after focused tests exposed recursive
+Qt callbacks; the final correction uses standard QSizePolicy only (six lines).
+
+Final focused source/UI suite: **33passed/48.16s**. Real WSLg compact inbox,
+reading and Save/reopen: **3passed/5.78s**. The Segoe UI WSLg probe also passes,
+with page/viewport both656px high and all critical controls visible. Sandboxed
+Wayland startup was denied by the environment; rerunning with authorized access
+to the WSLg socket passed. These are Linux/WSLg checks, not native Windows11
+manual acceptance. Review screenshots were refreshed and visually inspected;
+their image content is unchanged. Replacement exact-head CI evidence follows
+in PR7 after completion. The necessary correction goes to the same
+Phase6 branch/PR7 as a second implementation/test/evidence commit, without
+rewriting the first commit or adding a documentation-only commit.
+
+The initial restricted-sandbox full run stalled in the unchanged offline asyncio
+batch test; it was interrupted and is not counted as a pass. The full suite was
+restarted with access to local sockets, keeping API keys empty/tracing disabled.
+
+Final full command (PTY, outside the socket-restricted sandbox):
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**698passed/323.50s**, exit0;
+`/tmp/cyberforge-phase6-ux-final-layout-pytest.log`. Ruff lint/format pass92files;
+`git diff --check` passes. This supersedes the previous local full-suite evidence.
+No further production edits follow this gate. PR7 will record the exact pushed
+HEAD and Linux/Windows CI job/log results without an extra documentation commit.

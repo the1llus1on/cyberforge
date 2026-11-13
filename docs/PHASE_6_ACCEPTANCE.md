@@ -18,6 +18,8 @@ button returns to the inbox. Unread emphasis changes only in memory. Synthetic
 recipient/time details are template presentation, not learner records or actual
 delivery metadata. Browser navigation, compose and reply controls are disabled.
 The dark CyberForge shell and its single scenario catalog are unchanged.
+The opened body uses available height and internal scrolling, preserving the
+critical controls at 1100×720 across different native font metrics.
 
 «Уточнення викладача для перегенерації» is an instruction for the next generation.
 The helper explicitly says it does not directly edit a message; the saved email

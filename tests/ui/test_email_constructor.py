@@ -248,6 +248,9 @@ def test_compact_mailbox_keeps_critical_controls_visible(email_window, qtbot, op
             control.mapTo(viewport, control.rect().bottomRight())
         )
     assert window.containers[View.CONSTRUCTOR].horizontalScrollBar().maximum() == 0
+    assert window.containers[View.CONSTRUCTOR].verticalScrollBar().maximum() == 0
+    if opened:
+        assert page.body.height() >= page.body.minimumHeight()
     assert page.preview.folders.width() < 60
 
 
