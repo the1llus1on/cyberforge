@@ -6,6 +6,7 @@ keeps the accepted Groq subset intact; the gateway always validates locally.
 
 import json
 import re
+from hashlib import sha256
 from typing import Literal, Self
 from urllib.parse import urlsplit
 
@@ -214,40 +215,86 @@ class ScenarioInputV1(Contract):
 
 
 class EmailInputV1(ScenarioInputV1):
-    previous: EmailSlotsV1 | None = Field(default=None, repr=False)
+    previous: "EmailDraftV2 | EmailSlotsV1 | None" = Field(default=None, repr=False)
 
     @model_validator(mode="after")
     def previous_linkage(self) -> Self:
-        if self.previous and (
-            self.previous.internal_resource_id != self.context.internal_resource_id
-        ):
-            raise ValueError("previous_email_context")
+        if self.previous is not None:
+            if (
+                self.scenario_id is None
+                or self.scenario_version is None
+                or not isinstance(self.previous, EmailDraftV2)
+                or self.previous.provenance != source_provenance(self)
+            ):
+                raise ValueError("previous_email_provenance")
         return self
 
 
 class WebInputV1(ScenarioInputV1):
     email: "EmailDraftV2"
     template: Template
-    previous: WebSlotsV1 | None = Field(default=None, repr=False)
+    previous: "WebDraftV2 | WebSlotsV1 | None" = Field(default=None, repr=False)
 
     @model_validator(mode="after")
     def linkage(self) -> Self:
         if (
-            self.email.artifact.context != self.context
+            self.scenario_id is None
+            or self.scenario_version is None
+            or self.email.artifact.context != self.context
             or self.email.scenario_id != self.scenario_id
             or self.email.scenario_version != self.scenario_version
             or self.email.parameters != self.parameters
+            or self.email.provenance != source_provenance(self)
             or (
-                self.previous
+                self.previous is not None
                 and (
-                    self.previous.internal_resource_id
-                    != self.context.internal_resource_id
-                    or self.previous.template != self.template
+                    not isinstance(self.previous, WebDraftV2)
+                    or self.previous.scenario_id != self.scenario_id
+                    or self.previous.scenario_version != self.scenario_version
+                    or self.previous.artifact.context != self.context
+                    or self.previous.slots.template != self.template
+                    or self.previous.provenance != source_provenance(self, web=True)
                 )
             )
         ):
             raise ValueError("email_web_context")
         return self
+
+
+class DraftProvenanceV1(Contract):
+    """Local consistency fingerprint, never a signature or access permission."""
+
+    schema_version: Literal["draft-provenance-v1"] = "draft-provenance-v1"
+    kind: Literal["email", "web"]
+    language: Literal["uk", "en"]
+    source_digest: str = Field(pattern=r"^[a-f0-9]{64}$")
+
+
+def source_provenance(
+    source: ScenarioInputV1, *, web: bool = False
+) -> DraftProvenanceV1:
+    """Stable source identity: excludes current refinement and previous draft.
+
+    Web additionally binds the exact associated Email draft, including its slots.
+    Keep all scenario parameters, even those excluded from cloud prompt data.
+    """
+    payload = {
+        "scenario_id": source.scenario_id,
+        "scenario_version": source.scenario_version,
+        "parameters": source.parameters.model_dump(mode="json"),
+        "context": source.context.model_dump(mode="json"),
+        "language": source.language,
+    }
+    if web:
+        payload["template"] = source.template
+        payload["email"] = source.email.model_dump(mode="json")
+    return DraftProvenanceV1(
+        kind="web" if web else "email",
+        language=source.language,
+        source_digest=sha256(
+            json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        ).hexdigest(),
+    )
 
 
 class EmailDraftV2(Contract):
@@ -257,6 +304,8 @@ class EmailDraftV2(Contract):
     parameters: ScenarioParameters
     scenario_id: int | None
     scenario_version: int | None
+    # Additive local metadata: legacy envelopes remain readable, not reusable.
+    provenance: DraftProvenanceV1 | None = None
     selected_cues: tuple[NistCueId, ...]
     # No semantic detector in Phase 5: claims NEVER become verified cues.
     verified_cues: tuple[NistCueId, ...] = ()
@@ -264,6 +313,19 @@ class EmailDraftV2(Contract):
 
     @model_validator(mode="after")
     def consistency(self) -> Self:
+        if self.provenance is not None:
+            expected = source_provenance(
+                ScenarioInputV1(
+                    synthetic=True,
+                    scenario_id=self.scenario_id,
+                    scenario_version=self.scenario_version,
+                    parameters=self.parameters,
+                    context=self.artifact.context,
+                    language=self.provenance.language,
+                )
+            )
+            if self.provenance != expected:
+                raise ValueError("email_source_provenance")
         if (
             self.artifact.context.internal_resource_id
             != self.slots.internal_resource_id
@@ -284,11 +346,13 @@ class WebDraftV2(Contract):
     slots: WebSlotsV1
     scenario_id: int | None
     scenario_version: int | None
+    provenance: DraftProvenanceV1 | None = None
 
     @model_validator(mode="after")
     def consistency(self) -> Self:
         if (
-            self.artifact.context.internal_resource_id
+            (self.provenance is not None and self.provenance.kind != "web")
+            or self.artifact.context.internal_resource_id
             != self.slots.internal_resource_id
             or self.artifact.heading != self.slots.heading
             or self.artifact.body_text != self.slots.body_text
@@ -398,4 +462,5 @@ class ExplanationV1(Contract):
     decision_maker: Literal["instructor"] = "instructor"
 
 
+EmailInputV1.model_rebuild()
 WebInputV1.model_rebuild()

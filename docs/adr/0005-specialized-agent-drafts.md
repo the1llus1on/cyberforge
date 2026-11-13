@@ -105,3 +105,34 @@ Phase 9 — події; Phase 10 — authoritative ScoringService/trusted feedba
 Phase 11 — sanitized aggregates та analytics UI. Жодна з цих фаз не почата.
 Native Windows 11 verification відкладено до Phase 12 як ризик. Phase 5 не
 змінює GUI, persistence, migration чи accepted RBAC/versioning services.
+
+## F-01 — provenance попередніх чернеток (independent review remediation)
+
+Перевірка лише resource ID (і Web template) не розрізняла сценарії/версії з
+однаковим internal resource. `previous` тепер використовує повний EmailDraftV2
+або WebDraftV2 з additive локальною `DraftProvenanceV1`. Її SHA-256 source digest
+охоплює scenario ID/version, усі ScenarioParameters, ScenarioContextV1 та мову.
+Web digest додатково охоплює template і точний associated Email envelope/slots.
+Генератор створює provenance локально після валідації; LLM її не генерує.
+
+`context_token()` залишається request-specific, включно з refinement. Stable
+provenance не містить поточного refinement/previous: зміна лише інструкції
+зберігає legitimate regeneration. Новий Email, навіть із тією самою scenario
+provenance, робить попередній Web stale, якщо змінився його envelope/slots.
+Попередні drafts перевіряються на вході до graph/LLM; canonical Email для Web
+також перевіряється на expected identity/version/parameters/context/provenance.
+Email envelope повторно звіряє власні metadata з provenance: просте relabeling
+ID/version не переприв'язує чернетку. Web зберігає явну перевірку template.
+
+Сумісність: provider-facing slots schemas, Groq strict conversion, prompt/schema
+versions, canonical Phase 4 contracts і gateway незмінні. Старі draft envelopes
+без provenance читаються (`provenance=None`), але не приймаються як regeneration
+inputs або Email source для Web. Bare slots у legacy input union відхиляються
+fail-closed: відсутні докази походження не можна безпечно відновити. Caller має
+передавати `previous=result.draft`, а не `.draft.slots`; для legacy даних потрібна
+нова генерація з trusted scenario input. Відомі ID і version обов'язкові для
+reuse/Email→Web; standalone fresh Email може лишатися synthetic без identity.
+
+Provenance — consistency fingerprint, не підпис, authorization або доказ
+правдивості caller data. Trusted application service лишається межею RBAC;
+нових repositories, checkpoint stores, migrations або permissions не додано.

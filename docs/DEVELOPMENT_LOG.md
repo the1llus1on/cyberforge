@@ -1684,3 +1684,64 @@ successful Linux/Windows CI exact final PR HEAD; actual final SHA/CI run/jobs
 Перед commit/push: final diff і staged secret scan, включно з порівнянням actual
 local secret values без їх виведення. PR→main; merge заборонено цим завданням.
 Phase6 NOT STARTED; physical native Windows11 acceptance лишається Phase12.
+
+
+## Phase 5 F-01 — previous draft provenance remediation
+
+Independent review: Phase5 REVIEW, PR6, baseline
+`1d8ac8cdec5e84cca1713e3d801246ba21691d05`; clean existing feature branch,
+GitHub MCP підтвердив PR open/unmerged/base main/exact reviewed HEAD.
+План перед coding: відтворити resource-ID collision; відокремити stable provenance
+від request refinement; закрити Email/Web previous і canonical Email binding;
+focused first, one stable full gate, final-head Linux/Windows CI без live API.
+SRS §§5.6–5.7,11.4–11.7; SRS/RBAC/provider policy не змінюються.
+
+Root cause: previous inputs містили лише slots; resource ID/template не доводять
+scenario identity/version/context.8baseline regressions (2agents × differentID,
+version,context,parameters із однаковим resource) усі failed: generation викликано
+замість input rejection. Після fix попередні full envelopes перевіряються через
+local DraftProvenanceV1. Digest включає identity/version, усі parameters,context,
+language; Web також template і exact associated Email. Поточний refinement і
+previous виключено, existing request context_token незмінний. Email envelope
+self-consistency перевіряє provenance після relabeling metadata. Bare slots та
+legacy envelopes без provenance readable, але reuse fail-closed; unknown identity
+не допускається для reuse/Email→Web. Caller передає previous=result.draft.
+Fingerprint не є authorization/signature; trusted application service/RBAC intact.
+
+Changed: agents/contracts.py, specialized.py (local provenance stamping),
+prompts.py (тільки slots previous у prompt), existing valid-regeneration test
+оновлено на full envelope; new test_agent_provenance.py, ADR0005, plan/log.
+Provider-facing schemas порівняно з reviewed commit через isolated module load:
+EmailSlotsV1/WebSlotsV1/ExplanationSelectionV1 schemas та Groq strict conversion
+**identical**. Phase4 gateway/adapters/config/domain/services не змінювалися.
+
+Focused final:154passed/2.45s,104prior+50new. Cases: same-resource cross-scenario/
+version,changedcontext/all relevant parameter fields/language,canonicalEmail
+mismatch,relabelledidentity,exactEmail main/body/background changes forWeb,
+changed/tamperedtemplate,missingidentity,legacy inputs,JSON roundtrip,
+legitimate same-source regeneration з None/двома refinements для обох agents,
+immutability. Rejected inputs:REQUEST,0generations/0Mock calls; network guarded.
+Intermediate fixture issues (enum/model_copy,strictJSON,staticmockNIST claims)
+виправлено у tests без послаблення production validation. Offline demo4agents
+pending_review success. Ніяких live API, UI/DB/migration/dependency/startup changes;
+packaging/GUI checks не повторюються без зміни відповідних integration points.
+Native Windows11 physical verification лишається Phase12 acknowledged risk.
+
+Stable local gate після остаточного fix:
+
+| Команда / перевірка | Результат |
+| --- | --- |
+| uv run --offline --locked pytest tests/test_agent_provenance.py tests/test_agents.py -q --tb=short | **154passed/2.45s** |
+| uv run --offline --locked ruff check . | success |
+| uv run --offline --locked ruff format --check . | success,82files |
+| GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false uv run --offline --locked pytest -q --tb=short | **621passed/210.74s**, усі571prior regressions збережено |
+| baseline/current provider schema + Groq strict conversion comparison |3schemas identical |
+| uv run --offline --locked python -m cyberforge.agents.demo |success,4agents offline |
+| git diff --check |success |
+
+Full pytest виконано поза sandbox через відоме й раніше відтворене baseline
+asyncio wakeup limitation, без live API. Перед commit/push — staged diff/secret
+scan. Final HEAD і Linux/Windows exact-head CI jobs/log results будуть у PR6 та
+фінальному звіті після push, без circular doc-only commits. Phase5 REVIEW, не
+ACCEPTED; без merge/force/history rewriting/Phase6. .env/ключі/SQLite/user data
+і native Windows acceptance environment збережено.

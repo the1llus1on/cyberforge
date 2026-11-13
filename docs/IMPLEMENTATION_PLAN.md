@@ -771,3 +771,20 @@ agents, package privacy/source match і Qt startup smoke — success.
 Linux/Windows CI на exact final PR HEAD. Actual SHA, CI run/jobs і результати
 фіксуються в PR та фінальному звіті після push без circular doc commits.
 ACCEPTED — тільки окреме рішення власника; Phase6 NOT STARTED.
+
+### Phase 5 F-01 — independent review remediation
+
+Phase5 лишається **REVIEW**, owner acceptance не надано. Scope: SRS §§5.6–5.7,
+11.4–11.7 — previous draft provenance, identity/version/context і stale inputs.
+Resource ID не є scenario identity. Додано additive local DraftProvenanceV1 та
+повні previous envelopes; refinement відокремлено від stable source digest.
+Web також прив'язаний до точного associated Email. Legacy envelopes readable,
+але reuse без provenance/відомої identity відхиляється до LLM. RBAC unchanged.
+
+На reviewed HEAD8 deterministic cases відтворили помилку. Focused final:
+`pytest tests/test_agent_provenance.py tests/test_agents.py -q --tb=short` —
+154passed/2.45s (104existing +50new). Original provider schemas і Groq strict
+conversion порівняно з reviewed commit: identical. Offline demo success.
+Stable full gate: Ruff lint/format success,82files; **621passed/210.74s**,
+усі571prior tests збережено. Exact-final-head Linux/Windows CI evidence та HEAD
+фіксуються після push в PR6/final report; merge/ACCEPTED/Phase6 заборонені.

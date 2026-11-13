@@ -60,7 +60,8 @@ def task_data(source):
             mode="json", exclude={"generation_parameters", "legacy_nist_cues"}
         )
         if source.previous is not None:
-            payload["previous"] = source.previous.model_dump(mode="json")
+            # Provenance is a local gate, never model-authored task authority.
+            payload["previous"] = source.previous.slots.model_dump(mode="json")
         if hasattr(source, "email"):
             payload["email"] = source.email.slots.model_dump(mode="json")
         return payload

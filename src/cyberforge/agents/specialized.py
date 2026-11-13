@@ -11,6 +11,7 @@ from cyberforge.agents.contracts import (
     WebDraftV2,
     WebInputV1,
     WebSlotsV1,
+    source_provenance,
 )
 from cyberforge.agents.workflow import SpecializedAgent
 from cyberforge.llm.contracts import EmailArtifactV1, WebArtifactV1
@@ -58,6 +59,7 @@ class EmailScenarioAgent(SpecializedAgent):
             scenario_id=source.scenario_id,
             scenario_version=source.scenario_version,
             selected_cues=source.parameters.nist_cues,
+            provenance=source_provenance(source),
         )
 
 
@@ -85,6 +87,7 @@ class WebScenarioAgent(SpecializedAgent):
             slots=candidate,
             scenario_id=source.scenario_id,
             scenario_version=source.scenario_version,
+            provenance=source_provenance(source, web=True),
         )
 
 

@@ -254,7 +254,7 @@ def test_canonical_email_tamper_rejected():
 def test_regeneration_does_not_mutate_inputs_or_previous():
     source, draft = email_draft()
     source = source.model_copy(
-        update={"previous": draft.slots, "refinement": "Змініть тему."}
+        update={"previous": draft, "refinement": "Змініть тему."}
     )
     before = source.model_dump_json()
     payload = email_payload(source)
