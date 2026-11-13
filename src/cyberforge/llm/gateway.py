@@ -19,7 +19,7 @@ from cyberforge.llm.contracts import (
     Usage,
 )
 from cyberforge.llm.limits import RateLimiter
-from cyberforge.llm.schemas import groq_strict_schema
+from cyberforge.llm.schemas import groq_output_schema
 
 RETRYABLE = {ErrorCategory.TIMEOUT, ErrorCategory.UNAVAILABLE, ErrorCategory.RATE_LIMIT}
 FALLBACK_ALLOWED = {ErrorCategory.TIMEOUT, ErrorCategory.UNAVAILABLE}
@@ -77,6 +77,7 @@ class LLMGateway:
         error = None
         retry_after = None
         structured = None
+        schema_projection = None
         try:
             if (request.operation == "structured") != (output_type is not None):
                 raise GenerationError(ErrorCategory.CONFIGURATION)
@@ -91,7 +92,7 @@ class LLMGateway:
                 except PydanticInvalidForJsonSchema:
                     raise GenerationError(ErrorCategory.SCHEMA) from None
                 if schema is not None and active.provider == Provider.GROQ:
-                    schema = groq_strict_schema(schema)
+                    schema, schema_projection = groq_output_schema(output_type, schema)
                 provider = self._providers.get(active.provider)
                 if provider is None:
                     raise GenerationError(ErrorCategory.CONFIGURATION)
@@ -135,11 +136,18 @@ class LLMGateway:
                         and active.provider == Provider.GEMINI
                         and exc.category in FALLBACK_ALLOWED
                     ):
-                        # Explicit independent model; thinking remains compatible.
+                        # Deterministic cross-provider policy: minimal -> low;
+                        # compatible levels and None retain their original value.
+                        parameters = active.parameters
+                        if parameters.thinking == "minimal":
+                            parameters = parameters.model_copy(
+                                update={"thinking": "low"}
+                            )
                         active = active.model_copy(
                             update={
                                 "provider": Provider.GROQ,
                                 "model": "openai/gpt-oss-120b",
+                                "parameters": parameters,
                             }
                         )
                         fallback = True
@@ -169,6 +177,9 @@ class LLMGateway:
             operation=request.operation,
             prompt_version=request.prompt_version,
             schema_version=request.schema_version,
+            requested_parameters=request.parameters,
+            effective_parameters=active.parameters,
+            schema_projection=schema_projection,
             elapsed_seconds=max(0, self._clock() - started),
             usage=response.usage if response else Usage(),
             status="error" if error else "success",

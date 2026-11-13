@@ -1385,3 +1385,68 @@ Linux/Windows CI exact final HEAD обов'язково перевіряютьс
 actual SHA/run/results будуть у PR description і final report без зайвого
 code-free commit/повтору CI. Наявні .env, credentials, DB і Phase2 native
 Windows environment збережено. Відсутність live tests не позначається success.
+
+
+## 13.11.2026 — Phase4 independent review remediation F-01/F-02
+
+Власник дозволив вузькі fixes у тій самій branch feat/phase-4-llm-integration,
+PR5, reviewed HEAD5913183500bbaa03bee4d800a5f7fdedf02661de. Початкове дерево
+чисте; GitHub MCP підтвердив open/unmerged PR→main з тим самим HEAD.
+Phase4 лишається REVIEW, не ACCEPTED. План перед кодом — SRS §§10.4–10.8/11.1:
+parameter compatibility + observability, bounded schema projection + original
+local validator, focused tests → один stable full Ruff/pytest → final-head CI.
+
+Обидва findings підтверджено до fixes: нові3 focused tests очікувано FAILED
+(configuration для FlashLite minimal fallback, unsupported_schema для обох
+EmailArtifactV1/WebArtifactV1). Actual model_json_schema містить pattern
+^[a-zA-Z0-9_-]{1,64}$ у $defs.ScenarioContextV1.properties.internal_resource_id.
+Official Groq docs/SDK через Context7 підтвердили GPT-OSS low/medium/high та
+strict schema contract; source links, alternatives і consequences — ADR0004.
+
+F-01: тільки enabled allowlisted transient Gemini→Groq fallback maps minimal
+до explicit low; low/medium/high/None зберігаються. Temperature/output limit/
+timeout не змінюються. Original request і params immutable; telemetry додає
+requested_parameters/effective_parameters. Invalid original config не ремонтується.
+Safety/auth/credentials/schema/validation/quota/rate-limit/permanent errors
+не обходять existing denylist. Retries, budgets і cooldown logic не змінені.
+
+F-02: canonical models і regex незмінені. Тільки gateway, який має original
+output_type та mandatory local validation, застосовує explicit Groq V1-artifact
+projection. У копії лише exact known resource-ID pattern делегується локально;
+provider strict checker зберігає types/required/closed objects/version enum.
+Інші patterns/constraints і changed expected regex fail-closed. Raw adapter
+не отримує автоматичного lossy transformer. Schema projection позначено в
+telemetry, зокрема errors. Original Pydantic strict validation завжди відхиляє
+invalid ID до повернення result. Provider compliance не є content safety,
+consistency або instructor approval. Agents/constructors не реалізовувалися.
+
+Перевірки (UV_CACHE_DIR=/tmp/cyberforge-uv-cache):
+
+| Команда | Результат |
+| --- | --- |
+| uv run --offline --locked pytest tests/test_llm_review.py -q --tb=short | до fix3failed (reproduction); після fix92passed,0.73s |
+| uv run --offline --locked pytest tests/test_llm*.py -q --tb=short |192passed,3.74s; попередні100 LLM tests збережено |
+| uv run --offline --locked ruff check . | success |
+| uv run --offline --locked ruff format --check . | success,73files |
+| GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false uv run --offline --locked pytest -q --tb=short | **406passed,203.92s**; усі prior314 tests збережено |
+| git diff --check | success |
+
+Focused matrix: усі9 valid Gemini model/thinking combinations × timeout/5xx;
+10 denied categories ×2canonical artifacts; disabled fallback/invalid thinking;
+actual schema snapshots/non-mutation/fail-closed projection; real Groq SDK на
+httpx.MockTransport direct та fallback; valid ID boundaries, empty/overlong/
+path/URL/space/non-ASCII/newline/non-string ID і local validation failures.
+Фінальний full suite виконано один раз після стабілізації. Async/full checks
+поза sandbox для раніше встановленого event-loop wakeup limitation; requests
+лише fake/offline. Live API не виконувалися, model access/quotas досі unknown.
+
+Змінено8files: contracts/gateway/schemas, новий test_llm_review.py, ADR0004,
+plan/log/acceptance. SRS, dependencies/uv.lock, packaging/startup, migrations,
+UI та accepted application/domain services не змінено; wheel/WSLg повтори
+не потрібні за погодженим workflow. .env/credentials/DB/Phase2 Windows workspace
+збережено. Native Windows11 physical acceptance — Phase12, не CI evidence.
+
+Перед commit/push — final diff/staged secret-value scan. Linux/Windows CI
+перевіряються для exact нового PR HEAD; SHA/run/results будуть у PR description
+та final report без зайвого documentation-only CI циклу. Owner acceptance
+очікується; ні merge PR5, ні Phase5 не дозволені цим remediation.

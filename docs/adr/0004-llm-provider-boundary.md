@@ -90,10 +90,11 @@ reservation. Input UTF-8 bytes + serialized schema UTF-8 bytes + max output toke
 lazy client initialization, strict schema і normalized errors без SDK payload.
 `schemas.py`: bounded inline acyclic refs, enum/const, closed required objects,
 arrays і scalar types. Titles/descriptions вилучаються; const → singleton enum.
-Optional/default fields, unions, recursive refs, patterns/formats та інші
-непідтримувані constraints відхиляються до запиту; жодного silent weakening.
-Поточний Web/Email context із pattern свідомо не проходить цей bounded subset;
-його фактична генерація належить Phase 5 і потребуватиме окремого рішення.
+Optional/default fields, unions, recursive refs, довільні patterns/formats та
+інші непідтримувані constraints відхиляються до запиту. Для канонічних
+EmailArtifactV1/WebArtifactV1 є лише один explicit local-only виняток, описаний
+нижче у F-02; він не змінює Pydantic/domain validation. Фактичні agents,
+constructors і publication workflows залишаються наступними фазами.
 Локальна Pydantic strict validation завжди обов'язкова для structured generation.
 
 Telemetry містить лише затверджені metadata; відсутній provider usage лишається
@@ -161,3 +162,81 @@ Native Windows 11 physical acceptance — Phase 12, не Windows CI evidence.
 logs інших threads не вимикаються. Це запобігає витоку payload навіть за
 root DEBUG або GOOGLE_GENAI_DEBUG; тести використовують тільки synthetic keys
 і fake HTTP. У runtime не вмикається full prompt/response logging.
+
+
+## 13.11.2026 — independent review F-01/F-02 remediation
+
+Обидва findings відтворено на reviewed HEAD5913183: Flash-Lite minimal після
+transient failure завершувався configuration error; raw strict checker
+відхиляв обидві versioned artifact schemas через context internal_resource_id.
+Scope — SRS §§10.4–10.8/11.1, без нових вимог або змін SRS/архітектури.
+
+### F-01: deterministic fallback parameters
+
+Для вже дозволеного Gemini→Groq fallback застосовується фіксована політика:
+
+| Requested thinking | Effective Groq thinking |
+| --- | --- |
+| minimal (лише Gemini3.5FlashLite) | low |
+| low / medium / high | те саме значення |
+| None | None; provider default лишається explicit unknown choice |
+
+Це вибір найнижчого дозволеного Groq reasoning_effort, не твердження про
+однакову поведінку моделей. [Офіційний SDK контракт](https://github.com/groq/groq-python/blob/main/src/groq/types/chat/completion_create_params.py)
+підтверджує GPT-OSS low/medium/high, без minimal. Context7 підтвердив той самий
+контракт. Інші generation parameters зберігаються. Original request/parameters
+не змінюються: створюються нові frozen objects лише для effective fallback.
+Telemetry тепер містить requested_parameters та effective_parameters разом
+з наявними requested_model/actual_model/version metadata. Prompts/responses
+не додаються до telemetry. None не підміняється вигаданим reasoning level.
+
+Mapping виконується тільки після allowlisted temporary failure, за enabled
+fallback. Він не виправляє invalid original configuration і не дозволяє
+fallback для safety/authorization/credentials/schema/validation/rate-limit/
+quota/permanent failures. Залишаються попередні retries/budgets/cooldowns.
+
+### F-02: bounded artifact wire schema з незміненою локальною перевіркою
+
+Actual Pydantic JSON Schema обох V1 contracts містить у
+$defs.ScenarioContextV1.properties.internal_resource_id:
+
+```json
+{"pattern":"^[a-zA-Z0-9_-]{1,64}$","title":"Internal Resource Id","type":"string"}
+```
+
+За попередньою політикою groq_strict_schema відхиляє pattern. Рішення:
+groq_output_schema працює у gateway, де є canonical Pydantic output_type і
+обов'язковий validator. Тільки для точних EmailArtifactV1/WebArtifactV1
+він копіює JSON Schema, перевіряє точний expected regex у зазначеному полі
+і делегує лише цей regex локальній валідації. Wire field стає type=string.
+Подальший strict checker не змінюється; const→enum, closed required objects,
+scalar/array types та інші підтримувані constraints зберігаються. Новий або
+змінений regex/інший pattern не видаляється автоматично: unsupported_schema.
+Raw GroqProvider сам не застосовує lossy projection, бо не має Pydantic type.
+
+| Перевірка | Provider-facing strict schema | Локальна canonical Pydantic |
+| --- | --- | --- |
+| Required fields, closed objects, types, version enum | Так | Завжди повторно |
+| context.internal_resource_id ASCII letters/digits/_/-, length1–64 | Ні, лише type=string | Завжди повний original regex |
+| Інші непідтримувані patterns/constraints | Reject до HTTP | Не обходяться |
+
+Telemetry.schema_projection=groq-artifact-v1-local-resource-id позначає
+застосований виняток, включно з validation failures. На Gemini schema
+залишається повною, без проєкції. Повернення structured result можливе лише
+після original output_type.model_validate_json(...,strict=True); provider
+compliance не є достатнім security gate. Invalid ID не повертається як
+артефакт, не повторюється і не запускає додатковий fallback.
+
+Alternatives: зняття canonical pattern відхилено (послаблює local rule);
+загальне видалення patterns відхилено (silent weakening); повна окрема wire
+model hierarchy не потрібна для одного відомого поля. Обраний виняток явно
+дозволений remediation scope власника і зберігає effective validation rule,
+тому нового архітектурного погодження не потребує. Самі канонічні контракти,
+SDK adapters, dependencies і public gateway call signature не змінено.
+
+[Groq Strict Outputs](https://console.groq.com/docs/structured-outputs)
+визначає provider-level guarantee для переданої схеми; це не доводить
+безпечність навчального змісту. Synthetic data/domain consistency та instructor
+approval лишаються окремими наступними gates; агенти/конструктори не реалізовано.
+Live verification не виконувалася. Докази: tests/test_llm_review.py, журнал,
+final PR checks. Phase4 лишається REVIEW, без merge або Phase5.

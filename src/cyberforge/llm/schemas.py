@@ -1,8 +1,40 @@
 """Bounded, explicit Groq strict subset; canonical validation remains Pydantic."""
 
 from copy import deepcopy
+from typing import Literal
 
-from cyberforge.llm.contracts import ErrorCategory, GenerationError
+from pydantic import BaseModel
+
+from cyberforge.llm.contracts import (
+    EmailArtifactV1,
+    ErrorCategory,
+    GenerationError,
+    WebArtifactV1,
+)
+
+
+def groq_output_schema(
+    output_type: type[BaseModel], schema: dict
+) -> tuple[dict, Literal["groq-artifact-v1-local-resource-id"] | None]:
+    """Only canonical V1 artifacts delegate this exact regex to local validation.
+
+    The gateway must validate every response against the original output_type.
+    All other patterns/constraints still pass through the rejecting strict check.
+    This projection must not be used by the raw provider without that validator.
+    """
+    if output_type not in (EmailArtifactV1, WebArtifactV1):
+        return groq_strict_schema(schema), None
+    projected = deepcopy(schema)
+    try:
+        resource_id = projected["$defs"]["ScenarioContextV1"]["properties"][
+            "internal_resource_id"
+        ]
+        if resource_id.get("pattern") != r"^[a-zA-Z0-9_-]{1,64}$":
+            raise GenerationError(ErrorCategory.SCHEMA)
+        del resource_id["pattern"]
+    except KeyError:
+        raise GenerationError(ErrorCategory.SCHEMA) from None
+    return groq_strict_schema(projected), "groq-artifact-v1-local-resource-id"
 
 
 def groq_strict_schema(schema: dict) -> dict:

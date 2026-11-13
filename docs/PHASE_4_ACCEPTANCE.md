@@ -58,6 +58,26 @@ UI цієї фази не змінювався; повтор усіх Phase0–3
 Windows11/DPI/installer acceptance відкладено до Phase12; Windows CI не є
 підтвердженням фізичного Windows11 тестування.
 
+## Independent review F-01/F-02: додаткова offline перевірка
+
+`uv run pytest tests/test_llm_review.py -q` перевіряє fixed fallback policy і
+Groq structured artifacts без live API. Усі prior Phase0–4 tests збережено.
+
+- Для enabled transient Gemini3.5FlashLite fallback requested_parameters.thinking
+  лишається minimal, effective_parameters.thinking стає low; original request
+  незмінний. Інші дозволені рівні/None зберігаються. Denied failures не обходяться.
+- EmailArtifactV1/WebArtifactV1 через Groq (direct і fallback) проходять schema
+  projection лише для known resource-ID regex. Telemetry.schema_projection
+  позначає цей виняток. Provider перевіряє structure/types/version, а повний
+  regex завжди перевіряє original local Pydantic model до повернення результату.
+- Порожній/задовгий/path/URL/space/non-ASCII string ID має завершуватися
+  validation/local_validation=failed, хоча він допускається wire type=string.
+  Non-string ID також додатково відхиляється локально. Це не full content
+  safety/consistency/instructor approval workflow.
+
+Нових UI controls/agents немає, ручний WSLg checklist не розширюється.
+Завершення remediation не є owner acceptance і не дозволяє merge/Phase5.
+
 ## Live API — окреме виконання
 
 Потрібен окремий явний дозвіл власника. Команди в README; максимум один

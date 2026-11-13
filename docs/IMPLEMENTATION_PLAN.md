@@ -20,7 +20,7 @@
 | 1 | Main UI Shell | ACCEPTED | Dark PySide6 shell, universal Home / Guest state, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
 | 2 | Users & Groups | ACCEPTED | Прийнято власником 12.11.2026: login, Argon2id, 3 roles, demo accounts/groups, RBAC; WSLg і native Windows 11 докази нижче |
 | 3 | Scenario Management | ACCEPTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
-| 4 | LLM Integration | REVIEW | Gateway/Gemini Interactions/Groq/Mock/Runnable; 314 local tests; packaging/WSLg startup success; owner acceptance pending; ADR-0004 |
+| 4 | LLM Integration | REVIEW | Gateway/Gemini Interactions/Groq/Mock/Runnable; F-01/F-02 remediated; 406 local tests; owner acceptance pending; ADR-0004 |
 | 5 | Specialized Agents | NOT STARTED | Typed I/O contracts for four specialized agents and bounded orchestration; mock agent tests |
 | 6 | Email Constructor | NOT STARTED | Email shell, generation, preview, code view, regeneration, explicit save and validation; UI tests |
 | 7 | Web Constructor | NOT STARTED | Web templates, isolated Qt WebEngine, generation, preview, code view, explicit save; security and UI tests |
@@ -629,3 +629,26 @@ Ruff lint/format72files success, sdist/wheel та isolated installed wheel
 mock/async/guard/startup success. Реальний WSLg startup/close success;
 це не owner visual/functional acceptance. Phase4 **REVIEW**. Final PR HEAD
 і Linux/Windows CI results фіксуються в PR та фінальному звіті після push.
+
+
+## Phase 4 — independent review remediation F-01/F-02 (13.11.2026)
+
+Phase4 **REVIEW**. Reviewed baseline5913183, та сама feature branch/PR5.
+План перед кодом: §§10.4–10.8 — deterministic minimal→low fallback,
+immutable original request та requested/effective parameter telemetry;
+§11.1 — bounded Groq projection лише V1 artifact resource-ID pattern,
+незмінена canonical validation; §21 — focused then one stable full Ruff/pytest,
+Linux/Windows CI exact final HEAD. Packaging/startup/dependencies/UI не
+зачеплено, тому повтор wheel/WSLg checks не потрібний за AGENTS workflow.
+
+Початкові3 regression cases відтворили обидва findings. Виправлення не знімає
+local security rule і не змінює SRS/архітектуру: provider checks structure;
+canonical Pydantic завжди додатково перевіряє original regex. Telemetry позначає
+schema projection та параметри. Generic unsupported schemas і fallback denylist
+залишаються чинними. Details/alternatives — ADR0004, acceptance — PHASE4 record.
+Live API не виконувати; owner acceptance/merge/Phase5 не дозволені цим кроком.
+Final counts/CI будуть у журналі та описі PR5 після завершення перевірок.
+
+Remediation final local gate: Ruff73files success, focused192passed/3.74s
+(100prior +92new), one full pytest406passed/203.92s. Final SHA та Linux/Windows
+CI results оновлюються в PR5/final report після push. Phase4 лишається REVIEW.

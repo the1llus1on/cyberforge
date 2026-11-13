@@ -78,6 +78,9 @@ class GenerationTelemetry(Contract):
     operation: Literal["text", "structured"]
     prompt_version: str
     schema_version: str | None
+    requested_parameters: GenerationParameters
+    effective_parameters: GenerationParameters
+    schema_projection: Literal["groq-artifact-v1-local-resource-id"] | None = None
     elapsed_seconds: float = Field(ge=0)
     usage: Usage = Field(default_factory=Usage)
     status: Literal["success", "error"]
