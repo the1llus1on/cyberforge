@@ -305,3 +305,23 @@ def test_web_rejects_missing_expected_identity_before_generation(field):
     gateway, mock = scripted_gateway()
     assert WebScenarioAgent(gateway).run(request).error == ErrorCategory.REQUEST
     assert mock.calls == 0
+
+
+def test_web_regeneration_survives_email_refinement_without_content_change():
+    source = email_input()
+    email = generate_email(source)
+    previous = generate_web(web_input(source, email))
+    refined = source.model_copy(update={"refinement": "Збережіть навчальний зміст."})
+    refined_email = generate_email(refined)
+    assert refined_email.provenance == email.provenance
+    assert refined_email.slots.context_token != email.slots.context_token
+    before = email.slots.model_dump(mode="json", exclude={"context_token"})
+    after = refined_email.slots.model_dump(mode="json", exclude={"context_token"})
+    assert before == after
+    request = web_input(source, refined_email).model_copy(
+        update={"previous": previous, "refinement": "Уточніть заголовок сторінки."}
+    )
+    gateway, mock = scripted_gateway(web_payload(request))
+    result = WebScenarioAgent(gateway).run(request)
+    assert result.status == "pending_review" and mock.calls == 1
+    assert result.draft.provenance == previous.provenance

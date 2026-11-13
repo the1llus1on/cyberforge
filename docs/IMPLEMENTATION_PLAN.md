@@ -778,7 +778,7 @@ Phase5 лишається **REVIEW**, owner acceptance не надано. Scope:
 11.4–11.7 — previous draft provenance, identity/version/context і stale inputs.
 Resource ID не є scenario identity. Додано additive local DraftProvenanceV1 та
 повні previous envelopes; refinement відокремлено від stable source digest.
-Web також прив'язаний до точного associated Email. Legacy envelopes readable,
+Web також прив'язаний до associated Email content/metadata без request token. Legacy envelopes readable,
 але reuse без provenance/відомої identity відхиляється до LLM. RBAC unchanged.
 
 На reviewed HEAD8 deterministic cases відтворили помилку. Focused final:
@@ -788,3 +788,11 @@ conversion порівняно з reviewed commit: identical. Offline demo succes
 Stable full gate: Ruff lint/format success,82files; **621passed/210.74s**,
 усі571prior tests збережено. Exact-final-head Linux/Windows CI evidence та HEAD
 фіксуються після push в PR6/final report; merge/ACCEPTED/Phase6 заборонені.
+
+
+F-01 final audit: вкладений Email request token також виключено зі stable Web
+digest. Додано positive regression для Email refinement без зміни content з
+подальшим Web refinement; content/identity/context changes усе ще stale.
+Final focused155passed/5.07s (104prior+51new); остаточний full
+**622passed/447.22s**, Ruff lint/format success,82files. Попередній full621pass
+був до цієї поправки. Final-head Linux/Windows CI evidence — PR6/final report.

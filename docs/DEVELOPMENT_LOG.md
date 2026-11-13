@@ -1727,7 +1727,7 @@ pending_review success. Ніяких live API, UI/DB/migration/dependency/startu
 packaging/GUI checks не повторюються без зміни відповідних integration points.
 Native Windows11 physical verification лишається Phase12 acknowledged risk.
 
-Stable local gate після остаточного fix:
+Перший local gate (до final audit нижче):
 
 | Команда / перевірка | Результат |
 | --- | --- |
@@ -1745,3 +1745,24 @@ scan. Final HEAD і Linux/Windows exact-head CI jobs/log results будуть у
 фінальному звіті після push, без circular doc-only commits. Phase5 REVIEW, не
 ACCEPTED; без merge/force/history rewriting/Phase6. .env/ключі/SQLite/user data
 і native Windows acceptance environment збережено.
+
+
+F-01 final audit перед completion виявив зайву залежність: exact associated
+Email snapshot включав context_token з Email refinement. Виключено тільки цей
+request-specific token, зі збереженням повної content/metadata binding. Новий
+positive regression доводить Web regeneration після Email refinement без зміни
+content, разом зі зміною Web refinement; existing stale-email cases лишаються.
+Перший full621passed/210.74s і commit f155dc6 — перед цією додатковою поправкою,
+не остаточне verification evidence. Final focused155passed,104prior+51new.
+Остаточні full Ruff/pytest та exact-final-head CI фіксуються нижче/у PR6.
+
+
+F-01 остаточний stable gate після request-token correction:
+- focused `uv run --offline --locked pytest tests/test_agent_provenance.py tests/test_agents.py -q --tb=short`: **155passed/5.07s**,104prior+51new;
+- `uv run --offline --locked ruff check .`: success;
+- `uv run --offline --locked ruff format --check .`: success,82files;
+- `GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false uv run --offline --locked pytest -q --tb=short`: **622passed/447.22s**; усі571reviewed-HEAD tests preserved;
+- provider-schema/Groq strict conversion comparison повторено після остаточної code change:3schemas identical;
+- final diff/staged secret scan перед follow-up commit/push; історія не переписується.
+Final SHA та обидва successful exact-head CI jobs/log evidence фіксуються в PR6
+і фінальному звіті після push. Phase5 REVIEW, не ACCEPTED; merge/Phase6 відсутні.

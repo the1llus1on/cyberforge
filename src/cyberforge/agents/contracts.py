@@ -275,7 +275,7 @@ def source_provenance(
 ) -> DraftProvenanceV1:
     """Stable source identity: excludes current refinement and previous draft.
 
-    Web additionally binds the exact associated Email draft, including its slots.
+    Web additionally binds associated Email content, excluding its request token.
     Keep all scenario parameters, even those excluded from cloud prompt data.
     """
     payload = {
@@ -287,7 +287,10 @@ def source_provenance(
     }
     if web:
         payload["template"] = source.template
-        payload["email"] = source.email.model_dump(mode="json")
+        email = source.email.model_dump(mode="json")
+        # A changed Email refinement alone must not invalidate a Web draft.
+        email["slots"].pop("context_token")
+        payload["email"] = email
     return DraftProvenanceV1(
         kind="web" if web else "email",
         language=source.language,

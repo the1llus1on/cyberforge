@@ -112,13 +112,15 @@ Native Windows 11 verification відкладено до Phase 12 як ризи�
 однаковим internal resource. `previous` тепер використовує повний EmailDraftV2
 або WebDraftV2 з additive локальною `DraftProvenanceV1`. Її SHA-256 source digest
 охоплює scenario ID/version, усі ScenarioParameters, ScenarioContextV1 та мову.
-Web digest додатково охоплює template і точний associated Email envelope/slots.
+Web digest додатково охоплює template і associated Email envelope/slots,
+крім request-specific context_token вкладеного Email.
 Генератор створює provenance локально після валідації; LLM її не генерує.
 
 `context_token()` залишається request-specific, включно з refinement. Stable
 provenance не містить поточного refinement/previous: зміна лише інструкції
 зберігає legitimate regeneration. Новий Email, навіть із тією самою scenario
 provenance, робить попередній Web stale, якщо змінився його envelope/slots.
+Зміна лише Email refinement/request token без зміни змісту не робить Web stale.
 Попередні drafts перевіряються на вході до graph/LLM; canonical Email для Web
 також перевіряється на expected identity/version/parameters/context/provenance.
 Email envelope повторно звіряє власні metadata з provenance: просте relabeling
