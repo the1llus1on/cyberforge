@@ -33,7 +33,7 @@ If documents conflict, follow the SRS for approved product requirements. Do not 
 - Add only necessary dependencies; verify their current official documentation and compatible versions. Do not invent APIs or quietly replace the SRS technology decisions.
 - Do not create every proposed directory in advance; evolve the structure when code actually needs it.
 - Build and test offline with `MockLLMProvider` whenever possible. Make real API use explicitly configurable; never require a live Gemini key for the baseline tests.
-- Use `gemini-3.8-flash` as the default provider model only where supported and verified by current provider documentation and actual API access. Keep the provider replaceable.
+- Cloud priority (owner-approved 13.11.2026): Groq `openai/gpt-oss-120b` is primary; Gemini `gemini-4-hydrogen` is the preferred backup candidate only after owner-verified access and explicit activation. Gemini 3.5 Flash-Lite is optional; Gemini 3.8 Flash remains explicitly selectable with unresolved access. Without explicit cloud configuration, default to offline MockLLMProvider. Keep providers replaceable; never infer account access from published availability.
 - Keep `.env`, tokens, credentials, local databases and other secrets out of Git. Supply safe `.env.example` values. Use secure password hashing (Argon2id) and an appropriate OS secret store where specified.
 
 ## Non-negotiable domain and security requirements

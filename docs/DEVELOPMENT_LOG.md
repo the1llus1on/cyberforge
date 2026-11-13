@@ -1450,3 +1450,91 @@ UI та accepted application/domain services не змінено; wheel/WSLg п�
 перевіряються для exact нового PR HEAD; SHA/run/results будуть у PR description
 та final report без зайвого documentation-only CI циклу. Owner acceptance
 очікується; ні merge PR5, ні Phase5 не дозволені цим remediation.
+
+
+## 13.11.2026 — Groq primary / Hydrogen backup candidate
+
+Власник явно погодив нову operational policy та narrow SRS clarification.
+Baseline32e6de1090d819c06fa7d1bd2e79100eef0af501, чиста existing feature branch,
+PR5 open/unmerged→main підтверджено GitHub MCP. Phase4 лишається REVIEW.
+План перед кодом: §§10.2–10.8/11.1 — Hydrogen catalog/capabilities і model-specific
+request config, explicit verified backup через existing retry/fallback loop,
+neutral telemetry/validation; §21 — focused then one stable full Ruff/pytest,
+final-head Linux/Windows CI; owner-only first Hydrogen live test після review.
+
+Нова primary policy: Groq/openai/gpt-oss-120b; preferred backup candidate
+Gemini/gemini-4-hydrogen після owner verification+enable. Lite3.5 optional;
+Flash3.8 unresolved. Mock лишається default без explicit cloud config.
+Actual .env не редагувалася; рекомендовані несекретні поля в .env.example/README.
+Попередній Gemini-primary вибір superseded, історичні acceptance/evidence збережено.
+
+Використано4 official Google links власника, Developer API Interactions v1
+reference, AI Studio thinking/structured outputs/rate limits docs і installed
+SDK source. Blog прямо підтверджує AI Studio/Gemini API applicability. v1
+reference має model ID; structured guide показує Hydrogen response_format.
+Деякі individual AI Studio model pages web tool не відкрив; заміна — official
+API reference/feature guides, не сторонні джерела. Context7 index повертав
+legacy examples; direct installed SDK + fake transport доводять serialization.
+Cloud long-decode v1beta1 restriction не застосовується до обраного bounded
+Developer API v1 mode. Джерела/деталі/наслідки — ADR0004.
+
+GeminiProvider той самий: Hydrogen low/medium/high/xhigh, minimal denied;
+xhigh rejected для інших approved models. Temperature/top_p/top_k не
+передаються Hydrogen; original requested temperature збережена, effective=None
+означає omission. Older Gemini formats збережено. SDK pinned2.34.0 уже сумісний;
+ніякої dependency/lock зміни. store/background/continuation off, timeout bounded,
+retry compatibility safeguard strategy=none та privacy filter збережені.
+
+BackupConfig provider/model/enabled/access_verified — explicit optional config;
+обидва flags default false, enabled без verification fail-closed. Owner attests
+access для поточного ключа; config не робить live verification сам. Route лише
+для configured cloud primary; mock/mismatched request не переадресовується.
+Single hop/один existing execution loop; per-provider/model limits незалежні,
+allowlisted transient errors only, denylist/cooldowns незмінні. Legacy
+fallback_to_groq/env FALLBACK збережено deprecated; simultaneous new BACKUP +
+legacy=true reject ambiguous config. Unsupported minimal→low/xhigh→high mapping
+явні; original params immutable. Після Groq→Hydrogen schema projection reset,
+full canonical schema/local strict validation збережені (F-01/F-02 regressions).
+Telemetry має requested_provider і effective_model разом із prior metadata.
+
+CLI приймає Hydrogen лише з --live; low/256tokens/20s, retries0, legacyfalse,
+backupNone, single synchronous request без background/continuation. Command
+підготовлена та offline tested, але **НЕ запускалася проти Google**. Current
+scope забороняє додаткову API quota. Перший Hydrogen test виконує власник після
+review; до success backup лишається disabled/unverified. Старе allowlist
+rejection було local, не provider response. Published availability не означає
+owner access. Попередні bounded3live calls на32e6de1 зафіксовані в ADR: Groq/Lite
+success, Flash3.8unavailable; другий Flash unavailable — owner-reported.
+
+Перевірки (UV_CACHE_DIR=/tmp/cyberforge-uv-cache):
+
+| Команда / перевірка | Результат |
+| --- | --- |
+| uv run --offline --locked pytest tests/test_llm_hydrogen.py -q --tb=short | incremental49/58cases passed; final61cases у combined run |
+| uv run --offline --locked pytest tests/test_llm*.py -q --tb=short | **253passed,4.49s**, prior192 preserved +61new |
+| uv run --offline --locked ruff check . | success |
+| uv run --offline --locked ruff format --check . | success,74files |
+| GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false uv run --offline --locked pytest -q --tb=short | **467passed,232.84s**, усі prior406 preserved, один stable full run |
+| SRS narrow byte-scope review | header/§10.5/criterion23/conclusion only, surrounding CRLF preserved |
+| git -c core.whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol diff --check | success; header hard breaks represented without trailing spaces |
+
+Matrix: real google-genai2.34 fake HTTP for4thinking×text/schema, xhigh
+serialization, v1 endpoint/privacy/usage, single request on401/403/429/503,
+no continuation; exclusive thinking rejects; offline default/Groq config;
+verification gate/disabled states/legacy conflict/cycle prevention;2transient
+categories×4Groq thinking settings; all10denied errors; independent budgets,
+missing keys, bounded retries with fake clock; valid/invalid canonical artifacts
+across fallback, no fallback for invalid primary data/schema; telemetry/redaction;
+Hydrogen CLI --live guard and mocked success/errors. Ніяких live API у тестах/CI.
+
+Packaging/entrypoints/dependencies/install/startup/migrations/UI не зачеплено:
+build/isolated-wheel та unrelated WSLg не повторено за AGENTS policy. CI виконує
+locked install/import/Qt startup на обох OS. Native Windows11 acceptance лишається
+Phase12 risk, не completed evidence. Domain/RBAC/scoring/user data/native Phase2
+workspace не змінювалися. Remaining risks: Hydrogen actual access/quotas unknown,
+pinned SDK retry compatibility point, in-memory counters, future full artifact
+safety/consistency/approval workflows. Backup ніколи не активується сам.
+
+Перед commit/push — scoped diff і staged secret-value scan; final SHA/CI run
+будуть у PR5 та final report після обох jobs без redundant doc-only CI cycle.
+Ні merge/ACCEPTED, ні Phase5 не дозволені. Owner acceptance instructions оновлено.

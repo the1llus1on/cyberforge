@@ -7,7 +7,12 @@ from typing import Protocol
 
 from pydantic import BaseModel, PydanticInvalidForJsonSchema, ValidationError
 
-from cyberforge.llm.config import APPROVED_MODELS, GatewayConfig, validate_selection
+from cyberforge.llm.config import (
+    APPROVED_MODELS,
+    THINKING_LEVELS,
+    GatewayConfig,
+    validate_selection,
+)
 from cyberforge.llm.contracts import (
     ErrorCategory,
     GenerationError,
@@ -65,6 +70,24 @@ class LLMGateway:
         self._limiter = RateLimiter(config.limits, clock)
         self._sink = sink
 
+    def _backup_for(self, request: GenerationRequest) -> tuple[Provider, str] | None:
+        if request.provider == Provider.MOCK:
+            return None
+        backup = self.config.backup
+        if backup is not None:
+            if (
+                backup.enabled
+                and backup.access_verified
+                and (request.provider, request.model)
+                == (self.config.provider, self.config.model)
+            ):
+                return backup.provider, backup.model
+            return None
+        # Deprecated compatibility path, using the same one-hop execution loop.
+        if self.config.fallback_to_groq and request.provider == Provider.GEMINI:
+            return Provider.GROQ, "openai/gpt-oss-120b"
+        return None
+
     def generate(
         self, request: GenerationRequest, output_type: type[BaseModel] | None = None
     ) -> GenerationResult:
@@ -87,6 +110,18 @@ class LLMGateway:
                 validate_selection(
                     active.provider, active.model, active.parameters.thinking
                 )
+                if (
+                    active.model == "gemini-4-hydrogen"
+                    and active.parameters.temperature is not None
+                ):
+                    active = active.model_copy(
+                        update={
+                            "parameters": active.parameters.model_copy(
+                                update={"temperature": None}
+                            )
+                        }
+                    )
+                schema_projection = None
                 try:
                     schema = output_type.model_json_schema() if output_type else None
                 except PydanticInvalidForJsonSchema:
@@ -130,23 +165,33 @@ class LLMGateway:
                             attempt += 1
                     break
                 except GenerationError as exc:
+                    target = self._backup_for(request)
                     if (
                         not fallback
-                        and self.config.fallback_to_groq
-                        and active.provider == Provider.GEMINI
+                        and target is not None
                         and exc.category in FALLBACK_ALLOWED
                     ):
-                        # Deterministic cross-provider policy: minimal -> low;
-                        # compatible levels and None retain their original value.
-                        parameters = active.parameters
-                        if parameters.thinking == "minimal":
+                        target_provider, target_model = target
+                        validate_selection(target_provider, target_model, None)
+                        parameters = request.parameters
+                        thinking = parameters.thinking
+                        if (
+                            thinking is not None
+                            and thinking not in THINKING_LEVELS[target_model]
+                        ):
+                            # Fixed compatibility mappings; no AUTO routing.
+                            mapped = {"minimal": "low", "xhigh": "high"}.get(thinking)
+                            if mapped is None:
+                                raise GenerationError(
+                                    ErrorCategory.CONFIGURATION
+                                ) from None
                             parameters = parameters.model_copy(
-                                update={"thinking": "low"}
+                                update={"thinking": mapped}
                             )
                         active = active.model_copy(
                             update={
-                                "provider": Provider.GROQ,
-                                "model": "openai/gpt-oss-120b",
+                                "provider": target_provider,
+                                "model": target_model,
                                 "parameters": parameters,
                             }
                         )
@@ -170,8 +215,12 @@ class LLMGateway:
             error = ErrorCategory.TRANSPORT
         telemetry = GenerationTelemetry(
             provider=active.provider,
+            requested_provider=request.provider,
             requested_model=request.model
             if request.model in APPROVED_MODELS[request.provider]
+            else "<invalid-model>",
+            effective_model=active.model
+            if active.model in APPROVED_MODELS[active.provider]
             else "<invalid-model>",
             actual_model=response.actual_model if response else None,
             operation=request.operation,

@@ -261,22 +261,56 @@ API keys. `.env` не завантажується при імпорті або 
 `GOOGLE_API_KEY`/`GROQ_API_KEY` зберігаються лише локально; налаштування без
 секретів наведено в [`.env.example`](.env.example).
 
-Без налаштувань — mock/mock-v1. Дозволені cloud combinations:
+Без явної cloud-конфігурації — mock/mock-v1. Operational priority, погоджена
+власником 13.11.2026, замінює попередню Gemini-primary preference:
 
-| Provider | Model | Thinking |
+| Роль | Provider / model | Thinking |
 | --- | --- | --- |
-| gemini | gemini-3.8-flash | low, medium, high |
-| gemini | gemini-3.5-flash-lite | minimal, low, medium, high |
-| groq | openai/gpt-oss-120b | low, medium, high |
+| Primary cloud | groq / openai/gpt-oss-120b | low, medium, high |
+| Preferred backup candidate, disabled до owner verification | gemini / gemini-4-hydrogen | low, medium, high, xhigh |
+| Optional lightweight, explicit selection | gemini / gemini-3.5-flash-lite | minimal, low, medium, high |
+| Earlier approved, unresolved access | gemini / gemini-3.8-flash | low, medium, high |
 
-Вибір provider/model явний; AUTO відкладено. `configured_request(config, ...)`
-застосовує defaults конфігурації; direct GenerationRequest містить власний вибір.
-Fallback вимкнено за замовчуванням; optional Gemini→Groq дозволений лише після
-класифікованих тимчасових timeout/selected 5xx. 429, policy refusals,
-authorization, missing keys, configuration/schema/validation і permanent
-request errors fallback не спричиняють. Retry-After діє між викликами й моделями.
-Локальні rolling RPM/TPM/RPD/TPD budgets діють у межах gateway/process;
-це не account quotas чи billing controls. Restart не зберігає counters.
+Hydrogen використовує той самий Interactions v1 adapter; temperature/top_p/top_k
+не передаються. max_output_tokens/timeout залишаються bounded; automatic
+continuation/background вимкнені. Existing Gemini3 request formats збережено.
+
+### Явна primary/backup конфігурація
+
+Додайте лише несекретні поля до свого existing .env, не перезаписуючи ключів:
+
+```dotenv
+CYBERFORGE_LLM_PROVIDER=groq
+CYBERFORGE_LLM_MODEL=openai/gpt-oss-120b
+CYBERFORGE_LLM_FALLBACK=false
+CYBERFORGE_LLM_BACKUP={"provider":"gemini","model":"gemini-4-hydrogen","enabled":false,"access_verified":false}
+```
+
+`configured_request(config, ...)` застосовує ці primary defaults; direct
+GenerationRequest має власний явний вибір. Backup застосовується лише для
+запиту, що відповідає configured primary, і лише після owner-verified access
+та explicit enabled=true. Після успішного owner live test для поточного ключа
+можна вручну встановити обидва flags true; підтвердження не робиться автоматично.
+Можна зберегти access_verified=true із enabled=false, щоб fallback лишався off.
+Invalid/unapproved target, enabled без verification, однаковий primary/backup
+або cloud fallback із configured mock primary відхиляються.
+
+Один fallback hop, без циклів і AUTO. Дозволені лише classified timeout/selected
+5xx після bounded retries; 429, quota/budget, refusals, auth, missing keys,
+configuration/schema/validation та permanent failures fallback не запускають.
+Mock requests ніколи не перенаправляються у cloud. Provider/model budgets
+незалежні; Retry-After cooldown діє між requests/models. Budgets in-memory,
+не замінюють account quotas і не зберігаються після restart.
+
+`CYBERFORGE_LLM_FALLBACK=true` збережено як **deprecated** Gemini→Groq path із
+попередньою поведінкою. Це той самий execution/retry loop. Для нового BACKUP
+legacy flag має бути false/unset; одночасне налаштування відхиляється, а не
+мовчки змінює маршрут. Сумісні thinking levels/None зберігаються; unsupported
+minimal→low і xhigh→high mappings явні. На Hydrogen effective temperature=None
+означає omission; original requested parameters не змінюються. Telemetry містить
+requested_provider/model/parameters, effective provider/model/parameters та
+actual_model (або None, якщо відповідь його не надала). При переході до Gemini
+Groq artifact schema projection не переноситься: діє original full schema.
 
 GatewayRunnable підтримує invoke/ainvoke, batch/abatch і stream/astream
 одного повного результату; token streaming не передбачено. Retry/quota/fallback
@@ -284,23 +318,32 @@ GatewayRunnable підтримує invoke/ainvoke, batch/abatch і stream/astrea
 outer workflows теж не повинні trace prompts/results. Для observability є
 metadata-only TelemetrySink; prompts/responses за замовчуванням не зберігаються.
 
-### Live connectivity — тільки після окремого дозволу
+### Hydrogen connectivity — власник запускає перший тест після review
 
-Поточна реалізація не підтверджує доступ ключа до опублікованих моделей.
-Live calls не виконувалися. Не запускайте приклади нижче без окремого дозволу
-власника на API usage. Кожна команда робить максимум один запит без retries
-і fallback, із коротким synthetic input, 256 output tokens і timeout 20s:
+Попередня bounded live перевірка на reviewed32e6de1 підтвердила доступ до
+Groq GPT-OSS120B та Gemini3.5FlashLite. Gemini3.8Flash повернув unavailable;
+власник повідомив про два такі результати. Це не доводить access/quota restriction.
+Попереднє Hydrogen повідомлення про allowlist було локальним rejection, без
+Google API request. Published availability не підтверджує доступ конкретного
+ключа. **Hydrogen live не викликався в цьому завданні.**
+
+Після review власник виконує один synthetic connectivity request:
 
 ```console
-uv run cyberforge-llm-check --live --provider gemini --model gemini-3.8-flash
-uv run cyberforge-llm-check --live --provider gemini --model gemini-3.5-flash-lite
-uv run cyberforge-llm-check --live --provider groq --model openai/gpt-oss-120b
+uv run cyberforge-llm-check --live --provider gemini --model gemini-4-hydrogen
 ```
 
-Відсутність --live блокує виконання до читання ключів. Діагностика друкує лише
-provider/model/outcome/elapsed/available usage, без prompts/responses/secrets.
-При quota/access/network failure offline baseline залишається доступним.
+Explicit --live обов'язковий. Ця команда має low thinking, 256 output tokens,
+timeout20s; max_retries=0, обидва fallback config paths off, store/background/
+continuation off. Виводить лише provider/model/outcome/elapsed/available usage,
+без key/prompt/response. Incomplete output є normalized validation failure;
+малі token caps можуть обмежити thinking, команда ніколи не продовжує generation.
+Не змінюйте flags verification/enabled на true до успішного результату для
+поточного ключа. При failures не повторюйте API usage автоматично.
 
-[Phase 4 acceptance](docs/PHASE_4_ACCEPTANCE.md) містить offline перевірку
-контрактів і короткі WSLg кроки. Specialized agents, UI generation і LangGraph
-workflows — Phase 5 та пізніше; вони не реалізовані цією фазою.
+Інші approved models можна перевірити тим самим CLI лише за окремого дозволу
+на відповідні виклики. GUI startup/pytest/CI live diagnostics не запускають.
+
+[Phase4 acceptance](docs/PHASE_4_ACCEPTANCE.md) містить offline перевірку
+контрактів і короткі WSLg кроки. Нового graphical model selector немає;
+agents/LangGraph workflows та Email/Web generation UI лишаються наступними фазами.

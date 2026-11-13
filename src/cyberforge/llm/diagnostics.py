@@ -34,7 +34,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     started = monotonic()
     try:
         config = load_config(args.env_file).model_copy(
-            update={"max_retries": 0, "fallback_to_groq": False}
+            update={"max_retries": 0, "fallback_to_groq": False, "backup": None}
         )
         request = GenerationRequest(
             prompt="Synthetic connectivity check. Reply only OK.",

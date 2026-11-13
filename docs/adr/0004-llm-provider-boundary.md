@@ -75,6 +75,8 @@ HTML/rendering contracts. Gateway не має залежностей від БД
 `gateway.py`: explicit selection, timeout contract, capped exponential backoff
 із jitter, Retry-After, до 3 retries на провайдера; optional одноразовий перехід
 Gemini → Groq лише після timeout/500/502/503/504, ніколи після 429.
+Це початковий маршрут, superseded новою operational policy нижче; він
+збережений лише як deprecated compatibility mode.
 Невідомі transport failures консервативно не повторюються. AUTO не додається.
 Gateway синхронний; майбутній UI повинен запускати генерацію у worker.
 
@@ -145,9 +147,9 @@ cyberforge-llm-check вимагає --live та explicit provider/model. Одн�
 synthetic text request, max_output_tokens=256, timeout=20s, max_retries=0,
 fallback=False; SDK retries/continuation вимкнено. Виводить тільки provider,
 model, outcome, elapsed, available usage. Аргументи --help або відсутність
---live не читають .env і не створюють clients. Жодного live request не виконано:
-поточне рішення власника вимагає окремого дозволу на таке виконання.
-Account model access/quotas лишаються неперевіреними; це не offline failure.
+--live не читають .env і не створюють clients. На етапі початкової доставки live requests ще не виконувалися.
+Подальші bounded connectivity evidence і нова operational policy наведені
+нижче. Account-specific quotas лишаються неперевіреними; це не offline failure.
 
 AUTO, agents/orchestration, UI generation, artifact publication/approval,
 durable telemetry/quota persistence і comparative experiments відкладено.
@@ -240,3 +242,105 @@ SDK adapters, dependencies і public gateway call signature не змінено.
 approval лишаються окремими наступними gates; агенти/конструктори не реалізовано.
 Live verification не виконувалася. Докази: tests/test_llm_review.py, журнал,
 final PR checks. Phase4 лишається REVIEW, без merge або Phase5.
+
+
+## 13.11.2026 — Groq primary / Hydrogen backup candidate (owner APPROVED)
+
+Нова політика supersedes Gemini3.8 primary preference, але не видаляє історії
+погоджень/перевірок: primary Groq/openai/gpt-oss-120b, preferred backup candidate
+Gemini/gemini-4-hydrogen після owner live verification. Lite3.5 optional,
+Flash3.8 earlier-approved/unresolved, Mock offline default. Phase4 лишається REVIEW.
+SRS scope narrow: header primary/model, §10.5 policy, MVP gateway criterion23,
+conclusion primary-provider sentence; AGENTS/README/config example синхронізовано.
+Решта SRS, domain/RBAC/scoring/phase gates не змінюється.
+
+### Офіційна сумісність і межі доказу
+
+- [Анонс Google](https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-hydrogen/)
+  прямо називає Google AI Studio/Gemini API, не лише Vertex/Agent Platform.
+- [Developer API Interactions v1 reference](https://aistudio.google.com/api-reference/interactions-api?api-version=v1)
+  містить gemini-4-hydrogen та POST /v1/interactions. Bounded synchronous text/
+  structured requests підтримуються; [structured-output guide](https://aistudio.google.com/docs/structured-output)
+  використовує Hydrogen + response_format JSON Schema/Pydantic.
+- [Developer API thinking guide](https://aistudio.google.com/docs/thinking)
+  підтверджує low/medium/high/xhigh, default high. minimal заборонено. None
+  означає omitted setting, не fabricated model reasoning level.
+- [Interactions retention](https://aistudio.google.com/docs/interactions-overview)
+  підтримує store=false, несумісний з background і наступним previous_interaction_id.
+  Це не blanket Zero Data Retention/Free Tier privacy guarantee; лише synthetic data.
+- [Cloud Hydrogen model](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/4-hydrogen),
+  [developer guide](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/guides/gemini-4-hydrogen)
+  і [getting started](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/start/get-started-with-gemini-4)
+  підтверджують thinking та радять прибрати temperature/top_p/top_k (ignored
+  sampling values), rejected frequency/presence penalties, candidate_count>1.
+  Поточний contract останні поля взагалі не приймає. Cloud v1beta1 long-decode
+  restriction не переноситься на наш Developer API v1 bounded single-hop mode.
+- SDK guide вказує google-genai>=2.34.0 для Interactions continuation; installed
+  pinned2.34.0 уже достатній, continuation все одно disabled. SDK type union
+  має forward-compatible string branch; real installed SDK/fake HTTP tests
+  перевіряють фактичне xhigh serialization. Retry compatibility safeguard
+  strategy=none зберігається. Зміни dependency/lock не потрібні.
+- [Developer API rate limits](https://aistudio.google.com/docs/rate-limits):
+  limits залежать від model/project/tier; active limits дивляться в AI Studio.
+  Published/free-tier availability не доводить access конкретного ключа.
+  Account dashboard, billing і quotas не змінювалися/не запитувалися.
+
+Сторінки aistudio/ai.google.dev models/gemini-4-hydrogen були недоступні через
+web tool; використано офіційні Developer API v1 reference + thinking/structured
+guides і офіційний анонс, окремо від Cloud docs. Context7 SDK index повертав
+legacy generateContent snippets, тому transport details перевірено на самому
+installed official SDK. Немає припущення, що API paths і capabilities тотожні.
+
+### Єдина bounded fallback реалізація
+
+GatewayConfig.provider/model — explicit primary, defaults mock/mock-v1.
+BackupConfig(provider,model,enabled=false,access_verified=false) необов'язковий;
+.env поле CYBERFORGE_LLM_BACKUP — JSON. Owner attestation access_verified
+стосується поточного локального ключа; це не автоматична account verification.
+Enabled=true без verification fail-closed; verification=true/enable=false
+дозволяє тримати route вимкненим. При зміні ключа підтвердження треба переглянути.
+
+Новий route діє лише для request provider/model, що збігаються з configured
+cloud primary; mock не переадресовується. Validated target approved catalog,
+різні primary/backup model pairs, один hop/fallback bool, жодного ping-pong/AUTO.
+Той самий existing retry/error/quota loop і allowlist timeout/selected5xx;
+429/safety/auth/credentials/schema/request/config/local budgets заборонені.
+Provider/model limits рахуються окремо. Unsupported schema не ремонтується.
+
+Legacy fallback_to_groq / CYBERFORGE_LLM_FALLBACK=true лишається з попередньою
+Gemini→Groq поведінкою й F-01 minimal→low, але deprecated. Новий BACKUP плюс
+legacy=true відхиляються як ambiguous configuration. Інакше implicit precedence
+міг би непомітно змінити маршрут; видалення прапорця зламало б існуючу конфігурацію.
+Обидва режими використовують один execution path, не дві реалізації.
+
+Параметри починаються з immutable original request: сумісні levels/None
+зберігаються; unsupported minimal→low, unsupported xhigh→high. Target capabilities
+перевіряються до invocation. Hydrogen не отримує temperature/top_p/top_k;
+requested temperature зберігається, effective=None означає omission. Інший
+provider може отримати original temperature, якщо підтримує її. Existing
+Gemini3 formats збережено. Telemetry додає requested_provider та effective_model
+до existing effective provider/actual_model/requested/effective parameters.
+Schema projection reset на кожному hop: Groq V1 projection не переноситься
+на Hydrogen, який отримує full original schema. Mandatory Pydantic validation
+завжди виконується після final provider; F-02 лишається чинним.
+
+### Connectivity evidence та перший owner Hydrogen test
+
+На reviewed32e6de1 попередній явно дозволений bounded run мав рівно3 calls:
+Gemini3.8 unavailable14.210s/usage unknown; Gemini3.5Lite success2.232s/9input,
+2output,0reasoning; Groq120B success0.569s/79input,28output,18reasoning.
+Це технічна connectivity evidence, не comparative experiment. Власник також
+повідомив про success Groq/Lite та два unavailable для3.8; другий3.8 result
+є owner-reported, не новий agent call. Hydrogen allowlist rejection був local,
+не Google response. Hydrogen access досі UNKNOWN, backup disabled.
+
+Owner запускає після review:
+
+```console
+uv run cyberforge-llm-check --live --provider gemini --model gemini-4-hydrogen
+```
+
+CLI low/256tokens/20s, retries=0, legacy=false та backup=None, store/background/
+automatic continuation=false. Будь-які additional requests потребують дозволу.
+У цьому завданні live calls НЕ виконуються. Сам positive fake transport test
+не підтверджує access, cost, quota чи educational content quality.

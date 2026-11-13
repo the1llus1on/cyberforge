@@ -20,7 +20,7 @@
 | 1 | Main UI Shell | ACCEPTED | Dark PySide6 shell, universal Home / Guest state, sidebar mode controls, shared scenario panel, mode routing; UI smoke tests |
 | 2 | Users & Groups | ACCEPTED | Прийнято власником 12.11.2026: login, Argon2id, 3 roles, demo accounts/groups, RBAC; WSLg і native Windows 11 докази нижче |
 | 3 | Scenario Management | ACCEPTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
-| 4 | LLM Integration | REVIEW | Gateway/Gemini Interactions/Groq/Mock/Runnable; F-01/F-02 remediated; 406 local tests; owner acceptance pending; ADR-0004 |
+| 4 | LLM Integration | REVIEW | Groq primary; verified-gated Hydrogen backup candidate; Mock offline; F-01/F-02 preserved; 467 local tests; REVIEW; ADR-0004 |
 | 5 | Specialized Agents | NOT STARTED | Typed I/O contracts for four specialized agents and bounded orchestration; mock agent tests |
 | 6 | Email Constructor | NOT STARTED | Email shell, generation, preview, code view, regeneration, explicit save and validation; UI tests |
 | 7 | Web Constructor | NOT STARTED | Web templates, isolated Qt WebEngine, generation, preview, code view, explicit save; security and UI tests |
@@ -652,3 +652,49 @@ Final counts/CI будуть у журналі та описі PR5 після з
 Remediation final local gate: Ruff73files success, focused192passed/3.74s
 (100prior +92new), one full pytest406passed/203.92s. Final SHA та Linux/Windows
 CI results оновлюються в PR5/final report після push. Phase4 лишається REVIEW.
+
+
+## Phase4 — Groq primary та Hydrogen backup candidate (13.11.2026)
+
+Нова owner-approved policy supersedes Gemini3.8 primary: Groq GPT-OSS120B
+primary cloud, Hydrogen preferred backup candidate після owner access verification,
+Lite optional, Flash3.8 unresolved; Mock offline default. Phase4 **REVIEW**.
+Baseline32e6de1, existing branch/PR5. Owner повідомив local Hydrogen allowlist
+rejection, не Google failure, і два unavailable дляFlash3.8. Попередній bounded
+live run підтвердив Groq/Lite; у цьому завданні live API заборонені.
+
+План перед реалізацією: SRS §§10.2–10.8/11.1 — model catalog/capabilities,
+Hydrogen sampling omission у existing Interactions adapter, explicit primary/
+verified backup config, один shared fallback loop/telemetry/local validation;
+§21 — focused first, one stable full Ruff/pytest, Linux/Windows CI final HEAD;
+нормативні narrow policy references і owner acceptance command. LangGraph,
+AUTO engine, new GUI selector/agents/constructors — поза scope.
+
+Виконано: Hydrogen low/medium/high/xhigh, no minimal; xhigh відхиляється для
+інших моделей. Температура дляHydrogen omitted/effective=None, requested
+збережена. Single-hop backup enabled/access_verified за замовчуванням false;
+маршрут лише для configured cloud primary, ніколи mock→cloud. Legacy
+CYBERFORGE_LLM_FALLBACK Gemini→Groq збережено deprecated через той самий loop;
+конфлікт із новим BACKUP fail-closed. Denylist/cooldowns/budgets/F-01/F-02
+збережено; full original schema повертається після Groq→Hydrogen.
+
+Нормативний SRS scope: header primary/model, §10.5 policy, gateway MVP
+criterion23 і conclusion primary sentence; інші sections/CRLF збережено.
+AGENTS, README, safe .env.example та ADR0004 синхронізовані. Actual owner .env
+не змінюється: рекомендовані primary provider/model задаються явно користувачем.
+
+Dependencies/lock, installation metadata/entrypoints, main startup та UI не
+змінені. Installed pinned google-genai2.34.0 сумісний із bounded Hydrogen
+Interactions у fake HTTP tests; retry safeguard збережено. Packaging/wheel та
+unrelated WSLg не повторюються за AGENTS gates. CI включає locked install,
+package import і Qt startup на обох OS. Physical native Windows11 — Phase12.
+
+Focused gate:253passed/4.49s (усі prior192 +61new). Full gate/CI results
+додаються після завершення. Hydrogen live command лише підготовлена й
+mock-tested; owner запускає перший реальний тест після review. Жодної
+автоматичної активації backup до success/confirmation і explicit enable.
+
+Фінальний local gate: **467passed/232.84s**, focused253passed/4.49s,
+Ruff74files success. Усі prior406 regressions збережено. Final HEAD та обидва
+Linux/Windows CI jobs будуть підтверджені після push у PR5/final report.
+Hydrogen live — owner acceptance step після review, не виконаний агентом.

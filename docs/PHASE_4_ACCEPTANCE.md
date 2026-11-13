@@ -1,7 +1,7 @@
 # Phase 4 — LLM Integration: перевірка власником
 
 Статус: **REVIEW**, не ACCEPTED. Архітектура ADR-0004 погоджена окремо;
-прийняття реалізації ще очікується. Phase 5 не розпочато. Live calls не виконано.
+прийняття реалізації ще очікується. Phase 5 не розпочато. Hydrogen live access ще не перевірено; актуальні evidence — нижче.
 
 ## Вимоги та межі
 
@@ -93,3 +93,35 @@ Groq structured artifacts без live API. Усі prior Phase0–4 tests збе�
 
 Автоматичні докази наведено в DEVELOPMENT_LOG та final PR checks. Цей checklist
 не заповнюється автоматично й не заявляє невиконаних owner перевірок.
+
+
+## Groq primary / Hydrogen backup: поточне owner acceptance
+
+Попередню Gemini-primary policy superseded. Primary cloud — Groq GPT-OSS120B;
+Hydrogen — preferred backup candidate, Lite optional, Flash3.8 access unresolved.
+Mock залишається default без explicit cloud config. Нового GUI selector немає.
+
+1. Після review запустіть offline `uv run pytest tests/test_llm_hydrogen.py -q`.
+   Тут навіть CLI --live cases використовують fake providers, без API quota.
+2. Не змінюючи існуючі ключі, додайте primary Groq provider/model та disabled
+   backup config з README/.env.example. Legacy FALLBACK має бути false/unset.
+3. Перший реальний Hydrogen test власник запускає явно, один request:
+
+```console
+uv run cyberforge-llm-check --live --provider gemini --model gemini-4-hydrogen
+```
+
+4. Очікуйте лише metadata, без content/keys. Success підтвердить connectivity
+   поточного ключа; unavailable/auth/rate-limit/validation не вважаються success
+   і не повторюються автоматично. До success enabled/access_verified лишаються false.
+5. Лише після успішного owner test можна вручну підтвердити access_verified=true
+   та, якщо бажаний automatic fallback, enabled=true. Тоді застосовується один
+   Groq→Hydrogen hop лише після allowlisted technical failures. Щоб вимкнути
+   route після verification, лишіть enabled=false.
+
+Hydrogen sampling omission і effective=None відображено в telemetry; requested
+parameters зберігаються. Existing F-01/F-02 і local Pydantic validation чинні.
+Попередні bounded live evidence на32e6de1: Groq іLite success, Flash3.8 unavailable;
+власник повідомив про другий unavailable3.8. Це не підтверджує його access/quota
+restriction і не доводить Hydrogen access. У цьому завданні agent не робить
+live calls. Native Windows11/Phase12 deferral та owner acceptance gate незмінні.

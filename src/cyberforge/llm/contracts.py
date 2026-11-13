@@ -41,9 +41,9 @@ class GenerationError(Exception):
 
 
 class GenerationParameters(Contract):
-    temperature: float = Field(default=0.2, ge=0, le=2)
+    temperature: float | None = Field(default=0.2, ge=0, le=2)
     max_output_tokens: int = Field(default=512, ge=1, le=8192)
-    thinking: Literal["minimal", "low", "medium", "high"] | None = None
+    thinking: Literal["minimal", "low", "medium", "high", "xhigh"] | None = None
     timeout_seconds: float = Field(default=30, gt=0, le=120)
 
 
@@ -73,7 +73,9 @@ class ProviderResponse(Contract):
 
 class GenerationTelemetry(Contract):
     provider: Provider
+    requested_provider: Provider
     requested_model: str
+    effective_model: str
     actual_model: str | None = None
     operation: Literal["text", "structured"]
     prompt_version: str
