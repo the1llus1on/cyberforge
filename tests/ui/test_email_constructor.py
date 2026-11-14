@@ -7,7 +7,13 @@ from threading import Event, get_ident
 import pytest
 from PySide6.QtCore import QSize, Qt, QTimer, QUrl
 from PySide6.QtGui import QPalette, QTextDocument
-from PySide6.QtWidgets import QApplication, QMessageBox, QTextEdit, QToolButton
+from PySide6.QtWidgets import (
+    QApplication,
+    QListWidget,
+    QMessageBox,
+    QTextEdit,
+    QToolButton,
+)
 from sqlalchemy import text
 
 from cyberforge.agents.contracts import MessageV1
@@ -281,6 +287,9 @@ def test_compact_mailbox_keeps_critical_controls_visible(
     assert scroll.verticalScrollBar().maximum() == 0, layout_metrics(page, scroll)
     if opened:
         assert page.body.height() >= page.body.minimumHeight()
+        assert (
+            page.body.viewport().height() >= page.body.fontMetrics().lineSpacing() * 3
+        )
     assert page.preview.folders.width() < 60
 
 
@@ -317,7 +326,12 @@ def test_native_text_size_hints_cannot_widen_compact_reading_view(
         def minimumSizeHint(self):
             return QSize(1200, 65)
 
+    class TallNativeInbox(QListWidget):
+        def sizeHint(self):
+            return QSize(256, 1800)
+
     monkeypatch.setattr(email_preview, "MessageBody", WideNativeBody)
+    monkeypatch.setattr(email_preview, "QListWidget", TallNativeInbox)
     window = request.getfixturevalue("email_window")
     window.resize(1100, 720)
     page = open_generated(window, qtbot)

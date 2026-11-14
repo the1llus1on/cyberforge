@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QPushButton,
     QSizePolicy,
-    QStackedWidget,
+    QStackedLayout,
     QStyle,
     QStyledItemDelegate,
     QStyleOptionViewItem,
@@ -179,27 +179,54 @@ class _MessageDelegate(QStyledItemDelegate):
         painter.restore()
 
 
-class _MailViews(QStackedWidget):
-    """Use the active view's minimum layout height, including wrapped labels."""
+class _MailLayout(QStackedLayout):
+    """Ignore inactive views and preferred editor heights in native HFW queries."""
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.currentChanged.connect(lambda _: self.updateGeometry())
-
-    def minimumSizeHint(self) -> QSize:
+    def minimumSize(self) -> QSize:
         current = self.currentWidget()
-        return current.minimumSizeHint() if current else super().minimumSizeHint()
+        return current.minimumSizeHint() if current else QSize(0, 0)
 
     def sizeHint(self) -> QSize:
         current = self.currentWidget()
-        return current.sizeHint() if current else super().sizeHint()
+        return current.sizeHint() if current else QSize(0, 0)
 
     def heightForWidth(self, width: int) -> int:
         current = self.currentWidget()
         if current is None:
-            return super().heightForWidth(width)
+            return 0
         layout = current.layout()
         return max(layout.minimumSize().height(), layout.minimumHeightForWidth(width))
+
+
+class _MailViews(QWidget):
+    """Keep the existing view API with an active-page native layout policy."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._pages = _MailLayout(self)
+        self._pages.setContentsMargins(0, 0, 0, 0)
+        self._pages.currentChanged.connect(lambda _: self.updateGeometry())
+
+    def addWidget(self, widget: QWidget) -> int:
+        return self._pages.addWidget(widget)
+
+    def currentWidget(self) -> QWidget | None:
+        return self._pages.currentWidget()
+
+    def currentIndex(self) -> int:
+        return self._pages.currentIndex()
+
+    def setCurrentIndex(self, index: int) -> None:
+        self._pages.setCurrentIndex(index)
+
+    def minimumSizeHint(self) -> QSize:
+        return self._pages.minimumSize()
+
+    def sizeHint(self) -> QSize:
+        return self._pages.sizeHint()
+
+    def heightForWidth(self, width: int) -> int:
+        return self._pages.heightForWidth(width)
 
 
 class MailPreview(QFrame):

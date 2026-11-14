@@ -123,3 +123,10 @@ This keeps SRS §§5.3/5.5 and the accepted native-widget boundary: EmailDraftV2
 JSON is unchanged and canonical. The HTML source tab remains a separately
 labelled inert content projection, not the source of the native document.
 No agent, service, worker, persistence or migration interface changes are needed.
+
+The private inbox/reader stack uses a native QStackedLayout subclass whose
+minimum/height-for-width calculation follows only the active page. This places
+the policy at the layout level used by Qt's native geometry queries and prevents
+inactive/preferred editor heights from enlarging the constructor. The body keeps
+its original65px fallback minimum and internal scrolling; the outer view API,
+data flow, lifecycle and accepted application architecture are unchanged.

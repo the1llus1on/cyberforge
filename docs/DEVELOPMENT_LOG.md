@@ -2202,3 +2202,36 @@ Test diagnostics were made failure-only, without changing assertions; the exact
 final focused selection was rerun: **7passed/28.44s** offscreen. No further
 production edits follow the gate. Replacement exact-head CI proof is recorded
 in PR7/final report after push; owner visual acceptance remains pending.
+
+### Native active-page minimum-height correction
+
+Run43574506367 at762f71c passed Linux (704passed/386.14s). Windows confirmed
+the horizontal-growth/long-content fix, but found the reading page still655px
+high inside650/642px viewports (3failed,699passed,2POSIX skips/476.44s).
+The remaining5/13px reservation came from native preferred-height sizing.
+A48px body fallback was explored locally (7cases passed offscreen/WSLg), but
+the final correction retains the original65px minimum. A private native
+QStackedLayout now answers current-page minimum/height-for-width queries at the
+layout level; widget-only overrides can be bypassed when Qt asks an owned layout
+directly. The small view wrapper keeps the existing currentIndex/currentWidget
+API. Inactive inbox/preferred text-editor heights cannot inflate the reader.
+
+Retained all strict checks; added a three-text-line viewport assertion at1100×720
+and extended the oversized-hint case with an1800px preferred inactive inbox.
+Native active-layout focused selection: **7passed/25.35s** offscreen. No font,
+content, service/worker or persistence changes. Final WSLg/full/CI follows.
+
+Final native-layout WSLg source/UI/card suite: **41passed/128.22s**. Command:
+`QT_QPA_PLATFORM=wayland GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest tests/ui/test_email_constructor.py tests/test_email_source.py tests/ui/test_scenarios_ui.py::test_form_actions_and_internal_scroll -q --tb=short`.
+The refreshed screenshots are pixel-identical to the reviewed refinement
+captures. Arial/Segoe642px viewport probe passes. Lint/format93files and diff
+whitespace checks pass. No production edits after this stable verification;
+the complete704case suite is repeated before publishing the correction.
+
+Final active-layout full command (PTY, local asyncio sockets):
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**704passed/682.25s**, exit0; `/tmp/cyberforge-phase6-fidelity-layout-pytest.log`.
+This is final local evidence for the active-layout correction; all698previous
+cases remain, with6added cases and no new skips. Lint/format93files and diff
+whitespace checks pass. No production edits follow; final HEAD and both exact
+Linux/Windows CI job/log results are recorded in PR7/final report after push.
