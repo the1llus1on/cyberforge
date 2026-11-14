@@ -2401,3 +2401,18 @@ Final correction full gate:
 The same7focused layout cases also pass through real WSLg/Wayland in40.30s.
 Final lint/format and whitespace checks pass; no production edits follow this
 gate. Final-head Linux/Windows CI evidence will be recorded in PR7 and delivery.
+
+Run43596471556 for2efb258 passed Linux; Windows confirmed the width fix but
+reported4remaining opened-view height failures (720passed,2platform skips).
+The page needed8–16px more than the compact viewport. Edit now uses the same
+compact padding as Back, and page gaps decrease from3px to2px. This recovers
+space from controls without shrinking the body, hiding actions, changing
+functional behavior or relaxing tests. Focused/full/WSLg verification is repeated.
+
+Final height-correction checks:7focused cases passed offscreen/35.79s and
+WSLg/41.39s. Fresh synthetic WSLg captures retain every critical control and
+zero horizontal overflow; compact reading area gains19px. Final full command
+is the same offline `pytest -q --tb=short --durations=10` invocation above:
+**726passed/1049.72s**, exit0, `/tmp/phase6-edit-final-full.log`.
+Ruff lint/format97files and whitespace checks pass. No production edits follow
+this gate; final CI evidence is kept in PR7 and the delivery report.

@@ -56,7 +56,7 @@ class EmailPage(QWidget):
         self.manual_edits = False
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 4, 16, 4)
-        layout.setSpacing(3)
+        layout.setSpacing(2)
         top = QHBoxLayout()
         self.back_button = QPushButton("← До картки сценарію")
         self.back_button.setStyleSheet("padding: 4px 10px;")
@@ -119,6 +119,7 @@ class EmailPage(QWidget):
         layout.addWidget(self.refinement)
         actions = QHBoxLayout()
         self.edit_button = QPushButton("Редагувати лист")
+        self.edit_button.setStyleSheet("padding: 4px 10px;")
         self.edit_button.clicked.connect(self.edit_message)
         top.addWidget(self.edit_button)
         self.refinement_scope = QComboBox()
