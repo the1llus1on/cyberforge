@@ -64,7 +64,11 @@ class SpecializedAgent:
 
     @property
     def prompt_version(self) -> str:
-        return f"{self.kind}-prompt-v1"
+        return (
+            f"{self.kind}-prompt-v2"
+            if self.kind == "email"
+            else f"{self.kind}-prompt-v1"
+        )
 
     @staticmethod
     def context_token(source: BaseModel) -> str:
@@ -97,6 +101,12 @@ class SpecializedAgent:
                     "schema_version"
                 ].annotation.__args__[0],
             )
+            if self.kind == "email":
+                output_limit = self._gateway.config.email_max_output_tokens
+                parameters = request.parameters.model_copy(
+                    update={"max_output_tokens": output_limit}
+                )
+                request = request.model_copy(update={"parameters": parameters})
             response = self._runnable.invoke(request)
             return {
                 "candidate": response.structured,

@@ -1,0 +1,124 @@
+"""Live acceptance runner is exercised only with a scripted provider."""
+
+import json
+
+import pytest
+
+from cyberforge.agents.contracts import EmailInputV1
+from cyberforge.agents.email_live_check import main, run_check
+from cyberforge.application.email_demo import demo_gateway
+from cyberforge.llm.config import GatewayConfig, RateLimits
+from cyberforge.llm.contracts import ErrorCategory, GenerationError, Provider
+from cyberforge.llm.gateway import LLMGateway
+
+
+class Scripted:
+    def __init__(self, fail=False):
+        self.calls = []
+        self.fail = fail
+
+    def generate(self, request, schema):
+        self.calls.append((request, schema))
+        if self.fail:
+            raise GenerationError(ErrorCategory.TIMEOUT)
+        data = json.loads(
+            request.prompt.split("BEGIN_UNTRUSTED_JSON\n")[1].split(
+                "\nEND_UNTRUSTED_JSON"
+            )[0]
+        )
+        data.pop("context_token")
+        previous = data.pop("previous", None)
+        if previous:
+            # Reconstruct the valid previous envelope from the first response.
+            data["previous"] = self.first
+        source = EmailInputV1.model_validate_json(json.dumps(data))
+        gateway = demo_gateway(source)
+        response = gateway._providers[Provider.MOCK]._responses[0]
+        if previous is None:
+            from cyberforge.agents.specialized import EmailScenarioAgent
+
+            self.first = (
+                EmailScenarioAgent(gateway).run(source).draft.model_dump(mode="json")
+            )
+        return response
+
+
+def gateway(provider):
+    return LLMGateway(
+        GatewayConfig(
+            provider=Provider.GROQ,
+            model="openai/gpt-oss-120b",
+            max_retries=0,
+            limits={
+                k: RateLimits(tpm=128000, tpd=128000)
+                for k in ("groq", "groq:openai/gpt-oss-120b")
+            },
+        ),
+        {Provider.GROQ: provider},
+    )
+
+
+def test_no_live_opt_in_never_constructs_gateway(monkeypatch):
+    from cyberforge.agents import email_live_check
+
+    monkeypatch.setattr(
+        email_live_check, "create_gateway", lambda *a: pytest.fail("Network")
+    )
+    with pytest.raises(SystemExit):
+        main([])
+
+
+def test_two_requests_and_metadata_only(capsys):
+    provider = Scripted()
+    assert run_check(gateway(provider))
+    assert len(provider.calls) == 2
+    for request, schema in provider.calls:
+        assert schema["additionalProperties"] is False
+        assert request.parameters.max_output_tokens == 4096
+        assert request.prompt_version == "email-prompt-v2"
+    output = capsys.readouterr().out
+    assert "body_text" not in output and "context_token" not in output
+    assert 'protected_fields_preserved": true' in output
+
+
+def test_first_failure_stops_without_retry(capsys):
+    provider = Scripted(fail=True)
+    assert not run_check(gateway(provider))
+    assert len(provider.calls) == 1
+    assert "timeout" in capsys.readouterr().out
+
+
+def test_email_prompt_v2_uses_context_and_keeps_untyped_parameters_local():
+    from cyberforge.agents.email_live_check import acceptance_source
+    from cyberforge.agents.prompts import build_prompt, task_data
+    from cyberforge.agents.specialized import EmailScenarioAgent
+    from cyberforge.llm.config import load_config
+
+    source = acceptance_source()
+    data = task_data(source)
+    assert data["parameters"]["nist_cues"]
+    for field in (
+        "topic",
+        "difficulty",
+        "audience",
+        "description",
+        "learning_objective",
+        "tactics",
+    ):
+        assert data["parameters"][field]
+    assert "generation_parameters" not in data["parameters"]
+    prompt = build_prompt(
+        "email", source, EmailScenarioAgent.context_token(source), False
+    )
+    assert "EMAIL-PROMPT-V2" in prompt and "BEGIN_UNTRUSTED_JSON" in prompt
+    assert "NIST" in prompt and "never verified" in prompt
+    assert "main_body" in prompt and "previous" in prompt
+    assert GatewayConfig().parameters.max_output_tokens == 512
+    assert GatewayConfig().email_max_output_tokens == 4096
+    assert (
+        load_config(
+            environ={"CYBERFORGE_EMAIL_MAX_OUTPUT_TOKENS": "2048"},
+            env_file=__import__("pathlib").Path("/tmp/no-cyberforge-env"),
+        ).email_max_output_tokens
+        == 2048
+    )

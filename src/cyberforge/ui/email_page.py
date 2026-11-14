@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from PySide6.QtCore import Qt, QThreadPool, QTimer, Signal, Slot
 from PySide6.QtWidgets import (
+    QComboBox,
     QHBoxLayout,
     QMessageBox,
     QPlainTextEdit,
@@ -15,7 +16,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from cyberforge.agents.contracts import EmailDraftV2
+from cyberforge.agents.contracts import EmailDraftV2, MessageV1
 from cyberforge.application.email_materials import (
     EmailMaterialService,
     EmailWorkspace,
@@ -23,6 +24,7 @@ from cyberforge.application.email_materials import (
 )
 from cyberforge.domain.accounts import ApplicationError
 from cyberforge.domain.scenarios import Scenario
+from cyberforge.ui.email_editor import EmailEditorDialog
 from cyberforge.ui.email_preview import MailPreview
 from cyberforge.ui.email_source import EmailSourceDialog
 from cyberforge.ui.email_worker import EmailWorker, RequestIdentity, WorkerSignals
@@ -51,6 +53,7 @@ class EmailPage(QWidget):
         self.watchdog.setSingleShot(True)
         self.watchdog.timeout.connect(self._timed_out)
         self._refinement_baseline = ""
+        self.manual_edits = False
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 4, 16, 4)
         layout.setSpacing(3)
@@ -115,7 +118,19 @@ class EmailPage(QWidget):
         self.refinement.textChanged.connect(self._controls)
         layout.addWidget(self.refinement)
         actions = QHBoxLayout()
-        self.code_button = QPushButton("Структура / код")
+        self.edit_button = QPushButton("Редагувати лист")
+        self.edit_button.clicked.connect(self.edit_message)
+        top.addWidget(self.edit_button)
+        self.refinement_scope = QComboBox()
+        self.refinement_scope.addItem("AI: лише текст основного листа", "main_body")
+        self.refinement_scope.addItem("AI: весь лист і фон", "all")
+        self.refinement_scope.setAccessibleName("Межі змін AI; інші поля зберігаються")
+        self.refinement_scope.setToolTip(
+            "Лише текст: тема, відправник і всі фонові листи захищені. "
+            "Суперечливу інструкцію обмежує цей вибір."
+        )
+        status_row.addWidget(self.refinement_scope)
+        self.code_button = QPushButton("Переглянути код")
         self.code_button.clicked.connect(self.show_source)
         self.generate_button = QPushButton("Згенерувати")
         self.generate_button.clicked.connect(self.generate)
@@ -169,6 +184,10 @@ class EmailPage(QWidget):
         )
         self.save_button.setEnabled(writable and self.unsaved and self.pending is None)
         self.code_button.setEnabled(self.draft is not None)
+        self.edit_button.setEnabled(
+            writable and self.draft is not None and not self.running
+        )
+        self.refinement_scope.setEnabled(writable and not self.running)
         self.refinement.setReadOnly(not writable or self.pending is not None)
 
     def open(self, scenario: Scenario, *, editable: bool) -> None:
@@ -193,6 +212,12 @@ class EmailPage(QWidget):
         for dialog in self.findChildren(EmailSourceDialog):
             dialog.clear_sources()
             dialog.reject()
+        for dialog in self.findChildren(EmailEditorDialog):
+            for field in dialog.fields.values():
+                field.clear()
+            dialog.body.clear()
+            dialog.reject()
+        self.manual_edits = False
         self.workspace = self.draft = None
         self.unsaved = self.editable = self.stale = False
         self.refinement.clear()
@@ -244,7 +269,10 @@ class EmailPage(QWidget):
         if len(self.refinement.toPlainText()) > 2000:
             self.message.setText("Інструкція має містити не більше 2000 символів.")
             return
+        if self.manual_edits and not self.confirm_regeneration():
+            return
         workspace, previous = self.workspace, self.draft
+        scope = self.refinement_scope.currentData()
         token, refinement = self.token(), self.refinement.toPlainText()
         scenario = workspace.scenario
         identity = RequestIdentity(
@@ -276,7 +304,11 @@ class EmailPage(QWidget):
                 identity,
                 signals,
                 lambda: service.generate(
-                    token, workspace, previous=previous, refinement=refinement
+                    token,
+                    workspace,
+                    previous=previous,
+                    refinement=refinement,
+                    refinement_scope=scope,
                 ),
             )
         )
@@ -302,6 +334,7 @@ class EmailPage(QWidget):
         if draft is not None:
             self.draft = draft
             self.unsaved = True
+            self.manual_edits = False
             self._render_draft()
             self.message.setText(
                 "Нова чернетка. Перевірте вміст і явно збережіть лист."
@@ -349,9 +382,54 @@ class EmailPage(QWidget):
 
     def show_source(self) -> None:
         if self.draft is not None:
-            EmailSourceDialog(
-                self.draft, self, selected_index=self.preview.selected_index or 0
-            ).exec()
+            EmailSourceDialog(self.draft, self).exec()
+
+    def edit_message(self) -> None:
+        if not self.edit_button.isEnabled() or self.draft is None:
+            return
+        index = self.preview.selected_index
+        if index is None:
+            index = max(0, self.messages.currentRow())
+        snapshot, epoch, workspace = self.draft, self.session_epoch, self.workspace
+        message = [snapshot.slots.main, *snapshot.slots.background][index]
+
+        def apply(value: MessageV1) -> None:
+            if (
+                epoch != self.session_epoch
+                or self.draft is not snapshot
+                or self.running
+                or self.stale
+            ):
+                raise ApplicationError(
+                    "Чернетку вже змінено. Відкрийте редактор знову."
+                )
+            candidate = self.service.edit(
+                self.token(), workspace, snapshot, index=index, message=value
+            )
+            self.draft, self.unsaved, self.manual_edits = candidate, True, True
+            self._render_draft()
+            self.preview.open_message(index)
+            self._state(MaterialState.UNSAVED)
+            self.message.setText(
+                "Ручні правки застосовано локально. Натисніть «Зберегти» для запису."
+            )
+            self._controls()
+
+        EmailEditorDialog(message, apply, self).exec()
+
+    def confirm_regeneration(self) -> bool:
+        box = QMessageBox(self)
+        box.setWindowTitle("Перегенерація після ручних правок")
+        box.setText(
+            "AI отримає поточну чернетку з ручними правками. "
+            "Створити нового кандидата в обраних межах? "
+            "Збережений лист не зміниться; помилка збереже ручні правки."
+        )
+        box.addButton(QMessageBox.StandardButton.Yes).setText("Перегенерувати")
+        box.addButton(QMessageBox.StandardButton.No).setText("Залишити чернетку")
+        box.setDefaultButton(QMessageBox.StandardButton.No)
+        box.setEscapeButton(QMessageBox.StandardButton.No)
+        return box.exec() == QMessageBox.StandardButton.Yes
 
     def ask_unsaved(self) -> QMessageBox.StandardButton:
         box = QMessageBox(self)

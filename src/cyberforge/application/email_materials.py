@@ -8,12 +8,18 @@ import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import ValidationError
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from cyberforge.agents.contracts import EmailDraftV2, EmailInputV1, source_provenance
+from cyberforge.agents.contracts import (
+    EmailDraftV2,
+    EmailInputV1,
+    MessageV1,
+    source_provenance,
+)
 from cyberforge.agents.specialized import EmailScenarioAgent
 from cyberforge.application.scenarios import ScenarioService
 from cyberforge.domain.accounts import ApplicationError, Role
@@ -60,15 +66,22 @@ def email_source(
     *,
     previous: EmailDraftV2 | None = None,
     refinement: str | None = None,
+    refinement_scope: Literal["all", "main_body"] = "all",
 ) -> EmailInputV1:
+    context = synthetic_context(scenario)
+    if previous is not None and previous.instructor_sender_name is not None:
+        context = ScenarioContextV1.model_validate(
+            context.model_dump() | {"sender_name": previous.instructor_sender_name}
+        )
     return EmailInputV1(
         synthetic=True,
         scenario_id=scenario.id,
         scenario_version=scenario.version,
         parameters=scenario.parameters,
-        context=synthetic_context(scenario),
+        context=context,
         previous=previous,
         refinement=refinement or None,
+        refinement_scope=refinement_scope,
     )
 
 
@@ -199,12 +212,20 @@ class EmailMaterialService:
         *,
         previous: EmailDraftV2 | None = None,
         refinement: str | None = None,
+        refinement_scope: Literal["all", "main_body"] = "all",
     ) -> EmailDraftV2:
         current = self.check(token, workspace)
         if not self.available:
             raise ApplicationError(self.provider_label)
         try:
-            source = email_source(current, previous=previous, refinement=refinement)
+            if previous is not None:
+                previous = self._validated(previous, current)
+            source = email_source(
+                current,
+                previous=previous,
+                refinement=refinement,
+                refinement_scope=refinement_scope,
+            )
             # Demo is an explicitly selected offline mechanism, never a cloud fallback.
             if self.demo:
                 from cyberforge.application.email_demo import demo_gateway
@@ -215,7 +236,13 @@ class EmailMaterialService:
             result = EmailScenarioAgent(gateway).run(source)
             if result.draft is None or result.status != "pending_review":
                 raise GenerationError(result.error or ErrorCategory.VALIDATION)
-            draft = self._validated(result.draft, current)
+            payload = result.draft.model_dump(mode="json")
+            payload["instructor_sender_name"] = (
+                previous.instructor_sender_name if previous else None
+            )
+            draft = self._validated(
+                EmailDraftV2.model_validate_json(json.dumps(payload)), current
+            )
         except (ValidationError, ValueError, TypeError):
             raise ApplicationError(
                 "Дані листа або інструкція не пройшли перевірку. "
@@ -223,6 +250,80 @@ class EmailMaterialService:
             ) from None
         self.check(token, workspace)
         return draft
+
+    def edit(
+        self,
+        token: str | None,
+        workspace: EmailWorkspace,
+        draft: EmailDraftV2,
+        *,
+        index: int,
+        message: MessageV1 | None = None,
+        action: Literal["replace", "add", "remove"] = "replace",
+    ) -> EmailDraftV2:
+        """Apply validated local changes only; never writes material persistence."""
+        current = self.check(token, workspace)
+        try:
+            value = self._validated(draft, current)
+            data = value.model_dump(mode="json")
+            slots = data["slots"]
+            count = len(slots["background"])
+            if action == "remove":
+                if not 1 <= index <= count or count <= 1:
+                    raise ValueError("background_bounds")
+                del slots["background"][index - 1]
+            else:
+                if message is None:
+                    raise ValueError("message_required")
+                entry = MessageV1.model_validate_json(message.model_dump_json())
+                if (
+                    len(entry.sender_name) > 200
+                    or len(entry.sender_address) > 254
+                    or len(entry.subject) > 300
+                ):
+                    raise ValueError("editor_bounds")
+                if action == "add":
+                    if count >= 8:
+                        raise ValueError("background_bounds")
+                    slots["background"].append(entry.model_dump(mode="json"))
+                elif action == "replace" and 0 <= index <= count:
+                    if index == 0:
+                        slots["main"] = entry.model_dump(mode="json")
+                        data["artifact"]["subject"] = entry.subject
+                        data["artifact"]["body_text"] = entry.body_text
+                        data["artifact"]["context"]["sender_name"] = entry.sender_name
+                        data["instructor_sender_name"] = entry.sender_name
+                    else:
+                        slots["background"][index - 1] = entry.model_dump(mode="json")
+                else:
+                    raise ValueError("message_index")
+            source = EmailInputV1(
+                synthetic=True,
+                scenario_id=current.id,
+                scenario_version=current.version,
+                parameters=current.parameters,
+                context=data["artifact"]["context"],
+            )
+            data["provenance"] = source_provenance(source).model_dump(mode="json")
+            slots["context_token"] = EmailScenarioAgent.context_token(source)
+            result = self._validated(
+                EmailDraftV2.model_validate_json(json.dumps(data)), current
+            )
+        except (
+            ValidationError,
+            GenerationError,
+            ValueError,
+            TypeError,
+            AttributeError,
+        ):
+            raise ApplicationError(
+                "Зміни не пройшли перевірку. Використовуйте "
+                "синтетичну адресу .invalid, "
+                "звичайний текст без коду та зовнішніх "
+                "ресурсів; перевірте довжину полів."
+            ) from None
+        self.check(token, workspace)
+        return result
 
     def save(
         self, token: str | None, workspace: EmailWorkspace, draft: EmailDraftV2

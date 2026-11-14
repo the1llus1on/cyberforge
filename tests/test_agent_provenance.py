@@ -37,7 +37,9 @@ def generate_email(source):
 
 def web_input(source, email):
     return WebInputV1(
-        **source.model_dump(exclude={"previous"}), email=email, template="notice"
+        **source.model_dump(exclude={"previous", "refinement_scope"}),
+        email=email,
+        template="notice",
     )
 
 

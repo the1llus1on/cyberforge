@@ -65,6 +65,7 @@ class GatewayConfig(Contract):
     provider: Provider = Provider.MOCK
     model: str = "mock-v1"
     parameters: GenerationParameters = Field(default_factory=GenerationParameters)
+    email_max_output_tokens: int = Field(default=4096, ge=512, le=8192)
     google_api_key: SecretStr | None = Field(default=None, repr=False, exclude=True)
     groq_api_key: SecretStr | None = Field(default=None, repr=False, exclude=True)
     max_retries: int = Field(default=2, ge=0, le=3)
@@ -115,6 +116,7 @@ def load_config(
             "google_api_key": "GOOGLE_API_KEY",
             "groq_api_key": "GROQ_API_KEY",
             "max_retries": "CYBERFORGE_LLM_MAX_RETRIES",
+            "email_max_output_tokens": "CYBERFORGE_EMAIL_MAX_OUTPUT_TOKENS",
             "fallback_to_groq": "CYBERFORGE_LLM_FALLBACK",
         }
         data = {key: values[name] for key, name in fields.items() if values.get(name)}

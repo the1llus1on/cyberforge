@@ -2271,3 +2271,114 @@ staged exact-scope/private-value checks pass before publishing. No production
 changes follow this gate. The visual pass now touches13files after adding the
 scoped EmailPage label fix; original references/temp/credentials stay excluded.
 Final HEAD and both CI job/log proofs are recorded in PR7/final report.
+
+
+## Phase 6 mandatory editing completion — 14.11.2026 (REVIEW)
+
+Owner approved the Gmail-inspired visuals at cec7d34 and authorized manual
+editing, protected AI refinement, JSON-only inspection and an owner-run live
+Groq acceptance procedure. No merge/Phase7/automatic live calls are authorized.
+SRS §§4.7,5.1–5.8,9.2,10,11,16,21 remain authoritative and unchanged.
+Earlier HTML-projection descriptions are historical and superseded: the unused
+projection/highlighter/tab are removed; native QTextEdit formatting remains.
+
+Manual edits pass through EmailMaterialService with current ownership, role,
+archive/version/revision and material-revision checks. A complete JSON roundtrip
+validates every candidate; main subject/body mirror the artifact. Main sender
+updates controlled context plus optional instructor_sender_name payload metadata
+and recomputes stable provenance. Authoritative scenario identity/parameters,
+organization/premise and internal resource remain fixed. Missing override in
+legacy payloads means original stable context. No migration or alternate store.
+Provenance remains consistency evidence, not authorization or a PII detector.
+
+Apply is local; Cancel discards dialog fields; Save is transactional persistence.
+AI receives the current working draft. Explicit main-body scope merges only the
+validated new body into previous slots; all other fields stay deterministic.
+Wider scope is explicit. Scope wins over conflicting natural-language requests.
+Regeneration after manual edits asks confirmation; failures preserve working and
+saved data. JSON inspection reflects the whole current draft and stays read-only.
+
+Email-only prompt v2 improves educational coherence and provider-neutral policy.
+Email max output4096, bounded512–8192; general request default512 unchanged.
+Provider/model quota accounting, retries and strict schema/local validation are
+unchanged. Scripted fixtures reserve both model/provider budgets for the larger
+prompt/output; no production quota checks are bypassed. Untyped generation
+parameters remain intentionally unsupported. No new dependencies.
+
+Owner-run live procedure: see PHASE_6_ACCEPTANCE.md. Module CLI requires --live,
+uses only the existing Groq key, stops on initial failure, allows at most2requests,
+zero retries/corrections/fallback, logs metadata only. Live acceptance is PENDING;
+Codex has not run it. Physical native Windows11 remains Phase12 risk.
+Focused/full/persistence/package/WSLg and final-head CI evidence follows in the
+log and PR7. The current task remains REVIEW until owner GUI/live acceptance.
+
+
+Editing increment evidence: new service/editing cases passed13/27.06s before
+three further restriction cases; acceptance-runner/prompt tests4/1.80s, with
+scripted providers only. Full Phase5 agent/provenance suite155/6.37s passes after
+explicit Email→Web input projection updates and fixture quota reservations.
+Initial incremental runs exposed those compatibility/fixture issues; they are
+not counted as final passes. The superseded combined focused run was terminated
+without a final success summary; final full/WSLg checks are authoritative.
+
+Build: `uv build --offline --out-dir /tmp/cyberforge-phase6-edit-dist` passed
+wheel+sdist. A fresh fully dependency-isolated offline install could not resolve
+google-genai from the temporary cache. Installed the built wheel with --no-deps
+into a separate /tmp venv, reused verified dependencies through a .pth path,
+and asserted cyberforge.__file__ is inside that venv. From /tmp with python -I:
+manual Apply→Save→reopen via the actual service/UI passed; packaged live-check
+--help passed without requests. This is wheel-content/installability evidence,
+not an independently redownloaded dependency resolution. No source tree fallback,
+owner DB/credentials or preserved Windows environment was used.
+
+The new UI failed-regeneration regression confirms the worker receives the
+manual draft and retains both working and saved content:1passed/6.15s offscreen.
+Ruff lint/format pass97Python files; whitespace checks pass. WSLg preview/editor/
+compact captures inspected; source view now JSON-only, native formatting retained.
+Final full/WSLg counts and exact PR HEAD/CI evidence follow.
+
+WSLg final constructor suite37passed/221.12s; final added manual-worker-failure
+case1passed/5.32s. These are Codex checks, not owner acceptance. All captures use
+fresh synthetic temporary databases; existing owner credentials were not read.
+The UI currently edits existing main/background entries; background add/remove
+is validated by the service but intentionally not added to this focused dialog.
+The explicit refinement scope is the deterministic protection mechanism; free
+text is not parsed as an authoritative patch specification. All-content scope
+requires instructor review and does not guarantee natural-language preservation.
+Context/provenance do not prove that arbitrary names are synthetic; the existing
+synthetic-only input policy, known unsafe-pattern checks and owner review remain.
+
+Final review found legacy fields could be silently truncated on dialog open.
+The editor now retains existing full values; narrower Apply limits are enforced
+by validation. Focused legacy/edit workflow:3passed/12.47s. Added a regression
+for preserving existing long fields on Cancel. Regeneration confirmation now
+uses explicit Ukrainian buttons with Keep as default, without changing worker
+semantics. The previous full run was superseded/interrupted after these final
+UI fixes; the complete stable suite is repeated. No failure is counted as a pass.
+
+Final installed-wheel and screenshot probes are repeated after the legacy-field
+fix. Full stable suite collects726cases; final WSLg selection evidence follows.
+
+Final WSLg selection:5passed/25.94s. Rebuilt wheel/sdist and installed-wheel
+Apply/Save/reopen passed after the legacy fix. Screenshot probe confirms all
+critical controls including Edit visible at1100×720, zero horizontal overflow,
+main/background artifact messages and a current unsaved edited candidate.
+No screenshots contain real identities from the owner's Gmail references.
+
+
+Final stable full command (PTY with local asyncio sockets):
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**726passed/1021.98s**, exit0; `/tmp/phase6-edit-stable-full.log`.
+The705baseline cases retain meaningful security/persistence/worker regressions;
+four net HTML-projection-only cases were removed and25editing/source/prompt/
+live-runner/legacy/confirmation cases added. No new skips. Final lint/format:
+`uv run --offline --locked ruff check .` and `ruff format --check .` pass97files;
+`git diff --check` passes. Focused155agent/provenance cases, WSLg37+5 and final
+wheel/sdist/installed-wheel Apply→Save→reopen gates are recorded above.
+
+Final diff/staged exact-scope scan covers27intended files and excludes temp/,
+.env, credentials and databases. No code changes follow this stable full gate.
+Commit/push remain in the existing Phase6 branch/PR7. Exact final HEAD and both
+Linux/Windows CI jobs/log evidence will be recorded in PR7 and the final report
+without a documentation-only commit. No merge, ACCEPTED or Phase7 transition.
+Live Groq remains owner-initiated and PENDING; no real API calls were made.

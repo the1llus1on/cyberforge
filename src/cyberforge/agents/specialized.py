@@ -1,5 +1,7 @@
 "Four provider-neutral specialists with deterministic grounding gates."
 
+import json
+
 from cyberforge.agents.contracts import (
     AssistantInputV1,
     EmailDraftV2,
@@ -47,6 +49,11 @@ class EmailScenarioAgent(SpecializedAgent):
             or not set(candidate.claimed_cues) <= set(source.parameters.nist_cues)
         ):
             raise ValueError("email_consistency")
+        if source.previous is not None and source.refinement_scope == "main_body":
+            data = source.previous.slots.model_dump(mode="json")
+            data["main"]["body_text"] = candidate.main.body_text
+            data["context_token"] = candidate.context_token
+            candidate = EmailSlotsV1.model_validate_json(json.dumps(data))
         return EmailDraftV2(
             artifact=EmailArtifactV1(
                 schema_version="email-artifact-v1",
@@ -60,6 +67,9 @@ class EmailScenarioAgent(SpecializedAgent):
             scenario_version=source.scenario_version,
             selected_cues=source.parameters.nist_cues,
             provenance=source_provenance(source),
+            instructor_sender_name=(
+                source.previous.instructor_sender_name if source.previous else None
+            ),
         )
 
 

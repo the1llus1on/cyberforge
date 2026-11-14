@@ -43,25 +43,70 @@ they are not copied to Git or used as training/demo content or graphic assets.
   and a clearly inert action card. Strings enter through `insertText`, never
   HTML parsing. Resource loading is blocked. Background messages retain their
   existing text with paragraph formatting. No agent/schema/persistence changes.
-- The separate HTML source tab remains an inspection projection, not the native
-  document's source. JSON remains the canonical stored artifact.
+- JSON is the canonical stored artifact. The unused HTML source projection
+  has been removed; native visual formatting remains.
 
 Remaining visual limits: this is a synthetic native mock, with a text brand,
 disabled nonessential folders/actions and no proprietary assets, remote media,
 arbitrary HTML/multipart support or external navigation. Long formatted content
 and the resource card scroll inside the body, including at1100×720. The scenario
-catalog stays visible under the accepted navigation design. Owner visual
-acceptance remains pending after the automated/WSLg checks.
+catalog stays visible under the accepted navigation design. The owner has approved the visual design; functional manual editing and live
+acceptance remain pending.
 
 «Уточнення викладача для перегенерації» is an instruction for the next generation.
 The helper explicitly says it does not directly edit a message; the saved email
 changes only after «Зберегти». «Перегенерувати» produces an unsaved candidate.
 
-«Структура / код» separates canonical full EmailDraftV2 JSON from an HTML content
-projection for the selected message. The HTML is generated locally with escaped
-data and fixed markup; it is not returned by the AI, used by the Qt interface,
-executed or persisted. This is the explicit SRS §5.5 trade-off: inspectable email
-markup without presenting fabricated HTML as native widget source. See ADR-0006.
+«Переглянути код» shows the actual current canonical JSON only, read-only with
+highlighting, scrolling and Copy. No HTML inspection/rendering/storage exists.
+
+## Mandatory editing completion — current review scope
+
+The owner approved the Gmail-inspired design at cec7d34. Phase 6 remains REVIEW
+for functional editing and live acceptance. This section supersedes the earlier
+visual/source review descriptions; it does not grant merge or Phase 7 approval.
+
+- Select/open main or background mail, then «Редагувати лист». Native fields:
+  synthetic sender name (200), .invalid address (254), subject (300), body (4000).
+  Apply validates the complete canonical draft; Cancel discards dialog edits.
+  SQLite changes only through the separate «Зберегти» action. The service also
+  enforces 1–8 background entries for local add/remove operations; the dialog
+  focuses on editing existing messages rather than exposing JSON or attachments.
+- Main sender edits update artifact context and optional instructor_sender_name
+  metadata. The service recomputes provenance from authoritative identity,
+  parameters and controlled context. Organization, premise, version and resource
+  stay fixed. Existing saved payloads without this metadata remain readable.
+  This is an additive payload change using the existing JSON column, no migration.
+- AI gets the current validated working draft, including applied unsaved edits.
+  Explicit main-body scope deterministically preserves all other message/slot
+  fields; all-content scope permits wider changes. Scope overrides conflicting
+  prose. Manual edits require confirmation before regeneration; errors retain
+  the working draft and persisted material is unchanged until Save.
+- email-prompt-v2 uses scenario topic/audience/objective/description/difficulty,
+  tactics, selected NIST intentions, synthetic context and refinement constraints.
+  No cue is promoted to verified and no learner scores are generated.
+- Email-only output cap4096 (bounded512–8192), independent of the general512
+  default. Both provider/model local quota caps still apply. Untyped arbitrary
+  generation_parameters are intentionally excluded; no allowlist is needed yet.
+
+### Owner-initiated Groq acceptance — PENDING
+
+Run from the repository with the existing local key; do not paste credentials:
+
+```console
+uv run --offline --locked python -m cyberforge.agents.email_live_check --live
+```
+
+The opt-in runner uses Groq/openai/gpt-oss-120b only, low reasoning,4096 output
+cap,60s timeout, gateway and SDK retries0, max_corrections0, backup=None and
+fallback disabled. At most one initial and one main-body refinement request per
+invocation. Initial failure stops immediately. The isolated in-memory local
+reservation caps (2requests,128000 token reservation) accommodate conservative
+UTF8+schema+output accounting; these are not verified account quotas or billing
+limits. Provider quotas still apply. No .env updates, artifact persistence,
+raw prompts/responses or reasoning traces. Share only the sanitized JSON lines.
+Live structure success does not establish pedagogical quality: owner reviews
+content through the application and independently decides acceptance.
 
 ### Updated owner review checklist (WSLg)
 
@@ -76,9 +121,10 @@ with `--email-demo`; do not reinitialize an existing database or credentials.
    the opened subject, aligned sender/recipient/time, formatted paragraphs,
    synthetic header and inert resource card. Scroll the body; return to the
    inbox with its back arrow. Reply/forward remain nonfunctional.
-4. Open «Структура / код». JSON is canonical; the separate HTML tab is clearly
-   described as a local content projection. Check read-only behavior and Copy
-   in each tab. HTML should reflect the currently opened message.
+4. Edit both main/background messages; check invalid .invalid addresses/code
+   are rejected. Cancel, then Apply. Preview and «Переглянути код» must reflect
+   applied edits; persistence must stay unchanged until explicit Save. Reopen.
+   Refine in main-body scope and confirm subject/background preservation.
 5. Type a regeneration instruction. Confirm the existing preview/saved artifact
    stays unchanged until «Перегенерувати» finishes and a new unsaved candidate
    appears. Save explicitly, return to the card, reopen and inspect persistence.
@@ -87,6 +133,8 @@ with `--email-demo`; do not reinitialize an existing database or credentials.
    message/source fields. Review keyboard focus and the light/dark contrast.
 7. Confirm no browser navigation, real sending, publication or Web Constructor
    action is available. Native Windows 11 manual acceptance remains Phase 12.
+
+Review editor: [manual fields](screenshots/phase-6-email-editor.png).
 
 Review screenshots: [inbox](screenshots/phase-6-gmail-inbox.png),
 [opened message](screenshots/phase-6-email-preview.png),
@@ -102,7 +150,7 @@ existing PR #7; owner manual acceptance remains pending.
 | §§4.9,11.4–11.7 | Точні ID/version/parameter revision/context/provenance; immutable published; stale draft fail-closed; без копіювання матеріалів між версіями |
 | §§5.1,9.2,10.1–10.5 | Authorized EmailMaterialService → accepted EmailScenarioAgent → GatewayRunnable → LLMGateway; generation лише явним натисканням |
 | §§5.2–5.4 | Native Qt mail template приблизно 90% центральної ширини, main + 1–8 background messages, sender/address/subject/snippet, keyboard/read state/scroll; лише валідні slots |
-| §5.5 | Canonical JSON and a separately labelled inert HTML content projection; read-only modal, monospace, highlighting, scrolling/copy; never claimed as Qt interface source |
+| §5.5 | Canonical JSON only; read-only modal, monospace, highlighting, scrolling and Copy; no HTML projection |
 | §§5.6–5.7 | Full previous envelope, refinement, новий unsaved candidate; попередній saved artifact зберігається; Save/Discard/Remain guard |
 | §§5.8,11.2,14.4 | SQLite email_materials + additive Alembic 0004; full validated payload/context/provenance; explicit transactional Save, повернення на картку, reopen |
 | §§16,21 | Service RBAC, archived/published protection, optimistic concurrency/rollback, plain text, no external navigation/SMTP/credential forms; delayed-worker lifecycle tests |
@@ -140,8 +188,8 @@ QT_QPA_PLATFORM=wayland uv run --offline --locked cyberforge \
 2. Побачити Email/Web «Не створено». Натиснути «Створити електронний лист».
 3. Перевірити напис «Офлайн-демо», preview main/background, адреси `.invalid`,
    перемикання мишею й клавіатурою, read/unread state і довгий український текст.
-4. «Структура / код»: canonical JSON and separate HTML content projection,
-   both read-only with highlighting, copy and scrolling (details above).
+4. «Переглянути код»: current canonical JSON only,
+   read-only with highlighting, copy and scrolling (details above).
 5. Додати refinement → «Згенерувати». Новий candidate має unsaved state.
 6. Перейти на Home/інший сценарій: «Залишитися» зберігає чернетку;
    «Відкинути зміни» не записує її; «Зберегти лист» явно записує preview.

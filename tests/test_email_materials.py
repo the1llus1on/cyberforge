@@ -464,7 +464,13 @@ def test_real_agent_and_gateway_scripted_errors_preserve_saved(email_env, result
         )
         mock = MockLLMProvider([response])
         gateway = LLMGateway(
-            GatewayConfig(max_retries=0, limits={"mock": RateLimits(tpm=1000000)}),
+            GatewayConfig(
+                max_retries=0,
+                limits={
+                    key: RateLimits(tpm=1000000, tpd=1000000)
+                    for key in ("mock", "mock:mock-v1")
+                },
+            ),
             {Provider.MOCK: mock},
         )
     service = ScriptedService(env.service, gateway)
@@ -537,7 +543,10 @@ def test_configured_cloud_routing_uses_gateway_without_sdk_or_network(
             provider=provider,
             model=model,
             max_retries=0,
-            limits={provider.value: RateLimits(tpm=1000000)},
+            limits={
+                key: RateLimits(tpm=1000000, tpd=1000000)
+                for key in (provider.value, f"{provider.value}:{model}")
+            },
         ),
         {provider: mock},
     )

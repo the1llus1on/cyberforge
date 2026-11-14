@@ -402,10 +402,39 @@ generation. It does not edit the current preview or saved email directly:
 «Перегенерувати» creates an unsaved candidate; «Зберегти» explicitly persists it
 and returns to the scenario card. Reopening restores the stored artifact.
 
-«Структура / код» opens two read-only tabs: canonical EmailDraftV2 JSON and an
-escaped, deterministic HTML projection of the selected message's content.
-The projection is not AI-generated HTML or the source of the native Qt mailbox;
-it is never executed or stored. Both representations support highlighting/copy.
+«Редагувати лист» opens native sender/name/address/subject/body fields for the
+selected main or background message. Apply changes only the validated working
+draft; Cancel discards dialog edits. Only «Зберегти» writes SQLite. Sender edits
+rebind the synthetic context/provenance through the authorized service.
+
+«Переглянути код» inspects the current canonical JSON, including unsaved edits,
+with read-only highlighting, scrolling and Copy. The unused HTML projection
+has been removed; developer-controlled native visual formatting remains.
+
+Refinement uses the latest working draft. Select «AI: лише текст основного листа»
+to deterministically preserve subject, senders, background mail and other fields;
+«AI: весь лист і фон» permits broader changes. Scope takes precedence over
+conflicting prose. Regeneration after manual edits requires confirmation and
+never saves automatically. Failure preserves the current candidate.
+
+Email prompts are versioned email-prompt-v2. Only Email requests use the bounded
+4096-token output budget (512–8192 via CYBERFORGE_EMAIL_MAX_OUTPUT_TOKENS);
+other operations retain their configured defaults. Larger budgets do not prove
+content quality. Existing provider/model quota reservations still apply;
+configure both local keys explicitly for cloud work if conservative caps reject
+large prompt/schema/previous-draft reservations. Arbitrary generation_parameters
+remain unsupported for cloud prompting.
+
+Owner-only live acceptance (up to two paid requests, no retries/fallback):
+
+```console
+uv run --offline --locked python -m cyberforge.agents.email_live_check --live
+```
+
+This reads only GROQ_API_KEY from local configuration, leaves .env unchanged,
+and uses synthetic data. It stops after an initial failure and emits only safe
+contract/usage/timing metadata. Do not run it during baseline tests or CI.
+Live acceptance remains pending until the owner shares the sanitized result.
 
 Existing RBAC, archive/published restrictions, worker identity guards, provenance
 and SQLite behavior remain in force. Configured cloud generation requires an

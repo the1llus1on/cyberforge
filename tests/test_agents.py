@@ -66,7 +66,9 @@ def email_draft():
 def web_source():
     source, email = email_draft()
     return WebInputV1(
-        **source.model_dump(exclude={"previous"}), email=email, template="notice"
+        **source.model_dump(exclude={"previous", "refinement_scope"}),
+        email=email,
+        template="notice",
     )
 
 
@@ -148,7 +150,14 @@ def test_provider_neutral_groq_path(kind):
     }[kind]
     mock = MockLLMProvider([ProviderResponse(text=json.dumps(payload(source)))])
     gateway = LLMGateway(
-        GatewayConfig(provider=Provider.GROQ, model="openai/gpt-oss-120b"),
+        GatewayConfig(
+            provider=Provider.GROQ,
+            model="openai/gpt-oss-120b",
+            limits={
+                key: RateLimits(tpm=1000000, tpd=1000000)
+                for key in ("groq", "groq:openai/gpt-oss-120b")
+            },
+        ),
         {Provider.GROQ: mock},
     )
     assert agent_type(gateway).run(source).status == "pending_review"
@@ -436,7 +445,15 @@ def test_invalid_correction_budget(max_corrections):
 
 def test_malformed_json_is_controlled():
     mock = MockLLMProvider([ProviderResponse(text="{broken")])
-    gateway = LLMGateway(GatewayConfig(), {Provider.MOCK: mock})
+    gateway = LLMGateway(
+        GatewayConfig(
+            limits={
+                key: RateLimits(tpm=1000000, tpd=1000000)
+                for key in ("mock", "mock:mock-v1")
+            }
+        ),
+        {Provider.MOCK: mock},
+    )
     result = EmailScenarioAgent(gateway).run(email_input())
     assert result.error == ErrorCategory.VALIDATION
     assert "broken" not in result.model_dump_json()
@@ -492,7 +509,15 @@ def test_tracing_disabled_even_when_environment_enabled(monkeypatch):
         langsmith.Client, "create_run", lambda *a, **k: pytest.fail("raw trace")
     )
     mock = ObservingMock([ProviderResponse(text=json.dumps(email_payload(source)))])
-    gateway = LLMGateway(GatewayConfig(), {Provider.MOCK: mock})
+    gateway = LLMGateway(
+        GatewayConfig(
+            limits={
+                key: RateLimits(tpm=1000000, tpd=1000000)
+                for key in ("mock", "mock:mock-v1")
+            }
+        ),
+        {Provider.MOCK: mock},
+    )
     try:
         assert EmailScenarioAgent(gateway).run(source).status == "pending_review"
     finally:
@@ -586,7 +611,14 @@ def test_actual_groq_sdk_schema_and_privacy_without_network(kind, caplog):
         )
 
     gateway = LLMGateway(
-        GatewayConfig(provider=Provider.GROQ, model="openai/gpt-oss-120b"),
+        GatewayConfig(
+            provider=Provider.GROQ,
+            model="openai/gpt-oss-120b",
+            limits={
+                key: RateLimits(tpm=1000000, tpd=1000000)
+                for key in ("groq", "groq:openai/gpt-oss-120b")
+            },
+        ),
         {Provider.GROQ: GroqProvider(SecretStr(secret), client_factory=factory)},
     )
     result = agent_type(gateway).run(source)
@@ -611,7 +643,13 @@ def test_budget_stops_correction_without_bypassing_gateway():
         ]
     )
     gateway = LLMGateway(
-        GatewayConfig(limits={"mock": RateLimits(rpm=1)}), {Provider.MOCK: mock}
+        GatewayConfig(
+            limits={
+                key: RateLimits(rpm=1, tpm=1000000, tpd=1000000)
+                for key in ("mock", "mock:mock-v1")
+            }
+        ),
+        {Provider.MOCK: mock},
     )
     result = EmailScenarioAgent(gateway, max_corrections=1).run(source)
     assert result.status == "failed" and result.error == ErrorCategory.BUDGET

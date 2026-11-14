@@ -29,7 +29,7 @@ from cyberforge.llm.contracts import (
 )
 from cyberforge.llm.factory import create_gateway
 from cyberforge.ui.email_body import MessageBody
-from cyberforge.ui.email_source import EmailSourceDialog, render_email_html
+from cyberforge.ui.email_source import EmailSourceDialog
 from cyberforge.ui.navigation import View
 from cyberforge.ui.shell import MainWindow
 from cyberforge.ui.theme import apply_theme
@@ -141,19 +141,8 @@ def test_mail_navigation_source_copy_explicit_save_reopen(email_window, qtbot):
             assert dialog.source.document().firstBlock().next().layout().formats()
             dialog.copy_button.click()
             assert QApplication.clipboard().text() == dialog.source.toPlainText()
-            assert dialog.tabs.count() == 2
-            assert "канонічний" in dialog.explanation.text()
-            assert "Qt його не використовує" in dialog.explanation.text()
-            dialog.tabs.setCurrentIndex(1)
-            assert dialog.html_source.isReadOnly()
-            html = dialog.html_source.toPlainText()
-            assert html == render_email_html(draft, 1)
-            assert "<h1>" in html and draft.slots.background[0].subject in html
-            qtbot.keyClicks(dialog.html_source, "must-not-edit")
-            assert dialog.html_source.toPlainText() == html
-            dialog.copy_button.click()
-            assert dialog.copy_button.text() == "Копіювати HTML"
-            assert QApplication.clipboard().text() == html
+            assert "JSON" in dialog.explanation.text()
+            assert dialog.findChild(QTextEdit) is None
         finally:
             if dialog:
                 dialog.accept()
@@ -721,3 +710,173 @@ def test_database_failure_does_not_fake_green_border(email_window, qtbot):
     assert page.draft == draft and page.unsaved
     assert not window.scenario_page.email_material.property("saved")
     assert "secret" not in page.message.text()
+
+
+def test_visual_editor_apply_cancel_json_save_reopen(email_window, qtbot):
+    from cyberforge.ui.email_editor import EmailEditorDialog
+
+    page = open_generated(email_window, qtbot)
+    assert page.save()
+    email_window.scenario_page.open_email()
+    original = page.draft
+    page.preview.open_message(0)
+
+    def edit_main():
+        dialog = page.findChild(EmailEditorDialog)
+        dialog.fields["sender_name"].setText("Навчальний редактор")
+        dialog.fields["sender_address"].setText("editor@training.invalid")
+        dialog.fields["subject"].setText("Локальна тема")
+        dialog.body.setPlainText("Змінений текст для навчання.")
+        dialog.apply()
+
+    QTimer.singleShot(0, edit_main)
+    page.edit_button.click()
+    assert page.unsaved and page.manual_edits
+    assert page.subject.toPlainText() == "Локальна тема"
+    assert page.draft.slots.main.body_text in page.body.toPlainText()
+    assert page.draft.artifact.context.sender_name == "Навчальний редактор"
+    assert (
+        email_window.emails.load(email_window._token, page.workspace.scenario).draft
+        == original
+    )
+    edited = page.draft
+
+    def cancel():
+        dialog = [d for d in page.findChildren(EmailEditorDialog) if d.isVisible()][0]
+        dialog.fields["subject"].setText("Не застосовувати")
+        dialog.reject()
+
+    QTimer.singleShot(0, cancel)
+    page.edit_button.click()
+    assert page.draft == edited
+
+    def inspect_json():
+        dialog = page.findChild(EmailSourceDialog)
+        assert json.loads(dialog.source.toPlainText()) == edited.model_dump(mode="json")
+        assert dialog.source.isReadOnly()
+        dialog.copy_button.click()
+        assert QApplication.clipboard().text() == dialog.source.toPlainText()
+        dialog.accept()
+
+    QTimer.singleShot(0, inspect_json)
+    page.code_button.click()
+    assert page.save()
+    email_window.scenario_page.open_email()
+    assert page.draft == edited and not page.unsaved
+    page.preview.open_message(1)
+
+    def edit_background():
+        dialog = [d for d in page.findChildren(EmailEditorDialog) if d.isVisible()][0]
+        dialog.fields["subject"].setText("Фоновий лист після відкриття")
+        dialog.apply()
+
+    QTimer.singleShot(0, edit_background)
+    page.edit_button.click()
+    assert page.draft.slots.background[0].subject == "Фоновий лист після відкриття"
+    assert page.draft.slots.main == edited.slots.main
+
+
+def test_visual_editor_invalid_and_refinement_retains_manual(
+    email_window, qtbot, monkeypatch
+):
+    from cyberforge.ui.email_editor import EmailEditorDialog
+
+    page = open_generated(email_window, qtbot)
+    original = page.draft
+
+    def invalid():
+        dialog = [d for d in page.findChildren(EmailEditorDialog) if d.isVisible()][0]
+        dialog.fields["sender_address"].setText("real@example.com")
+        dialog.apply()
+        assert dialog.isVisible() and dialog.error.text()
+        dialog.reject()
+
+    QTimer.singleShot(0, invalid)
+    page.edit_button.click()
+    assert page.draft == original
+    manual = email_window.emails.edit(
+        email_window._token,
+        page.workspace,
+        original,
+        index=0,
+        message=original.slots.main.model_copy(update={"subject": "Ручна тема"}),
+    )
+    page.draft, page.unsaved, page.manual_edits = manual, True, True
+    page._render_draft()
+    page.refinement.setPlainText("Скороти лише текст основного листа")
+    monkeypatch.setattr(page, "confirm_regeneration", lambda: False)
+    page.generate_button.click()
+    assert page.draft == manual and not page.running
+    monkeypatch.setattr(page, "confirm_regeneration", lambda: True)
+    page.generate_button.click()
+    qtbot.waitUntil(lambda: not page.running, timeout=10000)
+    assert page.draft.slots.main.subject == "Ручна тема"
+    assert page.draft.slots.background == manual.slots.background
+    assert page.unsaved
+
+
+def test_failed_ai_after_manual_apply_keeps_working_and_saved(
+    email_window, qtbot, monkeypatch
+):
+    page = open_generated(email_window, qtbot)
+    assert page.save()
+    email_window.scenario_page.open_email()
+    saved = page.draft
+    manual = email_window.emails.edit(
+        email_window._token,
+        page.workspace,
+        saved,
+        index=0,
+        message=saved.slots.main.model_copy(
+            update={"subject": "Ручна тема перед помилкою"}
+        ),
+    )
+    page.draft, page.unsaved, page.manual_edits = manual, True, True
+    page._render_draft()
+    monkeypatch.setattr(page, "confirm_regeneration", lambda: True)
+    received = []
+
+    def fail(token, workspace, **kwargs):
+        received.append(kwargs["previous"])
+        raise ApplicationError("Тимчасова помилка генерації")
+
+    monkeypatch.setattr(email_window.emails, "generate", fail)
+    page.generate_button.click()
+    qtbot.waitUntil(lambda: not page.running, timeout=10000)
+    assert received == [manual]
+    assert page.draft == manual and page.unsaved and page.manual_edits
+    assert (
+        email_window.emails.load(email_window._token, page.workspace.scenario).draft
+        == saved
+    )
+
+
+def test_editor_does_not_truncate_existing_legacy_fields(qtbot):
+    from cyberforge.ui.email_editor import EmailEditorDialog
+
+    message = MessageV1(
+        sender_name="С" * 250,
+        sender_address="sender@training.invalid",
+        subject="Т" * 4000,
+        body_text="Текст",
+    )
+    received = []
+    dialog = EmailEditorDialog(message, received.append)
+    qtbot.addWidget(dialog)
+    assert dialog.fields["subject"].text() == message.subject
+    assert dialog.fields["sender_name"].text() == message.sender_name
+    dialog.reject()
+    assert not received
+
+
+def test_manual_regeneration_confirmation_defaults_to_keep(email_window):
+    page = email_window.scenario_page.email_page
+
+    def keep():
+        box = page.findChild(QMessageBox)
+        assert box.defaultButton().text() == "Залишити чернетку"
+        assert box.button(QMessageBox.StandardButton.Yes).text() == "Перегенерувати"
+        box.defaultButton().click()
+
+    QTimer.singleShot(0, keep)
+    assert not page.confirm_regeneration()

@@ -136,3 +136,43 @@ so platform-dependent preferred line counts cannot become hard outer-page
 minimums. Actual wrapping still follows available width. The shared label
 factory and surrounding shell are unchanged; a native preferred-height fault
 test reproduces the former overflow and protects this policy.
+
+
+## Phase 6 mandatory editing completion — 14.11.2026 (REVIEW)
+
+Owner approved the Gmail-inspired visuals at cec7d34 and authorized manual
+editing, protected AI refinement, JSON-only inspection and an owner-run live
+Groq acceptance procedure. No merge/Phase7/automatic live calls are authorized.
+SRS §§4.7,5.1–5.8,9.2,10,11,16,21 remain authoritative and unchanged.
+Earlier HTML-projection descriptions are historical and superseded: the unused
+projection/highlighter/tab are removed; native QTextEdit formatting remains.
+
+Manual edits pass through EmailMaterialService with current ownership, role,
+archive/version/revision and material-revision checks. A complete JSON roundtrip
+validates every candidate; main subject/body mirror the artifact. Main sender
+updates controlled context plus optional instructor_sender_name payload metadata
+and recomputes stable provenance. Authoritative scenario identity/parameters,
+organization/premise and internal resource remain fixed. Missing override in
+legacy payloads means original stable context. No migration or alternate store.
+Provenance remains consistency evidence, not authorization or a PII detector.
+
+Apply is local; Cancel discards dialog fields; Save is transactional persistence.
+AI receives the current working draft. Explicit main-body scope merges only the
+validated new body into previous slots; all other fields stay deterministic.
+Wider scope is explicit. Scope wins over conflicting natural-language requests.
+Regeneration after manual edits asks confirmation; failures preserve working and
+saved data. JSON inspection reflects the whole current draft and stays read-only.
+
+Email-only prompt v2 improves educational coherence and provider-neutral policy.
+Email max output4096, bounded512–8192; general request default512 unchanged.
+Provider/model quota accounting, retries and strict schema/local validation are
+unchanged. Scripted fixtures reserve both model/provider budgets for the larger
+prompt/output; no production quota checks are bypassed. Untyped generation
+parameters remain intentionally unsupported. No new dependencies.
+
+Owner-run live procedure: see PHASE_6_ACCEPTANCE.md. Module CLI requires --live,
+uses only the existing Groq key, stops on initial failure, allows at most2requests,
+zero retries/corrections/fallback, logs metadata only. Live acceptance is PENDING;
+Codex has not run it. Physical native Windows11 remains Phase12 risk.
+Focused/full/persistence/package/WSLg and final-head CI evidence follows in the
+log and PR7. The current task remains REVIEW until owner GUI/live acceptance.
