@@ -5,7 +5,7 @@ import socket
 from threading import Event, get_ident
 
 import pytest
-from PySide6.QtCore import Qt, QTimer, QUrl
+from PySide6.QtCore import QSize, Qt, QTimer, QUrl
 from PySide6.QtGui import QPalette, QTextDocument
 from PySide6.QtWidgets import QApplication, QMessageBox, QTextEdit, QToolButton
 from sqlalchemy import text
@@ -59,6 +59,25 @@ def open_generated(window, qtbot):
     qtbot.waitUntil(lambda: not page.running, timeout=10000)
     assert page.draft is not None, page.message.text()
     return page
+
+
+def layout_metrics(page, scroll):
+    return {
+        "viewport": scroll.viewport().size().toTuple(),
+        "page": page.size().toTuple(),
+        "minimum_hints": {
+            name: field.minimumSizeHint().toTuple()
+            for name, field in (
+                ("preview", page.preview),
+                ("reading", page.preview.reading),
+                ("body", page.body),
+                ("subject", page.subject),
+                ("sender", page.sender),
+                ("recipient", page.preview.recipient),
+                ("timestamp", page.timestamp),
+            )
+        },
+    }
 
 
 def test_mail_navigation_source_copy_explicit_save_reopen(email_window, qtbot):
@@ -140,14 +159,15 @@ def test_mail_navigation_source_copy_explicit_save_reopen(email_window, qtbot):
     assert card.email_material.property("saved")
     window.resize(1100, 720)
     qtbot.wait(20)
-    viewport = window.containers[View.CONSTRUCTOR].viewport()
+    scroll = window.containers[View.CONSTRUCTOR]
+    viewport = scroll.viewport()
     for control in (card.save_button, card.revert_button):
         assert viewport.rect().contains(
             control.mapTo(viewport, control.rect().topLeft())
-        )
+        ), layout_metrics(page, scroll)
         assert viewport.rect().contains(
             control.mapTo(viewport, control.rect().bottomRight())
-        )
+        ), layout_metrics(page, scroll)
     card.open_email()
     assert page.draft == draft and not page.save_button.isEnabled()
     assert page.status.text() == MaterialState.SAVED
@@ -241,7 +261,8 @@ def test_compact_mailbox_keeps_critical_controls_visible(
     if opened:
         page.preview.open_message(0)
     qtbot.wait(20)
-    viewport = window.containers[View.CONSTRUCTOR].viewport()
+    scroll = window.containers[View.CONSTRUCTOR]
+    viewport = scroll.viewport()
     for control in (
         page.back_button,
         page.refinement,
@@ -252,12 +273,12 @@ def test_compact_mailbox_keeps_critical_controls_visible(
         assert control.isVisible()
         assert viewport.rect().contains(
             control.mapTo(viewport, control.rect().topLeft())
-        )
+        ), layout_metrics(page, scroll)
         assert viewport.rect().contains(
             control.mapTo(viewport, control.rect().bottomRight())
-        )
-    assert window.containers[View.CONSTRUCTOR].horizontalScrollBar().maximum() == 0
-    assert window.containers[View.CONSTRUCTOR].verticalScrollBar().maximum() == 0
+        ), layout_metrics(page, scroll)
+    assert scroll.horizontalScrollBar().maximum() == 0, layout_metrics(page, scroll)
+    assert scroll.verticalScrollBar().maximum() == 0, layout_metrics(page, scroll)
     if opened:
         assert page.body.height() >= page.body.minimumHeight()
     assert page.preview.folders.width() < 60
@@ -285,6 +306,32 @@ def test_reading_hierarchy_vector_icons_and_inert_resource(email_window, qtbot):
     body_start = preview.body.document().find(page.draft.slots.main.body_text[:7])
     assert 14 <= body_start.charFormat().font().pixelSize() <= 15
     assert 120 <= body_start.blockFormat().lineHeight() <= 150
+
+
+def test_native_text_size_hints_cannot_widen_compact_reading_view(
+    request, monkeypatch, qtbot
+):
+    from cyberforge.ui import email_preview
+
+    class WideNativeBody(MessageBody):
+        def minimumSizeHint(self):
+            return QSize(1200, 65)
+
+    monkeypatch.setattr(email_preview, "MessageBody", WideNativeBody)
+    window = request.getfixturevalue("email_window")
+    window.resize(1100, 720)
+    page = open_generated(window, qtbot)
+    page.preview.open_message(0)
+    qtbot.wait(30)
+    scroll = window.containers[View.CONSTRUCTOR]
+    assert scroll.horizontalScrollBar().maximum() == 0
+    assert scroll.verticalScrollBar().maximum() == 0
+    for control in (page.refinement, page.save_button):
+        assert (
+            scroll.viewport()
+            .rect()
+            .contains(control.mapTo(scroll.viewport(), control.rect().bottomRight()))
+        )
 
 
 def test_native_message_template_keeps_injection_as_literal_text(qtbot):
@@ -560,7 +607,7 @@ def test_long_unicode_wrap_and_layout_at_supported_sizes(
         email_window.resize(width, height)
         qtbot.wait(30)
         scroll = email_window.containers[View.CONSTRUCTOR]
-        assert scroll.horizontalScrollBar().maximum() == 0
+        assert scroll.horizontalScrollBar().maximum() == 0, layout_metrics(page, scroll)
         assert page.body.horizontalScrollBar().maximum() == 0
         assert page.body.verticalScrollBar().maximum() > 0
         assert page.subject.horizontalScrollBar().maximum() == 0

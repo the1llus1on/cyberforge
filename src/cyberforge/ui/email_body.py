@@ -28,7 +28,9 @@ class MessageBody(QTextEdit):
         self.setTabChangesFocus(True)
         self.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
         self.setMinimumSize(0, 65)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
+        # Native text size hints vary by platform. Neither document width nor
+        # its preferred height may enlarge the surrounding constructor page.
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
         self.document().setDocumentMargin(6)
 
     def loadResource(self, resource_type, name):

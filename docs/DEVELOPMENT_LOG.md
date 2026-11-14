@@ -2166,3 +2166,39 @@ icons, UI tests, README, plan/log/acceptance/ADR and three synthetic screenshots
 Reference images/temp files, credentials, databases, .env and native acceptance
 files are excluded. Exact final HEAD and Linux/Windows CI job/log evidence are
 recorded in PR7/final report after push, without a documentation-only commit.
+
+### Windows CI width correction for the final visual pass
+
+Run43571914708 atfa81ce8 passed Linux (703passed/425.64s, plus startup smoke).
+Windows failed3reading/long-content geometry cases (698passed,2POSIX-only skips,
+377.81s): the page widened to1078px inside a760px viewport, which also introduced
+horizontal-scroll height loss. No service/source/security case failed.
+Local Arial/Segoe probes did not reproduce the platform-specific growth; the
+correction explicitly prevents native text size hints from widening the page.
+
+Read-only subject/sender/body fields ignore horizontal preferred/minimum hints
+while retaining available-space allocation, wrapping and internal scrolling.
+Recipient metadata can wrap; the fixed synthetic timestamp has a bounded width.
+Added an oversized-native-body-hint regression and geometry diagnostics to the
+existing strict assertions, without removing or loosening checks. Context7
+confirmed QSizePolicy.Ignored semantics. This is a native layout correction only;
+contracts, content, source inspection, Save and workers are unchanged.
+Focused offscreen geometry/source/Save-reopen: **7passed/25.61s**. Final WSLg,
+full-suite and replacement exact-head CI evidence follow. The additional commit
+will stay in PR7; no merge, acceptance or Phase7 work is authorized.
+
+Final WSLg correction selection: **7passed/26.00s**, including the new oversized
+native hint case, all4compact states, long-content and source/Save/reopen.
+Refreshed all3screenshots; their image content is unchanged. An isolated native
+Arial+Segoe WSLg probe also fits642px available height without outer overflow.
+Full Ruff lint/format pass93files and diff whitespace check passes. Required
+stable full suite is repeated after the code correction; no tests are omitted.
+
+Final correction full command (PTY, local asyncio sockets):
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**704passed/691.55s**, exit0; `/tmp/cyberforge-phase6-fidelity-width-pytest.log`.
+This supersedes the703case local result as final production-code evidence.
+Test diagnostics were made failure-only, without changing assertions; the exact
+final focused selection was rerun: **7passed/28.44s** offscreen. No further
+production edits follow the gate. Replacement exact-head CI proof is recorded
+in PR7/final report after push; owner visual acceptance remains pending.

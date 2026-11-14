@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QPlainTextEdit,
     QPushButton,
+    QSizePolicy,
     QStackedWidget,
     QStyle,
     QStyledItemDelegate,
@@ -423,9 +424,11 @@ class MailPreview(QFrame):
         sender_details.setSpacing(0)
         sender_details.addWidget(self.sender)
         self.recipient = _text("кому: мені · " + MAILBOX_ADDRESS, "recipient")
+        self.recipient.setWordWrap(True)
         sender_details.addWidget(self.recipient)
         sender_row.addLayout(sender_details, 1)
         self.timestamp = _text("", "timestamp")
+        self.timestamp.setMaximumWidth(160)
         self.timestamp.setToolTip(
             "Синтетичний навчальний час, не фактична дата доставки."
         )
@@ -473,6 +476,7 @@ class MailPreview(QFrame):
         field.setAccessibleName(name)
         field.setLineWrapMode(QPlainTextEdit.LineWrapMode.WidgetWidth)
         field.setMinimumSize(0, 0)
+        field.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         if height is not None:
             field.setFixedHeight(height)
         return field
