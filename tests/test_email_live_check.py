@@ -75,7 +75,7 @@ def test_two_requests_and_metadata_only(capsys):
     for request, schema in provider.calls:
         assert schema["additionalProperties"] is False
         assert request.parameters.max_output_tokens == 4096
-        assert request.prompt_version == "email-prompt-v2"
+        assert request.prompt_version == "email-prompt-v3"
     output = capsys.readouterr().out
     assert "body_text" not in output and "context_token" not in output
     assert 'protected_fields_preserved": true' in output
@@ -88,7 +88,7 @@ def test_first_failure_stops_without_retry(capsys):
     assert "timeout" in capsys.readouterr().out
 
 
-def test_email_prompt_v2_uses_context_and_keeps_untyped_parameters_local():
+def test_email_prompt_v3_uses_context_and_keeps_untyped_parameters_local():
     from cyberforge.agents.email_live_check import acceptance_source
     from cyberforge.agents.prompts import build_prompt, task_data
     from cyberforge.agents.specialized import EmailScenarioAgent
@@ -110,7 +110,9 @@ def test_email_prompt_v2_uses_context_and_keeps_untyped_parameters_local():
     prompt = build_prompt(
         "email", source, EmailScenarioAgent.context_token(source), False
     )
-    assert "EMAIL-PROMPT-V2" in prompt and "BEGIN_UNTRUSTED_JSON" in prompt
+    assert "EMAIL-PROMPT-V3" in prompt and "BEGIN_UNTRUSTED_JSON" in prompt
+    assert "Ordinary" in prompt and "fictional identities" in prompt
+    assert "Use reserved .invalid addresses only" not in prompt
     assert "NIST" in prompt and "never verified" in prompt
     assert "main_body" in prompt and "previous" in prompt
     assert GatewayConfig().parameters.max_output_tokens == 512

@@ -726,7 +726,7 @@ def test_visual_editor_apply_cancel_json_save_reopen(email_window, qtbot):
     def edit_main():
         dialog = page.findChild(EmailEditorDialog)
         dialog.fields["sender_name"].setText("Навчальний редактор")
-        dialog.fields["sender_address"].setText("editor@training.invalid")
+        dialog.fields["sender_address"].setText("maxim@ukr.net")
         dialog.fields["subject"].setText("Локальна тема")
         dialog.body.setPlainText("Змінений текст для навчання.")
         dialog.apply()
@@ -734,6 +734,7 @@ def test_visual_editor_apply_cancel_json_save_reopen(email_window, qtbot):
     QTimer.singleShot(0, edit_main)
     page.edit_button.click()
     assert page.unsaved and page.manual_edits
+    assert page.draft.slots.main.sender_address == "maxim@ukr.net"
     assert page.subject.toPlainText() == "Локальна тема"
     assert page.draft.slots.main.body_text in page.body.toPlainText()
     assert page.draft.artifact.context.sender_name == "Навчальний редактор"
@@ -788,7 +789,7 @@ def test_visual_editor_invalid_and_refinement_retains_manual(
 
     def invalid():
         dialog = [d for d in page.findChildren(EmailEditorDialog) if d.isVisible()][0]
-        dialog.fields["sender_address"].setText("real@example.com")
+        dialog.fields["sender_address"].setText("bad@@example.com")
         dialog.apply()
         assert dialog.isVisible() and dialog.error.text()
         dialog.reject()

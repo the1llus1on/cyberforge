@@ -65,7 +65,7 @@ class SpecializedAgent:
     @property
     def prompt_version(self) -> str:
         return (
-            f"{self.kind}-prompt-v2"
+            f"{self.kind}-prompt-v3"
             if self.kind == "email"
             else f"{self.kind}-prompt-v1"
         )

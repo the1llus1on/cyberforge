@@ -4,11 +4,70 @@ import json
 import socket
 
 import pytest
+from pydantic import ValidationError
 
 from cyberforge.agents.contracts import EmailDraftV2, MessageV1
 from cyberforge.application.email_materials import EmailMaterialService, email_source
 from cyberforge.domain.accounts import ApplicationError
+from cyberforge.llm.contracts import GenerationError
 from cyberforge.llm.factory import create_gateway
+
+
+@pytest.mark.parametrize(
+    "address",
+    [
+        "maxim@gmail.com",
+        "maxim@ukr.net",
+        "training@example.com",
+        "training@school.invalid",
+        "fictional+lesson@MAIL.example.com",
+    ],
+)
+def test_sender_accepts_ordinary_and_legacy_domains(address):
+    message = MessageV1(
+        sender_name="Вигаданий персонаж",
+        sender_address=address,
+        subject="Навчання",
+        body_text=f"Навчальна адреса: {address}",
+    )
+    assert message.sender_address == address
+
+
+@pytest.mark.parametrize(
+    "address",
+    [
+        "",
+        "@gmail.com",
+        "maxim@",
+        "maxim@@gmail.com",
+        "maxim@gmail",
+        "maxim@.gmail.com",
+        "maxim@gmail..com",
+        "maxim@-gmail.com",
+        "maxim@gmail-.com",
+        "maxim@gmail.com.",
+        "max im@gmail.com",
+        "maxim@gmail.com\r\nBcc:other@example.com",
+        "maxim\x00@gmail.com",
+        "maxim\x7f@gmail.com",
+        "maxim\t@gmail.com",
+        "<maxim@gmail.com>",
+        ".maxim@gmail.com",
+        "maxim..lesson@gmail.com",
+        "maxim.@gmail.com",
+        "x" * 65 + "@gmail.com",
+        "maxim@" + "x" * 64 + ".com",
+        "x" * 64 + "@" + ("d" * 63 + ".") * 3 + "com",
+    ],
+)
+def test_sender_rejects_malformed_or_unsafe_addresses(address):
+    with pytest.raises((ValidationError, GenerationError)):
+        MessageV1(
+            sender_name="Вигаданий персонаж",
+            sender_address=address,
+            subject="Навчання",
+            body_text="Навчальний текст",
+        )
 
 
 @pytest.fixture
@@ -37,7 +96,7 @@ def test_manual_main_background_save_reopen_and_refine(editing):
     entry = revised(
         e.draft.slots.main,
         sender_name="Синтетична редакція",
-        sender_address="editor@school.invalid",
+        sender_address="maxim@gmail.com",
         subject="Ручна тема",
         body_text="Ручний текст.",
     )
@@ -84,7 +143,7 @@ def test_manual_main_background_save_reopen_and_refine(editing):
 @pytest.mark.parametrize(
     "field,value",
     [
-        ("sender_address", "teacher@example.com"),
+        ("sender_address", "teacher@@example.com"),
         ("body_text", "<script>alert(1)</script>"),
         ("body_text", "https://example.com"),
         ("body_text", "password=private-secret"),

@@ -39,7 +39,7 @@ class EmailEditorDialog(QDialog):
         self.fields = {}
         for name, title, limit in (
             ("sender_name", "Синтетичне ім’я відправника", 200),
-            ("sender_address", "Адреса відправника (.invalid)", 254),
+            ("sender_address", "Адреса відправника", 254),
             ("subject", "Тема", 300),
         ):
             field = QLineEdit(getattr(message, name))
@@ -83,8 +83,9 @@ class EmailEditorDialog(QDialog):
             self._apply(value)
         except (ValidationError, GenerationError, ApplicationError, ValueError):
             self.error.setText(
-                "Правки відхилено: потрібні непорожні обмежені поля, синтетична адреса "
-                ".invalid і звичайний текст без коду, секретів та зовнішніх ресурсів. "
+                "Правки відхилено: потрібні непорожні обмежені поля, коректна адреса "
+                "name@domain і звичайний текст без коду, секретів "
+                "та зовнішніх ресурсів. "
                 "Сценарій також має залишатися доступним для редагування."
             )
             return

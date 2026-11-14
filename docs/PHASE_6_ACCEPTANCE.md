@@ -67,7 +67,7 @@ for functional editing and live acceptance. This section supersedes the earlier
 visual/source review descriptions; it does not grant merge or Phase 7 approval.
 
 - Select/open main or background mail, then «Редагувати лист». Native fields:
-  synthetic sender name (200), .invalid address (254), subject (300), body (4000).
+  synthetic sender name (200), syntactically valid address (254), subject (300), body (4000).
   Apply validates the complete canonical draft; Cancel discards dialog edits.
   SQLite changes only through the separate «Зберегти» action. The service also
   enforces 1–8 background entries for local add/remove operations; the dialog
@@ -121,7 +121,7 @@ with `--email-demo`; do not reinitialize an existing database or credentials.
    the opened subject, aligned sender/recipient/time, formatted paragraphs,
    synthetic header and inert resource card. Scroll the body; return to the
    inbox with its back arrow. Reply/forward remain nonfunctional.
-4. Edit both main/background messages; check invalid .invalid addresses/code
+4. Edit both main/background messages; check malformed addresses/code
    are rejected. Cancel, then Apply. Preview and «Переглянути код» must reflect
    applied edits; persistence must stay unchanged until explicit Save. Reopen.
    Refine in main-body scope and confirm subject/background preservation.
@@ -244,3 +244,12 @@ Owner manual checklist поки **не виконано / очікується**
 Поза Phase 6: Web Constructor/WebEngine, readiness/publication/assignments,
 Learner Simulation, ScoringService та Analytics. Saved green — тільки Email
 local structural validity + persistence, не готовність всього сценарію.
+
+
+Owner-approved address rule (14.11.2026): ordinary email domains and legacy
+`.invalid` addresses are accepted as inert display data. Minimal ASCII syntax
+validation bounds the local part to64 and total address to254 characters,
+requires a dotted domain with labels up to63 characters and rejects whitespace,
+controls and header injection. No DNS/MX/mailbox checks or delivery. Use fictional
+identities only; never include real personal data in cloud prompts. External URL
+restrictions remain unchanged. Email prompt is now email-prompt-v3.

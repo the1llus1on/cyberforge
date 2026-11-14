@@ -176,3 +176,17 @@ zero retries/corrections/fallback, logs metadata only. Live acceptance is PENDIN
 Codex has not run it. Physical native Windows11 remains Phase12 risk.
 Focused/full/persistence/package/WSLg and final-head CI evidence follows in the
 log and PR7. The current task remains REVIEW until owner GUI/live acceptance.
+
+
+### Phase 6 ordinary email domains — 14.11.2026 (REVIEW)
+
+Owner authorized removal of the mandatory .invalid email-domain restriction.
+SRS §§5.4–5.8: shared text validation no longer infers synthetic identity from
+an email domain. MessageV1 enforces bounded ASCII mailbox syntax; ordinary
+domains and existing .invalid addresses remain unchanged through Apply/Save/
+reopen/refinement. Editor labels/errors and email-prompt-v3 reflect the rule;
+shared policy v2 retains fictional identities and forbids real personal data.
+Provider schema structure, persistence, provenance, RBAC and external URL
+restrictions are unchanged. No DNS/MX checks, SMTP, navigation or live API calls.
+Focused offline tests and Ruff locally; final Linux/Windows CI runs the full
+suite. Phase 6 stays REVIEW; no merge or Phase 7.

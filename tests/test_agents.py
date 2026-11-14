@@ -111,6 +111,18 @@ def test_email_draft_and_nist_separation():
     assert draft.cue_validation == "requires_instructor_review"
 
 
+def test_agent_preserves_ordinary_email_domains():
+    source = email_input()
+    payload = email_payload(source)
+    payload["main"]["sender_address"] = "maxim@gmail.com"
+    payload["background"][0]["sender_address"] = "maxim@ukr.net"
+    gateway, _ = scripted_gateway(payload)
+    result = EmailScenarioAgent(gateway).run(source)
+    assert result.status == "pending_review"
+    assert result.draft.slots.main.sender_address == "maxim@gmail.com"
+    assert result.draft.slots.background[0].sender_address == "maxim@ukr.net"
+
+
 def test_web_linked_to_email_display_url_separate():
     source = web_source()
     gateway, _ = scripted_gateway(web_payload(source))
@@ -205,7 +217,6 @@ def test_internal_destination_rejected(value):
         "javascript:alert(1)",
         "data:text/html,hello",
         "https://real.example/path",
-        "contact@real.example",
         "api_key=secret-fixture",
     ],
 )

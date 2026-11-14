@@ -2416,3 +2416,28 @@ is the same offline `pytest -q --tb=short --durations=10` invocation above:
 **726passed/1049.72s**, exit0, `/tmp/phase6-edit-final-full.log`.
 Ruff lint/format97files and whitespace checks pass. No production edits follow
 this gate; final CI evidence is kept in PR7 and the delivery report.
+
+
+### Phase 6 ordinary email domains — 14.11.2026 (REVIEW)
+
+Owner authorized removal of the mandatory .invalid email-domain restriction.
+SRS §§5.4–5.8: shared text validation no longer infers synthetic identity from
+an email domain. MessageV1 enforces bounded ASCII mailbox syntax; ordinary
+domains and existing .invalid addresses remain unchanged through Apply/Save/
+reopen/refinement. Editor labels/errors and email-prompt-v3 reflect the rule;
+shared policy v2 retains fictional identities and forbids real personal data.
+Provider schema structure, persistence, provenance, RBAC and external URL
+restrictions are unchanged. No DNS/MX checks, SMTP, navigation or live API calls.
+Focused offline tests and Ruff locally; final Linux/Windows CI runs the full
+suite. Phase 6 stays REVIEW; no merge or Phase 7.
+
+Address-rule focused verification: `pytest -q tests/test_email_editing.py
+tests/test_email_live_check.py tests/test_agents.py tests/test_agent_provenance.py`:
+202passed/29.27s. UI `pytest -q tests/ui/test_email_constructor.py -k
+'visual_editor_apply_cancel_json_save_reopen or visual_editor_invalid'`:
+2passed/11.15s. All use offline Mock/scripted providers with socket guards.
+Ruff lint/format pass97files and `git diff --check` passes. The initial wider
+focused run used the old prompt marker and domain-only rejection expectation;
+those two expectations are superseded by prompt-v3/ordinary-address acceptance
+coverage. No repeated full local suite or live API calls. Final-head Linux/
+Windows full CI evidence will be recorded in PR7 and the delivery report.

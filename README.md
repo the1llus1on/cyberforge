@@ -444,3 +444,12 @@ the synthetic offline Mock demonstration and ignores `.env`/cloud keys.
 
 Safe isolated setup/launch commands and the updated owner review checklist:
 [PHASE_6_ACCEPTANCE](docs/PHASE_6_ACCEPTANCE.md). Phase 7 remains out of scope.
+
+
+Owner-approved address rule (14.11.2026): ordinary email domains and legacy
+`.invalid` addresses are accepted as inert display data. Minimal ASCII syntax
+validation bounds the local part to64 and total address to254 characters,
+requires a dotted domain with labels up to63 characters and rejects whitespace,
+controls and header injection. No DNS/MX/mailbox checks or delivery. Use fictional
+identities only; never include real personal data in cloud prompts. External URL
+restrictions remain unchanged. Email prompt is now email-prompt-v3.
