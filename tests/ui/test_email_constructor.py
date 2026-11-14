@@ -9,8 +9,10 @@ from PySide6.QtCore import QSize, Qt, QTimer, QUrl
 from PySide6.QtGui import QPalette, QTextDocument
 from PySide6.QtWidgets import (
     QApplication,
+    QLabel,
     QListWidget,
     QMessageBox,
+    QSizePolicy,
     QTextEdit,
     QToolButton,
 )
@@ -346,6 +348,42 @@ def test_native_text_size_hints_cannot_widen_compact_reading_view(
             .rect()
             .contains(control.mapTo(scroll.viewport(), control.rect().bottomRight()))
         )
+
+
+def test_wrapped_label_preferred_heights_cannot_expand_email_page(
+    request, monkeypatch, qtbot
+):
+    from cyberforge.ui import email_page
+
+    class TallPreferredLabel(QLabel):
+        def sizeHint(self):
+            hint = super().sizeHint()
+            return QSize(hint.width(), max(200, hint.height()))
+
+    def native_label(text, kind="muted"):
+        control = TallPreferredLabel(text)
+        control.setProperty("kind", kind)
+        control.setWordWrap(True)
+        control.setTextFormat(Qt.TextFormat.PlainText)
+        control.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        return control
+
+    monkeypatch.setattr(email_page, "label", native_label)
+    window = request.getfixturevalue("email_window")
+    window.resize(1100, 720)
+    page = open_generated(window, qtbot)
+    page.preview.open_message(0)
+    qtbot.wait(30)
+    scroll = window.containers[View.CONSTRUCTOR]
+    assert scroll.verticalScrollBar().maximum() == 0, layout_metrics(page, scroll)
+    for field in (page.provider, page.message, page.refinement_help):
+        assert field.height() >= field.heightForWidth(field.width())
+    for control in (page.refinement, page.save_button):
+        assert (
+            scroll.viewport()
+            .rect()
+            .contains(control.mapTo(scroll.viewport(), control.rect().bottomRight()))
+        ), layout_metrics(page, scroll)
 
 
 def test_native_message_template_keeps_injection_as_literal_text(qtbot):

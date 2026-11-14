@@ -128,6 +128,20 @@ class EmailPage(QWidget):
                 control.setStyleSheet("padding: 6px 12px;")
             actions.addWidget(control)
         layout.addLayout(actions)
+        # Wrapped labels must shrink to their actual height for the available
+        # width, rather than reserving platform-dependent preferred line counts.
+        for field in (
+            self.title,
+            self.provider,
+            self.status,
+            self.message,
+            self.refinement_label,
+            self.refinement_help,
+        ):
+            policy = field.sizePolicy()
+            policy.setVerticalPolicy(QSizePolicy.Policy.Preferred)
+            policy.setHeightForWidth(field.wordWrap())
+            field.setSizePolicy(policy)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self._controls()
 

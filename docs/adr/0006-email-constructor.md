@@ -130,3 +130,9 @@ the policy at the layout level used by Qt's native geometry queries and prevents
 inactive/preferred editor heights from enlarging the constructor. The body keeps
 its original65px fallback minimum and internal scrolling; the outer view API,
 data flow, lifecycle and accepted application architecture are unchanged.
+
+EmailPage's wrapped title/status/helper labels use vertical Preferred locally,
+so platform-dependent preferred line counts cannot become hard outer-page
+minimums. Actual wrapping still follows available width. The shared label
+factory and surrounding shell are unchanged; a native preferred-height fault
+test reproduces the former overflow and protects this policy.

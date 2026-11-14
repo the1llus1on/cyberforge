@@ -2235,3 +2235,39 @@ This is final local evidence for the active-layout correction; all698previous
 cases remain, with6added cases and no new skips. Lint/format93files and diff
 whitespace checks pass. No production edits follow; final HEAD and both exact
 Linux/Windows CI job/log results are recorded in PR7/final report after push.
+
+### Wrapped-label minimum policy — reproduced final height cause
+
+Run43577486176 at7337ef3 again left the Windows page655px tall (3failed,
+699passed,2POSIX-only skips/302.53s); the inner-stack policy did not resolve
+this outer constraint. Inspected the EmailPage root labels: the shared label
+factory gives them vertical QSizePolicy.Minimum, which treats their preferred
+wrapped height as a hard minimum even when the actual width needs fewer lines.
+
+Added a native-label preferred-height fault test. Before the fix it reproduces
+locally: page1439px versus viewport656px,783px outer scroll (1failed/4.56s).
+EmailPage now uses vertical Preferred for its six wrapped title/status/helper
+labels, retaining height-for-width wrapping. This changes no text/fonts or
+global label behavior. The exact same regression and existing geometry/source/
+Save selection then pass: **8passed/29.59s** offscreen. The body keeps65px.
+Existing strict assertions, inactive/editor hint case and three-line body guard
+remain intact. Final focused/full/CI proof follows; Phase6 remains REVIEW.
+
+The local label policy explicitly preserves height-for-width. Final focused
+selection (label/editor/inactive hints,4compact states, long content, source/
+Save/reopen) passes **8cases/28.30s** offscreen and **8cases/32.43s** WSLg,
+including assertions that wrapped text receives its measured required height.
+Broader WSLg UI/source/card pass: **42cases/139.92s** before the final wrapping
+flag preservation. Refreshed/inspected inbox; opened/compact captures remain
+pixel-identical. Arial/Segoe642px probe passes. Lint/format93files pass. Final
+complete705case run follows; no further production edits are planned.
+
+Final wrapped-label full command (PTY, local asyncio sockets):
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**705passed/931.94s**, exit0; `/tmp/cyberforge-phase6-fidelity-label-pytest.log`.
+All698previous cases remain with7added cases, no new skips. This supersedes
+earlier local totals for the final label policy. Lint/format93files, diff and
+staged exact-scope/private-value checks pass before publishing. No production
+changes follow this gate. The visual pass now touches13files after adding the
+scoped EmailPage label fix; original references/temp/credentials stay excluded.
+Final HEAD and both CI job/log proofs are recorded in PR7/final report.
