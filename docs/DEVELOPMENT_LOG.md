@@ -2382,3 +2382,22 @@ Commit/push remain in the existing Phase6 branch/PR7. Exact final HEAD and both
 Linux/Windows CI jobs/log evidence will be recorded in PR7 and the final report
 without a documentation-only commit. No merge, ACCEPTED or Phase7 transition.
 Live Groq remains owner-initiated and PENDING; no real API calls were made.
+
+### Windows CI compact-layout correction
+
+Completion commit ee370503 passed Linux CI; Windows CI run43591272955 reported
+7layout failures (717passed,2platform skips). Native combo font metrics widened
+the Email page to812px inside a768px viewport. The AI scope selector now uses a
+shorter Ukrainian label,12px typography and a bounded minimum-content size hint.
+The existing compact tests also assert Edit/scope visibility; no assertions were
+removed. Focused compact/native-hint/long-Unicode suite:7passed/36.85s. Real
+WSLg capture confirms zero horizontal overflow, visible critical controls and a
+current unsaved edited candidate at1100×720; three mailbox screenshots refreshed.
+The sandbox's first Wayland attempt lacked socket access; the authorized WSLg
+probe then passed with local-display access. Ruff lint/format pass97files.
+Final correction full gate:
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -q --tb=short --durations=10`:
+**726passed/1010.40s**, exit0; `/tmp/phase6-edit-layout-full.log`.
+The same7focused layout cases also pass through real WSLg/Wayland in40.30s.
+Final lint/format and whitespace checks pass; no production edits follow this
+gate. Final-head Linux/Windows CI evidence will be recorded in PR7 and delivery.

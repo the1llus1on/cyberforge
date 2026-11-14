@@ -262,6 +262,8 @@ def test_compact_mailbox_keeps_critical_controls_visible(
     viewport = scroll.viewport()
     for control in (
         page.back_button,
+        page.edit_button,
+        page.refinement_scope,
         page.refinement,
         page.code_button,
         page.generate_button,

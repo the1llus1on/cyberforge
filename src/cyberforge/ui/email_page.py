@@ -122,8 +122,15 @@ class EmailPage(QWidget):
         self.edit_button.clicked.connect(self.edit_message)
         top.addWidget(self.edit_button)
         self.refinement_scope = QComboBox()
-        self.refinement_scope.addItem("AI: лише текст основного листа", "main_body")
+        self.refinement_scope.addItem("AI: лише основний текст", "main_body")
         self.refinement_scope.addItem("AI: весь лист і фон", "all")
+        # Bound the combo's minimum hint independently of native Windows font
+        # metrics, so the provider/status row cannot widen the whole workspace.
+        self.refinement_scope.setMinimumContentsLength(20)
+        self.refinement_scope.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
+        self.refinement_scope.setStyleSheet("font-size: 12px;")
         self.refinement_scope.setAccessibleName("Межі змін AI; інші поля зберігаються")
         self.refinement_scope.setToolTip(
             "Лише текст: тема, відправник і всі фонові листи захищені. "

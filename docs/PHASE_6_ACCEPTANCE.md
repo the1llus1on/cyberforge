@@ -212,6 +212,17 @@ model до явної дії. Startup/selection/refresh API не виклика�
 
 ## Автоматизовані докази та gate
 
+Current mandatory-editing completion evidence: full offline suite726passed,
+Ruff lint/format97files, focused agent/provenance155passed, WSLg editing checks,
+and wheel/installed-wheel persistence checks are recorded in DEVELOPMENT_LOG.md.
+The first completion CI passed Linux but exposed7compact-layout failures on
+Windows; a bounded native scope-selector size hint corrects that regression.
+Compact checks now include the Edit and AI scope controls. Final-head CI results
+belong to PR7 and the delivery report; owner GUI/live acceptance remains pending.
+
+The following numbers describe the earlier visual revision, before mandatory
+manual editing, and are retained as historical evidence:
+
 Фактичні focused/full/packaging/WSLg результати — у DEVELOPMENT_LOG.md.
 Final UX-revision Ruff lint/format: success,92Python files; full pytest:
 **698 passed / 324.13s**, all690existing tests retained plus8new cases.
