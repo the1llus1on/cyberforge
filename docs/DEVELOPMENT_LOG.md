@@ -2085,3 +2085,84 @@ Final full command (PTY, local-socket access):
 This is final local evidence after both Windows CI findings. Ruff lint/format
 pass92Python files and `git diff --check` passes. No further production edits
 follow this gate; exact final HEAD/CI evidence is recorded in PR7/final report.
+
+## 14.11.2026 — Phase 6 final visual fidelity pass (PR #7)
+
+Owner-reported manual WSLg review of0e34dd8ae9061221921448c28f00391d82852f20:
+the overall layout was acceptable, with typography/icons/reading presentation
+still requiring refinement. This authorizes one focused visual pass, not Phase6
+acceptance, merge or Phase7. Started on the matching clean tracked branch/PR7.
+The owner then supplied local inbox/opened Gmail references in temp/. Inspected
+them and existing Phase6 captures; originals contain real mailbox data and are
+left untracked, without copying any content, identities or graphical assets.
+The open owner demo credential files/databases were not read, reset or modified.
+
+Plan mapped to SRS §§5.2–5.5: refine the existing native preview's hierarchy and
+iconography, format existing structured message content with controlled native
+Qt primitives, retain canonical JSON/source clarification, then focused/full
+regressions, WSLg captures and exact-final-head Linux/Windows CI. SRS §§5.6–5.8,
+16/21 persistence/security/worker guarantees remain regression requirements.
+GitHub MCP confirmed the reviewed HEAD and open/unmerged main-target PR7;
+Context7 verified official QTextEdit/QTextCursor/block/frame-format APIs.
+
+Implementation: scoped Arial/native fallback typography, 22px subject, 15px body,
+14px sender/inbox text, 12px recipient/time. Metadata is aligned around a native
+avatar; reply/forward use separate outlined pills. Existing icon infrastructure
+now supplies original painted mail glyphs, with optional color and doubled
+pixmap resolution; default shell icon colors/API are preserved. Inbox/read views
+have separate toolbars; wide rows align sender/subject/snippet/time in one line,
+compact rows use two. Read/unread/selection styling remains in memory.
+
+MessageBody is native QTextEdit/QTextDocument, not a browser engine. QTextCursor
+inserts only literal existing sender/body/resource strings. Native character,
+block and frame formats provide paragraphs, a synthetic sender header and an
+inert resource/action card. No arbitrary HTML parsing, anchors, scripts, external
+resources or new content claims. Resource loading is denied. Background text
+retains paragraph boundaries. JSON/HTML inspection remains unchanged and honest:
+the HTML tab is still an inert content projection, not native UI source.
+No agent/contracts/services/workers/schema/dependency/startup/catalog changes.
+No live API calls, physical Windows11 checks or native-environment refresh.
+
+Early focused feedback caught1px outer overflow with8px extra toolbar reserve;
+reduced preview bottom padding from8px to4px and retained strict assertions.
+Tests check custom toolbar labels without imposing them on Qt-owned line-edit
+buttons. Focused source/UI: **38passed/157.59s**; relevant real WSLg UI/card:
+**35passed/164.71s**. After the final sender font/height adjustment, compact
+inbox/read with native-metric reserve, hierarchy/icons, source/Save/reopen and
+long Unicode content: **7passed/33.87s** offscreen, **7passed/35.23s** WSLg.
+Three new tests cover native hierarchy, literal injection/resource denial and
+background paragraph fidelity; two added compact cases reserve8px for differing
+native metrics. All698previous cases remain present; no new skips.
+
+Commands use `UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked`:
+`pytest tests/test_email_source.py tests/ui/test_email_constructor.py -q --tb=short`;
+WSLg adds `QT_QPA_PLATFORM=wayland` and checks the constructor module plus
+`tests/ui/test_scenarios_ui.py::test_form_actions_and_internal_scroll`. Final
+focused selection: `test_compact_mailbox_keeps_critical_controls_visible`,
+`test_reading_hierarchy_vector_icons_and_inert_resource`,
+`test_mail_navigation_source_copy_explicit_save_reopen`,
+`test_long_unicode_wrap_and_layout_at_supported_sizes` in the constructor module.
+
+Isolated synthetic WSLg captures: inbox1400×900, opened message1400×1060, compact
+reading1100×720. An additional Segoe UI probe with642px available viewport
+(Windows650px minus8px reserve) confirms all critical controls visible and zero
+outer scrolling. This is WSLg/font-metric evidence, not native Windows11 proof.
+Compared the hierarchy, vector icons, rows and formatted content with both local
+references. The native mock intentionally omits real brands/media/apps and
+arbitrary multipart rendering; long body/card content scrolls internally.
+The accepted scenario catalog remains visible. Owner final visual decision is
+pending; Phase6 stays REVIEW, Phase7 NOT STARTED.
+
+Ruff lint/format pass93Python files; `git diff --check` passes. Packaging/wheel
+checks are not repeated for this UI-only change under the approved workflow.
+Final full-suite, staged scan and exact-HEAD CI evidence follow below/PR7.
+
+Final stable full command (PTY, local asyncio-socket access):
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**703passed/887.67s**, exit0; `/tmp/cyberforge-phase6-fidelity-pytest.log`.
+No production changes after this verification. Lint/format93files and diff
+whitespace checks pass. The intended12-file commit includes native body/preview,
+icons, UI tests, README, plan/log/acceptance/ADR and three synthetic screenshots.
+Reference images/temp files, credentials, databases, .env and native acceptance
+files are excluded. Exact final HEAD and Linux/Windows CI job/log evidence are
+recorded in PR7/final report after push, without a documentation-only commit.

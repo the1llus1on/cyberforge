@@ -10,6 +10,9 @@ merge `8a6beabf13ec4da43d2ce26bb78bccc9fce64340`. Гілка:
 The owner did not accept the previous visual presentation. This follow-up stays
 in Phase 6 REVIEW and supersedes the earlier mailbox/source-view descriptions.
 UI text remains Ukrainian; this change's technical report is in English.
+On 14.11.2026 the owner reported manual WSLg review of `0e34dd8`: the overall
+layout was acceptable, with typography, icons and reading-view fidelity still
+requiring refinement. This feedback does not mark Phase 6 ACCEPTED.
 
 The light native Qt mailbox now has a Gmail-inspired browser tab/address strip,
 mail search/header, responsive folder rail, generated inbox and a separate
@@ -20,6 +23,35 @@ delivery metadata. Browser navigation, compose and reply controls are disabled.
 The dark CyberForge shell and its single scenario catalog are unchanged.
 The opened body uses available height and internal scrolling, preserving the
 critical controls at 1100×720 across different native font metrics.
+
+### Final visual refinement — 14.11.2026
+
+Compared the locally supplied Gmail inbox and opened-message references with
+the Phase 6 views. Reference images contain real mailbox data and remain local;
+they are not copied to Git or used as training/demo content or graphic assets.
+
+- Mail typography is scoped to the preview: 22px subject, 15px body, 14px sender
+  and inbox text, 12px recipient/time. Sender/recipient columns and timestamps
+  align; reply/forward have separate native pill controls.
+- Original vector drawings extend the existing icon infrastructure. Wide inbox
+  rows use one sender/subject/snippet/time line; compact rows use two lines.
+  Selected, read and unread states remain local presentation state. The inbox
+  and reading view have distinct native toolbars; only real internal navigation
+  and search are enabled. No extra fake category/data tabs are introduced.
+- The main body uses a developer-controlled native QTextDocument template:
+  existing sender text, readable paragraphs, the existing internal resource ID,
+  and a clearly inert action card. Strings enter through `insertText`, never
+  HTML parsing. Resource loading is blocked. Background messages retain their
+  existing text with paragraph formatting. No agent/schema/persistence changes.
+- The separate HTML source tab remains an inspection projection, not the native
+  document's source. JSON remains the canonical stored artifact.
+
+Remaining visual limits: this is a synthetic native mock, with a text brand,
+disabled nonessential folders/actions and no proprietary assets, remote media,
+arbitrary HTML/multipart support or external navigation. Long formatted content
+and the resource card scroll inside the body, including at1100×720. The scenario
+catalog stays visible under the accepted navigation design. Owner visual
+acceptance remains pending after the automated/WSLg checks.
 
 «Уточнення викладача для перегенерації» is an instruction for the next generation.
 The helper explicitly says it does not directly edit a message; the saved email
@@ -40,8 +72,10 @@ with `--email-demo`; do not reinitialize an existing database or credentials.
    dark and only the browser/mail preview is light.
 2. Review the generated inbox, sender/subject/snippets and timestamps. Search for
    a background sender; open it by click or keyboard Enter.
-3. Review the reading view: subject, sender/address, synthetic recipient/time,
-   body and inactive internal resource. Return to the inbox with its back arrow.
+3. Compare typography/icons/row alignment with the supplied references. Review
+   the opened subject, aligned sender/recipient/time, formatted paragraphs,
+   synthetic header and inert resource card. Scroll the body; return to the
+   inbox with its back arrow. Reply/forward remain nonfunctional.
 4. Open «Структура / код». JSON is canonical; the separate HTML tab is clearly
    described as a local content projection. Check read-only behavior and Copy
    in each tab. HTML should reflect the currently opened message.

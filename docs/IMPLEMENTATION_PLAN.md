@@ -835,3 +835,12 @@ native environment збережено, SRS/dependencies/lockfile не зміне
 Exact-final-head Linux/Windows CI evidence та PR/SHA — у PR і фінальному звіті
 після push. Owner acceptance очікується; native Windows11 лишається Phase12 risk.
 REVIEW не означає ACCEPTED або дозвіл на merge/Phase7.
+
+14.11.2026 visual refinement in PR7: the owner reviewed0e34dd8 in WSLg and found
+the layout acceptable, requesting closer Gmail typography/icons/reading content.
+SRS §§5.2–5.5: refine native presentation using existing structured fields,
+without changing contracts/persistence/workers or the scenario catalog. Keep
+explicit Save and security regressions, minimum-size/font-metric checks, updated
+WSLg screenshots and exact-final-head Linux/Windows CI. Evidence and limitations
+are recorded in DEVELOPMENT_LOG/PHASE_6_ACCEPTANCE and PR7. Phase6 stays REVIEW;
+only the owner can grant final visual acceptance. Phase7 remains NOT STARTED.

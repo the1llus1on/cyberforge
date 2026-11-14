@@ -5,11 +5,12 @@ import socket
 from threading import Event, get_ident
 
 import pytest
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QPalette
-from PySide6.QtWidgets import QApplication, QMessageBox, QPlainTextEdit
+from PySide6.QtCore import Qt, QTimer, QUrl
+from PySide6.QtGui import QPalette, QTextDocument
+from PySide6.QtWidgets import QApplication, QMessageBox, QTextEdit, QToolButton
 from sqlalchemy import text
 
+from cyberforge.agents.contracts import MessageV1
 from cyberforge.application.email_materials import EmailMaterialService, MaterialState
 from cyberforge.domain.accounts import ApplicationError
 from cyberforge.llm.contracts import (
@@ -19,6 +20,7 @@ from cyberforge.llm.contracts import (
     ProviderResponse,
 )
 from cyberforge.llm.factory import create_gateway
+from cyberforge.ui.email_body import MessageBody
 from cyberforge.ui.email_source import EmailSourceDialog, render_email_html
 from cyberforge.ui.navigation import View
 from cyberforge.ui.shell import MainWindow
@@ -75,7 +77,9 @@ def test_mail_navigation_source_copy_explicit_save_reopen(email_window, qtbot):
     )
     assert page.preview.views.currentWidget() == page.preview.reading
     assert page.subject.toPlainText() == page.draft.slots.main.subject
-    assert page.body.toPlainText() == page.draft.slots.main.body_text
+    assert page.draft.slots.main.body_text in page.body.toPlainText()
+    assert page.draft.slots.main.sender_name in page.body.toPlainText()
+    assert page.draft.slots.internal_resource_id in page.body.toPlainText()
     assert page.sender.height() >= page.sender.fontMetrics().lineSpacing() * 2
     assert page.timestamp.text() == "09:30 · навчальний час"
     assert not page.messages.item(0).font().bold()
@@ -167,7 +171,7 @@ def test_refinement_new_candidate_never_overwrites_and_failed_save_keeps_it(
     assert "лише після «Зберегти»" in page.refinement_help.text()
     assert page.generate_button.text() == "Перегенерувати"
     page.refinement.setPlainText("Додай стислий навчальний вступ")
-    assert page.body.toPlainText() == original.slots.main.body_text
+    assert original.slots.main.body_text in page.body.toPlainText()
     assert page.draft == original and not page.unsaved
     assert not page.save_button.isEnabled()
     page.preview.search.setText(original.slots.main.sender_address)
@@ -225,9 +229,14 @@ def test_light_mailbox_search_and_browser_boundary(email_window, qtbot):
 
 
 @pytest.mark.parametrize("opened", [False, True])
-def test_compact_mailbox_keeps_critical_controls_visible(email_window, qtbot, opened):
+@pytest.mark.parametrize("header_reserve", [0, 8])
+def test_compact_mailbox_keeps_critical_controls_visible(
+    email_window, qtbot, opened, header_reserve
+):
     window = email_window
     window.resize(1100, 720)
+    # Reserve room for differing native toolbar/font metrics at the same size.
+    window.topbar.setMinimumHeight(window.topbar.height() + header_reserve)
     page = open_generated(window, qtbot)
     if opened:
         page.preview.open_message(0)
@@ -252,6 +261,76 @@ def test_compact_mailbox_keeps_critical_controls_visible(email_window, qtbot, op
     if opened:
         assert page.body.height() >= page.body.minimumHeight()
     assert page.preview.folders.width() < 60
+
+
+def test_reading_hierarchy_vector_icons_and_inert_resource(email_window, qtbot):
+    page = open_generated(email_window, qtbot)
+    preview = page.preview
+    preview.open_message(0)
+    assert 20 <= preview.subject.font().pixelSize() <= 22
+    assert 14 <= preview.body.font().pixelSize() <= 15
+    assert preview.sender.mapTo(preview, preview.sender.rect().topLeft()).x() == (
+        preview.recipient.mapTo(preview, preview.recipient.rect().topLeft()).x()
+    )
+    for control in preview.findChildren(QToolButton):
+        assert not control.icon().isNull() and not control.text()
+        # Qt owns the line edit's clear/search buttons and their accessibility.
+        if control.parentWidget() is not preview.search:
+            assert control.accessibleName()
+    assert not preview.reply.icon().isNull()
+    assert not preview.forward.icon().isNull() and not preview.forward.isEnabled()
+    assert "перехід вимкнено" in preview.body.toPlainText()
+    assert page.draft.slots.internal_resource_id in preview.body.toPlainText()
+    assert page.draft.slots.main.body_text in preview.body.toPlainText()
+    body_start = preview.body.document().find(page.draft.slots.main.body_text[:7])
+    assert 14 <= body_start.charFormat().font().pixelSize() <= 15
+    assert 120 <= body_start.blockFormat().lineHeight() <= 150
+
+
+def test_native_message_template_keeps_injection_as_literal_text(qtbot):
+    field = MessageBody()
+    qtbot.addWidget(field)
+    message = MessageV1.model_construct(
+        sender_name='<img src="file:///private.png">',
+        sender_address="sender@training.invalid",
+        subject="Синтетична перевірка",
+        body_text='<script>alert(1)</script>\n\n<a href="https://example.invalid">текст</a>',
+    )
+    before = message.model_dump_json()
+    field.set_message(message, "scenario_1_v1")
+    field.show()
+    rendered = field.toPlainText()
+    assert message.sender_name in rendered and message.body_text in rendered
+    assert "scenario_1_v1" in rendered
+    assert message.model_dump_json() == before
+    assert field.isReadOnly() and not field.acceptRichText()
+    qtbot.keyClicks(field, "cannot-edit")
+    assert field.toPlainText() == rendered
+    for style in field.document().allFormats():
+        assert not style.isImageFormat()
+        if style.isCharFormat():
+            assert not style.toCharFormat().isAnchor()
+    for address in ("file:///private.png", "https://example.invalid/image.png"):
+        assert (
+            field.document().resource(
+                QTextDocument.ResourceType.ImageResource, QUrl(address)
+            )
+            is None
+        )
+
+
+def test_formatted_background_preserves_paragraphs_without_main_card(qtbot):
+    field = MessageBody()
+    qtbot.addWidget(field)
+    message = MessageV1(
+        sender_name="Навчальна бібліотека",
+        sender_address="library@training.invalid",
+        subject="Матеріали",
+        body_text="Перший абзац — ї є ґ.\n\nДругий абзац.\n",
+    )
+    field.set_message(message, None)
+    assert field.toPlainText() == message.body_text
+    assert "Навчальний ресурс" not in field.toPlainText()
 
 
 @pytest.mark.parametrize("choice", ["Save", "Discard", "Cancel"])
@@ -476,7 +555,7 @@ def test_long_unicode_wrap_and_layout_at_supported_sizes(
     assert page.messages.count() == 9
     page.preview.open_message(0)
     assert "ї є ґ" in page.body.toPlainText()
-    assert page.body.lineWrapMode() == QPlainTextEdit.LineWrapMode.WidgetWidth
+    assert page.body.lineWrapMode() == QTextEdit.LineWrapMode.WidgetWidth
     for width, height in [(1100, 720), (1400, 900), (1920, 1080)]:
         email_window.resize(width, height)
         qtbot.wait(30)

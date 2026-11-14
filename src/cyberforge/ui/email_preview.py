@@ -1,7 +1,7 @@
 """Native, isolated Gmail-inspired training mailbox. No web renderer or URLs."""
 
-from PySide6.QtCore import QSignalBlocker, QSize, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QPainter, QPalette, QPen
+from PySide6.QtCore import QRect, QSignalBlocker, QSize, Qt, Signal
+from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPalette, QPen, QTextCursor
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -11,7 +11,6 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QPlainTextEdit,
     QPushButton,
-    QSizePolicy,
     QStackedWidget,
     QStyle,
     QStyledItemDelegate,
@@ -22,6 +21,8 @@ from PySide6.QtWidgets import (
 )
 
 from cyberforge.agents.contracts import EmailDraftV2
+from cyberforge.ui.email_body import MessageBody
+from cyberforge.ui.icons import icon
 
 MAILBOX_ADDRESS = "participant@training.invalid"
 
@@ -39,28 +40,35 @@ def _text(text: str, name: str = "") -> QLabel:
     return result
 
 
-def _tool(text: str, name: str, *, enabled: bool = False) -> QToolButton:
+def _tool(
+    symbol: str, name: str, *, enabled: bool = False, size: int = 30
+) -> QToolButton:
     result = QToolButton()
-    result.setText(text)
+    glyph = icon(symbol, color="#5f6368")
+    glyph.addPixmap(glyph.pixmap(20, 20), QIcon.Mode.Disabled)
+    result.setIcon(glyph)
+    result.setIconSize(QSize(20, 20))
     result.setAccessibleName(name)
     result.setToolTip(name if enabled else name + " · лише навчальний макет")
     result.setEnabled(enabled)
-    result.setFixedSize(28, 28)
+    result.setFixedSize(size, size)
     return result
 
 
 LIGHT_STYLE = """
-QWidget { color: #202124; font-size: 13px; background: transparent; }
+QWidget { color: #202124; font-family: Arial; font-size: 14px;
+    background: transparent; }
 QFrame#emailPreview { background: #f6f8fc; border: 1px solid #c7cbd1;
     border-radius: 12px; }
 QFrame#browserTabs { background: #dfe3eb; border-top-left-radius: 11px;
     border-top-right-radius: 11px; }
-QLabel#browserTab { background: #f6f8fc; padding: 5px 14px; border-radius: 7px; }
+QFrame#browserTab { background: #f6f8fc; border-radius: 7px; }
+QLabel#browserTabTitle { font-size: 12px; }
 QLabel#browserNotice { color: #5f6368; font-size: 11px; }
 QLineEdit#browserAddress { background: #edf0f5; border: none; border-radius: 12px;
     padding: 4px 12px; color: #5f6368; font-size: 12px; }
-QLineEdit#mailSearch { background: #eaf1fb; border: none; border-radius: 16px;
-    padding: 8px 14px; color: #202124; }
+QLineEdit#mailSearch { background: #eaf1fb; border: none; border-radius: 20px;
+    padding: 10px 12px; color: #202124; }
 QLineEdit:focus { border: 1px solid #1a73e8; }
 QLabel#mailBrand { font-size: 22px; color: #5f6368; }
 QLabel#mailMark { color: #d93025; font-size: 25px; font-weight: 700; }
@@ -69,22 +77,25 @@ QPushButton { color: #202124; background: transparent; border: none;
     border-radius: 15px; padding: 6px 12px; text-align: left; }
 QPushButton:hover, QToolButton:hover { background: #e4e9f1; }
 QPushButton:focus, QToolButton:focus { border: 1px solid #1a73e8; }
-QPushButton#compose { background: #c2e7ff; border-radius: 14px; padding: 12px; }
+QPushButton#compose { background: #c2e7ff; border-radius: 15px; padding: 14px 12px; }
 QPushButton#inboxFolder { background: #d3e3fd; font-weight: 600; }
-QPushButton#reply { border: 1px solid #dadce0; border-radius: 14px;
-    padding: 4px 12px; }
+QWidget#mailFolders QPushButton { padding: 7px 12px; }
+QWidget#mailFolders QPushButton#compose { padding: 14px 12px; }
+QPushButton#reply, QPushButton#mailForward { border: 1px solid #9aa0a6;
+    border-radius: 17px; padding: 7px 16px; color: #444746; }
 QPushButton:disabled { color: #69717c; }
 QToolButton { color: #5f6368; background: transparent; border: none;
     border-radius: 14px; font-size: 17px; }
 QToolButton:disabled { color: #7c828b; }
-QLabel#category { color: #0b57d0; border-bottom: 3px solid #0b57d0;
-    padding: 7px 12px; font-weight: 600; }
+QFrame#category { border-bottom: 3px solid #0b57d0; }
+QLabel#categoryTitle { color: #0b57d0; font-weight: 600; }
 QLabel#recipient, QLabel#timestamp, QLabel#resource {
-    color: #5f6368; font-size: 11px; }
-QPlainTextEdit { background: #ffffff; color: #202124; border: none;
+    color: #5f6368; font-size: 12px; }
+QPlainTextEdit, QTextEdit { background: #ffffff; color: #202124; border: none;
     selection-background-color: #d3e3fd; selection-color: #202124; }
-QPlainTextEdit#mailSubject { font-size: 20px; }
-QPlainTextEdit#mailSender { font-size: 12px; }
+QPlainTextEdit#mailSubject { font-size: 22px; }
+QPlainTextEdit#mailSender { font-size: 14px; }
+QTextEdit#mailBody { font-size: 15px; }
 QListWidget { background: #ffffff; border: none; outline: none; }
 QListWidget:focus { border: 1px solid #1a73e8; }
 QScrollBar:vertical { background: #f1f3f4; width: 8px; }
@@ -98,7 +109,12 @@ class _MessageDelegate(QStyledItemDelegate):
     """Paint real artifact fields as dense mailbox rows; elide only the overview."""
 
     def sizeHint(self, option, index) -> QSize:
-        return QSize(0, 60)
+        width = (
+            option.widget.viewport().width()
+            if isinstance(option.widget, QListWidget)
+            else option.rect.width()
+        )
+        return QSize(0, 46 if width >= 680 else 64)
 
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index) -> None:
         data = index.data(Qt.ItemDataRole.UserRole + 1)
@@ -108,40 +124,57 @@ class _MessageDelegate(QStyledItemDelegate):
         rect = option.rect
         selected = option.state & QStyle.StateFlag.State_Selected
         unread = index.data(Qt.ItemDataRole.FontRole).bold()
-        painter.fillRect(
-            rect, QColor("#d3e3fd" if selected else "#ffffff" if unread else "#f2f6fc")
-        )
+        background = "#ffffff" if unread else "#f2f6fc"
+        if option.state & QStyle.StateFlag.State_MouseOver:
+            background = "#e8eef7"
+        painter.fillRect(rect, QColor("#c2dbff" if selected else background))
         painter.setPen(QPen(QColor("#e5e9ef")))
         painter.drawLine(rect.bottomLeft(), rect.bottomRight())
-        painter.setPen(QColor("#70757a"))
-        painter.drawRoundedRect(rect.x() + 12, rect.y() + 22, 13, 13, 2, 2)
-        painter.drawText(rect.x() + 36, rect.y() + 34, "☆")
-        left = rect.x() + 62
-        width = max(1, rect.width() - 125)
+        middle = rect.center().y()
+        for name, offset in (("checkbox", 10), ("star", 36)):
+            icon(name, color="#7a8189").paint(
+                painter, QRect(rect.x() + offset, middle - 9, 18, 18)
+            )
+        left = rect.x() + 66
         font = QFont(option.font)
-        font.setBold(unread)
+        font.setPixelSize(14)
+        font.setWeight(QFont.Weight.DemiBold if unread else QFont.Weight.Normal)
         painter.setFont(font)
         painter.setPen(QColor("#202124"))
+        wide = rect.width() >= 680
+        baseline = middle + 5 if wide else rect.y() + 24
+        sender_width = 155 if wide else max(1, rect.width() - 138)
         painter.drawText(
             left,
-            rect.y() + 22,
+            baseline,
             painter.fontMetrics().elidedText(
-                data[0], Qt.TextElideMode.ElideRight, width
+                data[0], Qt.TextElideMode.ElideRight, sender_width
             ),
         )
-        painter.drawText(rect.right() - 49, rect.y() + 22, data[3])
+        font.setPixelSize(12)
+        painter.setFont(font)
+        painter.drawText(rect.right() - 47, baseline, data[3])
+        font.setPixelSize(14)
+        painter.setFont(font)
+        subject_left = left + 175 if wide else left
+        subject_y = baseline if wide else rect.y() + 48
+        available = max(1, rect.right() - subject_left - (65 if wide else 12))
+        subject = painter.fontMetrics().elidedText(
+            data[1], Qt.TextElideMode.ElideRight, available
+        )
+        painter.drawText(subject_left, subject_y, subject)
+        used = painter.fontMetrics().horizontalAdvance(subject)
         font.setBold(False)
         painter.setFont(font)
         painter.setPen(QColor("#5f6368"))
-        painter.drawText(
-            left,
-            rect.y() + 44,
-            painter.fontMetrics().elidedText(
-                data[1] + " — " + data[2],
-                Qt.TextElideMode.ElideRight,
-                max(1, rect.width() - 78),
-            ),
-        )
+        if available - used > 35:
+            painter.drawText(
+                subject_left + used,
+                subject_y,
+                painter.fontMetrics().elidedText(
+                    " — " + data[2], Qt.TextElideMode.ElideRight, available - used
+                ),
+            )
         painter.restore()
 
 
@@ -191,25 +224,35 @@ class MailPreview(QFrame):
         self.selected_index: int | None = None
         self.read_messages: set[int] = set()
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(0, 0, 0, 8)
+        outer.setContentsMargins(0, 0, 0, 4)
         outer.setSpacing(0)
         tabs = QFrame()
         tabs.setObjectName("browserTabs")
         tab_row = QHBoxLayout(tabs)
         tab_row.setContentsMargins(10, 4, 10, 0)
-        self.browser_tab = _text("✉  Gmail — Навчальна пошта  ×", "browserTab")
-        tab_row.addWidget(self.browser_tab)
+        tab = QFrame()
+        tab.setObjectName("browserTab")
+        tab_content = QHBoxLayout(tab)
+        tab_content.setContentsMargins(10, 0, 4, 0)
+        tab_content.setSpacing(6)
+        tab_glyph = _text("")
+        tab_glyph.setPixmap(icon("mail", color="#5f6368").pixmap(16, 16))
+        tab_content.addWidget(tab_glyph)
+        self.browser_tab = _text("Gmail — Навчальна пошта", "browserTabTitle")
+        tab_content.addWidget(self.browser_tab)
+        tab_content.addWidget(_tool("close", "Закрити навчальну вкладку", size=24))
+        tab_row.addWidget(tab)
         tab_row.addWidget(_text("Навчальний перегляд", "browserNotice"), 1)
         outer.addWidget(tabs)
         address_row = QHBoxLayout()
         address_row.setContentsMargins(8, 2, 12, 2)
         address_row.setSpacing(2)
         for symbol, name in (
-            ("←", "Назад у браузері"),
-            ("→", "Уперед у браузері"),
-            ("↻", "Оновити сторінку"),
+            ("arrow_left", "Назад у браузері"),
+            ("arrow_right", "Уперед у браузері"),
+            ("refresh", "Оновити сторінку"),
         ):
-            address_row.addWidget(_tool(symbol, name))
+            address_row.addWidget(_tool(symbol, name, size=24))
         self.address = QLineEdit("https://mail.training.invalid/#inbox")
         self.address.setObjectName("browserAddress")
         self.address.setReadOnly(True)
@@ -224,7 +267,7 @@ class MailPreview(QFrame):
         header = QHBoxLayout()
         header.setContentsMargins(12, 2, 12, 4)
         header.setSpacing(8)
-        header.addWidget(_tool("☰", "Меню пошти"))
+        header.addWidget(_tool("menu", "Меню пошти"))
         header.addWidget(_text("M", "mailMark"))
         header.addWidget(_text("Gmail", "mailBrand"))
         self.search = QLineEdit()
@@ -232,6 +275,10 @@ class MailPreview(QFrame):
         self.search.setPlaceholderText("Пошук у пошті")
         self.search.setAccessibleName("Пошук у синтетичних листах")
         self.search.setMinimumWidth(0)
+        self.search.addAction(
+            icon("search", color="#444746"), QLineEdit.ActionPosition.LeadingPosition
+        )
+        self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self._filter)
         header.addWidget(self.search, 1)
         self.avatar = _text("Н")
@@ -245,24 +292,43 @@ class MailPreview(QFrame):
         workspace.setContentsMargins(8, 0, 8, 0)
         workspace.setSpacing(8)
         self.folders = QWidget()
+        self.folders.setObjectName("mailFolders")
         folder_layout = QVBoxLayout(self.folders)
         folder_layout.setContentsMargins(0, 5, 0, 0)
-        folder_layout.setSpacing(3)
-        self.compose = QPushButton("✎  Написати")
+        folder_layout.setSpacing(4)
+        self.compose = QPushButton("Написати")
+        self.compose.setIcon(icon("compose", color="#243947"))
+        self.compose.setIconSize(QSize(22, 22))
+        self.compose.setAccessibleName(
+            "Написати лист · недоступно в навчальному макеті"
+        )
         self.compose.setObjectName("compose")
         self.compose.setEnabled(False)
         self.compose.setToolTip("Навчальна скринька не надсилає листів.")
         folder_layout.addWidget(self.compose)
-        self.inbox_button = QPushButton("▣  Вхідні")
+        self.inbox_button = QPushButton("Вхідні")
+        self.inbox_button.setIcon(icon("inbox", color="#1f3761"))
+        self.inbox_button.setIconSize(QSize(20, 20))
         self.inbox_button.setObjectName("inboxFolder")
         self.inbox_button.setAccessibleName("Повернутися до вхідних листів")
         self.inbox_button.clicked.connect(self.show_inbox)
         folder_layout.addWidget(self.inbox_button)
         self.folder_extras = QWidget()
         extra = QVBoxLayout(self.folder_extras)
-        extra.setContentsMargins(12, 4, 0, 0)
-        for name in ("☆  Із зірочкою", "◷  Відкладені", "➤  Надіслані", "▤  Чернетки"):
-            extra.addWidget(_text(name))
+        extra.setContentsMargins(0, 0, 0, 0)
+        extra.setSpacing(0)
+        for symbol, name in (
+            ("star", "Із зірочкою"),
+            ("clock", "Відкладені"),
+            ("send", "Надіслані"),
+            ("draft", "Чернетки"),
+        ):
+            folder = QPushButton(name)
+            folder.setIcon(icon(symbol, color="#5f6368"))
+            folder.setIconSize(QSize(20, 20))
+            folder.setEnabled(False)
+            folder.setToolTip("Лише навчальний макет; доступні «Вхідні».")
+            extra.addWidget(folder)
         folder_layout.addWidget(self.folder_extras)
         folder_layout.addStretch()
         workspace.addWidget(self.folders)
@@ -272,16 +338,35 @@ class MailPreview(QFrame):
         sheet_layout.setContentsMargins(8, 0, 8, 4)
         sheet_layout.setSpacing(0)
         tools = QHBoxLayout()
-        self.inbox_back = _tool("←", "До вхідних листів", enabled=True)
-        self.inbox_back.clicked.connect(self.show_inbox)
-        tools.addWidget(self.inbox_back)
+        tools.setContentsMargins(0, 3, 0, 3)
+        tools.setSpacing(6)
+        self.inbox_tools = QWidget()
+        inbox_tools = QHBoxLayout(self.inbox_tools)
+        inbox_tools.setContentsMargins(0, 0, 0, 0)
+        inbox_tools.setSpacing(6)
         for symbol, name in (
-            ("▣", "Архів"),
-            ("!", "Позначити як спам"),
-            ("⌫", "Видалити"),
-            ("⋮", "Додаткові дії"),
+            ("checkbox", "Вибрати листи"),
+            ("refresh", "Оновити пошту"),
+            ("more", "Додаткові дії зі списком"),
         ):
-            tools.addWidget(_tool(symbol, name))
+            inbox_tools.addWidget(_tool(symbol, name))
+        tools.addWidget(self.inbox_tools)
+        self.reading_tools = QWidget()
+        reading_tools = QHBoxLayout(self.reading_tools)
+        reading_tools.setContentsMargins(0, 0, 0, 0)
+        reading_tools.setSpacing(6)
+        self.inbox_back = _tool("arrow_left", "До вхідних листів", enabled=True)
+        self.inbox_back.clicked.connect(self.show_inbox)
+        reading_tools.addWidget(self.inbox_back)
+        for symbol, name in (
+            ("archive", "Архів"),
+            ("spam", "Позначити як спам"),
+            ("trash", "Видалити"),
+            ("mail", "Позначити непрочитаним"),
+            ("more", "Додаткові дії"),
+        ):
+            reading_tools.addWidget(_tool(symbol, name))
+        tools.addWidget(self.reading_tools)
         tools.addStretch()
         self.counter = _text("0 листів", "timestamp")
         tools.addWidget(self.counter)
@@ -291,10 +376,22 @@ class MailPreview(QFrame):
         inbox_layout = QVBoxLayout(inbox)
         inbox_layout.setContentsMargins(0, 0, 0, 0)
         inbox_layout.setSpacing(0)
-        inbox_layout.addWidget(_text("▣  Основні", "category"))
+        category = QFrame()
+        category.setObjectName("category")
+        category_content = QHBoxLayout(category)
+        category_content.setContentsMargins(14, 10, 14, 10)
+        category_content.setSpacing(12)
+        category_icon = _text("")
+        category_icon.setPixmap(icon("inbox", color="#0b57d0").pixmap(20, 20))
+        category_content.addWidget(category_icon)
+        category_content.addWidget(_text("Основні", "categoryTitle"))
+        category_content.addStretch()
+        category.setMaximumWidth(240)
+        inbox_layout.addWidget(category)
         self.messages = QListWidget()
         self.messages.setAccessibleName("Вхідні синтетичні листи: Enter відкриває лист")
         self.messages.setMinimumSize(0, 85)
+        self.messages.setMouseTracking(True)
         self.messages.setHorizontalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
@@ -306,46 +403,62 @@ class MailPreview(QFrame):
         self.reading = QWidget()
         reading = QVBoxLayout(self.reading)
         reading.setContentsMargins(12, 0, 12, 0)
-        reading.setSpacing(3)
-        self.subject = self._plain("Тема вибраного листа", 36)
+        reading.setSpacing(4)
+        self.subject = self._plain("Тема вибраного листа", 38)
         self.subject.setObjectName("mailSubject")
-        reading.addWidget(self.subject)
+        subject_row = QHBoxLayout()
+        subject_row.addSpacing(46)
+        subject_row.addWidget(self.subject)
+        reading.addLayout(subject_row)
         sender_row = QHBoxLayout()
-        sender_row.setSpacing(8)
+        sender_row.setSpacing(10)
         self.sender_avatar = _text("Н")
         self.sender_avatar.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.sender_avatar.setFixedSize(30, 30)
-        self.sender_avatar.setStyleSheet("background: #e8d5ff; border-radius: 15px;")
-        sender_row.addWidget(self.sender_avatar)
-        self.sender = self._plain("Відправник і адреса вибраного листа", 42)
+        self.sender_avatar.setFixedSize(36, 36)
+        self.sender_avatar.setStyleSheet("background: #e8d5ff; border-radius: 18px;")
+        sender_row.addWidget(self.sender_avatar, 0, Qt.AlignmentFlag.AlignTop)
+        self.sender = self._plain("Відправник і адреса вибраного листа", 44)
         self.sender.setObjectName("mailSender")
-        sender_row.addWidget(self.sender, 1)
+        sender_details = QVBoxLayout()
+        sender_details.setSpacing(0)
+        sender_details.addWidget(self.sender)
+        self.recipient = _text("кому: мені · " + MAILBOX_ADDRESS, "recipient")
+        sender_details.addWidget(self.recipient)
+        sender_row.addLayout(sender_details, 1)
         self.timestamp = _text("", "timestamp")
         self.timestamp.setToolTip(
             "Синтетичний навчальний час, не фактична дата доставки."
         )
-        sender_row.addWidget(self.timestamp)
+        self.timestamp.setContentsMargins(0, 4, 0, 0)
+        sender_row.addWidget(self.timestamp, 0, Qt.AlignmentFlag.AlignTop)
         reading.addLayout(sender_row)
-        self.recipient = _text("кому: мені · " + MAILBOX_ADDRESS, "recipient")
-        reading.addWidget(self.recipient)
-        self.body = self._plain("Текст вибраного листа")
-        self.body.setMinimumHeight(65)
-        # Nested height-for-width layouts otherwise reserve the editor's large
-        # preferred height. Give it the remaining space and scroll long mail.
-        self.body.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored
-        )
-        reading.addWidget(self.body, 1)
+        self.body = MessageBody()
+        body_row = QHBoxLayout()
+        body_row.setSpacing(0)
+        body_row.addSpacing(46)
+        body_row.addWidget(self.body, 1)
+        reading.addLayout(body_row, 1)
         self.resource = _text("", "resource")
         self.resource.setWordWrap(True)
         reading.addWidget(self.resource)
-        self.reply = QPushButton("↶  Відповісти       ➜  Переслати")
+        self.reply_actions = QWidget()
+        reply_row = QHBoxLayout(self.reply_actions)
+        reply_row.setContentsMargins(46, 5, 0, 5)
+        reply_row.setSpacing(8)
+        self.reply = QPushButton("Відповісти")
         self.reply.setObjectName("reply")
-        self.reply.setEnabled(False)
-        self.reply.setToolTip(
-            "Відповіді та надсилання недоступні в навчальному макеті."
-        )
-        reading.addWidget(self.reply, 0, Qt.AlignmentFlag.AlignLeft)
+        self.forward = QPushButton("Переслати")
+        self.forward.setObjectName("mailForward")
+        for button, name in ((self.reply, "reply"), (self.forward, "mail_forward")):
+            button.setIcon(icon(name, color="#444746"))
+            button.setIconSize(QSize(18, 18))
+            button.setEnabled(False)
+            button.setToolTip(
+                "Відповіді та надсилання недоступні в навчальному макеті."
+            )
+            reply_row.addWidget(button)
+        reply_row.addStretch()
+        reading.addWidget(self.reply_actions)
         self.views.addWidget(self.reading)
         sheet_layout.addWidget(self.views, 1)
         workspace.addWidget(sheet, 1)
@@ -367,11 +480,12 @@ class MailPreview(QFrame):
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
         compact = self.width() < 850
-        self.folders.setFixedWidth(45 if compact else 160)
-        self.compose.setText("✎" if compact else "✎  Написати")
-        self.inbox_button.setText("▣" if compact else "▣  Вхідні")
+        self.folders.setFixedWidth(48 if compact else 168)
+        self.compose.setText("" if compact else "Написати")
+        self.inbox_button.setText("" if compact else "Вхідні")
         self.folder_extras.setVisible(not compact)
-        self.reply.setVisible(not compact)
+        self.reply_actions.setVisible(not compact)
+        self.messages.doItemsLayout()
 
     def heightForWidth(self, width: int) -> int:
         return self.layout().minimumHeightForWidth(width)
@@ -428,9 +542,20 @@ class MailPreview(QFrame):
         item.setFont(font)
         self.subject.setPlainText(message.subject)
         self.sender.setPlainText(f"{message.sender_name}\n{message.sender_address}")
+        cursor = self.sender.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.Start)
+        cursor.movePosition(
+            QTextCursor.MoveOperation.EndOfBlock, QTextCursor.MoveMode.KeepAnchor
+        )
+        style = cursor.charFormat()
+        style.setFontWeight(QFont.Weight.DemiBold)
+        style.setForeground(QColor("#202124"))
+        cursor.mergeCharFormat(style)
         self.sender_avatar.setText(message.sender_name[:1].upper())
         self.timestamp.setText(training_time(index) + " · навчальний час")
-        self.body.setPlainText(message.body_text)
+        self.body.set_message(
+            message, self.draft.slots.internal_resource_id if index == 0 else None
+        )
         self.resource.setText(
             "Навчальне посилання: "
             + self.draft.slots.internal_resource_id
@@ -439,6 +564,8 @@ class MailPreview(QFrame):
             else "Фоновий синтетичний лист"
         )
         self.views.setCurrentIndex(1)
+        self.inbox_tools.hide()
+        self.reading_tools.show()
         self.inbox_back.setEnabled(True)
         self.address.setText(
             f"https://mail.training.invalid/#inbox/message-{index + 1}"
@@ -448,6 +575,8 @@ class MailPreview(QFrame):
 
     def show_inbox(self) -> None:
         self.views.setCurrentIndex(0)
+        self.inbox_tools.show()
+        self.reading_tools.hide()
         self.inbox_back.setEnabled(False)
         self.address.setText("https://mail.training.invalid/#inbox")
         self.counter.setText(f"{self.messages.count()} листів")

@@ -391,6 +391,12 @@ Enter) to open it, and use the mailbox back button to return. Addresses and
 timestamps are synthetic; browser controls and sending actions do not navigate
 or send mail. No browser engine or external web content is used.
 
+The reading view uses a 22px subject, 15px paragraph text and a native formatted
+content template. The main message's sender supplies its synthetic header;
+its existing internal resource ID appears in an inert information/action card.
+Model strings remain literal text. Wide inbox rows align sender, subject,
+snippet and time; compact rows wrap their overview. Icons are painted locally.
+
 «Уточнення викладача для перегенерації» supplies an instruction for the next
 generation. It does not edit the current preview or saved email directly:
 «Перегенерувати» creates an unsaved candidate; «Зберегти» explicitly persists it

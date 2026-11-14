@@ -107,3 +107,19 @@ Refinement is labelled as a next-generation instruction. It does not mutate
 preview/persistence directly; regeneration creates a candidate and Save remains
 explicit. Existing services, worker/request identity, RBAC, provenance, archived/
 published restrictions and database schema are unchanged by this follow-up.
+
+## Native content formatting refinement — 14.11.2026
+
+The owner requested richer email presentation without new agent contracts.
+The body now uses native QTextEdit/QTextDocument formatting. A controlled
+QTextCursor template inserts existing sender/body/resource strings with
+`insertText`; no generated string reaches `setHtml`/`insertHtml`. Character,
+paragraph and frame formats provide typography, a synthetic sender header and
+an inert resource card. Resource loading is denied; there are no anchors,
+remote images, scripts, navigation or credential fields. Template labels are
+presentation, not additional AI-authored content or persisted data.
+
+This keeps SRS §§5.3/5.5 and the accepted native-widget boundary: EmailDraftV2
+JSON is unchanged and canonical. The HTML source tab remains a separately
+labelled inert content projection, not the source of the native document.
+No agent, service, worker, persistence or migration interface changes are needed.
