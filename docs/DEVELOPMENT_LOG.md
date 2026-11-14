@@ -2441,3 +2441,9 @@ focused run used the old prompt marker and domain-only rejection expectation;
 those two expectations are superseded by prompt-v3/ordinary-address acceptance
 coverage. No repeated full local suite or live API calls. Final-head Linux/
 Windows full CI evidence will be recorded in PR7 and the delivery report.
+
+Address-rule CI run43642852695 found the long-address UI fixture used a single
+200-character domain label. It now uses multiple valid labels at the identical
+total address length; layout assertions are unchanged. Focused long-Unicode
+layout test:1passed/3.25s; Ruff/format97files and whitespace checks pass. This
+fixture-only follow-up adds no production change or repeated full local suite.

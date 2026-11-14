@@ -634,7 +634,10 @@ def test_long_unicode_wrap_and_layout_at_supported_sizes(
             "Навчальний український текст із літерами ї є ґ.\n" * 70
         )
         payload["main"]["subject"] = "У" * 4000
-        payload["main"]["sender_address"] = "sender@" + "d" * 200 + ".invalid"
+        # Keep the long-address layout stress while using valid domain labels.
+        payload["main"]["sender_address"] = (
+            "sender@" + ("d" * 63 + ".") * 3 + "d" * 8 + ".invalid"
+        )
         payload["background"] *= 4
         mock._responses.clear()
         mock._responses.append(ProviderResponse(text=json.dumps(payload)))
