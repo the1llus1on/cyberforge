@@ -773,3 +773,33 @@ def test_publication_survives_database_and_service_restart(publication_env):
         assert PublicationAccessService(publications).resolve_internal(learner, pub.id)
     finally:
         database.close()
+
+
+def test_refused_lower_phase_downgrade_rolls_back_entire_schema(publication_env):
+    from sqlalchemy import inspect
+
+    e = publication_env
+    materials(e)  # Phase8 tables empty; accepted Phase7 Web prevents0005 downgrade.
+    with e.database.engine.connect() as db:
+        before_tables = set(inspect(db).get_table_names())
+        before_triggers = db.exec_driver_sql(
+            "SELECT name, sql FROM sqlite_master WHERE type='trigger' ORDER BY name"
+        ).all()
+    config = e.database.migration_config()
+    with pytest.raises(RuntimeError), e.database.engine.begin() as db:
+        config.attributes["connection"] = db
+        command.downgrade(config, "0004_email_materials")
+    with e.database.engine.connect() as db:
+        assert set(inspect(db).get_table_names()) == before_tables
+        assert (
+            db.exec_driver_sql(
+                "SELECT name, sql FROM sqlite_master WHERE type='trigger' ORDER BY name"
+            ).all()
+            == before_triggers
+        )
+        assert MigrationContext.configure(db).get_current_revision() == (
+            "0006_scenario_integration_publication"
+        )
+    # The current schema remains usable without a repair/reinitialization.
+    link(e)
+    assert e.webs.load(e.token, e.scenario) == e.saved_web

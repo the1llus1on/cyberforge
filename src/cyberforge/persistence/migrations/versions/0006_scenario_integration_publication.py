@@ -22,7 +22,18 @@ def execute(sql: str) -> None:
     op.execute(sa.text(sql))
 
 
+def serialize_ddl() -> None:
+    # sqlite3 legacy mode does not BEGIN on SELECT/DDL. Alembic may report
+    # an SQLAlchemy transaction while the driver has none. Start a real one
+    # before changing schema, so a later refused downgrade restores the whole
+    # chain, including tables/triggers and the Alembic version stamp.
+    connection = op.get_bind()
+    if not connection.connection.driver_connection.in_transaction:
+        connection.exec_driver_sql("BEGIN IMMEDIATE")
+
+
 def upgrade() -> None:
+    serialize_ddl()
     for table, constraint in (
         ("scenario_links", "link_revision"),
         ("rubric_definitions", "rubric_revision"),
@@ -261,6 +272,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    serialize_ddl()
     for table in TABLES:
         if op.get_bind().execute(sa.text(f"SELECT 1 FROM {table} LIMIT 1")).first():
             raise RuntimeError("Cannot downgrade integration/publication/audit data")
