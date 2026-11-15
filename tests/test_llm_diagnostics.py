@@ -41,7 +41,10 @@ def test_disabled_or_unapproved_never_reads_config_or_creates_client(monkeypatch
         ("groq", "openai/gpt-oss-120b"),
     ],
 )
-def test_one_bounded_attempt_and_no_fallback(monkeypatch, capsys, provider, model):
+@pytest.mark.parametrize("limit", [None, 50000])
+def test_one_bounded_attempt_and_no_fallback(
+    monkeypatch, capsys, provider, model, limit
+):
     calls = []
 
     class OfflineDiagnostic:
@@ -59,11 +62,12 @@ def test_one_bounded_attempt_and_no_fallback(monkeypatch, capsys, provider, mode
         assert config.fallback_to_groq is False
         return OfflineDiagnostic()
 
-    monkeypatch.setattr(diagnostics, "load_config", lambda path: GatewayConfig())
+    config = GatewayConfig(parameters={"max_output_tokens": limit})
+    monkeypatch.setattr(diagnostics, "load_config", lambda path: config)
     monkeypatch.setattr(diagnostics, "create_gateway", factory)
     assert diagnostics.main(["--live", "--provider", provider, "--model", model]) == 0
     assert len(calls) == 1
-    assert calls[0].parameters.max_output_tokens == 256
+    assert calls[0].parameters.max_output_tokens == limit
     assert calls[0].parameters.timeout_seconds == 20
     output = capsys.readouterr().out
     assert "prompt" not in output

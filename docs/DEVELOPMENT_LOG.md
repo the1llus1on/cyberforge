@@ -2491,3 +2491,9 @@ Official Groq Python API docs confirm optional max_completion_tokens omission
 and APIStatusError status_code/body metadata; local pinned SDK transports
 verify serialization without network. Raw provider messages/bodies are never
 exported. No packaging/dependency/migration changes or GUI redesign.
+
+Final scan found the separate connectivity CLI still hard-coded256tokens.
+It now inherits the configured optional provider limit too. Diagnostic/Hydrogen
+focused selection:70passed/4.82s, including absent and explicit50000-token
+settings. Ruff lint/format98files and whitespace pass. No live call; this small
+follow-up is covered by final-head CI rather than another full local run.

@@ -636,7 +636,7 @@ def test_hydrogen_diagnostic_guard_and_single_mocked_execution(monkeypatch, caps
             assert req.provider == Provider.GEMINI and req.model == HYDROGEN
             assert req.parameters.thinking == "low"
             assert (
-                req.parameters.max_output_tokens == 256
+                req.parameters.max_output_tokens is None
                 and req.parameters.timeout_seconds == 20
             )
             return create_gateway().generate(
