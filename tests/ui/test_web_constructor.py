@@ -306,9 +306,24 @@ def test_compact_critical_controls_and_browser_width(web_window, qtbot):
     assert web_window.scenario_page.web_status.text() == MaterialState.UNSAVED
 
 
-def test_compact_native_combo_metrics_cannot_widen_workspace(web_window, qtbot):
+def test_compact_native_combo_metrics_cannot_widen_workspace(
+    request, monkeypatch, qtbot
+):
+    from PySide6.QtCore import QSize
+
+    from cyberforge.ui import web_page
+
+    class WideNativeButton(web_page.QPushButton):
+        def minimumSizeHint(self):
+            native = super().minimumSizeHint()
+            # Use the measured Windows maximum rather than guessing a font
+            # conversion that varies with platform DPI and font fallback.
+            return QSize(max(232, native.width()), native.height())
+
+    monkeypatch.setattr(web_page, "QPushButton", WideNativeButton)
+    web_window = request.getfixturevalue("web_window")
     page = generate(web_window, qtbot)
-    # Larger native glyph metrics reproduce the Windows minimum-hint pressure
+    # Larger native glyph metrics reproduce Windows combo/button hint pressure
     # on Linux too, without relaxing the actual viewport/overflow assertions.
     for control in (page.preset, page.theme, page.scope, page.selected_component):
         control.setStyleSheet("font-size:20px")

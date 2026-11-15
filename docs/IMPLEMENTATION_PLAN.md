@@ -1009,3 +1009,11 @@ Focused Web UI/security15passed/34.17s; post-fix real WSLg compact3passed/9.36s.
 Initial CI43749813530: Linux884passed, Windows881passed/2skips/1compact failure;
 history retained. Final exact-head CI evidence belongs to PR8/delivery report.
 Phase7 REVIEW, owner acceptance pending; no merge/Phase8.
+
+
+Measured native action-row correction: Edit moved to top row (Email design),
+three actions below preview; Windows numeric row minimum828 identified directly.
+Final local gate **886passed/518.91s**, Ruff117files PASS; focused Web UI/security
+15passed/35.12s, real WSLg compact3passed/11.22s plus measured-width1passed/4.33s.
+Failure-only diagnostics retained; CI runs compact gate before full suite.
+Final PR8 HEAD and Linux/Windows evidence remain in PR/delivery report; Phase7 REVIEW.

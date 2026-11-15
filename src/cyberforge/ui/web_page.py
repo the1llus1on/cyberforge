@@ -124,7 +124,10 @@ class WebPage(QWidget):
         ):
             button.setStyleSheet("padding:6px 10px")
             button.clicked.connect(slot)
-            actions.addWidget(button)
+            if button is self.edit_button:
+                top.addWidget(button)
+            else:
+                actions.addWidget(button)
         layout.addLayout(actions)
         for field in (self.title, self.provider, self.status, self.message):
             policy = field.sizePolicy()

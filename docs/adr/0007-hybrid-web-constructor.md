@@ -70,3 +70,7 @@ Phish Scale для human detection difficulty електронних листі�
 Windows CI remediation у межах того самого рішення: native selector minimum hints
 обмежено для compact workspace; browser tab elides visual title, зберігаючи повний
 tooltip/canonical value. Renderer/trust boundary та збережені дані не змінюються.
+
+Numeric Windows CI identified the remaining bottom action-row minimum828px.
+Edit action now lives in the top row, matching Email; code/generate/save remain
+below preview. This preserves labels/font size and browser height at1100×720.

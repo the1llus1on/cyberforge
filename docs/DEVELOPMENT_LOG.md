@@ -2706,3 +2706,38 @@ full pytest, so Windows root-cause inspection no longer waits for unrelated suit
 Local focused compact3passed/9.68s, Ruff117files PASS. Application code unchanged
 in this diagnostic increment; prior886-test local gate remains the application
 baseline. No security/persistence failures, live calls, merge or Phase8.
+
+### Phase 7 — measured Windows action-row root cause
+
+Diagnostic HEAD04393b6fdcafb2b93da72fb072557162345d04e3,
+CI43753536827 focused Windows gate supplied full numeric evidence in seconds:
+page min860; selector row548 (692with larger font), browser min142;
+**bottom action row min828** from button hints232/232/218/134 + spacing12.
+Page margins32 yield860. This identifies the remaining constraint directly;
+selector/metadata bounds alone could not remove it. No content or credentials
+are included in numeric diagnostics. The compact assertions remain unchanged.
+
+Move «Редагувати сайт» to the existing top row, matching accepted Email layout;
+keep code/generate/save below preview. No labels shortened, font reduced, preview
+permanently shrunk or checks weakened. Native-pressure regression now enlarges
+both combo and button fonts. Focused Web UI/security **15passed/35.12s**;
+real WSLg compact3cases **3passed/11.22s**. Refreshed screenshot inspected:
+1100×720, page768×656, browser662×453, viewport662×358, Save visible/off-record true.
+Full stable regression rerun before publishing this measured correction.
+
+Portable native regression уточнено за фактичними Windows measurements:
+minimum button hint232px замість припущення про pixel font conversion; assertion
+і component/viewport bounds не змінені. Test-only уточнення виконано під час full
+run, application code frozen. Focused compact **3passed/9.86s**, real WSLg measured
+hint case **1passed/4.33s**. Повний CI повторить актуальну версію цього тесту.
+
+
+Measured-fix stable local gate before publishing:
+`uv run --offline --locked ruff check .` — PASS;
+`uv run --offline --locked ruff format --check .` — PASS117files;
+`uv run --offline --locked pytest -q --tb=short` — **886passed/518.91s**, exit0.
+Portable measured-width test-only refinement separately3passed/9.86s and WSLg
+1passed/4.33s; product code remained frozen during full run. Existing783regressions
+retained. Publish only after this successful gate; exact-head Linux/Windows CI
+follows, including focused compact gate first and then complete886-case suite.
+No live API/merge/owner acceptance/Phase8; UI-only change, package policy unchanged.
