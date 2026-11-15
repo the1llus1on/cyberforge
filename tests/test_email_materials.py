@@ -424,7 +424,7 @@ def test_upgrade_from_phase5_preserves_all_existing_records(email_env):
     assert env.service.get(env.token, env.scenario.id) == before
     with env.database.engine.connect() as db:
         context = MigrationContext.configure(db)
-        assert context.get_current_revision() == "0005_web_materials"
+        assert context.get_current_revision() == "0006_scenario_integration_publication"
         assert compare_metadata(context, Base.metadata) == []
         assert db.exec_driver_sql("PRAGMA foreign_key_check").all() == []
     env.emails.save(env.token, env.workspace, generate(env))

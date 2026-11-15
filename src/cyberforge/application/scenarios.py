@@ -231,6 +231,44 @@ class ScenarioService:
             db.flush()
             return self._value(record, row)
 
+    def create_next_draft(self, token: str | None, expected: Scenario) -> Scenario:
+        """Explicit fork of published parameters, even when unchanged; no artifacts."""
+        with self.accounts.transaction(write=True) as db:
+            actor = self.accounts.require(
+                db, token, Role.INSTRUCTOR, Role.ADMINISTRATOR
+            )
+            record = self._record(db, actor, expected.id, write=True)
+            latest = self._latest(db, record.id)
+            if (latest.number, latest.revision, record.archive_revision) != (
+                expected.version,
+                expected.revision,
+                expected.archive_revision,
+            ):
+                raise ApplicationError(
+                    "Сценарій уже змінено. Відкрийте актуальну версію."
+                )
+            if (
+                record.archived_at is not None
+                or latest.status != ScenarioStatus.PUBLISHED
+            ):
+                raise ApplicationError(
+                    "Нову версію можна створити лише з активної опублікованої версії."
+                )
+            now = datetime.now(UTC).replace(tzinfo=None)
+            row = ScenarioVersion(
+                scenario_id=record.id,
+                number=latest.number + 1,
+                revision=1,
+                status=ScenarioStatus.DRAFT,
+                parameters=self._value(record, latest).parameters.bounded_payload(),
+                created_at=now,
+                updated_at=now,
+            )
+            db.add(row)
+            db.flush()
+            result = self._value(record, row)
+        return result
+
     def _archive_state(
         self,
         token: str | None,
