@@ -2778,3 +2778,48 @@ Acceptance increment: документаційні зміни лише в README
 plan/log. SRS/runtime/tests/dependencies/migrations не змінено. Локальний full suite
 не повторюється для docs-only; required final-head CI виконує обидві платформи.
 Перед merge перевіряються base/main, scope, mergeability та expected_head_sha.
+
+## 15.11.2026 — Phase 8: дозволений початок
+
+Вкладений owner request явно затвердив ScenarioLinkV1, RubricDefinitionV1 та
+окремі audited group grants; дозволив narrow SRS amendment, branch/commit/push/PR.
+GitHub MCP main SHA b84e2fbd… підтверджено; tree clean. Перший sandbox fetch
+відхилено через read-only .git; elevated authorized fetch/ff/switch успішні.
+Існуючі owner .env/DB/credentials/environments не відкривалися й не змінювалися.
+Прочитано accepted Scenario/Email/Web/RBAC/contracts/migrations/UI та relevant
+SRS/Phase6–7/ADR5–7. Existing BEGIN IMMEDIATE та material/parameter revisions
+збережено. Context7 SQLAlchemy functional docs request успішний; dependencies без змін.
+Нормативні уточнення лише в SRSv3.0 з датою; ADR0008 і plan фіксують рішення/gates.
+Contracts: typed link, bounded rubric registry, reviewed snapshot, report/receipt,
+manifest/internal navigation; actual scoring/attempts/AI поза Phase8.
+
+### Phase8 — contracts/integration/persistence gate
+
+Додано closed ScenarioLinkV1, rubric registry/declarations, reviewed sources/report,
+review receipt та manifest/internal-navigation contracts. Additive0006 додає6tables,
+immutable-source/history triggers, REPLACE guards і automatic grant audit transitions.
+Existing published-version/archive/Email/Web triggers збережено. Explicit new draft
+копіює тільки parameters; publication status не збільшує content revision.
+
+Початковий focused run виявив collision назви audit trigger; усунуто до GUI gate.
+Наступний run:68passed до нового forged-rubric тесту, який виявив serializer warning
+перед revalidation. warnings=False лише для serialization, повна local validation
+збережена. Повторний rubric focused:12passed/16.36s. Детальні combined security/
+persistence/regression результати додаються після завершення. Dependency versions
+незмінні; uv cache перенаправлено в /tmp через read-only default cache.
+
+### Phase8 — completed focused persistence/UI increments
+
+`.venv/bin/pytest tests/test_scenario_integration.py tests/test_web_materials.py tests/test_email_materials.py tests/test_scenarios.py tests/test_groups_database.py -q --tb=short`
+— **172passed/234.24s**. Включено75new Phase8 cases: exact source/link, forbidden
+roles/groups, warning ack, stale receipts, atomic rollback/concurrent publication,
+direct UPDATE/DELETE/REPLACE denial, immutable historical references, grant/revoke/
+regrant audit, current membership/archive/restore/latest eligible та0005→0006.
+
+`.venv/bin/pytest tests/ui/test_scenario_integration.py tests/ui/test_scenarios_ui.py -x -q --tb=short`
+— **45passed/120.82s**. Додано integrated constructor workspace з read-only Email/
+Web review, link/rubric saves, detailed readiness, group picker, final confirmation,
+history/grants, explicit next draft. Save/Discard/Remain й session guards retained.
+Зелений saved матеріал не означає publication. Додатковий precision review замінив
+rubric spinbox на validated numeric text, щоб не округлювати довільні positive
+saved weights; focused precision/actual Web/WSLg gate виконується окремо.

@@ -1049,3 +1049,21 @@ polish залишаються Phase12 ризиками; Windows CI їх не з�
 точні SHA/CI/merge evidence фіксуються в PR8 та фінальному звіті без циклічних
 документаційних commits. Phase8 — **NOT STARTED / PLANNING**: architecture та
 implementation requirements потребують окремого review/дозволу. Phases9–12 без змін.
+
+## Phase 8 — Scenario Integration (15.11.2026)
+
+**IN PROGRESS**, явно дозволено реалізацію/feature PR, без merge/ACCEPTED/Phase9.
+База main b84e2fbdfcf1d84f86a6d8c30a9b0b868e678212, clean tree, GitHub MCP,
+fetch/ff-only; feat/phase-8-scenario-integration.
+
+| Інкремент | SRS | Gate / evidence |
+| --- | --- | --- |
+| Поправка/ADR/contracts | §§4,6.10,11–12,14,23–24 | Closed schemas, registry positive/negative serialization |
+| Integration/link | §§6.10,11.4–11.6,16 | exact persisted Email/Web/provenance/target, stale and forged rejection, inert visible CTA |
+| Rubric | §§12.2–12.6 | bounded criteria/actions/applicability, weights/editor, safe decline |
+| Readiness/review | §§4.8,11.6 | deterministic reason codes, exact receipts, warning ack, nonoverrideable blockers |
+| Persistence/publication | §§4.9,14 | additive0006, rollback/races/direct-write protection, explicit new version |
+| Grants/access | §§2.3–2.5,14,16 | RBAC, audit regrant, current membership, dedup/latest, archive/restore |
+| GUI/delivery | §§3–4,21,24 | guards/modals/compact WSLg, full Ruff/pytest/package, final-head Linux/Windows CI |
+
+Деталі — ADR-0008 та PHASE_8_ACCEPTANCE. No AI calls/learner attempts/scoring.
