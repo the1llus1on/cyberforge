@@ -142,3 +142,24 @@ def test_environment_detection(monkeypatch, qapp, backend, present, expected):
     monkeypatch.setattr(shortcuts.QApplication, "platformName", lambda: backend)
     monkeypatch.setattr(shortcuts.Path, "is_file", lambda path: present)
     assert shortcuts.affected_environment() == expected
+
+
+def test_focus_binding_filters_new_native_editors_only(qtbot, monkeypatch):
+    monkeypatch.setattr(shortcuts, "affected_environment", lambda: True)
+    window = QWidget()
+    qtbot.addWidget(window)
+    window.show()
+    handler = shortcuts.ClipboardShortcuts(window)
+    app = QApplication.instance()
+    handler.bind(app)
+    field = QLineEdit(window)
+    field.show()
+    field.setFocus()
+    handler._focus_changed(None, field)
+    previous = app.clipboard().text()
+    try:
+        app.clipboard().setText("Київ")
+        app.sendEvent(field, event())
+        assert field.text() == "Київ"
+    finally:
+        app.clipboard().setText(previous)

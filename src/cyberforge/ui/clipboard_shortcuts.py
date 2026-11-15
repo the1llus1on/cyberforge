@@ -43,6 +43,18 @@ class ClipboardShortcuts(QObject):
         super().__init__(window)
         self.window = window
 
+    def bind(self, app: QApplication) -> None:
+        # A Python application-wide event filter wraps every Chromium internal
+        # QObject, including objects being destroyed. Filter native editors only.
+        app.focusChanged.connect(self._focus_changed)
+        self._focus_changed(None, app.focusWidget())
+
+    def _focus_changed(self, old, current) -> None:
+        if isinstance(current, (QLineEdit, QPlainTextEdit, QTextEdit)) and (
+            self.window.isAncestorOf(current)
+        ):
+            current.installEventFilter(self)
+
     def eventFilter(self, watched, event) -> bool:
         if (
             event.type() not in (QEvent.Type.KeyPress, QEvent.Type.ShortcutOverride)
