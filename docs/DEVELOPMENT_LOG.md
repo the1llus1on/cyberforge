@@ -2517,3 +2517,39 @@ tests/test_llm_gemini.py`:172passed/11.98s. Updated provider-neutral assertion
 selection rerun:4cases verify Email4096 vs unrelated operations unset. Ruff
 lint/format98files and whitespace checks pass. Final-head CI evidence follows
 in PR7 and delivery; no full local suite or live requests.
+
+
+## Phase 6 — остаточне прийняття та дозволене злиття, 2026-11-15
+
+Власник явно оголосив Phase6 ACCEPTED і дозволив normal merge commit PR7 у
+main після final-head CI. Reviewed implementation HEAD:
+9653b72ddd65be590a60a21aeb2bb59ad3d4f2aa. PR відкритий, base main,
+mergeable_state clean; review threads, reviews і comments порожні, блокувальних
+зауважень немає. Reviewed CI43679237327: Linux783passed/280.37s,
+Windows781passed/2POSIX-only skips/476.08s; Ruff98files/import/Qt smoke success.
+
+Owner-reported прийняття: approved Gmail-inspired UI; manual main/background
+editing; Apply/Cancel/Save; canonical JSON, persistence/reopen; refinement і
+regeneration; GUI generation зі змістовними scenario parameters і GUI
+regeneration. Owner live Groq4096: initial889/refinement780output tokens,
+validation PASSED, protected_fields_preserved=true. Ці GUI/live докази належать
+власнику; Codex не запускав нових live API calls під час acceptance.
+
+Документаційний інкремент змінює лише README, PHASE_6_ACCEPTANCE,
+IMPLEMENTATION_PLAN, DEVELOPMENT_LOG та ADR-0006 status. Історію REVIEW збережено,
+SRS/runtime не змінено. Остаточний doc HEAD має пройти Linux/Windows CI перед
+звичайним merge через GitHub MCP із expected_head_sha; фактичний merge SHA і
+результати ff-only local main sync фіксуються в PR7/звіті.
+
+Прийняті Phase12 deferrals: подальше UX polishing, ширша scenario quality,
+фінальна оптимізація та physical Windows11/DPI/keyboard/installer acceptance.
+WSLg/Windows Server CI не є доказом фізичної Windows11 перевірки. Occasional
+failure за underspecified scenario input — nonblocking robustness/diagnostic
+opportunity, яку не приховано й не оголошено виправленою.
+
+Локально до змін: tracked tree clean, owner temp/ залишається untracked і
+зберігається. Baseline hashes8private/database files та metadata .venv збережено
+локально у /tmp без виведення вмісту секретів. Після merge перевірити їхню
+незмінність; не виконувати cleanup/reset/init-demo. Phase7 — NOT STARTED /
+PLANNING; лише майбутнє погодження Web Constructor, без branch/PR/реалізації.
+Phases8–12 лишаються NOT STARTED.

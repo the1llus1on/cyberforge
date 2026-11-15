@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–5 — ACCEPTED; Phase 6 — REVIEW, очікує незалежного review та прийняття власником; Phases 7–12 — NOT STARTED.
+**State:** Phases 0–6 — ACCEPTED (Phase6 прийнято власником2026-11-15); Phase7 — NOT STARTED / PLANNING; Phases8–12 — NOT STARTED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -938,3 +938,32 @@ default. Explicit8192+ remains valid; no hard application maximum or default
 local quotas. Gemini, unrelated operations, validation and refinement protections
 remain intact. No live API calls by Codex. Focused tests/Ruff locally and final
 Linux/Windows CI; Phase6 stays REVIEW, no merge/acceptance/Phase7.
+
+
+## Phase 6 — ACCEPTED власником 2026-11-15
+
+Явне рішення власника замінює попередні REVIEW/pending записи без видалення
+історії. Прийнято Gmail-inspired Email Constructor, manual main/background
+editing, Apply/Cancel/explicit Save, canonical JSON/persistence/reopen,
+AI refinement/regeneration та чинні security/RBAC/provenance/versioning/threading
+межі. Повний scope і accepted limitations:
+[PHASE_6_ACCEPTANCE.md](PHASE_6_ACCEPTANCE.md).
+
+Owner GUI: generation зі змістовними параметрами та regeneration — success.
+Owner live Groq4096: initial889/refinement780output tokens, validation PASSED,
+protected fields preserved. Reviewed HEAD9653b72ddd65be590a60a21aeb2bb59ad3d4f2aa;
+[PR7](https://github.com/the1llus1on/cyberforge/pull/7), CI43679237327:
+Linux783passed, Windows781passed/2POSIX skips, Ruff/import/Qt smoke success.
+Документаційний acceptance HEAD повторно перевіряється CI; власник дозволив
+звичайний merge commit, потім fetch/ff-only local main synchronization.
+Final HEAD/CI/merge SHA — у PR7 та фінальному звіті, без циклічних doc commits.
+
+Phase12: UX polishing, ширша якість сценаріїв, final optimization і physical
+Windows11 acceptance matrix залишаються відкладеними ризиками, не виконаними
+перевірками. Occasional generation failure за underspecified input —
+неблокувальна robustness/diagnostic opportunity.
+
+**Phase7 — NOT STARTED / PLANNING.** Наступний запланований етап — Web
+Constructor (SRS §23); architecture/UI/templates/editing/acceptance criteria
+потребують окремого погодження власника. Реалізацію, branch або PR Phase7
+не розпочато цим рішенням. Phases8–12 без змін: NOT STARTED.

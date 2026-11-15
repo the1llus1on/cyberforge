@@ -382,7 +382,11 @@ Default `max_corrections=0`; явне `1` дозволяє максимум од
 retry/fallback і model selection залишаються політикою Phase 4; demo не змінює
 cloud configuration. Нових live API-викликів для Phase 5 не дозволено.
 
-### Phase 6: Email Constructor (REVIEW)
+### Phase 6: Email Constructor (ACCEPTED — 2026-11-15)
+
+Прийнято власником після GUI generation/regeneration і live Groq перевірки.
+Scope, докази та Phase12 deferrals — [PHASE_6_ACCEPTANCE](docs/PHASE_6_ACCEPTANCE.md).
+Phase7 — NOT STARTED / PLANNING, потребує окремого погодження до реалізації.
 
 Open a saved scenario → «Створити електронний лист». The native Qt preview now
 resembles a Gmail mailbox inside a browser frame, with a light mail area inside

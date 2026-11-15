@@ -1,6 +1,6 @@
 # ADR-0006 — Email Constructor: явне збереження та доставка результатів
 
-**Статус:** реалізація Phase 6, очікує review власника.
+**Статус:** ACCEPTED власником проєкту 2026-11-15 (Phase6, PR7).
 **Дата:** 13.11.2026. SRS §§4.5–4.9, 5.1–5.8, 9.2, 10, 11.2–11.7, 14.4, 21, 23.
 
 ## Межа сервісу та дані
@@ -190,3 +190,16 @@ Provider schema structure, persistence, provenance, RBAC and external URL
 restrictions are unchanged. No DNS/MX checks, SMTP, navigation or live API calls.
 Focused offline tests and Ruff locally; final Linux/Windows CI runs the full
 suite. Phase 6 stays REVIEW; no merge or Phase 7.
+
+
+## Остаточне прийняття — 2026-11-15
+
+Власник прийняв поточну архітектуру Email Constructor: native Gmail-inspired
+preview, canonical JSON, manual edits через trusted service, explicit Save,
+protected AI refinement, persistence/provenance/RBAC/threading boundaries.
+Owner GUI generation/regeneration і live Groq initial/refinement успішні;
+докази та Phase12 deferrals — PHASE_6_ACCEPTANCE.md. Попередні pending/review
+записи ADR є історією рішень. SRS/runtime не змінено для acceptance.
+Phase7 залишається NOT STARTED / PLANNING до окремого погодження архітектури,
+UI/templates/editing та acceptance criteria. Merge PR7 дозволено окремо
+власником; final-head CI і actual merge SHA фіксуються в PR7/звіті.

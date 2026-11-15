@@ -1,9 +1,66 @@
 # Phase 6 — Email Constructor
 
-**Статус:** REVIEW; прийняття виконує лише власник.
+**Статус:** ACCEPTED власником проєкту 2026-11-15.
 Окремий дозвіл Phase 6 отримано 13.11.2026 після ACCEPTED Phase 5 / PR6,
 merge `8a6beabf13ec4da43d2ce26bb78bccc9fce64340`. Гілка:
-`feat/phase-6-email-constructor`. Merge та Phase 7 не дозволені цим завданням.
+`feat/phase-6-email-constructor`. Власник дозволив звичайний merge commit PR #7
+після CI остаточного HEAD; Phase 7 потребує окремого погодження.
+
+## Остаточне прийняття власником — 2026-11-15
+
+Власник явно прийняв Phase 6 — Email Constructor і дозволив злиття
+[PR #7](https://github.com/the1llus1on/cyberforge/pull/7) у main звичайним merge
+commit. Це рішення замінює попередні REVIEW/pending записи нижче; історію
+перевірок збережено. Незалежно перевірений implementation HEAD:
+`9653b72ddd65be590a60a21aeb2bb59ad3d4f2aa`.
+
+Прийнятий обсяг (SRS §§4.7,5.1–5.8,9.2,10–11,16,21,23–24):
+
+- Gmail-inspired native Qt інтерфейс із темною оболонкою, світлою поштою,
+  inbox/main/background і відкритим листом; компактне вікно1100×720.
+- Візуальне редагування основного/фонових листів: ім’я, адреса, тема, текст;
+  Apply змінює робочу чернетку, Cancel відкидає правки діалогу, Save явно
+  записує SQLite. Збереження та повторне відкриття працюють.
+- Canonical EmailDraftV2 JSON, read-only JSON inspector; HTML-проєкцію видалено,
+  нативне форматування збережено. Звичайні домени та .invalid підтримуються.
+- AI generation/refinement використовує поточну валідну чернетку; main_body
+  детерміновано захищає решту полів. Збережено RBAC, provenance, version/revision,
+  unsaved-change, stale-result і Qt worker protections. Немає SMTP, зовнішньої
+  навігації, виконання довільного коду чи автоматичних cloud requests.
+- Groq/openai/gpt-oss-120b Email default4096 для initial/refinement, явні більші
+  overrides без application maximum; локальні квоти залишаються opt-in.
+
+**Owner-run / owner-reported докази:** власник схвалив Gmail-inspired дизайн,
+ручне редагування, Apply/Cancel/Save, JSON/persistence, AI refinement та
+regeneration. Live Groq з4096 успішно виконав initial (889output tokens) і
+refinement (780output tokens), local validation PASSED,
+protected_fields_preserved=true. Окремо власник підтвердив успішну GUI generation
+зі змістовними параметрами сценарію та GUI regeneration. Codex не виконував цих
+live API перевірок і не приписує собі owner manual acceptance.
+
+**CI reviewed HEAD:** [run43679237327](https://github.com/the1llus1on/cyberforge/actions/runs/43679237327):
+Linux783passed/280.37s; Windows Server2022 —781passed,2POSIX-only skipped/476.08s;
+Ruff lint/format98files, package import і Qt smoke — success на обох платформах.
+Окремий documentation-only acceptance commit має пройти final-head CI перед
+merge; точний final HEAD, CI та фактичний merge SHA фіксуються в PR7 і звіті.
+
+**Прийняті обмеження / Phase12:** подальше UX polishing, ширші перевірки якості
+сценаріїв, фінальна оптимізація; physical native Windows11, DPI, keyboard,
+packaging/installer та загальний acceptance matrix. Вони не позначені як уже
+пройдені. WSLg і Windows Server CI не замінюють physical Windows11 acceptance.
+Occasional generation failure за недостатньо визначених вхідних параметрів
+залишається неблокувальною можливістю покращення robustness/diagnostics,
+а не підставою оголошувати перевіреною якість усіх можливих сценаріїв.
+
+**Поточний стан:** Phases0–6 ACCEPTED. Phase7 — NOT STARTED / PLANNING;
+архітектура, UI, шаблони, editing features та критерії прийняття Web Constructor
+мають бути окремо погоджені до реалізації. Phases8–12 зберігають NOT STARTED.
+SRS/runtime для запису прийняття не змінюються.
+
+## Історія попередніх review та інкрементів
+
+Наведені далі REVIEW, pending та заборони merge відображають попередні рішення
+до остаточного прийняття2026-11-15; поточне рішення наведено вище.
 
 ## Owner-requested UX revision in PR #7
 
