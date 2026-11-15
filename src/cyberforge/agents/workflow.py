@@ -86,12 +86,7 @@ class SpecializedAgent:
 
     def _generate(self, state: State) -> dict:
         try:
-            prompt = build_prompt(
-                self.kind,
-                state["source"],
-                self.context_token(state["source"]),
-                state["count"] > 0,
-            )
+            prompt = self.build_prompt(state["source"], state["count"] > 0)
             request = configured_request(
                 self._gateway.config,
                 prompt=prompt,
@@ -102,8 +97,12 @@ class SpecializedAgent:
                     "schema_version"
                 ].annotation.__args__[0],
             )
-            if self.kind == "email":
-                output_limit = self._gateway.config.email_max_output_tokens
+            if self.kind in {"email", "web_components"}:
+                output_limit = (
+                    self._gateway.config.email_max_output_tokens
+                    if self.kind == "email"
+                    else self._gateway.config.web_max_output_tokens
+                )
                 if output_limit is None:
                     output_limit = request.parameters.max_output_tokens
                 if (
@@ -143,6 +142,9 @@ class SpecializedAgent:
                 "repairable": False,
                 "count": state["count"],
             }
+
+    def build_prompt(self, source: BaseModel, corrective: bool) -> str:
+        return build_prompt(self.kind, source, self.context_token(source), corrective)
 
     def _validate(self, state: State) -> dict:
         if state["error"] is not None:

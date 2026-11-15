@@ -127,3 +127,29 @@ class EmailMaterial(Base):
     created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime())
     updated_at: Mapped[datetime] = mapped_column(DateTime())
+
+
+class WebMaterial(Base):
+    """One canonical component draft per exact scenario version."""
+
+    __tablename__ = "web_materials"
+    __table_args__ = (
+        CheckConstraint(
+            "revision > 0 AND scenario_revision > 0 AND email_revision > 0",
+            name="web_revision",
+        ),
+        CheckConstraint("schema_version = 'web-draft-v3'", name="web_schema"),
+    )
+    version_id: Mapped[int] = mapped_column(
+        ForeignKey("scenario_versions.id"), primary_key=True
+    )
+    revision: Mapped[int] = mapped_column(Integer)
+    scenario_revision: Mapped[int] = mapped_column(Integer)
+    email_revision: Mapped[int] = mapped_column(Integer)
+    email_digest: Mapped[str] = mapped_column(String(64))
+    source_digest: Mapped[str] = mapped_column(String(64))
+    schema_version: Mapped[str] = mapped_column(String(40))
+    payload: Mapped[dict] = mapped_column(JSON)
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime())
+    updated_at: Mapped[datetime] = mapped_column(DateTime())
