@@ -24,11 +24,13 @@ from PySide6.QtWidgets import (
 
 from cyberforge.application.email_materials import EmailMaterialService, MaterialState
 from cyberforge.application.scenarios import ScenarioService
+from cyberforge.application.web_materials import WebMaterialService
 from cyberforge.domain.accounts import ApplicationError
 from cyberforge.domain.scenarios import Difficulty, Scenario
 from cyberforge.ui.cue_picker import CuePicker
 from cyberforge.ui.email_page import EmailPage
 from cyberforge.ui.pages import card, label
+from cyberforge.ui.web_page import WebPage
 
 
 class _WorkspaceStack(QStackedWidget):
@@ -56,11 +58,13 @@ class ScenarioPage(QWidget):
         service: ScenarioService,
         token: Callable[[], str | None],
         emails: EmailMaterialService,
+        webs: WebMaterialService | None = None,
     ) -> None:
         super().__init__()
         self.service = service
         self.token = token
         self.emails = emails
+        self.webs = webs or WebMaterialService(emails)
         self.scenario: Scenario | None = None
         self.observed: Scenario | None = None
         self.owned = False
@@ -95,6 +99,11 @@ class ScenarioPage(QWidget):
         self.email_page.back_requested.connect(self.close_email)
         self.email_page.saved.connect(self._email_saved)
         self.email_page.state_changed.connect(self._email_state)
+        self.web_page = WebPage(self.webs, token)
+        self.content_stack.addWidget(self.web_page)
+        self.web_page.back_requested.connect(self.close_web)
+        self.web_page.saved.connect(self._web_saved)
+        self.web_page.state_changed.connect(self._web_state)
         layout = QVBoxLayout(self.editor)
         layout.setContentsMargins(24, 20, 24, 20)
         self.title = label("Сценарій не вибрано", "title")
@@ -185,10 +194,16 @@ class ScenarioPage(QWidget):
         self.email_button.clicked.connect(self.open_email)
         email_layout.addWidget(self.email_button)
         material_layout.addWidget(self.email_material, 1)
-        web = card(
-            "Вебсторінка", "Не створено · Phase 7\nПублікація сценарію ще недоступна."
-        )
-        material_layout.addWidget(web, 1)
+        self.web_material = QFrame()
+        self.web_material.setObjectName("webMaterial")
+        web_layout = QVBoxLayout(self.web_material)
+        web_layout.addWidget(label("Вебсторінка", "heading"))
+        self.web_status = label(MaterialState.EMPTY)
+        web_layout.addWidget(self.web_status)
+        self.web_button = QPushButton("Створити сайт")
+        self.web_button.clicked.connect(self.open_web)
+        web_layout.addWidget(self.web_button)
+        material_layout.addWidget(self.web_material, 1)
         layout.addWidget(self.materials)
         self.message = label("")
         layout.addWidget(self.message)
@@ -261,6 +276,54 @@ class ScenarioPage(QWidget):
             if self.scenario is None
             else "Відкрити конструктор листа"
         )
+        web_state = MaterialState.EMPTY
+        if self.scenario is not None:
+            try:
+                web_state = self.webs.load(self.token(), self.scenario).state
+            except ApplicationError:
+                web_state = MaterialState.REVIEW
+        self._web_state(web_state)
+        self.web_button.setEnabled(self.scenario is not None)
+        self.web_button.setText(
+            "Створити сайт" if web_state == MaterialState.EMPTY else "Відкрити сайт"
+        )
+
+    def _web_state(self, state: MaterialState) -> None:
+        self.web_status.setText(state)
+        color = (
+            "#69c994"
+            if state == MaterialState.SAVED
+            else ("#d9b770" if state == MaterialState.REVIEW else "#343843")
+        )
+        self.web_material.setStyleSheet(
+            f"QFrame#webMaterial {{ border:1px solid {color}; border-radius:12px; }}"
+        )
+        self.web_material.setProperty("saved", state == MaterialState.SAVED)
+
+    def open_web(self) -> None:
+        if self.scenario is None or not self.can_leave():
+            return
+        try:
+            self.web_page.open(self.scenario, editable=self.editable)
+        except ApplicationError as error:
+            self.message.setText(str(error))
+            return
+        self.content_stack.setCurrentWidget(self.web_page)
+
+    def close_web(self) -> None:
+        if self.web_page.can_leave() and self.scenario is not None:
+            try:
+                self.load(
+                    self.service.get(self.token(), self.scenario.id),
+                    editable=self.owned,
+                )
+            except ApplicationError as error:
+                self.web_page.message.setText(str(error))
+
+    def _web_saved(self, scenario: Scenario) -> None:
+        self.load(scenario, editable=self.owned)
+        self.message.setText("Сайт збережено. Сценарій ще не опубліковано.")
+        self.saved.emit(scenario)
 
     def open_email(self) -> None:
         if self.scenario is None or not self.can_leave():
@@ -308,7 +371,7 @@ class ScenarioPage(QWidget):
         return self.active and self._raw() != self._baseline
 
     def _changed(self) -> None:
-        if self.content_stack.currentWidget() != self.email_page:
+        if self.content_stack.currentWidget() not in (self.email_page, self.web_page):
             self.content_stack.setCurrentWidget(
                 self.editor if self.active else self.empty_state
             )
@@ -330,6 +393,7 @@ class ScenarioPage(QWidget):
 
     def clear(self) -> None:
         self.email_page.clear()
+        self.web_page.clear()
         self.content_stack.setCurrentWidget(self.empty_state)
         self.active = self.editable = False
         self.scenario = None
@@ -388,6 +452,7 @@ class ScenarioPage(QWidget):
 
     def new(self) -> None:
         self.email_page.clear()
+        self.web_page.clear()
         self.content_stack.setCurrentWidget(self.editor)
         self.scenario = None
         self.observed = None
@@ -402,6 +467,7 @@ class ScenarioPage(QWidget):
 
     def load(self, scenario: Scenario, *, editable: bool) -> None:
         self.email_page.clear()
+        self.web_page.clear()
         self.content_stack.setCurrentWidget(self.editor)
         self.scenario = scenario
         self.observed = scenario
@@ -487,6 +553,8 @@ class ScenarioPage(QWidget):
         return QMessageBox.StandardButton(box.exec())
 
     def can_leave(self) -> bool:
+        if not self.web_page.can_leave():
+            return False
         if not self.email_page.can_leave():
             return False
         if not self.dirty:
@@ -573,6 +641,9 @@ class ScenarioPage(QWidget):
     def observe(self, scenario: Scenario) -> None:
         """Lock an externally archived editor without erasing its recovery buffer."""
         if self.scenario is None or self.scenario.id != scenario.id:
+            return
+        if self.content_stack.currentWidget() == self.web_page:
+            self.web_page.observe(scenario)
             return
         if self.content_stack.currentWidget() == self.email_page:
             self.email_page.observe(scenario)

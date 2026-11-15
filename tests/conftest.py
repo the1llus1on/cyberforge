@@ -13,6 +13,10 @@ from cyberforge.persistence.database import Database
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+from cyberforge.web.resources import register_web_scheme  # noqa: E402
+
+register_web_scheme()
+
 
 @pytest.fixture
 def scenario_env(tmp_path):

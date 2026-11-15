@@ -27,6 +27,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="Явне офлайн-демо конструктора листа; синтетичний шаблон без AI та мережі",
     )
+    parser.add_argument(
+        "--web-demo",
+        action="store_true",
+        help="Явне офлайн-демо Web та Email, без AI й мережі",
+    )
     setup = parser.add_mutually_exclusive_group()
     setup.add_argument(
         "--init-admin",
@@ -44,6 +49,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Новий приватний JSON-файл випадкових demo-паролів",
     )
     args = parser.parse_args(argv)
+    if args.web_demo and args.database is None:
+        parser.error("Для --web-demo вкажіть окрему або явно обрану --database.")
     if args.init_demo and (args.database is None or args.credentials_file is None):
         parser.error("Для demo вкажіть --database та --credentials-file.")
     if args.credentials_file and not args.init_demo:
@@ -58,6 +65,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     from cyberforge.persistence.database import Database
 
     setup_only = args.init_admin or args.init_demo
+    if not setup_only:
+        from cyberforge.web.resources import register_web_scheme
+
+        register_web_scheme()
     if setup_only:
         app = QCoreApplication([sys.argv[0]])
     else:
@@ -110,6 +121,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         from cyberforge.application.email_materials import EmailMaterialService
         from cyberforge.application.scenarios import ScenarioService
+        from cyberforge.application.web_materials import WebMaterialService
         from cyberforge.llm.config import GatewayConfig, load_config
         from cyberforge.llm.contracts import GenerationError
         from cyberforge.llm.factory import create_gateway
@@ -118,15 +130,21 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         apply_theme(app)
         try:
-            config = GatewayConfig() if args.email_demo else load_config()
+            config = (
+                GatewayConfig() if args.email_demo or args.web_demo else load_config()
+            )
         except GenerationError:
             raise ApplicationError(
                 "Некоректна конфігурація LLM. Перевірте локальні налаштування."
             ) from None
         emails = EmailMaterialService(
-            ScenarioService(accounts), create_gateway(config), demo=args.email_demo
+            ScenarioService(accounts),
+            create_gateway(config),
+            demo=args.email_demo or args.web_demo,
         )
-        window = MainWindow(accounts, emails)
+        window = MainWindow(
+            accounts, emails, WebMaterialService(emails, demo=args.web_demo)
+        )
         window.show()
         if args.smoke_test:
             QTimer.singleShot(500, window.close)

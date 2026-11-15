@@ -17,8 +17,9 @@ Phase 0 та Phase 1 — ACCEPTED. Phase 2 — Users & Groups: **ACCEPTED вла
 [ADR-0003](docs/adr/0003-scenario-drafts.md).
 У Конструкторі доступні створення, пошук і редагування власних сценаріїв,
 постійні ID, SQLite persistence, чернеткові версії та зворотне архівування. Аналіз використовує
-ті самі ID та показує відсутність результатів. AI-генерація в UI, обчислення оцінок і
-Qt WebEngine ще не реалізовано. Ключі API та `.env` не потрібні.
+ті самі ID та показує відсутність результатів. Email/Web Constructor підтримують
+явну AI-генерацію або позначене офлайн-демо; Web використовує ізольований Qt WebEngine.
+Scoring/learner flow ще не реалізовано. Для офлайн-демо ключі та `.env` не потрібні.
 
 ## Встановлення й звичайний запуск
 
@@ -386,7 +387,7 @@ cloud configuration. Нових live API-викликів для Phase 5 не д
 
 Прийнято власником після GUI generation/regeneration і live Groq перевірки.
 Scope, докази та Phase12 deferrals — [PHASE_6_ACCEPTANCE](docs/PHASE_6_ACCEPTANCE.md).
-Phase7 — NOT STARTED / PLANNING, потребує окремого погодження до реалізації.
+Phase7 окремо дозволено15.11.2026; поточний стан і перевірки наведено нижче.
 
 Open a saved scenario → «Створити електронний лист». The native Qt preview now
 resembles a Gmail mailbox inside a browser frame, with a light mail area inside
@@ -478,3 +479,24 @@ restrictions remain unchanged. Email prompt is now email-prompt-v3.
 Owner live follow-up: omitted Groq max_completion_tokens returned HTTP400;
 explicit4096 passed initial/refinement validation (889/780output tokens), with
 protected fields preserved. This is owner evidence; Codex made no live calls.
+
+## Phase 7 — компонентний Web Constructor
+
+Web працює з тим самим збереженим Scenario/Email: один renderer дев'яти
+компонентів, автоматична композиція й чотири presets, три теми, visual editor,
+AI refinement у трьох межах, read-only HTML/CSS/JSON та explicit SQLite Save.
+WebEngine ізольований: display-only HTTPS адреса не завантажується, JS/зовнішня
+мережа/довільні файли/popups/downloads заборонені. Зміна saved Email робить Web stale
+без видалення матеріалу. Публікація й learner simulation залишаються наступними фазами.
+
+Явне offline demo: `uv run --offline --locked cyberforge --database /path/to/demo.sqlite3 --web-demo`.
+Прапорець потребує явно обраної БД, ігнорує .env/keys, не викликає cloud API та не
+видає synthetic fixtures за AI. Ізольоване створення БД, owner checklist, screenshots
+та minimal owner-only live workflow: [PHASE_7_ACCEPTANCE.md](docs/PHASE_7_ACCEPTANCE.md).
+Web Groq output default4096; `CYBERFORGE_WEB_MAX_OUTPUT_TOKENS` overrides shared/default,
+explicit positive limits без hard application maximum. Phase7 **ACCEPTED власником
+2026-11-15**; PR8 merge дозволено після final-head CI. Owner підтвердив live Groq
+generation/regeneration, ручне редагування шапки, light/dark та preview/rendering.
+Save/reopen і всі presets мають automated evidence, не окреме owner confirmation.
+Physical Windows11/DPI/installer та інші Phase12 checks залишаються ризиками.
+Phase8 — **NOT STARTED / PLANNING**, потребує окремого погодження.
