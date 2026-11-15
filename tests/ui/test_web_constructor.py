@@ -233,12 +233,72 @@ def test_current_manual_draft_in_protected_refinement(web_window, qtbot):
     assert page.unsaved
 
 
+def layout_metrics(page, viewport):
+    from PySide6.QtWidgets import QWidget
+
+    controls = {}
+    for name in (
+        "preset",
+        "theme",
+        "scope",
+        "selected_component",
+        "provider",
+        "status",
+        "title",
+        "refinement",
+        "code_button",
+        "edit_button",
+        "generate_button",
+        "save_button",
+        "browser",
+    ):
+        control = getattr(page, name)
+        controls[name] = (
+            control.width(),
+            control.minimumWidth(),
+            control.minimumSizeHint().width(),
+            control.sizeHint().width(),
+        )
+    controls["browser_children"] = [
+        (
+            type(c).__name__,
+            c.width(),
+            c.minimumWidth(),
+            c.minimumSizeHint().width(),
+            c.sizeHint().width(),
+        )
+        for c in page.browser.findChildren(QWidget)
+        if c.isVisible() and c.minimumSizeHint().width() > 200
+    ]
+    data = {
+        "viewport": viewport.width(),
+        "page": (
+            page.width(),
+            page.minimumWidth(),
+            page.minimumSizeHint().width(),
+            page.sizeHint().width(),
+        ),
+        "controls": controls,
+        "rows": [
+            (
+                page.layout().itemAt(i).minimumSize().width(),
+                page.layout().itemAt(i).sizeHint().width(),
+            )
+            for i in range(page.layout().count())
+        ],
+    }
+    print("WEB_LAYOUT_METRICS " + json.dumps(data))
+    return data
+
+
 def test_compact_critical_controls_and_browser_width(web_window, qtbot):
     page = generate(web_window, qtbot)
     qtbot.wait(100)
     viewport = web_window.containers[View.CONSTRUCTOR].viewport()
-    assert page.width() <= viewport.width()
-    assert page.minimumSizeHint().width() <= viewport.width()
+    assert page.width() <= viewport.width(), layout_metrics(page, viewport)
+    assert page.minimumSizeHint().width() <= viewport.width(), layout_metrics(
+        page, viewport
+    )
     assert 0.8 <= page.browser.width() / page.width() <= 0.95
     assert page.browser.view.height() >= 150
     assert page.save_button.isVisible() and page.edit_button.isVisible()
@@ -254,8 +314,10 @@ def test_compact_native_combo_metrics_cannot_widen_workspace(web_window, qtbot):
         control.setStyleSheet("font-size:20px")
     qtbot.wait(100)
     viewport = web_window.containers[View.CONSTRUCTOR].viewport()
-    assert page.width() <= viewport.width()
-    assert page.minimumSizeHint().width() <= viewport.width()
+    assert page.width() <= viewport.width(), layout_metrics(page, viewport)
+    assert page.minimumSizeHint().width() <= viewport.width(), layout_metrics(
+        page, viewport
+    )
     assert web_window.containers[View.CONSTRUCTOR].horizontalScrollBar().maximum() == 0
 
 
@@ -342,6 +404,6 @@ def test_long_valid_tab_title_does_not_expand_compact_browser(web_window, qtbot)
     page._render()
     qtbot.wait(100)
     viewport = web_window.containers[View.CONSTRUCTOR].viewport()
-    assert page.width() <= viewport.width()
+    assert page.width() <= viewport.width(), layout_metrics(page, viewport)
     assert page.browser.tab.toolTip() == page.draft.page.tab_title
     assert page.browser.address.text() == page.draft.page.display_url

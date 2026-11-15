@@ -2693,3 +2693,16 @@ before this run; only evidence/docs updated afterward. Final candidate published
 only after this complete local gate. No live API, merge, owner acceptance or Phase8.
 Exact new HEAD, PR8 Linux/Windows run/jobs/results recorded in PR/final delivery
 without circular doc commit. UI-only fix leaves prior package/migration gate valid.
+
+### Phase 7 — Windows native measurement before further remediation
+
+HEAD3140a49a93034accca21b8f58796377ca40e3103, CI43752490696:
+Linux886passed/358.69s plus Ruff/import/Qt smoke success; Windows881passed,
+2POSIX skips,3compact failures/467.13s, page remains860px vs768px. Initial
+selector attribution was incomplete: reduced hints did not remove the Windows
+constraint. Assertions retained; next diagnostic-only increment adds numeric
+widget/row minimum-size evidence on failure and a focused compact CI gate before
+full pytest, so Windows root-cause inspection no longer waits for unrelated suites.
+Local focused compact3passed/9.68s, Ruff117files PASS. Application code unchanged
+in this diagnostic increment; prior886-test local gate remains the application
+baseline. No security/persistence failures, live calls, merge or Phase8.
