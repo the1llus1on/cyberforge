@@ -97,8 +97,8 @@ Run from the repository with the existing local key; do not paste credentials:
 uv run --offline --locked python -m cyberforge.agents.email_live_check --live
 ```
 
-The opt-in runner uses Groq/openai/gpt-oss-120b only, low reasoning, no output
-limit unless --max-output-tokens N is explicitly supplied,60s timeout, gateway
+The opt-in runner uses Groq/openai/gpt-oss-120b only, low reasoning,4096 output
+tokens by default (Email env override or --max-output-tokens N, no maximum),60s timeout, gateway
 and SDK retries0, max_corrections0, backup=None and fallback disabled. At most
 one initial and one main-body refinement request per invocation. Initial failure
 stops immediately. No local token quota. Provider/account limits still apply.
@@ -279,3 +279,16 @@ A fresh owner-only live run is required to identify the actual provider failure;
 no live call was made by Codex. Existing opt-in command remains unchanged,
 with optional --max-output-tokens N, no local token quotas, at most2requests,
 zero retries/corrections/fallback. No .env or owner demo data changes.
+
+
+### Groq Email default follow-up — 15.11.2026 (REVIEW)
+
+Owner live evidence: omitted max_completion_tokens returned HTTP400 during
+initial generation. Explicit4096 passed initial (889output tokens) and refinement
+(780output tokens), local validation and protected-field comparison. Groq Email
+with openai/gpt-oss-120b now defaults to4096 for both requests. Explicit Email
+or shared output settings still win; CLI flag wins over the Email environment
+setting. Values8192+ are accepted without a hard application maximum. Gemini,
+unrelated operations and opt-in local quotas remain unchanged. Codex made no
+live requests. This supersedes the prior omission default only for this specific
+Email/provider/model combination; Phase6 remains REVIEW.

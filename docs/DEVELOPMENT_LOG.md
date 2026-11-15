@@ -2497,3 +2497,23 @@ It now inherits the configured optional provider limit too. Diagnostic/Hydrogen
 focused selection:70passed/4.82s, including absent and explicit50000-token
 settings. Ruff lint/format98files and whitespace pass. No live call; this small
 follow-up is covered by final-head CI rather than another full local run.
+
+
+### Groq Email compatibility default — 15.11.2026
+
+Owner approved targeted SRS §§5.4,5.6–5.7,10.4 configuration correction: after
+owner live HTTP400 with omitted output limit, explicit4096 passed initial/
+refinement (889/780output tokens), validation and protected-field checks.
+EmailScenarioAgent uses4096 only for Groq/openai/gpt-oss-120b when neither Email
+nor shared limit is explicit. CLI uses the same path, with flag > Email env >
+default. Explicit8192+ remains valid; no hard application maximum or default
+local quotas. Gemini, unrelated operations, validation and refinement protections
+remain intact. No live API calls by Codex. Focused tests/Ruff locally and final
+Linux/Windows CI; Phase6 stays REVIEW, no merge/acceptance/Phase7.
+
+Focused offline selection: `pytest -q tests/test_email_live_check.py
+tests/test_llm_token_policy.py tests/test_agents.py tests/test_llm_groq.py
+tests/test_llm_gemini.py`:172passed/11.98s. Updated provider-neutral assertion
+selection rerun:4cases verify Email4096 vs unrelated operations unset. Ruff
+lint/format98files and whitespace checks pass. Final-head CI evidence follows
+in PR7 and delivery; no full local suite or live requests.

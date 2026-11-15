@@ -126,7 +126,7 @@ def main(argv=None) -> int:
         "--max-output-tokens",
         type=int,
         default=None,
-        help="Optional explicit provider output limit; omitted by default",
+        help="Email output limit override; Groq GPT-OSS Email defaults to 4096",
     )
     args = parser.parse_args(argv)
     if args.max_output_tokens is not None and args.max_output_tokens < 1:
@@ -134,6 +134,19 @@ def main(argv=None) -> int:
     if not args.live:
         parser.error("Explicit --live required; no requests were made")
     values = dotenv_values(Path(".env"), interpolate=False)
+    output_limit = args.max_output_tokens
+    if output_limit is None:
+        configured = os.environ.get(
+            "CYBERFORGE_EMAIL_MAX_OUTPUT_TOKENS",
+            values.get("CYBERFORGE_EMAIL_MAX_OUTPUT_TOKENS"),
+        )
+        if configured:
+            try:
+                output_limit = int(configured)
+                if output_limit < 1:
+                    raise ValueError
+            except ValueError:
+                parser.error("CYBERFORGE_EMAIL_MAX_OUTPUT_TOKENS must be positive")
     key = os.environ.get("GROQ_API_KEY", values.get("GROQ_API_KEY"))
     if not key:
         print('{"status":"error","error":"missing_credentials"}')
@@ -145,9 +158,8 @@ def main(argv=None) -> int:
         max_retries=0,
         backup=None,
         fallback_to_groq=False,
-        parameters=GenerationParameters(
-            thinking="low", timeout_seconds=60, max_output_tokens=args.max_output_tokens
-        ),
+        parameters=GenerationParameters(thinking="low", timeout_seconds=60),
+        email_max_output_tokens=output_limit,
     )
     try:
         return 0 if run_check(create_gateway(config)) else 1

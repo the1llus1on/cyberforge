@@ -140,10 +140,9 @@ def test_real_sdk_initial_and_refinement_requests(
     assert captured[0]["response_format"] == captured[1]["response_format"]
     assert captured[1]["reasoning_effort"] == "low"
     assert captured[1]["response_format"]["json_schema"]["strict"] is True
-    if output_limit is None:
-        assert all("max_completion_tokens" not in body for body in captured)
-    else:
-        assert all(body["max_completion_tokens"] == output_limit for body in captured)
+    assert all(
+        body["max_completion_tokens"] == (output_limit or 4096) for body in captured
+    )
     output = capsys.readouterr().out
     records = [json.loads(line) for line in output.splitlines()]
     refined = records[1]

@@ -74,7 +74,7 @@ def test_two_requests_and_metadata_only(capsys):
     assert len(provider.calls) == 2
     for request, schema in provider.calls:
         assert schema["additionalProperties"] is False
-        assert request.parameters.max_output_tokens is None
+        assert request.parameters.max_output_tokens == 4096
         assert request.prompt_version == "email-prompt-v3"
     output = capsys.readouterr().out
     assert "body_text" not in output and "context_token" not in output
@@ -90,7 +90,12 @@ def test_first_failure_stops_without_retry(capsys):
 
 @pytest.mark.parametrize(
     "shared,email,expected",
-    [(None, None, None), (50000, None, 50000), (50000, 60000, 60000)],
+    [
+        (None, None, 4096),
+        (None, 8192, 8192),
+        (50000, None, 50000),
+        (50000, 60000, 60000),
+    ],
 )
 def test_email_optional_limit_inherits_or_overrides(shared, email, expected):
     from cyberforge.llm.contracts import GenerationParameters
@@ -109,25 +114,51 @@ def test_email_optional_limit_inherits_or_overrides(shared, email, expected):
     )
 
 
-@pytest.mark.parametrize("limit", [None, 50000])
-def test_owner_cli_has_no_implicit_budget(monkeypatch, limit):
+@pytest.mark.parametrize(
+    "limit,env_limit,expected",
+    [
+        (None, None, 4096),
+        (8192, None, 8192),
+        (50000, None, 50000),
+        (None, "16000", 16000),
+        (8192, "16000", 8192),
+    ],
+)
+def test_owner_cli_email_default_and_overrides(monkeypatch, limit, env_limit, expected):
     from cyberforge.agents import email_live_check
 
     monkeypatch.setattr(email_live_check, "dotenv_values", lambda *a, **kw: {})
     monkeypatch.setenv("GROQ_API_KEY", "fixture-key")
+    monkeypatch.delenv("CYBERFORGE_EMAIL_MAX_OUTPUT_TOKENS", raising=False)
+    if env_limit is not None:
+        monkeypatch.setenv("CYBERFORGE_EMAIL_MAX_OUTPUT_TOKENS", env_limit)
     configs = []
+    provider = Scripted()
 
     def factory(config):
         configs.append(config)
-        return gateway(Scripted())
+        return LLMGateway(config, {Provider.GROQ: provider})
 
     monkeypatch.setattr(email_live_check, "create_gateway", factory)
     assert (
         main(["--live", *(["--max-output-tokens", str(limit)] if limit else [])]) == 0
     )
-    assert configs[0].parameters.max_output_tokens == limit
-    assert configs[0].email_max_output_tokens is None and configs[0].limits == {}
-    assert configs[0].max_retries == 0 and configs[0].backup is None
+    assert len(provider.calls) == 2
+    assert all(
+        req.parameters.max_output_tokens == expected for req, _ in provider.calls
+    )
+    assert configs[0].limits == {} and configs[0].max_retries == 0
+    assert configs[0].backup is None
+
+
+def test_gemini_email_keeps_unset_output_limit():
+    provider = Scripted()
+    config = GatewayConfig(
+        provider=Provider.GEMINI, model="gemini-4-hydrogen", max_retries=0
+    )
+    assert run_check(LLMGateway(config, {Provider.GEMINI: provider}))
+    assert len(provider.calls) == 2
+    assert all(req.parameters.max_output_tokens is None for req, _ in provider.calls)
 
 
 def test_email_prompt_v3_uses_context_and_keeps_untyped_parameters_local():

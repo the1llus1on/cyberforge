@@ -13,6 +13,7 @@ from cyberforge.llm.contracts import (
     ErrorCategory,
     GenerationError,
     GenerationTelemetry,
+    Provider,
 )
 from cyberforge.llm.factory import configured_request
 from cyberforge.llm.gateway import LLMGateway
@@ -101,11 +102,16 @@ class SpecializedAgent:
                     "schema_version"
                 ].annotation.__args__[0],
             )
-            if (
-                self.kind == "email"
-                and self._gateway.config.email_max_output_tokens is not None
-            ):
+            if self.kind == "email":
                 output_limit = self._gateway.config.email_max_output_tokens
+                if output_limit is None:
+                    output_limit = request.parameters.max_output_tokens
+                if (
+                    output_limit is None
+                    and request.provider == Provider.GROQ
+                    and request.model == "openai/gpt-oss-120b"
+                ):
+                    output_limit = 4096
                 parameters = request.parameters.model_copy(
                     update={"max_output_tokens": output_limit}
                 )

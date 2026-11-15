@@ -421,8 +421,10 @@ Email prompts use email-prompt-v3. Provider output limits are optional: omit
 max_output_tokens (or set null) in CYBERFORGE_LLM_PARAMETERS to leave provider
 defaults in force. An explicit positive value has no application maximum.
 CYBERFORGE_EMAIL_MAX_OUTPUT_TOKENS is an optional Email-specific override;
-when absent, Email inherits the shared setting. Groq/Gemini omit their output
-limit field when unset. Provider context/output/account limits still apply.
+when absent, Email inherits an explicit shared setting. If both are unset,
+Groq Email with openai/gpt-oss-120b sends4096 for initial and refinement requests
+(owner-verified compatibility default). Gemini and other operations retain
+optional limits. Provider context/output/account limits still apply.
 
 Local rate/token quotas are opt-in through CYBERFORGE_LLM_LIMITS. Unspecified
 provider/model keys and dimensions have no local cap. Both explicitly configured
@@ -439,16 +441,17 @@ Owner-only live acceptance (up to two paid requests, no retries/fallback):
 uv run --offline --locked python -m cyberforge.agents.email_live_check --live
 ```
 
-This reads only GROQ_API_KEY from local configuration, leaves .env unchanged,
+This reads GROQ_API_KEY and the optional Email limit, leaves .env unchanged,
 and uses synthetic data. It stops after an initial failure and emits only safe
 contract/usage/timing metadata. Do not run it during baseline tests or CI.
-The owner reported initial success (1452 input/742 output tokens), followed by
-invalid_request on refinement. The cause is not established from that category.
-Rerun is required after reviewing this patch; metadata now includes safe HTTP
-status, allowlisted error type/code and context/output/schema failure category.
-The runner defaults to no output/token quota; optional --max-output-tokens N
-sets an explicit provider limit. It still makes at most two requests with no
-retries, corrections or fallback. No live calls were made by Codex.
+Owner follow-up found HTTP400 when omitting the output limit; explicit4096
+passed initial/refinement validation and protected-field checks. Metadata includes
+safe HTTP status, allowlisted error type/code and context/output/schema category.
+The runner defaults to4096 output tokens, with no local token quota.
+CYBERFORGE_EMAIL_MAX_OUTPUT_TOKENS overrides the default; --max-output-tokens N
+takes precedence. Values8192 and higher remain supported without an app ceiling.
+It still makes at most two requests with no retries, corrections or fallback.
+No live calls were made by Codex.
 
 Existing RBAC, archive/published restrictions, worker identity guards, provenance
 and SQLite behavior remain in force. Configured cloud generation requires an
@@ -467,3 +470,7 @@ requires a dotted domain with labels up to63 characters and rejects whitespace,
 controls and header injection. No DNS/MX/mailbox checks or delivery. Use fictional
 identities only; never include real personal data in cloud prompts. External URL
 restrictions remain unchanged. Email prompt is now email-prompt-v3.
+
+Owner live follow-up: omitted Groq max_completion_tokens returned HTTP400;
+explicit4096 passed initial/refinement validation (889/780output tokens), with
+protected fields preserved. This is owner evidence; Codex made no live calls.

@@ -172,7 +172,11 @@ def test_provider_neutral_groq_path(kind):
         ),
         {Provider.GROQ: mock},
     )
-    assert agent_type(gateway).run(source).status == "pending_review"
+    result = agent_type(gateway).run(source)
+    assert result.status == "pending_review"
+    assert result.telemetry[0].effective_parameters.max_output_tokens == (
+        4096 if kind == "email" else None
+    )
     assert mock.calls == 1
 
 

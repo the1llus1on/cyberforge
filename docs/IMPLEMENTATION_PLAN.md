@@ -925,3 +925,16 @@ A fresh owner-only live run is required to identify the actual provider failure;
 no live call was made by Codex. Existing opt-in command remains unchanged,
 with optional --max-output-tokens N, no local token quotas, at most2requests,
 zero retries/corrections/fallback. No .env or owner demo data changes.
+
+
+### Groq Email compatibility default — 15.11.2026
+
+Owner approved targeted SRS §§5.4,5.6–5.7,10.4 configuration correction: after
+owner live HTTP400 with omitted output limit, explicit4096 passed initial/
+refinement (889/780output tokens), validation and protected-field checks.
+EmailScenarioAgent uses4096 only for Groq/openai/gpt-oss-120b when neither Email
+nor shared limit is explicit. CLI uses the same path, with flag > Email env >
+default. Explicit8192+ remains valid; no hard application maximum or default
+local quotas. Gemini, unrelated operations, validation and refinement protections
+remain intact. No live API calls by Codex. Focused tests/Ruff locally and final
+Linux/Windows CI; Phase6 stays REVIEW, no merge/acceptance/Phase7.
