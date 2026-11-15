@@ -76,6 +76,12 @@ class WebPage(QWidget):
         )
         self.selected_component.setAccessibleName("Компонент для AI refinement")
         options.addWidget(self.selected_component, 1)
+        # Four adjacent native combos must fit a 768px workspace. Segoe UI on
+        # Windows can expand the ten-character hints beyond that workspace.
+        # Keep full choices in the popup while allowing the closed controls to
+        # shrink; the selected-component control receives remaining width.
+        for control in (self.preset, self.theme, self.scope, self.selected_component):
+            control.setMinimumContentsLength(6)
         layout.addLayout(options)
         info = QHBoxLayout()
         self.provider = label(service.provider_label)

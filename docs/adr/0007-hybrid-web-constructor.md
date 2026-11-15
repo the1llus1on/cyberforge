@@ -61,3 +61,12 @@ Back/Forward disabled для single-page preview.
 learner navigation/events Phase9, scoring Phase10, analytics Phase11.
 Browser isolation має пройти actual engine gate зараз; physical Windows11,
 DPI/installer/final polish — ризики до Phase12, не перевірені вимоги.
+
+Перевірка методичної межі15.11.2026:
+[офіційний NIST TN2276](https://csrc.nist.gov/pubs/tn/2276/final) визначає
+Phish Scale для human detection difficulty електронних листів. Web prompt/schema
+не використовують цю шкалу як Web difficulty або learner score.
+
+Windows CI remediation у межах того самого рішення: native selector minimum hints
+обмежено для compact workspace; browser tab elides visual title, зберігаючи повний
+tooltip/canonical value. Renderer/trust boundary та збережені дані не змінюються.

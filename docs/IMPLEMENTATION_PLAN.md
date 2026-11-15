@@ -1000,3 +1000,12 @@ checks passed. docs/screenshots/phase-7-web-*.png оглянуто. Final PR HEA
 Linux/Windows CI status — у PR/final report після push. Owner manual/live acceptance
 pending, native physical Windows11 лишається Phase12 risk. Phase7 REVIEW, не ACCEPTED;
 Phase8 NOT STARTED. Повний checklist — PHASE_7_ACCEPTANCE.md.
+
+
+Phase7 Windows remediation final local gate: native combo sizing та elided browser
+metadata preserve1100×720; original width assertions retained,2new regressions.
+Ruff117files PASS; full **886passed/506.40s**, all783prior+103Phase7 cases.
+Focused Web UI/security15passed/34.17s; post-fix real WSLg compact3passed/9.36s.
+Initial CI43749813530: Linux884passed, Windows881passed/2skips/1compact failure;
+history retained. Final exact-head CI evidence belongs to PR8/delivery report.
+Phase7 REVIEW, owner acceptance pending; no merge/Phase8.

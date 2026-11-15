@@ -246,6 +246,19 @@ def test_compact_critical_controls_and_browser_width(web_window, qtbot):
     assert web_window.scenario_page.web_status.text() == MaterialState.UNSAVED
 
 
+def test_compact_native_combo_metrics_cannot_widen_workspace(web_window, qtbot):
+    page = generate(web_window, qtbot)
+    # Larger native glyph metrics reproduce the Windows minimum-hint pressure
+    # on Linux too, without relaxing the actual viewport/overflow assertions.
+    for control in (page.preset, page.theme, page.scope, page.selected_component):
+        control.setStyleSheet("font-size:20px")
+    qtbot.wait(100)
+    viewport = web_window.containers[View.CONSTRUCTOR].viewport()
+    assert page.width() <= viewport.width()
+    assert page.minimumSizeHint().width() <= viewport.width()
+    assert web_window.containers[View.CONSTRUCTOR].horizontalScrollBar().maximum() == 0
+
+
 def test_stale_saved_email_blocks_edit_and_can_regenerate(web_window, qtbot):
     page = generate(web_window, qtbot)
     assert page.save()
@@ -316,3 +329,19 @@ def test_closing_waits_asynchronously_for_web_worker(web_window, qtbot, monkeypa
     # MainWindow has already disposed its browser. The fixture's second cleanup
     # only clears draft controls before deleting the closed top-level widget.
     page.browser = None
+
+
+def test_long_valid_tab_title_does_not_expand_compact_browser(web_window, qtbot):
+    from cyberforge.web.contracts import WebDraftV3
+
+    page = generate(web_window, qtbot)
+    data = page.draft.model_dump(mode="json")
+    data["page"]["tab_title"] = "Н" * 150
+    data["page"]["display_url"] = "https://portal.example/" + "a" * 470
+    page.draft = WebDraftV3.model_validate_json(json.dumps(data))
+    page._render()
+    qtbot.wait(100)
+    viewport = web_window.containers[View.CONSTRUCTOR].viewport()
+    assert page.width() <= viewport.width()
+    assert page.browser.tab.toolTip() == page.draft.page.tab_title
+    assert page.browser.address.text() == page.draft.page.display_url

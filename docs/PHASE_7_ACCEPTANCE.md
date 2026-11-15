@@ -148,9 +148,11 @@ provider configuration; перевірка backup не входить у minimal
 
 Поточні focused/full/build/WSLg результати й precise commands — DEVELOPMENT_LOG.md.
 Exact final SHA, PR та Linux/Windows CI фіксуються після push у delivery report/PR
-без циклічного documentation-only commit. Local gate: Ruff117files PASS, full
-pytest882passed/504.65s, додаткові lifecycle2passed/6.27s; real WSLg35passed/30.20s;
-package/installed-wheel/migration/security PASS. CI gate перевіряється на final PR HEAD.
+без циклічного documentation-only commit. Final local gate: Ruff117files PASS, full pytest886passed/506.40s,
+Web UI/security15passed/34.17s; real WSLg35passed/30.20s та post-fix compact
+3passed/9.36s. Package/installed-wheel/migration/security PASS. Initial Windows CI
+compact-width failure та remediation збережено у DEVELOPMENT_LOG; final Linux/Windows
+CI gate перевіряється на final PR HEAD.
 
 Owner WSLg functional acceptance та live Groq/visual quality review очікуються.
 Structural validation не доводить semantic consistency чи навчальну якість; source

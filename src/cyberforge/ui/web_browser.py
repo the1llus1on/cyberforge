@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
+    QSizePolicy,
     QVBoxLayout,
 )
 from shiboken6 import delete, isValid
@@ -119,6 +120,32 @@ class IsolatedPage(QWebEnginePage):
         return []
 
 
+class BrowserTab(QLabel):
+    """Elide visual metadata without letting it set the workspace width."""
+
+    def __init__(self):
+        super().__init__()
+        self.full_title = ""
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+
+    def set_title(self, title):
+        self.full_title = "◈  " + title
+        self.setToolTip(title)
+        self._elide()
+
+    def _elide(self):
+        self.setText(
+            self.fontMetrics().elidedText(
+                self.full_title, Qt.TextElideMode.ElideRight, max(0, self.width() - 16)
+            )
+        )
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._elide()
+
+
 class WebBrowser(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -126,7 +153,8 @@ class WebBrowser(QFrame):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        self.tab = QLabel("◈  Нова навчальна сторінка")
+        self.tab = BrowserTab()
+        self.tab.set_title("Нова навчальна сторінка")
         self.tab.setStyleSheet(
             "padding:8px;background:#303643;color:#f2f4fa;border-radius:8px;"
         )
@@ -226,7 +254,7 @@ class WebBrowser(QFrame):
             self.store.html = b"<!doctype html><html><body></body></html>"
             self.page.setUrl(QUrl(self.store.url))
             self.view.hide()
-            self.tab.setText("◈  Нова навчальна сторінка")
+            self.tab.set_title("Нова навчальна сторінка")
             self.address.clear()
             return
         nonce = uuid4().hex
@@ -238,7 +266,7 @@ class WebBrowser(QFrame):
             for c in draft.page.components
             for a in getattr(c, "actions", ())
         }
-        self.tab.setText("◈  " + draft.page.tab_title)
+        self.tab.set_title(draft.page.tab_title)
         self.address.setText(draft.page.display_url)
         self.view.show()
         self.page.setUrl(QUrl(self.store.url))

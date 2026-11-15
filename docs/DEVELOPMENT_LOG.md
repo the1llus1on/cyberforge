@@ -2651,3 +2651,45 @@ Normal push/PR→main дозволено; final SHA/CI links фіксуютьс�
 фінальному звіті, без circular docs commits. Phase7 — REVIEW, не ACCEPTED.
 Owner WSLg/manual/live Groq acceptance pending; no live API performed by Codex.
 No merge/force-push/deletion/Phase8. Physical Windows11/DPI/installer Phase12 risk.
+
+### Phase 7 — Windows CI compact-width remediation
+
+First PR8 HEAD6f1c9664e5a5588ecc402a1565d65a6b6d23fe6e,
+[run43749813530](https://github.com/the1llus1on/cyberforge/actions/runs/43749813530):
+Linux **884passed/390.38s**, Ruff/import/Qt smoke PASS. Windows **1failed,
+881passed,2POSIX skips/548.28s**: new Web compact assertion860px page vs768px
+viewport; усі browser security, persistence та accepted Phase0–6 tests passed.
+Failure reported before further publishing; no merge.
+
+Four adjacent native combo minimum hints were too wide under Windows font metrics.
+Bounded six-character closed-control hints preserve popup choices and leave the
+selected-component control the remaining width. New larger-glyph regression
+retains actual viewport/no-horizontal-overflow assertions. Additional valid maximum
+metadata check reproduced a separate150-character tab title overflow (1653px);
+browser tab now elides visual text with full tooltip/canonical metadata preserved.
+No source content, renderer, service, schema, security policy or persistence change.
+
+Focused Web UI+actual browser security: **15passed/34.17s**. An intermediate full
+run was superseded/interrupted while the additional metadata regression was fixed;
+it is not counted as a passed gate. Final full run starts only after both fixes.
+Original882passed gate and first CI remain historical evidence, not final HEAD
+claims. UI-only remediation does not repeat packaging/migration/wheel checks under
+the owner-approved workflow. Affected compact screenshot refreshed only.
+
+Post-remediation real WSLg:
+`QT_QPA_PLATFORM=wayland .venv/bin/pytest tests/ui/test_web_constructor.py::test_compact_critical_controls_and_browser_width tests/ui/test_web_constructor.py::test_compact_native_combo_metrics_cannot_widen_workspace tests/ui/test_web_constructor.py::test_long_valid_tab_title_does_not_expand_compact_browser -q --tb=short`
+— **3passed/9.36s**. Original full metadata overflow відтворено окремо до виправлення
+(1failed/3.93s); assertion не послаблено. Final stable Ruff lint/format PASS117files;
+full rerun з обома виправленнями триває. Official NIST TN2276 source перевірено
+15.11.2026; evidence link додано до ADR, NIST не застосовується до Web scoring.
+
+
+Final post-remediation stable commands:
+`uv run --offline --locked ruff check .` — PASS;
+`uv run --offline --locked ruff format --check .` — PASS117files;
+`uv run --offline --locked pytest -q --tb=short` — **886passed/506.40s**, exit0.
+All783accepted regressions retained plus103Phase7 cases. Final code was frozen
+before this run; only evidence/docs updated afterward. Final candidate published
+only after this complete local gate. No live API, merge, owner acceptance or Phase8.
+Exact new HEAD, PR8 Linux/Windows run/jobs/results recorded in PR/final delivery
+without circular doc commit. UI-only fix leaves prior package/migration gate valid.
