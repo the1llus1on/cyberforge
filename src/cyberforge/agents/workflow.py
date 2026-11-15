@@ -101,7 +101,10 @@ class SpecializedAgent:
                     "schema_version"
                 ].annotation.__args__[0],
             )
-            if self.kind == "email":
+            if (
+                self.kind == "email"
+                and self._gateway.config.email_max_output_tokens is not None
+            ):
                 output_limit = self._gateway.config.email_max_output_tokens
                 parameters = request.parameters.model_copy(
                     update={"max_output_tokens": output_limit}

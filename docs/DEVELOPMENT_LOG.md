@@ -2447,3 +2447,47 @@ Address-rule CI run43642852695 found the long-address UI fixture used a single
 total address length; layout assertions are unchanged. Focused long-Unicode
 layout test:1passed/3.25s; Ruff/format97files and whitespace checks pass. This
 fixture-only follow-up adds no production change or repeated full local suite.
+
+
+### Optional provider token limits and refinement diagnosis — 15.11.2026
+
+Phase6 stays REVIEW in PR7. SRS §§5.6–5.8,10–11,16: owner explicitly removes
+implicit output and local token ceilings. Shared/Email output limits default to
+None, accept any explicit positive integer and have no application maximum.
+Email inherits shared settings unless explicitly overridden. Groq/Gemini omit
+unset output fields. Local quotas/dimensions are opt-in; explicit provider/model
+levels still apply together, while Retry-After, timeouts and bounded retries
+remain. Unknown provider-default output cannot be reserved; configured token
+budgets estimate prompt/schema bytes plus an explicit output allowance. They
+are not billing guarantees. Content length/artifact-size limits remain intact.
+
+Owner live evidence: initial Groq/gpt-oss-120b success,1452input/742output tokens,
+local validation passed; refinement invalid_request without usage/artifact.
+Root cause remains UNKNOWN from that category alone. No causal token claim.
+Offline real-SDK/in-memory HTTP tests exercise previous draft, prompt-v3,
+identical strict schema, low reasoning, initial+refinement success, protected
+main-body merge and injected400 failures. No request-construction defect is
+reproduced. New diagnostics retain only HTTP status, exact allowlisted error
+code/type and context/output/structured-output/invalid-request classification.
+Unknown strings, error messages, failed_generation and raw bodies are discarded.
+A fresh owner-only live run is required to identify the actual provider failure;
+no live call was made by Codex. Existing opt-in command remains unchanged,
+with optional --max-output-tokens N, no local token quotas, at most2requests,
+zero retries/corrections/fallback. No .env or owner demo data changes.
+
+Verification: initial provider/gateway/live-runner batch155passed/11.17s;
+additional optional-limit/diagnostic/CLI cases24passed/2.33s. The first wider
+focused attempt stalled at asyncio in the socket-restricted sandbox and was
+interrupted, not counted as a pass. Runnable-only rerun with local socket access:
+6passed/0.50s. Final stable focused selection (no real API keys, tracing off,
+offline/locked uv): tests/test_llm_token_policy.py, test_llm_gateway.py,
+test_llm_groq.py, test_llm_gemini.py, test_llm_hydrogen.py,
+test_email_live_check.py, test_agents.py, test_agent_provenance.py,
+test_email_editing.py, test_llm_review.py, test_llm_integration.py and
+test_llm_runnable.py: **471passed/43.32s**. Ruff lint/format98files, diff
+whitespace and packaged-module-style `python -m ...email_live_check --help`
+pass. No full local suite; Linux/Windows CI will verify the exact pushed HEAD.
+Official Groq Python API docs confirm optional max_completion_tokens omission
+and APIStatusError status_code/body metadata; local pinned SDK transports
+verify serialization without network. Raw provider messages/bodies are never
+exported. No packaging/dependency/migration changes or GUI redesign.

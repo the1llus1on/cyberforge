@@ -417,12 +417,20 @@ to deterministically preserve subject, senders, background mail and other fields
 conflicting prose. Regeneration after manual edits requires confirmation and
 never saves automatically. Failure preserves the current candidate.
 
-Email prompts are versioned email-prompt-v2. Only Email requests use the bounded
-4096-token output budget (512–8192 via CYBERFORGE_EMAIL_MAX_OUTPUT_TOKENS);
-other operations retain their configured defaults. Larger budgets do not prove
-content quality. Existing provider/model quota reservations still apply;
-configure both local keys explicitly for cloud work if conservative caps reject
-large prompt/schema/previous-draft reservations. Arbitrary generation_parameters
+Email prompts use email-prompt-v3. Provider output limits are optional: omit
+max_output_tokens (or set null) in CYBERFORGE_LLM_PARAMETERS to leave provider
+defaults in force. An explicit positive value has no application maximum.
+CYBERFORGE_EMAIL_MAX_OUTPUT_TOKENS is an optional Email-specific override;
+when absent, Email inherits the shared setting. Groq/Gemini omit their output
+limit field when unset. Provider context/output/account limits still apply.
+
+Local rate/token quotas are opt-in through CYBERFORGE_LLM_LIMITS. Unspecified
+provider/model keys and dimensions have no local cap. Both explicitly configured
+levels still apply; Retry-After cooldowns, timeouts and bounded retries remain.
+Token reservations estimate UTF8 prompt+schema bytes plus an explicitly configured
+output allowance. With no output limit, unknown completion tokens cannot be
+reserved; these estimates are not billing/account limits. Content field/artifact
+bounds and local validation remain mandatory. Arbitrary generation_parameters
 remain unsupported for cloud prompting.
 
 Owner-only live acceptance (up to two paid requests, no retries/fallback):
@@ -434,7 +442,13 @@ uv run --offline --locked python -m cyberforge.agents.email_live_check --live
 This reads only GROQ_API_KEY from local configuration, leaves .env unchanged,
 and uses synthetic data. It stops after an initial failure and emits only safe
 contract/usage/timing metadata. Do not run it during baseline tests or CI.
-Live acceptance remains pending until the owner shares the sanitized result.
+The owner reported initial success (1452 input/742 output tokens), followed by
+invalid_request on refinement. The cause is not established from that category.
+Rerun is required after reviewing this patch; metadata now includes safe HTTP
+status, allowlisted error type/code and context/output/schema failure category.
+The runner defaults to no output/token quota; optional --max-output-tokens N
+sets an explicit provider limit. It still makes at most two requests with no
+retries, corrections or fallback. No live calls were made by Codex.
 
 Existing RBAC, archive/published restrictions, worker identity guards, provenance
 and SQLite behavior remain in force. Configured cloud generation requires an

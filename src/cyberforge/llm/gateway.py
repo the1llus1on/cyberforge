@@ -49,7 +49,7 @@ class GenerationFailure(GenerationError):
         telemetry: GenerationTelemetry,
         retry_after: float | None = None,
     ):
-        super().__init__(category, retry_after)
+        super().__init__(category, retry_after, telemetry.provider_diagnostics)
         self.telemetry = telemetry
 
 
@@ -101,6 +101,7 @@ class LLMGateway:
         retry_after = None
         structured = None
         schema_projection = None
+        diagnostics = None
         try:
             if (request.operation == "structured") != (output_type is not None):
                 raise GenerationError(ErrorCategory.CONFIGURATION)
@@ -210,6 +211,7 @@ class LLMGateway:
         except GenerationError as exc:
             error = exc.category
             retry_after = exc.retry_after
+            diagnostics = exc.diagnostics
         except Exception:
             # Unexpected transport/schema implementation details are never exported.
             error = ErrorCategory.TRANSPORT
@@ -236,6 +238,7 @@ class LLMGateway:
             fallback=fallback,
             error=error,
             local_validation=validation,
+            provider_diagnostics=diagnostics,
         )
         if self._sink is not None:
             try:

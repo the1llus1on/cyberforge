@@ -372,3 +372,17 @@ production workflows later; incomplete manual GUI; native physical Windows11
 Phase12. Вони не блокують явно надане owner acceptance. Погоджено ordinary
 PR5 merge тільки після final-head Linux/Windows CI, без bypass/force. Phase5
 **NOT STARTED**; окремий дозвіл обов'язковий. SRS/код/залежності не змінюються.
+
+
+## Owner-approved optional budgets — 15.11.2026
+
+Supersedes earlier default application caps: output limits now default to unset,
+with no application maximum for explicit positive values. Email inherits the
+shared optional limit unless overridden. Groq/Gemini omit unset limit fields.
+Quota keys/dimensions are opt-in; provider account/context/output limits remain.
+Configured token reservations estimate input/schema bytes plus an explicit
+output allowance; unset output cannot be reserved or treated as a billing cap.
+Retries/corrections/timeouts/cooldowns and content/schema bounds remain intact.
+Provider failure metadata uses a closed code/type allowlist plus HTTP status;
+unknown strings and raw errors are discarded. This does not establish the cause
+of the owner's refinement failure; a sanitized owner rerun remains required.

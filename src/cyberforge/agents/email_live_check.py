@@ -12,7 +12,7 @@ from cyberforge.agents.contracts import EmailInputV1
 from cyberforge.agents.specialized import EmailScenarioAgent
 from cyberforge.domain.nist_cues import NistCueId
 from cyberforge.domain.scenarios import ScenarioParameters
-from cyberforge.llm.config import GatewayConfig, RateLimits
+from cyberforge.llm.config import GatewayConfig
 from cyberforge.llm.contracts import GenerationParameters, Provider, ScenarioContextV1
 from cyberforge.llm.factory import create_gateway
 
@@ -102,6 +102,7 @@ def run_check(gateway, emit=print) -> bool:
                                 "schema_version",
                                 "elapsed_seconds",
                                 "usage",
+                                "provider_diagnostics",
                             },
                         )
                         for t in result.telemetry
@@ -121,7 +122,15 @@ def main(argv=None) -> int:
     parser.add_argument(
         "--live", action="store_true", help="Opt in to at most two paid Groq requests"
     )
+    parser.add_argument(
+        "--max-output-tokens",
+        type=int,
+        default=None,
+        help="Optional explicit provider output limit; omitted by default",
+    )
     args = parser.parse_args(argv)
+    if args.max_output_tokens is not None and args.max_output_tokens < 1:
+        parser.error("--max-output-tokens must be positive")
     if not args.live:
         parser.error("Explicit --live required; no requests were made")
     values = dotenv_values(Path(".env"), interpolate=False)
@@ -136,13 +145,9 @@ def main(argv=None) -> int:
         max_retries=0,
         backup=None,
         fallback_to_groq=False,
-        parameters=GenerationParameters(thinking="low", timeout_seconds=60),
-        email_max_output_tokens=4096,
-        # Explicit local request reservation, not a claim about account quotas.
-        limits={
-            key: RateLimits(rpm=2, rpd=2, tpm=128000, tpd=128000)
-            for key in ("groq", "groq:openai/gpt-oss-120b")
-        },
+        parameters=GenerationParameters(
+            thinking="low", timeout_seconds=60, max_output_tokens=args.max_output_tokens
+        ),
     )
     try:
         return 0 if run_check(create_gateway(config)) else 1

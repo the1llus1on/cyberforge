@@ -74,7 +74,7 @@ def test_two_requests_and_metadata_only(capsys):
     assert len(provider.calls) == 2
     for request, schema in provider.calls:
         assert schema["additionalProperties"] is False
-        assert request.parameters.max_output_tokens == 4096
+        assert request.parameters.max_output_tokens is None
         assert request.prompt_version == "email-prompt-v3"
     output = capsys.readouterr().out
     assert "body_text" not in output and "context_token" not in output
@@ -86,6 +86,48 @@ def test_first_failure_stops_without_retry(capsys):
     assert not run_check(gateway(provider))
     assert len(provider.calls) == 1
     assert "timeout" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "shared,email,expected",
+    [(None, None, None), (50000, None, 50000), (50000, 60000, 60000)],
+)
+def test_email_optional_limit_inherits_or_overrides(shared, email, expected):
+    from cyberforge.llm.contracts import GenerationParameters
+
+    provider = Scripted()
+    config = GatewayConfig(
+        provider=Provider.GROQ,
+        model="openai/gpt-oss-120b",
+        max_retries=0,
+        parameters=GenerationParameters(max_output_tokens=shared),
+        email_max_output_tokens=email,
+    )
+    assert run_check(LLMGateway(config, {Provider.GROQ: provider}))
+    assert all(
+        req.parameters.max_output_tokens == expected for req, _ in provider.calls
+    )
+
+
+@pytest.mark.parametrize("limit", [None, 50000])
+def test_owner_cli_has_no_implicit_budget(monkeypatch, limit):
+    from cyberforge.agents import email_live_check
+
+    monkeypatch.setattr(email_live_check, "dotenv_values", lambda *a, **kw: {})
+    monkeypatch.setenv("GROQ_API_KEY", "fixture-key")
+    configs = []
+
+    def factory(config):
+        configs.append(config)
+        return gateway(Scripted())
+
+    monkeypatch.setattr(email_live_check, "create_gateway", factory)
+    assert (
+        main(["--live", *(["--max-output-tokens", str(limit)] if limit else [])]) == 0
+    )
+    assert configs[0].parameters.max_output_tokens == limit
+    assert configs[0].email_max_output_tokens is None and configs[0].limits == {}
+    assert configs[0].max_retries == 0 and configs[0].backup is None
 
 
 def test_email_prompt_v3_uses_context_and_keeps_untyped_parameters_local():
@@ -115,8 +157,8 @@ def test_email_prompt_v3_uses_context_and_keeps_untyped_parameters_local():
     assert "Use reserved .invalid addresses only" not in prompt
     assert "NIST" in prompt and "never verified" in prompt
     assert "main_body" in prompt and "previous" in prompt
-    assert GatewayConfig().parameters.max_output_tokens == 512
-    assert GatewayConfig().email_max_output_tokens == 4096
+    assert GatewayConfig().parameters.max_output_tokens is None
+    assert GatewayConfig().email_max_output_tokens is None
     assert (
         load_config(
             environ={"CYBERFORGE_EMAIL_MAX_OUTPUT_TOKENS": "2048"},

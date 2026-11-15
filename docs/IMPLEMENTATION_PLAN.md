@@ -898,3 +898,30 @@ Provider schema structure, persistence, provenance, RBAC and external URL
 restrictions are unchanged. No DNS/MX checks, SMTP, navigation or live API calls.
 Focused offline tests and Ruff locally; final Linux/Windows CI runs the full
 suite. Phase 6 stays REVIEW; no merge or Phase 7.
+
+
+### Optional provider token limits and refinement diagnosis — 15.11.2026
+
+Phase6 stays REVIEW in PR7. SRS §§5.6–5.8,10–11,16: owner explicitly removes
+implicit output and local token ceilings. Shared/Email output limits default to
+None, accept any explicit positive integer and have no application maximum.
+Email inherits shared settings unless explicitly overridden. Groq/Gemini omit
+unset output fields. Local quotas/dimensions are opt-in; explicit provider/model
+levels still apply together, while Retry-After, timeouts and bounded retries
+remain. Unknown provider-default output cannot be reserved; configured token
+budgets estimate prompt/schema bytes plus an explicit output allowance. They
+are not billing guarantees. Content length/artifact-size limits remain intact.
+
+Owner live evidence: initial Groq/gpt-oss-120b success,1452input/742output tokens,
+local validation passed; refinement invalid_request without usage/artifact.
+Root cause remains UNKNOWN from that category alone. No causal token claim.
+Offline real-SDK/in-memory HTTP tests exercise previous draft, prompt-v3,
+identical strict schema, low reasoning, initial+refinement success, protected
+main-body merge and injected400 failures. No request-construction defect is
+reproduced. New diagnostics retain only HTTP status, exact allowlisted error
+code/type and context/output/structured-output/invalid-request classification.
+Unknown strings, error messages, failed_generation and raw bodies are discarded.
+A fresh owner-only live run is required to identify the actual provider failure;
+no live call was made by Codex. Existing opt-in command remains unchanged,
+with optional --max-output-tokens N, no local token quotas, at most2requests,
+zero retries/corrections/fallback. No .env or owner demo data changes.

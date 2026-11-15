@@ -42,8 +42,9 @@ class GroqProvider:
         kwargs = {
             "model": request.model,
             "messages": [{"role": "user", "content": request.prompt}],
-            "max_completion_tokens": params.max_output_tokens,
         }
+        if params.max_output_tokens is not None:
+            kwargs["max_completion_tokens"] = params.max_output_tokens
         if params.temperature is not None:
             kwargs["temperature"] = params.temperature
         if response_format is not None:

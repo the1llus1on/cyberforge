@@ -85,8 +85,8 @@ visual/source review descriptions; it does not grant merge or Phase 7 approval.
 - email-prompt-v2 uses scenario topic/audience/objective/description/difficulty,
   tactics, selected NIST intentions, synthetic context and refinement constraints.
   No cue is promoted to verified and no learner scores are generated.
-- Email-only output cap4096 (bounded512–8192), independent of the general512
-  default. Both provider/model local quota caps still apply. Untyped arbitrary
+- Output limits and local quota caps are optional (see current follow-up below).
+  Only explicitly configured provider/model caps apply. Untyped arbitrary
   generation_parameters are intentionally excluded; no allowlist is needed yet.
 
 ### Owner-initiated Groq acceptance — PENDING
@@ -97,14 +97,13 @@ Run from the repository with the existing local key; do not paste credentials:
 uv run --offline --locked python -m cyberforge.agents.email_live_check --live
 ```
 
-The opt-in runner uses Groq/openai/gpt-oss-120b only, low reasoning,4096 output
-cap,60s timeout, gateway and SDK retries0, max_corrections0, backup=None and
-fallback disabled. At most one initial and one main-body refinement request per
-invocation. Initial failure stops immediately. The isolated in-memory local
-reservation caps (2requests,128000 token reservation) accommodate conservative
-UTF8+schema+output accounting; these are not verified account quotas or billing
-limits. Provider quotas still apply. No .env updates, artifact persistence,
-raw prompts/responses or reasoning traces. Share only the sanitized JSON lines.
+The opt-in runner uses Groq/openai/gpt-oss-120b only, low reasoning, no output
+limit unless --max-output-tokens N is explicitly supplied,60s timeout, gateway
+and SDK retries0, max_corrections0, backup=None and fallback disabled. At most
+one initial and one main-body refinement request per invocation. Initial failure
+stops immediately. No local token quota. Provider/account limits still apply.
+No .env updates, artifact persistence, raw prompts/responses or reasoning traces.
+Share only sanitized JSON lines, including allowlisted provider diagnostics.
 Live structure success does not establish pedagogical quality: owner reviews
 content through the application and independently decides acceptance.
 
@@ -253,3 +252,30 @@ requires a dotted domain with labels up to63 characters and rejects whitespace,
 controls and header injection. No DNS/MX/mailbox checks or delivery. Use fictional
 identities only; never include real personal data in cloud prompts. External URL
 restrictions remain unchanged. Email prompt is now email-prompt-v3.
+
+
+### Optional provider token limits and refinement diagnosis — 15.11.2026
+
+Phase6 stays REVIEW in PR7. SRS §§5.6–5.8,10–11,16: owner explicitly removes
+implicit output and local token ceilings. Shared/Email output limits default to
+None, accept any explicit positive integer and have no application maximum.
+Email inherits shared settings unless explicitly overridden. Groq/Gemini omit
+unset output fields. Local quotas/dimensions are opt-in; explicit provider/model
+levels still apply together, while Retry-After, timeouts and bounded retries
+remain. Unknown provider-default output cannot be reserved; configured token
+budgets estimate prompt/schema bytes plus an explicit output allowance. They
+are not billing guarantees. Content length/artifact-size limits remain intact.
+
+Owner live evidence: initial Groq/gpt-oss-120b success,1452input/742output tokens,
+local validation passed; refinement invalid_request without usage/artifact.
+Root cause remains UNKNOWN from that category alone. No causal token claim.
+Offline real-SDK/in-memory HTTP tests exercise previous draft, prompt-v3,
+identical strict schema, low reasoning, initial+refinement success, protected
+main-body merge and injected400 failures. No request-construction defect is
+reproduced. New diagnostics retain only HTTP status, exact allowlisted error
+code/type and context/output/structured-output/invalid-request classification.
+Unknown strings, error messages, failed_generation and raw bodies are discarded.
+A fresh owner-only live run is required to identify the actual provider failure;
+no live call was made by Codex. Existing opt-in command remains unchanged,
+with optional --max-output-tokens N, no local token quotas, at most2requests,
+zero retries/corrections/fallback. No .env or owner demo data changes.

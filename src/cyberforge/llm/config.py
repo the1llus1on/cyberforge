@@ -55,17 +55,17 @@ class BackupConfig(Contract):
 
 
 class RateLimits(Contract):
-    rpm: int = Field(default=10, ge=1)
-    tpm: int = Field(default=8000, ge=1)
-    rpd: int = Field(default=100, ge=1)
-    tpd: int = Field(default=100000, ge=1)
+    rpm: int | None = Field(default=None, ge=1)
+    tpm: int | None = Field(default=None, ge=1)
+    rpd: int | None = Field(default=None, ge=1)
+    tpd: int | None = Field(default=None, ge=1)
 
 
 class GatewayConfig(Contract):
     provider: Provider = Provider.MOCK
     model: str = "mock-v1"
     parameters: GenerationParameters = Field(default_factory=GenerationParameters)
-    email_max_output_tokens: int = Field(default=4096, ge=512, le=8192)
+    email_max_output_tokens: int | None = Field(default=None, ge=1)
     google_api_key: SecretStr | None = Field(default=None, repr=False, exclude=True)
     groq_api_key: SecretStr | None = Field(default=None, repr=False, exclude=True)
     max_retries: int = Field(default=2, ge=0, le=3)

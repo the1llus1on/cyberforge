@@ -147,7 +147,9 @@ def test_concurrent_reservations_do_not_exceed_budget():
 
 
 def test_structured_schema_is_included_in_token_budget():
-    instance, provider, *_ = gateway()
+    instance, provider, *_ = gateway(
+        GatewayConfig(limits={"mock": RateLimits(tpm=8000)})
+    )
 
     class LargeSchema(Contract):
         message: str = Field(description="Synthetic schema description. " * 400)
@@ -177,7 +179,7 @@ def test_non_json_pydantic_schema_is_rejected_before_transport():
 @pytest.mark.parametrize("field", ["rpm", "rpd", "tpm", "tpd"])
 def test_both_budget_levels_and_all_dimensions(key, field):
     now = [0]
-    tokens = len(b"Synthetic fixture") + 512
+    tokens = len(b"Synthetic fixture")
     limit = 1 if field in {"rpm", "rpd"} else tokens
     limiter = RateLimiter({key: RateLimits(**{field: limit})}, lambda: now[0])
     limiter.reserve(request())
