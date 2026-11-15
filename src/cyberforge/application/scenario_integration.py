@@ -54,7 +54,7 @@ def check(identifier, passed, explanation, correction):
         check_id=identifier,
         status="PASS" if passed else "BLOCKED",
         explanation=explanation if passed else correction,
-        correction=correction,
+        correction="Додаткові дії не потрібні." if passed else correction,
     )
 
 

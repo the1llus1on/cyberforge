@@ -521,7 +521,25 @@ class MailPreview(QFrame):
     def heightForWidth(self, width: int) -> int:
         return self.layout().minimumHeightForWidth(width)
 
+    def set_link(self, link) -> None:
+        from cyberforge.web.contracts import email_digest
+
+        self.link = (
+            link
+            if link is not None
+            and self.draft is not None
+            and (
+                link.scenario_id == self.draft.scenario_id
+                and link.scenario_version == self.draft.scenario_version
+                and link.source_email_digest == email_digest(self.draft)
+            )
+            else None
+        )
+        if self.selected_index is not None:
+            self.open_message(self.selected_index)
+
     def set_draft(self, draft: EmailDraftV2 | None) -> None:
+        self.link = None
         self.draft = draft
         self.selected_index = None
         self.read_messages.clear()
@@ -585,10 +603,17 @@ class MailPreview(QFrame):
         self.sender_avatar.setText(message.sender_name[:1].upper())
         self.timestamp.setText(training_time(index) + " · навчальний час")
         self.body.set_message(
-            message, self.draft.slots.internal_resource_id if index == 0 else None
+            message,
+            self.draft.slots.internal_resource_id if index == 0 else None,
+            self.link if index == 0 else None,
         )
         self.resource.setText(
             "Навчальне посилання: "
+            + (
+                self.link.link_label + " · " + self.link.display_url + " · "
+                if self.link
+                else ""
+            )
             + self.draft.slots.internal_resource_id
             + " · перехід вимкнено"
             if index == 0
