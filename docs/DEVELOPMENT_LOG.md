@@ -2823,3 +2823,70 @@ history/grants, explicit next draft. Save/Discard/Remain й session guards retai
 Зелений saved матеріал не означає publication. Додатковий precision review замінив
 rubric spinbox на validated numeric text, щоб не округлювати довільні positive
 saved weights; focused precision/actual Web/WSLg gate виконується окремо.
+
+### Phase8 — WSLg та installed-wheel gates
+
+Real Wayland command:
+`QT_QPA_PLATFORM=wayland .venv/bin/pytest tests/ui/test_scenario_integration.py tests/ui/test_web_security.py tests/ui/test_email_constructor.py::test_mail_navigation_source_copy_explicit_save_reopen -q --tb=short`
+— **11passed/44.36s**, exit0; actual browser/isolated profile, network-isolation
+regressions, native main CTA/weight precision/disposal/session/compact covered.
+Synthetic compact screenshot probe1passed/2.77s; docs/screenshots/phase-8-*.png
+переглянуто, main/footer/modal controls reachable1100×720. Automation не є owner
+functional acceptance або physical Windows11. PASS corrections уточнено, щоб
+не показувати failure action для успішної перевірки; focused2passed/3.91s.
+
+Додаткові persisted corruption/attestation/exact groups/concurrent revoke/restart:
+8passed/13.14s. `uv build --offline --out-dir /tmp/cyberforge-phase8-package`
+PASS (UV_CACHE_DIR=/tmp/cyberforge-phase8-uv-cache). Перший isolated install із
+новим порожнім cache fail offline (alembic відсутній); повторено з наявним cache,
+без мережі,58hash-verified runtime packages installed у новий /tmp venv, wheel install
+PASS. `python -I` installed-package script0005→0006 з existing synthetic Email/Web,
+full integration/review/publish/grants/audit/access/new draft/FK PASS. Installed
+Qt `--web-demo --database /tmp/.../smoke.sqlite3 --smoke-test` exit0.
+Wheel/source parity85Python files, no private data PASS; source/dependency versions
+не змінено після wheel build. Final full suite виконується; CI додає ранній
+Phase8 native compact gate перед existing full suite.
+
+Офіційний NIST TN2276 перевірено через primary csrc.nist.gov: email detection
+difficulty, не learner score/Web metric. GitHub MCP remote .github listing
+підтвердив лише workflows; PR templates не знайдено локально або remote .github.
+
+### Phase8 — migration-chain rollback hardening
+
+Додатковий isolated probe підтвердив дефект sqlite3 legacy DDL: downgrade через
+empty0006 до0004 відхиляється existing0005 Web data guard, але без real BEGIN
+міг видалити0006tables/triggers, залишивши Alembic stamp0006. Owner DB не зачіпалася.
+0006тепер перед upgrade/downgrade перевіряє DBAPI in_transaction і починає реальний
+BEGIN IMMEDIATE, якщо його ще немає. Вже відкриту транзакцію не дублює; existing
+AccountService/Database semantics не змінює. Весь migration chain rollback
+відновлює tables/triggers/stamp, включно з відмовою попередньої фази.
+Новий regression порівнює complete tables/triggers/stamp і перевіряє usable link/Web
+після rollback. Focused migration gates5passed/8.50s. Потрібен повторний stable full
+suite і rebuild/installed-wheel, оскільки змінилася packaged migration; перший full
+run не використовується як остаточний evidence цього hardening.
+
+Pre-hardening full run завершився976passed/686.21s; це історичний evidence,
+не остаточний gate після DDL fix. Final screenshot refresh1passed/3.28s та
+overview/CTA screenshots оглянуто; PASS corrections не показують failure actions.
+Rebuilt wheel повторно встановлено офлайн; installed0005→0006/full publication/
+audit/access/new draft/FK і new explicit-database startup smoke PASS, source parity
+PASS. Context7 підтвердив public Connection.connection.driver_connection API та
+sqlite3 legacy DDL behavior. Нових dependencies немає; runtime phase boundaries незмінні.
+
+### Phase8 — stable final local gate / REVIEW
+
+`UV_CACHE_DIR=/tmp/cyberforge-phase8-uv-cache QT_QPA_PLATFORM=offscreen uv run --offline --locked pytest -q --tb=short`
+— **977passed/673.63s**, exit0. Усі886accepted Phase0–7 regressions збережено,
+91Phase8 cases added (84service/security/migration та7UI). Після початку цього
+final run application/test Python code не змінювався; тільки документація.
+`UV_CACHE_DIR=/tmp/cyberforge-phase8-uv-cache uv run --offline --locked ruff check .`
+та `... ruff format --check .` PASS,126Python files. Focused/package/WSLg evidence
+вище; final rebuilt wheel parity85files і new-database Qt smoke PASS.
+`git -c core.whitespace=cr-at-eol diff --check` PASS, SRS CRLF збережено;
+changed-file/private-key scan27files/zero findings, owner data поза scope.
+
+Статус Phase8 REVIEW. Owner manual checklist у PHASE_8_ACCEPTANCE; owner acceptance
+не приписується automation. No live Groq/Gemini, attempts/events/scoring/analytics,
+merge/force-push/branch deletion або Phase9. GitHub MCP повторно підтвердив main
+b84e2fbd… незмінним. Feature commits auditable; final push/PR/exact-head Linux та
+Windows CI фіксуються у PR і delivery report без circular evidence commits.

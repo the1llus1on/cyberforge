@@ -24,9 +24,9 @@
 | 5 | Specialized Agents | ACCEPTED | Прийнято власником 13.11.2026: four agents, typed contracts, bounded LangGraph, provenance/F-01, offline/provider-neutral integration; PHASE_5_ACCEPTANCE.md |
 | 6 | Email Constructor | ACCEPTED | Прийнято власником15.11.2026: Email preview/editor, async generation, explicit SQLite Save; PHASE_6_ACCEPTANCE.md |
 | 7 | Web Constructor | ACCEPTED | Hybrid components, isolated WebEngine, visual editor, scoped AI, saved Email binding, explicit SQLite Save; PHASE_7_ACCEPTANCE.md |
-| 8 | Scenario Integration | NOT STARTED / PLANNING | Shared Email→Web context, internal link validation, readiness gate, immutable publishing; integration tests |
+| 8 | Scenario Integration | REVIEW | Typed Email→Web link, rubric definitions/editor, exact readiness/review, atomic immutable publication, audited grants/access; PHASE_8_ACCEPTANCE.md |
 | 9 | Learner Simulation | NOT STARTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
-| 10 | Scoring & Mentor | NOT STARTED | Versioned deterministic rubrics, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
+| 10 | Scoring & Mentor | NOT STARTED | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
 | 11 | Analytics Mode | NOT STARTED | Read-only scenario statistics, deduplicated learner table, missing-data rules, filters, CSV/JSON export, RBAC; analytics tests |
 | 12 | Finalization | NOT STARTED | Full regression/security checks, Windows 11 package, demonstration dataset, docs and release checklist |
 
@@ -1052,7 +1052,7 @@ implementation requirements потребують окремого review/доз�
 
 ## Phase 8 — Scenario Integration (15.11.2026)
 
-**IN PROGRESS**, явно дозволено реалізацію/feature PR, без merge/ACCEPTED/Phase9.
+**REVIEW**, реалізацію та local gates завершено; feature PR дозволено, без merge/ACCEPTED/Phase9.
 База main b84e2fbdfcf1d84f86a6d8c30a9b0b868e678212, clean tree, GitHub MCP,
 fetch/ff-only; feat/phase-8-scenario-integration.
 
@@ -1067,3 +1067,14 @@ fetch/ff-only; feat/phase-8-scenario-integration.
 | GUI/delivery | §§3–4,21,24 | guards/modals/compact WSLg, full Ruff/pytest/package, final-head Linux/Windows CI |
 
 Деталі — ADR-0008 та PHASE_8_ACCEPTANCE. No AI calls/learner attempts/scoring.
+
+
+Phase8 final local gate: full offline pytest **977passed/673.63s**, Ruff lint/format
+126Python files PASS. Focused persistence172passed +8additional, migration rollback
+5passed, GUI45passed; real WSLg11passed plus final compact screenshot1passed.
+Built/installed wheel,0005→0006 preservation, full publication/grants/access,
+Qt startup and85file source parity PASS. First full976passed/686.21s preceded
+DDL hardening; final977run includes the rollback regression. CI includes early
+native compact check, final-head Linux/Windows evidence follows in PR/final report.
+Owner manual acceptance pending; physical Windows11/DPI/installer Phase12 risk.
+Phase8 REVIEW, no merge/ACCEPTED/Phase9. ADR0008 and PHASE_8_ACCEPTANCE contain details.
