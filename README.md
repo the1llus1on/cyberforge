@@ -494,5 +494,9 @@ WebEngine ізольований: display-only HTTPS адреса не зава�
 видає synthetic fixtures за AI. Ізольоване створення БД, owner checklist, screenshots
 та minimal owner-only live workflow: [PHASE_7_ACCEPTANCE.md](docs/PHASE_7_ACCEPTANCE.md).
 Web Groq output default4096; `CYBERFORGE_WEB_MAX_OUTPUT_TOKENS` overrides shared/default,
-explicit positive limits без hard application maximum. Phase7 очікує незалежний review
-і owner acceptance; merge не дозволено.
+explicit positive limits без hard application maximum. Phase7 **ACCEPTED власником
+2026-11-15**; PR8 merge дозволено після final-head CI. Owner підтвердив live Groq
+generation/regeneration, ручне редагування шапки, light/dark та preview/rendering.
+Save/reopen і всі presets мають automated evidence, не окреме owner confirmation.
+Physical Windows11/DPI/installer та інші Phase12 checks залишаються ризиками.
+Phase8 — **NOT STARTED / PLANNING**, потребує окремого погодження.

@@ -1,6 +1,6 @@
 # ADR-0007 — Гібридний компонентний Web Constructor
 
-Дата: 15.11.2026. **Архітектура затверджена власником; реалізація REVIEW.**
+Дата: 15.11.2026. **ACCEPTED власником проєкту 2026-11-15 (Phase7, PR8).**
 SRS v3.0, датована поправка §§6.4–6.10,9.3,11.3,26.3,26.5.
 
 Один deterministic renderer дев'яти компонентів замінює rigid template selection
@@ -74,3 +74,8 @@ tooltip/canonical value. Renderer/trust boundary та збережені дан�
 Numeric Windows CI identified the remaining bottom action-row minimum828px.
 Edit action now lives in the top row, matching Email; code/generate/save remain
 below preview. This preserves labels/font size and browser height at1100×720.
+
+
+Остаточне прийняття, owner-tested scope, automated evidence та accepted limitations:
+[PHASE_7_ACCEPTANCE.md](../PHASE_7_ACCEPTANCE.md). Phase8 NOT STARTED / PLANNING;
+прийняття Phase7 не дозволяє реалізацію наступної фази.

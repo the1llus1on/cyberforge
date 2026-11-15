@@ -1,7 +1,9 @@
 # Phase 7 — Hybrid Component-Based Web Constructor
 
-**Статус: REVIEW; очікується незалежний review та рішення власника.** Архітектуру й реалізацію дозволено
-власником15.11.2026. Прийняття фази та merge не дозволені; Phase8 не розпочато.
+**Статус: ACCEPTED власником проєкту 2026-11-15.** Дозволено merge PR8 після
+успішного final-head CI. Phase8 — NOT STARTED / PLANNING.
+Попередні REVIEW/checklist записи нижче збережено як історичні докази;
+фактичний owner-tested scope та обмеження уточнено в остаточному рішенні наприкінці.
 Історична база: Phase6 ACCEPTED, main0fc97861e8e9c84393253e79c142c7c54adcb8b3.
 
 ## Вимоги та реалізація
@@ -181,3 +183,35 @@ Windows11 acceptance. **Phase7 не може стати ACCEPTED без ріше
   test_clipboard_shortcuts.py binding regression. Existing tests retained.
 - CI: .github/workflows/ci.yml додає focused native compact gate перед повним
   pytest; failure-only numeric layout diagnostics у tests/ui/test_web_constructor.py.
+
+
+## Phase 7 — ACCEPTED власником 2026-11-15
+
+Власник явно прийняв Phase 7 — Hybrid Component-Based Web Constructor та дозволив
+звичайний merge commit PR #8 після successful CI на точному final HEAD.
+Reviewed implementation HEAD: `43462c5b963030db060ca0e515b09f6120017414`.
+Це рішення замінює попередні REVIEW/pending записи; історію перевірок збережено.
+
+**Owner-tested / owner-reported:** реальний GUI, live Groq GPT-OSS120B Web generation,
+AI regeneration, ручне редагування шапки сайту, light/dark switching, коректні
+browser preview та component rendering. Independent review critical implementation
+paths/security tests не виявив підтвердженого блокувального дефекту.
+Ручні Save/reopen, всі presets та physical Windows11 окремо НЕ підтверджені власником.
+
+**Automated evidence:** reviewed HEAD CI
+[43754808309](https://github.com/the1llus1on/cyberforge/actions/runs/43754808309):
+Linux886passed, Windows884passed/2POSIX-only skips; Ruff, compact native gate,
+Qt startup smoke та actual WebEngine security tests PASS. Persistence, Save/reopen,
+presets, RBAC, concurrency/migration та isolation мають окремі automated докази
+вище/у DEVELOPMENT_LOG, не приписуються власнику. Codex live API не виконував.
+
+**Accepted limitations:** одна сторінка, fixed synthetic form values, structured
+provenance не доводить повну семантичну/навчальну якість. Physical Windows11,
+DPI, keyboard, executable/installer, broader performance та final presentation
+polish залишаються Phase12 ризиками; Windows CI їх не замінює. Неперевірені
+вимоги не позначено перевіреними. .env/keys/SQLite/user data/environments збережено.
+
+Документаційний acceptance HEAD повторно проходить Linux/Windows CI перед merge;
+точні SHA/CI/merge evidence фіксуються в PR8 та фінальному звіті без циклічних
+документаційних commits. Phase8 — **NOT STARTED / PLANNING**: architecture та
+implementation requirements потребують окремого review/дозволу. Phases9–12 без змін.

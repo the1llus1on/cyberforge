@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–6 — ACCEPTED (Phase6 прийнято власником2026-11-15); Phase7 — REVIEW; Phases8–12 — NOT STARTED.
+**State:** Phases 0–6 — ACCEPTED (Phase6 прийнято власником2026-11-15); Phase7 — ACCEPTED власником2026-11-15; Phase8 — NOT STARTED / PLANNING; Phases9–12 — NOT STARTED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -23,8 +23,8 @@
 | 4 | LLM Integration | ACCEPTED | Прийнято власником 13.11.2026; Groq primary/Hydrogen verified backup, explicit activation; Mock offline; F-01/F-02; accepted residual risks; ADR-0004 |
 | 5 | Specialized Agents | ACCEPTED | Прийнято власником 13.11.2026: four agents, typed contracts, bounded LangGraph, provenance/F-01, offline/provider-neutral integration; PHASE_5_ACCEPTANCE.md |
 | 6 | Email Constructor | ACCEPTED | Прийнято власником15.11.2026: Email preview/editor, async generation, explicit SQLite Save; PHASE_6_ACCEPTANCE.md |
-| 7 | Web Constructor | REVIEW | Hybrid components, isolated WebEngine, visual editor, scoped AI, saved Email binding, explicit SQLite Save; PHASE_7_ACCEPTANCE.md |
-| 8 | Scenario Integration | NOT STARTED | Shared Email→Web context, internal link validation, readiness gate, immutable publishing; integration tests |
+| 7 | Web Constructor | ACCEPTED | Hybrid components, isolated WebEngine, visual editor, scoped AI, saved Email binding, explicit SQLite Save; PHASE_7_ACCEPTANCE.md |
+| 8 | Scenario Integration | NOT STARTED / PLANNING | Shared Email→Web context, internal link validation, readiness gate, immutable publishing; integration tests |
 | 9 | Learner Simulation | NOT STARTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
 | 10 | Scoring & Mentor | NOT STARTED | Versioned deterministic rubrics, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
 | 11 | Analytics Mode | NOT STARTED | Read-only scenario statistics, deduplicated learner table, missing-data rules, filters, CSV/JSON export, RBAC; analytics tests |
@@ -1017,3 +1017,35 @@ Final local gate **886passed/518.91s**, Ruff117files PASS; focused Web UI/securi
 15passed/35.12s, real WSLg compact3passed/11.22s plus measured-width1passed/4.33s.
 Failure-only diagnostics retained; CI runs compact gate before full suite.
 Final PR8 HEAD and Linux/Windows evidence remain in PR/delivery report; Phase7 REVIEW.
+
+
+## Phase 7 — ACCEPTED власником 2026-11-15
+
+Власник явно прийняв Phase 7 — Hybrid Component-Based Web Constructor та дозволив
+звичайний merge commit PR #8 після successful CI на точному final HEAD.
+Reviewed implementation HEAD: `43462c5b963030db060ca0e515b09f6120017414`.
+Це рішення замінює попередні REVIEW/pending записи; історію перевірок збережено.
+
+**Owner-tested / owner-reported:** реальний GUI, live Groq GPT-OSS120B Web generation,
+AI regeneration, ручне редагування шапки сайту, light/dark switching, коректні
+browser preview та component rendering. Independent review critical implementation
+paths/security tests не виявив підтвердженого блокувального дефекту.
+Ручні Save/reopen, всі presets та physical Windows11 окремо НЕ підтверджені власником.
+
+**Automated evidence:** reviewed HEAD CI
+[43754808309](https://github.com/the1llus1on/cyberforge/actions/runs/43754808309):
+Linux886passed, Windows884passed/2POSIX-only skips; Ruff, compact native gate,
+Qt startup smoke та actual WebEngine security tests PASS. Persistence, Save/reopen,
+presets, RBAC, concurrency/migration та isolation мають окремі automated докази
+вище/у DEVELOPMENT_LOG, не приписуються власнику. Codex live API не виконував.
+
+**Accepted limitations:** одна сторінка, fixed synthetic form values, structured
+provenance не доводить повну семантичну/навчальну якість. Physical Windows11,
+DPI, keyboard, executable/installer, broader performance та final presentation
+polish залишаються Phase12 ризиками; Windows CI їх не замінює. Неперевірені
+вимоги не позначено перевіреними. .env/keys/SQLite/user data/environments збережено.
+
+Документаційний acceptance HEAD повторно проходить Linux/Windows CI перед merge;
+точні SHA/CI/merge evidence фіксуються в PR8 та фінальному звіті без циклічних
+документаційних commits. Phase8 — **NOT STARTED / PLANNING**: architecture та
+implementation requirements потребують окремого review/дозволу. Phases9–12 без змін.
