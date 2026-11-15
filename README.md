@@ -124,8 +124,9 @@ uv build
 
 Тести використовують тимчасові БД й масковані форми; за замовчуванням Qt
 працює через `offscreen`. Після встановлення залежностей перевірки працюють
-без мережі: `uv run --offline --locked pytest`. MockLLMProvider належить
-Phase 4; поточний код узагалі не викликає LLM або зовнішніх сервісів.
+без мережі: `uv run --offline --locked pytest`. MockLLMProvider забезпечує
+офлайн-перевірки; звичайні тести та GUI startup не викликають cloud API.
+У Phase 6 хмарна генерація потребує явної конфігурації та дії викладача.
 GitHub Actions виконує Ruff та pytest для PR і push у main на Linux та Windows.
 
 WSLg Wayland:
@@ -214,8 +215,8 @@ ID і назва `Сценарій {id}` виникають тільки піс�
 Instructor працює лише зі своїми сценаріями. Administrator бачить усі,
 редагує й архівує власні; чужі картки й архів доступні для читання. Learner не бачить чернеток.
 Конструктор і Аналіз мають один каталог та зберігають вибраний ID.
-Режим Аналізу показує відсутність результатів. Email/Web генерація,
-публікація й обчислення аналітики ще не реалізовані.
+Режим Аналізу показує відсутність результатів. Email Constructor додано у Phase 6
+(див. нижче); Web, публікація й обчислення аналітики залишаються наступними фазами.
 
 Повна демонстрація й manual Windows gate:
 [PHASE_3_ACCEPTANCE](docs/PHASE_3_ACCEPTANCE.md).
@@ -350,7 +351,8 @@ continuation off. Виводить лише provider/model/outcome/elapsed/avail
 
 [Phase4 acceptance](docs/PHASE_4_ACCEPTANCE.md) містить offline перевірку
 контрактів і короткі WSLg кроки. Нового graphical model selector немає;
-agents/LangGraph workflows та Email/Web generation UI лишаються наступними фазами.
+Agents/LangGraph workflows додано у Phase 5, Email UI — у Phase 6; Web UI
+залишається Phase 7.
 
 
 ### Phase 5: спеціалізовані агенти (офлайн)
@@ -379,3 +381,100 @@ Default `max_corrections=0`; явне `1` дозволяє максимум од
 лише після validation failure та в межах чинних gateway budgets. Transport
 retry/fallback і model selection залишаються політикою Phase 4; demo не змінює
 cloud configuration. Нових live API-викликів для Phase 5 не дозволено.
+
+### Phase 6: Email Constructor (ACCEPTED — 2026-11-15)
+
+Прийнято власником після GUI generation/regeneration і live Groq перевірки.
+Scope, докази та Phase12 deferrals — [PHASE_6_ACCEPTANCE](docs/PHASE_6_ACCEPTANCE.md).
+Phase7 — NOT STARTED / PLANNING, потребує окремого погодження до реалізації.
+
+Open a saved scenario → «Створити електронний лист». The native Qt preview now
+resembles a Gmail mailbox inside a browser frame, with a light mail area inside
+the dark CyberForge shell. Search the generated inbox, click a message (or press
+Enter) to open it, and use the mailbox back button to return. Addresses and
+timestamps are synthetic; browser controls and sending actions do not navigate
+or send mail. No browser engine or external web content is used.
+
+The reading view uses a 22px subject, 15px paragraph text and a native formatted
+content template. The main message's sender supplies its synthetic header;
+its existing internal resource ID appears in an inert information/action card.
+Model strings remain literal text. Wide inbox rows align sender, subject,
+snippet and time; compact rows wrap their overview. Icons are painted locally.
+
+«Уточнення викладача для перегенерації» supplies an instruction for the next
+generation. It does not edit the current preview or saved email directly:
+«Перегенерувати» creates an unsaved candidate; «Зберегти» explicitly persists it
+and returns to the scenario card. Reopening restores the stored artifact.
+
+«Редагувати лист» opens native sender/name/address/subject/body fields for the
+selected main or background message. Apply changes only the validated working
+draft; Cancel discards dialog edits. Only «Зберегти» writes SQLite. Sender edits
+rebind the synthetic context/provenance through the authorized service.
+
+«Переглянути код» inspects the current canonical JSON, including unsaved edits,
+with read-only highlighting, scrolling and Copy. The unused HTML projection
+has been removed; developer-controlled native visual formatting remains.
+
+Refinement uses the latest working draft. Select «AI: лише текст основного листа»
+to deterministically preserve subject, senders, background mail and other fields;
+«AI: весь лист і фон» permits broader changes. Scope takes precedence over
+conflicting prose. Regeneration after manual edits requires confirmation and
+never saves automatically. Failure preserves the current candidate.
+
+Email prompts use email-prompt-v3. Provider output limits are optional: omit
+max_output_tokens (or set null) in CYBERFORGE_LLM_PARAMETERS to leave provider
+defaults in force. An explicit positive value has no application maximum.
+CYBERFORGE_EMAIL_MAX_OUTPUT_TOKENS is an optional Email-specific override;
+when absent, Email inherits an explicit shared setting. If both are unset,
+Groq Email with openai/gpt-oss-120b sends4096 for initial and refinement requests
+(owner-verified compatibility default). Gemini and other operations retain
+optional limits. Provider context/output/account limits still apply.
+
+Local rate/token quotas are opt-in through CYBERFORGE_LLM_LIMITS. Unspecified
+provider/model keys and dimensions have no local cap. Both explicitly configured
+levels still apply; Retry-After cooldowns, timeouts and bounded retries remain.
+Token reservations estimate UTF8 prompt+schema bytes plus an explicitly configured
+output allowance. With no output limit, unknown completion tokens cannot be
+reserved; these estimates are not billing/account limits. Content field/artifact
+bounds and local validation remain mandatory. Arbitrary generation_parameters
+remain unsupported for cloud prompting.
+
+Owner-only live acceptance (up to two paid requests, no retries/fallback):
+
+```console
+uv run --offline --locked python -m cyberforge.agents.email_live_check --live
+```
+
+This reads GROQ_API_KEY and the optional Email limit, leaves .env unchanged,
+and uses synthetic data. It stops after an initial failure and emits only safe
+contract/usage/timing metadata. Do not run it during baseline tests or CI.
+Owner follow-up found HTTP400 when omitting the output limit; explicit4096
+passed initial/refinement validation and protected-field checks. Metadata includes
+safe HTTP status, allowlisted error type/code and context/output/schema category.
+The runner defaults to4096 output tokens, with no local token quota.
+CYBERFORGE_EMAIL_MAX_OUTPUT_TOKENS overrides the default; --max-output-tokens N
+takes precedence. Values8192 and higher remain supported without an app ceiling.
+It still makes at most two requests with no retries, corrections or fallback.
+No live calls were made by Codex.
+
+Existing RBAC, archive/published restrictions, worker identity guards, provenance
+and SQLite behavior remain in force. Configured cloud generation requires an
+explicit instructor action; startup/navigation do not call a model. Without
+cloud configuration generation is unavailable. `--email-demo` explicitly selects
+the synthetic offline Mock demonstration and ignores `.env`/cloud keys.
+
+Safe isolated setup/launch commands and the updated owner review checklist:
+[PHASE_6_ACCEPTANCE](docs/PHASE_6_ACCEPTANCE.md). Phase 7 remains out of scope.
+
+
+Owner-approved address rule (14.11.2026): ordinary email domains and legacy
+`.invalid` addresses are accepted as inert display data. Minimal ASCII syntax
+validation bounds the local part to64 and total address to254 characters,
+requires a dotted domain with labels up to63 characters and rejects whitespace,
+controls and header injection. No DNS/MX/mailbox checks or delivery. Use fictional
+identities only; never include real personal data in cloud prompts. External URL
+restrictions remain unchanged. Email prompt is now email-prompt-v3.
+
+Owner live follow-up: omitted Groq max_completion_tokens returned HTTP400;
+explicit4096 passed initial/refinement validation (889/780output tokens), with
+protected fields preserved. This is owner evidence; Codex made no live calls.

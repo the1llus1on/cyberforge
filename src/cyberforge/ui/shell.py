@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 )
 
 from cyberforge.application.accounts import AccountService
+from cyberforge.application.email_materials import EmailMaterialService
 from cyberforge.application.scenarios import ScenarioService
 from cyberforge.domain.accounts import (
     AccessDenied,
@@ -29,6 +30,7 @@ from cyberforge.domain.accounts import (
 )
 from cyberforge.domain.scenarios import Scenario
 from cyberforge.groups.service import GroupService
+from cyberforge.llm.factory import create_gateway
 from cyberforge.ui.account_pages import AccountPage
 from cyberforge.ui.admin_page import AdminPage
 from cyberforge.ui.clipboard_shortcuts import ClipboardShortcuts
@@ -67,11 +69,15 @@ class MainWindow(QMainWindow):
         if frame.topLeft().toTuple() != (left, top):
             self.move(left, top)
 
-    def __init__(self, accounts: AccountService) -> None:
+    def __init__(
+        self, accounts: AccountService, emails: EmailMaterialService | None = None
+    ) -> None:
         super().__init__()
         self.accounts = accounts
         self.groups = GroupService(accounts)
         self.scenarios = ScenarioService(accounts)
+        self.emails = emails or EmailMaterialService(self.scenarios, create_gateway())
+        self._closing_pending = False
         self.selected_scenario_id: int | None = None
         self._catalog: tuple[Scenario, ...] = ()
         self._token: str | None = None
@@ -202,7 +208,7 @@ class MainWindow(QMainWindow):
         self.containers: dict[View, QScrollArea] = {}
         for view in View:
             if view == View.CONSTRUCTOR:
-                page = ScenarioPage(self.scenarios, lambda: self._token)
+                page = ScenarioPage(self.scenarios, lambda: self._token, self.emails)
                 self.scenario_page = page
                 page.saved.connect(self._scenario_saved)
                 page.archive_changed.connect(self._scenario_archive_changed)
@@ -237,6 +243,7 @@ class MainWindow(QMainWindow):
         self._render()
 
     def _authenticated(self, token: str) -> None:
+        self.scenario_page.email_page.invalidate()
         self._token = token
         self.authentication_state = AuthenticationState.AUTHENTICATED
         self.navigation.reset()
@@ -301,11 +308,25 @@ class MainWindow(QMainWindow):
         return True
 
     def closeEvent(self, event) -> None:
+        if self._closing_pending:
+            if self.scenario_page.email_page.running:
+                event.ignore()
+                QTimer.singleShot(50, self.close)
+                return
+            super().closeEvent(event)
+            return
         if not self.scenario_page.can_leave():
             event.ignore()
             return
         self.session_timer.stop()
         self._signed_out()
+        if self.scenario_page.email_page.running:
+            self._closing_pending = True
+            event.ignore()
+            self.centralWidget().setEnabled(False)
+            self.statusBar().showMessage("Завершення поточного запиту перед закриттям…")
+            QTimer.singleShot(50, self.close)
+            return
         super().closeEvent(event)
 
     def navigate(self, view: View) -> None:

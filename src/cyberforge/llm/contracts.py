@@ -34,15 +34,21 @@ class ErrorCategory(StrEnum):
 class GenerationError(Exception):
     """Only normalized categories cross the integration boundary."""
 
-    def __init__(self, category: ErrorCategory, retry_after: float | None = None):
+    def __init__(
+        self,
+        category: ErrorCategory,
+        retry_after: float | None = None,
+        diagnostics: "ProviderDiagnostics | None" = None,
+    ):
         self.category = category
         self.retry_after = retry_after
+        self.diagnostics = diagnostics
         super().__init__(category.value)
 
 
 class GenerationParameters(Contract):
     temperature: float | None = Field(default=0.2, ge=0, le=2)
-    max_output_tokens: int = Field(default=512, ge=1, le=8192)
+    max_output_tokens: int | None = Field(default=None, ge=1)
     thinking: Literal["minimal", "low", "medium", "high", "xhigh"] | None = None
     timeout_seconds: float = Field(default=30, gt=0, le=120)
 
@@ -63,6 +69,43 @@ class Usage(Contract):
     input_tokens: int | None = Field(default=None, ge=0)
     output_tokens: int | None = Field(default=None, ge=0)
     reasoning_tokens: int | None = Field(default=None, ge=0)
+
+
+class ProviderDiagnostics(Contract):
+    http_status: int | None = Field(default=None, ge=100, le=599)
+    error_type: (
+        Literal[
+            "invalid_request_error",
+            "invalid_request",
+            "rate_limit_error",
+            "server_error",
+            "authentication_error",
+            "permission_error",
+        ]
+        | None
+    ) = None
+    error_code: (
+        Literal[
+            "context_length_exceeded",
+            "max_tokens_exceeded",
+            "max_completion_tokens_exceeded",
+            "output_limit_exceeded",
+            "json_validate_failed",
+            "invalid_json_schema",
+            "json_schema_invalid",
+            "unsupported_response_format",
+            "invalid_request",
+            "rate_limit_exceeded",
+        ]
+        | None
+    ) = None
+    kind: Literal[
+        "context_limit",
+        "output_limit",
+        "structured_output",
+        "invalid_request",
+        "other",
+    ] = "other"
 
 
 class ProviderResponse(Contract):
@@ -90,6 +133,7 @@ class GenerationTelemetry(Contract):
     fallback: bool = False
     error: ErrorCategory | None = None
     local_validation: Literal["passed", "failed"] | None = None
+    provider_diagnostics: ProviderDiagnostics | None = None
 
 
 class GenerationResult(Contract):

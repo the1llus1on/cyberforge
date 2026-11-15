@@ -22,6 +22,20 @@ class Message(Contract):
     message: str
 
 
+def test_explicit_large_output_limit_is_forwarded():
+    captured = []
+
+    def handler(req):
+        captured.append(json.loads(req.content))
+        return httpx.Response(200, json=payload())
+
+    value = request().model_copy(
+        update={"parameters": GenerationParameters(max_output_tokens=50000)}
+    )
+    adapter(handler).generate(value, Message.model_json_schema())
+    assert captured[0]["generation_config"]["max_output_tokens"] == 50000
+
+
 def request(model="gemini-3.8-flash", thinking="low"):
     return GenerationRequest(
         prompt="Synthetic input",
@@ -95,6 +109,7 @@ def test_stateless_single_request_schema_usage_and_timeout(schema, caplog, monke
     assert "automatic_continuation" not in body
     assert body["generation_config"]["thinking_level"] == "low"
     assert body["generation_config"]["thinking_summaries"] == "none"
+    assert "max_output_tokens" not in body["generation_config"]
     if schema:
         assert body["response_format"] == {
             "type": "text",

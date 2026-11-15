@@ -81,11 +81,25 @@ def test_strict_schema_reasoning_and_usage(caplog):
         is False
     )
     assert body["reasoning_effort"] == "low"
-    assert body["max_completion_tokens"] == 512
+    assert "max_completion_tokens" not in body
     assert response.usage.input_tokens == 10
     assert response.actual_model == "openai/gpt-oss-120b"
     assert "synthetic-test-key" not in caplog.text
     assert "Synthetic input" not in caplog.text
+
+
+def test_explicit_large_output_limit_is_forwarded():
+    captured = []
+
+    def handler(req):
+        captured.append(json.loads(req.content))
+        return httpx.Response(200, json=payload())
+
+    value = request().model_copy(
+        update={"parameters": GenerationParameters(max_output_tokens=50000)}
+    )
+    adapter(handler).generate(value, Message.model_json_schema())
+    assert captured[0]["max_completion_tokens"] == 50000
 
 
 @pytest.mark.parametrize(

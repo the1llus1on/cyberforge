@@ -28,9 +28,11 @@ class RateLimiter:
 
     def reserve(self, request: GenerationRequest, schema: dict | None = None) -> None:
         # Byte count is an intentionally conservative input-token upper estimate.
-        # Output reservation includes thinking; failures keep their reservation.
-        tokens = (
-            len(request.prompt.encode("utf-8")) + request.parameters.max_output_tokens
+        # Add output (including thinking) only when explicitly bounded. Unknown
+        # provider-default output cannot be reserved; this is not a billing cap.
+        # Failures keep their reservation for explicitly configured quotas.
+        tokens = len(request.prompt.encode("utf-8")) + (
+            request.parameters.max_output_tokens or 0
         )
         if schema is not None:
             tokens += len(json.dumps(schema, ensure_ascii=False).encode("utf-8"))
@@ -41,17 +43,27 @@ class RateLimiter:
             if remaining > 0:
                 raise GenerationError(ErrorCategory.RATE_LIMIT, remaining)
             for key in keys:
-                limit = self._limits.get(key, RateLimits())
+                limit = self._limits.get(key)
+                if limit is None:
+                    continue
                 entries = self._entries[key]
                 while entries and entries[0][0] <= now - 86400:
                     entries.popleft()
                 minute = [(t, n) for t, n in entries if t > now - 60]
                 if (
-                    len(entries) >= limit.rpd
-                    or len(minute) >= limit.rpm
-                    or sum(n for _, n in entries) + tokens > limit.tpd
-                    or sum(n for _, n in minute) + tokens > limit.tpm
+                    (limit.rpd is not None and len(entries) >= limit.rpd)
+                    or (limit.rpm is not None and len(minute) >= limit.rpm)
+                    or (
+                        limit.tpd is not None
+                        and sum(n for _, n in entries) + tokens > limit.tpd
+                    )
+                    or (
+                        limit.tpm is not None
+                        and sum(n for _, n in minute) + tokens > limit.tpm
+                    )
                 ):
                     raise GenerationError(ErrorCategory.BUDGET)
             for key in keys:
+                if key not in self._limits:
+                    continue
                 self._entries[key].append((now, tokens))

@@ -44,9 +44,6 @@ def safe_text(value: str) -> None:
         re.I,
     ):
         raise ValueError("unsafe_content")
-    for address in re.findall(r"[\w.+-]+@([\w.-]+)", value):
-        if not address.endswith(".invalid"):
-            raise ValueError("non_synthetic_address")
     for url in re.findall(r"https?://[^\s]+", value):
         parsed = urlsplit(url)
         if not (parsed.hostname or "").endswith(".invalid"):
@@ -91,7 +88,6 @@ class Slots(Contract):
         except ValueError as exc:
             if str(exc) in {
                 "unsafe_content",
-                "non_synthetic_address",
                 "external_reference",
             }:
                 raise GenerationError(ErrorCategory.SAFETY) from None
@@ -107,13 +103,23 @@ class MessageV1(Slots):
 
     @model_validator(mode="after")
     def address(self) -> Self:
+        local, separator, domain = self.sender_address.partition("@")
         if (
-            re.fullmatch(
-                r"[a-zA-Z0-9._+-]{1,64}@[a-z0-9-]+\.invalid", self.sender_address
+            len(self.sender_address) > 254
+            or not separator
+            or re.fullmatch(r"[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]{1,64}", local) is None
+            or local.startswith(".")
+            or local.endswith(".")
+            or ".." in local
+            or len(domain) > 253
+            or len(domain.split(".")) < 2
+            or any(
+                re.fullmatch(r"[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?", label)
+                is None
+                for label in domain.split(".")
             )
-            is None
         ):
-            raise ValueError("synthetic_sender")
+            raise ValueError("sender_address_syntax")
         return self
 
 
@@ -216,6 +222,7 @@ class ScenarioInputV1(Contract):
 
 class EmailInputV1(ScenarioInputV1):
     previous: "EmailDraftV2 | EmailSlotsV1 | None" = Field(default=None, repr=False)
+    refinement_scope: Literal["all", "main_body"] = "all"
 
     @model_validator(mode="after")
     def previous_linkage(self) -> Self:
@@ -309,6 +316,8 @@ class EmailDraftV2(Contract):
     scenario_version: int | None
     # Additive local metadata: legacy envelopes remain readable, not reusable.
     provenance: DraftProvenanceV1 | None = None
+    # Local instructor-approved context override, never supplied by a model.
+    instructor_sender_name: str | None = Field(default=None, max_length=200)
     selected_cues: tuple[NistCueId, ...]
     # No semantic detector in Phase 5: claims NEVER become verified cues.
     verified_cues: tuple[NistCueId, ...] = ()
@@ -316,6 +325,10 @@ class EmailDraftV2(Contract):
 
     @model_validator(mode="after")
     def consistency(self) -> Self:
+        if self.instructor_sender_name is not None:
+            safe_text(self.instructor_sender_name)
+            if self.artifact.context.sender_name != self.instructor_sender_name:
+                raise ValueError("instructor_sender_context")
         if self.provenance is not None:
             expected = source_provenance(
                 ScenarioInputV1(

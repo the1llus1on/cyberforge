@@ -3,14 +3,16 @@
 import json
 from collections.abc import Callable
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import QSize, Signal
 from PySide6.QtWidgets import (
     QButtonGroup,
     QFormLayout,
+    QFrame,
     QHBoxLayout,
     QLineEdit,
     QMessageBox,
     QPlainTextEdit,
+    QProgressBar,
     QPushButton,
     QRadioButton,
     QScrollArea,
@@ -20,11 +22,29 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from cyberforge.application.email_materials import EmailMaterialService, MaterialState
 from cyberforge.application.scenarios import ScenarioService
 from cyberforge.domain.accounts import ApplicationError
 from cyberforge.domain.scenarios import Difficulty, Scenario
 from cyberforge.ui.cue_picker import CuePicker
+from cyberforge.ui.email_page import EmailPage
 from cyberforge.ui.pages import card, label
+
+
+class _WorkspaceStack(QStackedWidget):
+    """A hidden constructor must not impose its height on the scenario card."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.currentChanged.connect(lambda _: self.updateGeometry())
+
+    def minimumSizeHint(self) -> QSize:
+        current = self.currentWidget()
+        return current.minimumSizeHint() if current else super().minimumSizeHint()
+
+    def sizeHint(self) -> QSize:
+        current = self.currentWidget()
+        return current.sizeHint() if current else super().sizeHint()
 
 
 class ScenarioPage(QWidget):
@@ -32,11 +52,15 @@ class ScenarioPage(QWidget):
     archive_changed = Signal(object)
 
     def __init__(
-        self, service: ScenarioService, token: Callable[[], str | None]
+        self,
+        service: ScenarioService,
+        token: Callable[[], str | None],
+        emails: EmailMaterialService,
     ) -> None:
         super().__init__()
         self.service = service
         self.token = token
+        self.emails = emails
         self.scenario: Scenario | None = None
         self.observed: Scenario | None = None
         self.owned = False
@@ -45,7 +69,7 @@ class ScenarioPage(QWidget):
         self._baseline: tuple = ()
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
-        self.content_stack = QStackedWidget()
+        self.content_stack = _WorkspaceStack()
         outer.addWidget(self.content_stack)
         self.empty_state = QWidget()
         empty = QVBoxLayout(self.empty_state)
@@ -66,6 +90,11 @@ class ScenarioPage(QWidget):
         self.editor = QWidget()
         self.content_stack.addWidget(self.empty_state)
         self.content_stack.addWidget(self.editor)
+        self.email_page = EmailPage(emails, token)
+        self.content_stack.addWidget(self.email_page)
+        self.email_page.back_requested.connect(self.close_email)
+        self.email_page.saved.connect(self._email_saved)
+        self.email_page.state_changed.connect(self._email_state)
         layout = QVBoxLayout(self.editor)
         layout.setContentsMargins(24, 20, 24, 20)
         self.title = label("Сценарій не вибрано", "title")
@@ -139,10 +168,27 @@ class ScenarioPage(QWidget):
         advanced.addRow(
             label("Параметри зберігаються як дані. Загальний ліміт — 50 000 символів.")
         )
-        self.materials = label(
-            "Електронний лист: Не створено\nВебсторінка: Не створено\n"
-            "Генерація та публікація будуть доступні на наступних етапах."
+        self.materials = QWidget()
+        material_layout = QHBoxLayout(self.materials)
+        material_layout.setContentsMargins(0, 0, 0, 0)
+        self.email_material = QFrame()
+        self.email_material.setObjectName("emailMaterial")
+        email_layout = QVBoxLayout(self.email_material)
+        email_layout.addWidget(label("Електронний лист", "heading"))
+        self.email_status = label(MaterialState.EMPTY)
+        email_layout.addWidget(self.email_status)
+        self.email_progress = QProgressBar()
+        self.email_progress.setRange(0, 0)
+        self.email_progress.hide()
+        email_layout.addWidget(self.email_progress)
+        self.email_button = QPushButton("Створити електронний лист")
+        self.email_button.clicked.connect(self.open_email)
+        email_layout.addWidget(self.email_button)
+        material_layout.addWidget(self.email_material, 1)
+        web = card(
+            "Вебсторінка", "Не створено · Phase 7\nПублікація сценарію ще недоступна."
         )
+        material_layout.addWidget(web, 1)
         layout.addWidget(self.materials)
         self.message = label("")
         layout.addWidget(self.message)
@@ -177,8 +223,71 @@ class ScenarioPage(QWidget):
     def heightForWidth(self, width: int) -> int:
         # The stack's preferred editor height must not push footer actions out
         # of the viewport; keep the existing minimum-height scroll behavior.
-        content = self.editor if self.active else self.empty_state
+        content = self.content_stack.currentWidget()
         return content.layout().minimumHeightForWidth(width)
+
+    def _email_state(self, state: MaterialState) -> None:
+        self.email_status.setText(state)
+        color = (
+            "#69c994"
+            if state == MaterialState.SAVED
+            else "#d9b770"
+            if state == MaterialState.REVIEW
+            else "#343843"
+        )
+        self.email_material.setStyleSheet(
+            f"QFrame#emailMaterial {{ border: 1px solid {color}; "
+            "border-radius: 12px; }"
+        )
+        self.email_material.setProperty("saved", state == MaterialState.SAVED)
+        self.email_progress.setVisible(state == MaterialState.GENERATING)
+
+    def refresh_materials(self) -> None:
+        self.email_button.setEnabled(self.scenario is not None)
+        state = MaterialState.EMPTY
+        if self.scenario is not None:
+            try:
+                state = self.emails.load(self.token(), self.scenario).state
+            except ApplicationError:
+                state = MaterialState.REVIEW
+        self._email_state(state)
+        self.email_button.setText(
+            "Створити електронний лист"
+            if state == MaterialState.EMPTY and self.editable
+            else "Відкрити електронний лист"
+        )
+        self.email_button.setToolTip(
+            "Спочатку збережіть параметри сценарію."
+            if self.scenario is None
+            else "Відкрити конструктор листа"
+        )
+
+    def open_email(self) -> None:
+        if self.scenario is None or not self.can_leave():
+            return
+        try:
+            self.email_page.open(self.scenario, editable=self.editable)
+        except ApplicationError as error:
+            self.message.setText(str(error))
+            return
+        self.content_stack.setCurrentWidget(self.email_page)
+        if self.email_page.draft is None and self.editable:
+            self.email_page.generate()
+
+    def close_email(self) -> None:
+        if self.email_page.can_leave() and self.scenario is not None:
+            try:
+                self.load(
+                    self.service.get(self.token(), self.scenario.id),
+                    editable=self.owned,
+                )
+            except ApplicationError as error:
+                self.email_page.message.setText(str(error))
+
+    def _email_saved(self, scenario: Scenario) -> None:
+        self.load(scenario, editable=self.owned)
+        self.message.setText("Електронний лист збережено. Сценарій ще не опубліковано.")
+        self.saved.emit(scenario)
 
     def _raw(self) -> tuple:
         return (
@@ -199,9 +308,10 @@ class ScenarioPage(QWidget):
         return self.active and self._raw() != self._baseline
 
     def _changed(self) -> None:
-        self.content_stack.setCurrentWidget(
-            self.editor if self.active else self.empty_state
-        )
+        if self.content_stack.currentWidget() != self.email_page:
+            self.content_stack.setCurrentWidget(
+                self.editor if self.active else self.empty_state
+            )
         self.save_button.setEnabled(self.active and self.editable)
         self.revert_button.setEnabled(self.dirty)
         state = self.observed or self.scenario
@@ -219,6 +329,8 @@ class ScenarioPage(QWidget):
         )
 
     def clear(self) -> None:
+        self.email_page.clear()
+        self.content_stack.setCurrentWidget(self.empty_state)
         self.active = self.editable = False
         self.scenario = None
         self.observed = None
@@ -275,6 +387,8 @@ class ScenarioPage(QWidget):
         self._changed()
 
     def new(self) -> None:
+        self.email_page.clear()
+        self.content_stack.setCurrentWidget(self.editor)
         self.scenario = None
         self.observed = None
         self.owned = True
@@ -283,9 +397,12 @@ class ScenarioPage(QWidget):
         self._fill()
         self.metadata.setText("ID буде присвоєно після успішного збереження.")
         self.materials.setVisible(True)
+        self.refresh_materials()
         self.topic.setFocus()
 
     def load(self, scenario: Scenario, *, editable: bool) -> None:
+        self.email_page.clear()
+        self.content_stack.setCurrentWidget(self.editor)
         self.scenario = scenario
         self.observed = scenario
         self.owned = editable
@@ -307,6 +424,7 @@ class ScenarioPage(QWidget):
             + ("\nЛише перегляд: сценарій іншого автора." if not editable else "")
         )
         self.materials.setVisible(True)
+        self.refresh_materials()
 
     def save(self) -> bool:
         if not self.active or not self.editable:
@@ -369,6 +487,8 @@ class ScenarioPage(QWidget):
         return QMessageBox.StandardButton(box.exec())
 
     def can_leave(self) -> bool:
+        if not self.email_page.can_leave():
+            return False
         if not self.dirty:
             return True
         choice = self.ask_unsaved()
@@ -454,6 +574,16 @@ class ScenarioPage(QWidget):
         """Lock an externally archived editor without erasing its recovery buffer."""
         if self.scenario is None or self.scenario.id != scenario.id:
             return
+        if self.content_stack.currentWidget() == self.email_page:
+            self.email_page.observe(scenario)
+            return
+        if (self.scenario.version, self.scenario.revision) != (
+            scenario.version,
+            scenario.revision,
+        ):
+            self._email_state(MaterialState.REVIEW)
+        else:
+            self.refresh_materials()
         if (
             self.observed
             and self.observed.archive_revision == scenario.archive_revision

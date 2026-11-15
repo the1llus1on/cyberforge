@@ -103,3 +103,27 @@ class ScenarioVersion(Base):
     parameters: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime())
     updated_at: Mapped[datetime] = mapped_column(DateTime())
+
+
+class EmailMaterial(Base):
+    """One explicit saved Email per exact scenario version; no temporary drafts."""
+
+    __tablename__ = "email_materials"
+    __table_args__ = (
+        CheckConstraint(
+            "revision > 0 AND scenario_revision > 0", name="email_revision"
+        ),
+        CheckConstraint("schema_version = 'email-draft-v2'", name="email_schema"),
+    )
+    version_id: Mapped[int] = mapped_column(
+        ForeignKey("scenario_versions.id"), primary_key=True
+    )
+    revision: Mapped[int] = mapped_column(Integer)
+    scenario_revision: Mapped[int] = mapped_column(Integer)
+    source_digest: Mapped[str] = mapped_column(String(64))
+    schema_version: Mapped[str] = mapped_column(String(40))
+    context: Mapped[dict] = mapped_column(JSON)
+    payload: Mapped[dict] = mapped_column(JSON)
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime())
+    updated_at: Mapped[datetime] = mapped_column(DateTime())

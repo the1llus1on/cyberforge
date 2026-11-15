@@ -31,9 +31,10 @@ class GeminiProvider:
             raise GenerationError(ErrorCategory.MISSING_CREDENTIALS)
         params = request.parameters
         generation_config = {
-            "max_output_tokens": params.max_output_tokens,
             "thinking_summaries": "none",
         }
+        if params.max_output_tokens is not None:
+            generation_config["max_output_tokens"] = params.max_output_tokens
         if request.model != "gemini-4-hydrogen" and params.temperature is not None:
             generation_config["temperature"] = params.temperature
         if params.thinking is not None:

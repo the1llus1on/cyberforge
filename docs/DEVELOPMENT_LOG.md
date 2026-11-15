@@ -1787,3 +1787,769 @@ merge --ff-only origin/main, перевірка SHAs/parents/clean tree. Failed/
 unexpected head/base/scope або conflicts зупинять merge без bypass. Staged
 secret/diff checks перед commit. Actual final HEAD/CI/merge outcome — PR6/final
 report після виконання, без circular doc commit. Phase6 NOT STARTED.
+
+## 13.11.2026 — Phase 6 Email Constructor: початок та інкременти
+
+Власник окремо дозволив Phase 6 з реалізацією, offline перевірками та PR, без
+merge/Phase 7. GitHub MCP підтвердив merged/ACCEPTED PR6; clean local main
+містить accepted merge 8a6beabf13ec4da43d2ce26bb78bccc9fce64340. Fetch/ff-only
+успішні; створено feat/phase-6-email-constructor. Sandbox read-only .git вимагав
+escalation; user changes відсутні. Наявні .env, keys, databases і Windows
+acceptance environment не змінювалися. Старі NOT STARTED записи — історичні.
+
+План перед coding зіставлено з SRS §§4.5–4.9,5.1–5.8,9.2,10,11,14.4,21,23–24.
+Context7 функціонально доступний; офіційні Qt QRunnable/QThreadPool/queued
+signals перевірено. GitHub MCP доступний. Інші MCP для цієї зміни не потрібні;
+нових runtime dependencies немає. SRS незмінний, матеріальних відкритих рішень
+не виявлено. Boundary/schema/context/lifecycle — ADR-0006.
+
+Інкремент persistence: additive 0004 без зміни старих rows, EmailMaterialService
+із наявним RBAC/BEGIN IMMEDIATE, independent material revision, exact scenario
+revision/archive revision/provenance, full validated envelope. Детермінований
+контекст v1 — лише trusted scenario ID/version. Stale/corrupt records не стираються,
+повертаються як requires-review; valid replacement лише явним Save. Нові versions
+не копіюють material. Downgrade nonempty table відмовляє без втрати даних.
+
+Інкремент UI: ScenarioPage materials + EmailPage у наявному stack, приблизно 90%
+preview, native plain-text inbox/detail/read state, JSON modal/copy/highlighting,
+refinement та explicit Save/reopen/green. Accepted real EmailScenarioAgent і
+gateway; no fixture-based normal generation. --email-demo явно синтетичний,
+повністю offline і не читає .env. Default Mock unavailable показано чесно.
+Workers QRunnable/QThreadPool, queued GUI slots, request/session/scenario/revision
+identity; navigation/logout/version/archive/timeout відхиляють стару доставку.
+Закриття з worker асинхронно очікує завершення; backend cancellation не заявлено.
+
+Проміжні перевірки: existing scenario UI/database focus 51passed,1failed через
+очікування попереднього Alembic head; test оновлено. New service focus
+39passed,2failed через test-only str замість Path; fixtures виправлено.
+Ці3cases повторно: 3passed/6.65s. New GUI focus:22passed/78.27s. Перший GUI
+прогін перервано через assertion у modal test callback без finally-close;
+harness виправлено, production dialog не змінено. Усі tests без live API.
+Остаточні результати наведено нижче після стабілізації.
+
+### Phase 6 — стабілізація та WSLg
+
+- `UV_CACHE_DIR=/tmp/cyberforge-phase6-uv-cache uv run --offline --locked pytest tests/test_email_materials.py tests/ui/test_email_constructor.py -q --tb=short`:
+  **67passed/156.71s** перед останнім session-epoch case і візуальною поправкою.
+- WSLg screenshot review виявив обрізані другі рядки sender/resource; додано
+  minimum height і regression assertion. Додано явно synthetic 09:30/09:25…
+  timestamps у developer template згідно §5.3. Final layout/source cases:
+  **2passed/7.27s** (такий самий focus до timestamps:2passed/7.81s).
+- `QT_QPA_PLATFORM=wayland GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-uv-cache uv run --offline --locked pytest tests/ui/test_email_constructor.py -q --tb=short`:
+  **25passed/115.29s**, код до остаточних header/layout поправок нижче,
+  real WSLg/Wayland.
+- Реальний Wayland probe з ізольованою temporary DB: generation → preview →
+  explicit Save → card; saved=true, scenario_status=draft, horizontal_overflow=0.
+  Фінальні screenshots `phase-6-email-preview.png` (1400×900) та
+  `phase-6-email-saved.png` (1100×720) візуально перевірено. Це Codex automation,
+  не owner manual acceptance й не фізична Windows11 перевірка.
+- Final `uv run --offline --locked ruff check .`, `ruff format --check .`:
+  success,90Python files. Cache перенаправлено в /tmp, бо default uv cache
+  read-only у sandbox. `git diff --check`:success.
+- `uv build --offline --out-dir /tmp/cyberforge-phase6-dist`: sdist+wheel success.
+  Archive inspection:61Python sources byte-identical тому code snapshot, packaged
+  0004 migration присутня, private DB/.env artifacts відсутні.
+- Fresh isolated wheel environment: offline dependency install виявив cache miss
+  Alembic; дозволене завантаження58exact runtime dependencies із locked export
+  та --require-hashes. Це package downloads, не LLM API calls. Остаточний
+  installability/runtime outcome наведено нижче після завершення.
+
+Змінені файли: README; IMPLEMENTATION_PLAN/DEVELOPMENT_LOG; main.py;
+persistence/models.py; ui/scenario_page.py,shell.py; migration-head expectation
+у test_groups_database.py. Додані: application/email_materials.py,email_demo.py;
+migrations/versions/0004_email_materials.py; ui/email_page.py,email_source.py,
+email_worker.py; tests/test_email_materials.py,ui/test_email_constructor.py;
+ADR-0006,PHASE_6_ACCEPTANCE та2WSLg screenshots. Pyproject/uv.lock і SRS незмінні.
+
+### Phase 6 — пауза власника та завершення layout remediation
+
+До паузи власника повний прогін завершився **689passed,1failed/725.80s**:
+`test_form_actions_and_internal_scroll[size0]` — кнопка Save виходила за viewport
+1100×720. Focus із новими header widgets також відтворив цю регресію:
+**18passed,1failed/72.07s**. Публікації за failing checks не було. Власник
+зупинив роботу, потім окремо попросив продовжити; commit/push/PR до паузи відсутні.
+
+Гранична тема без пробілів показала обмеження QLabel wrapping: headers переведено
+на native read-only QPlainTextEdit зі scrolling і Tab focus navigation. Після
+відновлення роботи root cause footer regression підтверджено: стандартний
+QStackedWidget застосовував minimum size прихованої EmailPage до картки.
+Локальний _WorkspaceStack тепер бере sizeHint/minimumSizeHint активної сторінки
+і повідомляє layout про перехід. Global shell/theme не змінювалися.
+Офіційні QWidget layout/updateGeometry API додатково перевірено Context7.
+
+Focused existing footer (2sizes) + new Email save/source/long-header cases:
+**4passed/6.68s**; після доповнення Save→card viewport assertions:
+**1passed/1.84s**. Ці перевірки залишаються у загальній suite.
+
+Final `QT_QPA_PLATFORM=wayland GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-uv-cache uv run --offline --locked pytest tests/ui/test_email_constructor.py tests/ui/test_scenarios_ui.py::test_form_actions_and_internal_scroll -q --tb=short`:
+**27passed/66.89s**. Оновлений real WSLg probe: saved=true,
+scenario_status=draft, horizontal_overflow=0, save_visible=true на1100×720.
+Обидва screenshots оновлено й візуально перевірено. Headers та body мають власне
+прокручування; за потреби доступне прокручування всієї центральної панелі.
+Owner manual acceptance не виконано; Windows11 native verification — Phase12 risk.
+
+Остаточне пакування після layout fix: `uv build --offline --out-dir /tmp/cyberforge-phase6-dist`;
+`uv export --offline --locked --no-dev --no-emit-project --format requirements-txt --output-file /tmp/cyberforge-phase6-requirements.txt --quiet`;
+`uv venv --offline --python .venv/bin/python /tmp/cyberforge-phase6-wheel-env`;
+`uv pip install --offline --python /tmp/cyberforge-phase6-wheel-env/bin/python --require-hashes -r /tmp/cyberforge-phase6-requirements.txt`;
+`uv pip install --offline --python /tmp/cyberforge-phase6-wheel-env/bin/python --no-deps /tmp/cyberforge-phase6-dist/cyberforge-0.1.0-py3-none-any.whl`:
+успішно,58locked runtime dependencies встановлено офлайн.61Python sources у
+wheel/sdist byte-identical остаточному src; міграція присутня, private artifacts
+відсутні. Isolated installed wheel, `python -I`, cwd=/tmp: packaged migration
+0004, foreign_key_check, real offline Email agent, Save/reopen — success;
+`python -I -m cyberforge --email-demo --database /tmp/cyberforge-phase6-wheel-smoke.sqlite3 --smoke-test`
+з QT_QPA_PLATFORM=offscreen та blank keys — exit0.
+
+GitHub MCP після resume: main лишається8a6beabf13ec4da43d2ce26bb78bccc9fce64340;
+попереднього Phase6 PR немає. Final lint/format — success,90files; final full
+pytest та exact-final-head CI результати фіксуються після їх завершення.
+
+### Phase 6 — final local gate / REVIEW
+
+Один попередній final-code pytest процес перервався кодом143/SIGTERM без pytest
+summary; його не зараховано як success. Повторено в PTY з постійним /tmp log:
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**690passed/305.56s**, exit0. Збережено всі622accepted tests, додано68cases.
+Обидва existing footer regression sizes і Save→card viewport assertions пройдено.
+Фінальні lint/format (`uv run --offline --locked ruff check .`,
+`uv run --offline --locked ruff format --check .`, з UV_CACHE_DIR у/tmp) — success,
+90files; `git diff --check` — success. Production code після цього не змінюється.
+
+Phase6 подано на **REVIEW**, не ACCEPTED. Повний local gate, real WSLg27cases,
+packaging/migration/installability gates пройдено. Owner manual checklist — pending;
+physical native Windows11 — acknowledged Phase12 risk. Live API calls відсутні;
+Groq/Hydrogen integration selection перевірено scripted provider через existing
+gateway, не реальними account requests. Offline demo чесно позначено synthetic.
+
+Перед publishing — complete diff/staged secret/private-path scan. Feature branch
+commit/push та PR→main дозволені початковим запитом. Exact final HEAD, PR URL,
+обидва successful Linux/Windows CI jobs/log evidence фіксуються в PR/final report
+після push, без circular documentation-only commit. CI failure не обходиться.
+Merge/force/history rewriting/Phase7 заборонені цим завданням. GitHub/Context7
+MCP доступні; fallback для цих перевірок не потрібний. SRS/.env/owner databases/
+keys/native Windows acceptance environment незмінні.
+
+## 13.11.2026 — Phase 6 owner-requested Gmail-style UX revision (PR #7)
+
+The owner did not accept the previous Email Constructor UX and authorized this
+change in the existing Phase 6 branch/PR only. Communication/new technical notes
+are English; application text remains Ukrainian. Phase 7, live LLM requests and
+manual native Windows 11 validation remain excluded. The existing owner demo
+database/credentials were not read, reset or modified by development probes.
+
+Initial state: clean feat/phase-6-email-constructor at
+61e766830c4a31929f2942a6fd4345b58bb4c281; GitHub MCP confirmed PR7 open/unmerged,
+base main8a6beab, matching HEAD. Reviewed SRS §§5.2–5.7, current source/view code,
+acceptance record and ADR-0006. Context7 supplied official native QListWidget/
+delegate/activation and QStackedWidget documentation. No new dependencies.
+
+Plan before implementation: scope light styling to the preview; add native
+browser/mail chrome, inbox/search and reading view; clarify regeneration;
+provide canonical JSON plus an honest inert HTML content projection under §5.5;
+focused UI/security tests, then one stable full gate, WSLg and exact-head CI.
+
+Implementation: MailPreview owns only native presentation/read state. Its data
+comes from current EmailDraftV2 slots. Inbox click/Enter opens a message, search
+filters real fields, back returns to the inbox. The read-only `.invalid` address
+bar and disabled sending/navigation controls cannot open a website or send mail.
+The surrounding application theme/catalog are unchanged. Native active-view
+minimum-height sizing and compact folders preserve critical controls at1100×720;
+early compact-layout failures were fixed before the final gate.
+
+The refinement label/helper and Generate/Regenerate button now explain the
+instruction → new unsaved candidate → explicit Save flow. Canonical JSON stays
+unchanged. A second source tab contains escaped deterministic HTML for the
+selected message's content only, not AI HTML or Qt interface source. It is not
+rendered/executed/persisted. Both tabs are read-only, highlighted and copyable;
+UI clearing clears both. Fixed-template escaping/allowed-tags tests include
+validation-bypass injection cases. This source-view trade-off is recorded in
+the existing ADR-0006; no new architectural document or SRS change was needed.
+
+Focused final-code checks:
+`UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest tests/test_email_source.py tests/ui/test_email_constructor.py -q --tb=short`:
+**33 passed / 48.43s**. Covers both source tabs/copy/read-only semantics, escaped
+HTML, inbox/reading/search/read state, refinement guidance, Save/reopen/failure,
+stale/session/version/archive/timeout delivery rejection and responsive controls.
+Ruff lint/format pass,92Python files. Final full/WSLg/CI evidence follows below.
+
+This is UI/source-inspection-only: application services, agents/gateway,
+threading/identity code, schema/migrations, dependencies/lockfile and startup
+configuration are unchanged. Packaging/wheel checks are not repeated under the
+approved UI-only verification policy; standard CI import/startup checks remain.
+Documentation is limited to README, this log, PHASE_6_ACCEPTANCE and the focused
+ADR amendment, plus updated WSLg screenshots. No documentation-only commit is
+planned. Phase6 stays REVIEW and awaits the owner's UX review/acceptance.
+
+### Gmail-style UX revision — final local verification
+
+- `UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked ruff check .`
+  and `ruff format --check .`: success,92Python files.
+- `GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+  Initial full pass before the final search-reset correction below:
+  **698 passed / 341.97s**, exit0, PTY log in /tmp. All690previous tests retained;
+  eight new cases cover the light/native mailbox, compact inbox/reading controls
+  and deterministic/safe HTML content projection.
+- `QT_QPA_PLATFORM=wayland GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest tests/ui/test_email_constructor.py tests/ui/test_scenarios_ui.py::test_form_actions_and_internal_scroll -q --tb=short`:
+  **30 passed / 73.76s**, real WSLg. The isolated offline screenshot probe confirms
+  3real artifact messages, opened index0, unsaved=true, zero horizontal overflow
+  and all critical controls visible at1100×720. Inbox, opened-message and compact
+  screenshots were inspected. These are Codex checks, not owner acceptance.
+- `git diff --check`: success. Before commit/push, review staged diff and scan
+  actual local secret values/private paths without printing those values.
+
+Changed in this revision: ui/email_preview.py (new), ui/email_page.py,
+ui/email_source.py; tests/test_email_source.py (new),
+tests/ui/test_email_constructor.py; README, PHASE_6_ACCEPTANCE, this log,
+ADR-0006; screenshots phase-6-email-preview.png, phase-6-gmail-inbox.png (new),
+phase-6-gmail-compact.png (new). No services, agents, workers, schema, lockfile,
+global theme or main shell edits. One combined implementation/docs commit goes
+to the current PR7 branch. Exact final HEAD and final Linux/Windows CI job/log
+evidence will be recorded in PR7 and the final English report after push;
+no circular documentation-only commit. No merge or Phase7 work is authorized.
+
+Final diff review caught an active-search regeneration edge case: clearing a
+nonempty search query could call the filter between clearing/rebuilding inbox
+rows. QSignalBlocker now prevents that intermediate callback. The refinement
+test explicitly regenerates with an active query and checks the rebuilt inbox.
+Focused final regression: **1 passed / 1.77s** offscreen, **1 passed / 2.50s**
+real WSLg. The 30-case WSLg visual/interaction pass above remains the renderer
+evidence; the final change affects only search callback delivery during reset.
+
+Required final full suite repeated because code changed:
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**698 passed / 324.13s**, exit0, PTY log
+`/tmp/cyberforge-phase6-ux-after-reset-pytest.log`. This supersedes the earlier
+full-pass timing for commit45d1318. The subsequent Windows CI correction below
+supersedes this as final-code evidence. No live LLM calls,
+native Windows manual tests or owner-database operations were performed.
+
+### Windows CI compact reading-view correction
+
+CI run43517074528 at45d1318 passed Linux (698passed/355.49s) but failed Windows
+(1failed,695passed,2POSIX-only skips/400.33s). The existing 1100×720 reading-view
+test caught a real issue: Segoe UI metrics plus nested height-for-width sizing
+reserved the body's preferred editor height and pushed refinement/actions below
+the viewport. The assertion was retained and strengthened to require no outer
+vertical scrolling and a usable body minimum height.
+
+Reproduced with locally loaded Segoe UI fonts in an isolated Linux/offscreen
+probe; the correction ignores only the body's preferred vertical size while
+retaining its minimum, stretch allocation and internal scrolling. No font files
+are copied into the repository. Context7 confirmed native layout sizing APIs.
+A custom-layout experiment was discarded after focused tests exposed recursive
+Qt callbacks; the final correction uses standard QSizePolicy only (six lines).
+
+Final focused source/UI suite: **33passed/48.16s**. Real WSLg compact inbox,
+reading and Save/reopen: **3passed/5.78s**. The Segoe UI WSLg probe also passes,
+with page/viewport both656px high and all critical controls visible. Sandboxed
+Wayland startup was denied by the environment; rerunning with authorized access
+to the WSLg socket passed. These are Linux/WSLg checks, not native Windows11
+manual acceptance. Review screenshots were refreshed and visually inspected;
+their image content is unchanged. Replacement exact-head CI evidence follows
+in PR7 after completion. The necessary correction goes to the same
+Phase6 branch/PR7 as a second implementation/test/evidence commit, without
+rewriting the first commit or adding a documentation-only commit.
+
+The initial restricted-sandbox full run stalled in the unchanged offline asyncio
+batch test; it was interrupted and is not counted as a pass. The full suite was
+restarted with access to local sockets, keeping API keys empty/tracing disabled.
+
+Final full command (PTY, outside the socket-restricted sandbox):
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**698passed/323.50s**, exit0;
+`/tmp/cyberforge-phase6-ux-final-layout-pytest.log`. Ruff lint/format pass92files;
+`git diff --check` passes. This supersedes the previous local full-suite evidence.
+This verifies commitf8e1417; the final padding adjustment below supersedes it.
+PR7 records exact pushed HEADs and Linux/Windows CI job/log results without an
+extra documentation-only commit.
+
+### Windows CI outer-padding correction
+
+Run43520321517 atf8e1417 passed Linux (698passed/324.42s). Windows passed every
+critical-control visibility assertion but found **2pixels** of outer vertical
+scrolling under the newly added stricter assertion (1failed,695passed,
+2POSIX-only skips/479.10s). Kept that assertion and reduced EmailPage's vertical
+padding from8px to4px; no controls/text/font sizes or workflow behavior changed.
+This adds8px of layout headroom at the minimum size. The focused compact and
+Save/reopen check passes **3cases/5.05s** offscreen and **3cases/7.79s** WSLg.
+An isolated Segoe UI WSLg probe with a650px viewport (matching Windows CI) passes
+all control visibility/zero-outer-scroll assertions. Only the temporary probe's
+window minimum was reduced; the application's1100×720 minimum is unchanged.
+The three review screenshots were refreshed; the compact image was inspected.
+Final full/CI evidence follows. The additional commit is a verified correction in
+PR7, not a separate phase or documentation-only change.
+
+Final full command (PTY, local-socket access):
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**698passed/327.86s**, exit0; `/tmp/cyberforge-phase6-ux-padding-pytest.log`.
+This is final local evidence after both Windows CI findings. Ruff lint/format
+pass92Python files and `git diff --check` passes. No further production edits
+follow this gate; exact final HEAD/CI evidence is recorded in PR7/final report.
+
+## 14.11.2026 — Phase 6 final visual fidelity pass (PR #7)
+
+Owner-reported manual WSLg review of0e34dd8ae9061221921448c28f00391d82852f20:
+the overall layout was acceptable, with typography/icons/reading presentation
+still requiring refinement. This authorizes one focused visual pass, not Phase6
+acceptance, merge or Phase7. Started on the matching clean tracked branch/PR7.
+The owner then supplied local inbox/opened Gmail references in temp/. Inspected
+them and existing Phase6 captures; originals contain real mailbox data and are
+left untracked, without copying any content, identities or graphical assets.
+The open owner demo credential files/databases were not read, reset or modified.
+
+Plan mapped to SRS §§5.2–5.5: refine the existing native preview's hierarchy and
+iconography, format existing structured message content with controlled native
+Qt primitives, retain canonical JSON/source clarification, then focused/full
+regressions, WSLg captures and exact-final-head Linux/Windows CI. SRS §§5.6–5.8,
+16/21 persistence/security/worker guarantees remain regression requirements.
+GitHub MCP confirmed the reviewed HEAD and open/unmerged main-target PR7;
+Context7 verified official QTextEdit/QTextCursor/block/frame-format APIs.
+
+Implementation: scoped Arial/native fallback typography, 22px subject, 15px body,
+14px sender/inbox text, 12px recipient/time. Metadata is aligned around a native
+avatar; reply/forward use separate outlined pills. Existing icon infrastructure
+now supplies original painted mail glyphs, with optional color and doubled
+pixmap resolution; default shell icon colors/API are preserved. Inbox/read views
+have separate toolbars; wide rows align sender/subject/snippet/time in one line,
+compact rows use two. Read/unread/selection styling remains in memory.
+
+MessageBody is native QTextEdit/QTextDocument, not a browser engine. QTextCursor
+inserts only literal existing sender/body/resource strings. Native character,
+block and frame formats provide paragraphs, a synthetic sender header and an
+inert resource/action card. No arbitrary HTML parsing, anchors, scripts, external
+resources or new content claims. Resource loading is denied. Background text
+retains paragraph boundaries. JSON/HTML inspection remains unchanged and honest:
+the HTML tab is still an inert content projection, not native UI source.
+No agent/contracts/services/workers/schema/dependency/startup/catalog changes.
+No live API calls, physical Windows11 checks or native-environment refresh.
+
+Early focused feedback caught1px outer overflow with8px extra toolbar reserve;
+reduced preview bottom padding from8px to4px and retained strict assertions.
+Tests check custom toolbar labels without imposing them on Qt-owned line-edit
+buttons. Focused source/UI: **38passed/157.59s**; relevant real WSLg UI/card:
+**35passed/164.71s**. After the final sender font/height adjustment, compact
+inbox/read with native-metric reserve, hierarchy/icons, source/Save/reopen and
+long Unicode content: **7passed/33.87s** offscreen, **7passed/35.23s** WSLg.
+Three new tests cover native hierarchy, literal injection/resource denial and
+background paragraph fidelity; two added compact cases reserve8px for differing
+native metrics. All698previous cases remain present; no new skips.
+
+Commands use `UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked`:
+`pytest tests/test_email_source.py tests/ui/test_email_constructor.py -q --tb=short`;
+WSLg adds `QT_QPA_PLATFORM=wayland` and checks the constructor module plus
+`tests/ui/test_scenarios_ui.py::test_form_actions_and_internal_scroll`. Final
+focused selection: `test_compact_mailbox_keeps_critical_controls_visible`,
+`test_reading_hierarchy_vector_icons_and_inert_resource`,
+`test_mail_navigation_source_copy_explicit_save_reopen`,
+`test_long_unicode_wrap_and_layout_at_supported_sizes` in the constructor module.
+
+Isolated synthetic WSLg captures: inbox1400×900, opened message1400×1060, compact
+reading1100×720. An additional Segoe UI probe with642px available viewport
+(Windows650px minus8px reserve) confirms all critical controls visible and zero
+outer scrolling. This is WSLg/font-metric evidence, not native Windows11 proof.
+Compared the hierarchy, vector icons, rows and formatted content with both local
+references. The native mock intentionally omits real brands/media/apps and
+arbitrary multipart rendering; long body/card content scrolls internally.
+The accepted scenario catalog remains visible. Owner final visual decision is
+pending; Phase6 stays REVIEW, Phase7 NOT STARTED.
+
+Ruff lint/format pass93Python files; `git diff --check` passes. Packaging/wheel
+checks are not repeated for this UI-only change under the approved workflow.
+Final full-suite, staged scan and exact-HEAD CI evidence follow below/PR7.
+
+Final stable full command (PTY, local asyncio-socket access):
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**703passed/887.67s**, exit0; `/tmp/cyberforge-phase6-fidelity-pytest.log`.
+No production changes after this verification. Lint/format93files and diff
+whitespace checks pass. The intended12-file commit includes native body/preview,
+icons, UI tests, README, plan/log/acceptance/ADR and three synthetic screenshots.
+Reference images/temp files, credentials, databases, .env and native acceptance
+files are excluded. Exact final HEAD and Linux/Windows CI job/log evidence are
+recorded in PR7/final report after push, without a documentation-only commit.
+
+### Windows CI width correction for the final visual pass
+
+Run43571914708 atfa81ce8 passed Linux (703passed/425.64s, plus startup smoke).
+Windows failed3reading/long-content geometry cases (698passed,2POSIX-only skips,
+377.81s): the page widened to1078px inside a760px viewport, which also introduced
+horizontal-scroll height loss. No service/source/security case failed.
+Local Arial/Segoe probes did not reproduce the platform-specific growth; the
+correction explicitly prevents native text size hints from widening the page.
+
+Read-only subject/sender/body fields ignore horizontal preferred/minimum hints
+while retaining available-space allocation, wrapping and internal scrolling.
+Recipient metadata can wrap; the fixed synthetic timestamp has a bounded width.
+Added an oversized-native-body-hint regression and geometry diagnostics to the
+existing strict assertions, without removing or loosening checks. Context7
+confirmed QSizePolicy.Ignored semantics. This is a native layout correction only;
+contracts, content, source inspection, Save and workers are unchanged.
+Focused offscreen geometry/source/Save-reopen: **7passed/25.61s**. Final WSLg,
+full-suite and replacement exact-head CI evidence follow. The additional commit
+will stay in PR7; no merge, acceptance or Phase7 work is authorized.
+
+Final WSLg correction selection: **7passed/26.00s**, including the new oversized
+native hint case, all4compact states, long-content and source/Save/reopen.
+Refreshed all3screenshots; their image content is unchanged. An isolated native
+Arial+Segoe WSLg probe also fits642px available height without outer overflow.
+Full Ruff lint/format pass93files and diff whitespace check passes. Required
+stable full suite is repeated after the code correction; no tests are omitted.
+
+Final correction full command (PTY, local asyncio sockets):
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**704passed/691.55s**, exit0; `/tmp/cyberforge-phase6-fidelity-width-pytest.log`.
+This supersedes the703case local result as final production-code evidence.
+Test diagnostics were made failure-only, without changing assertions; the exact
+final focused selection was rerun: **7passed/28.44s** offscreen. No further
+production edits follow the gate. Replacement exact-head CI proof is recorded
+in PR7/final report after push; owner visual acceptance remains pending.
+
+### Native active-page minimum-height correction
+
+Run43574506367 at762f71c passed Linux (704passed/386.14s). Windows confirmed
+the horizontal-growth/long-content fix, but found the reading page still655px
+high inside650/642px viewports (3failed,699passed,2POSIX skips/476.44s).
+The remaining5/13px reservation came from native preferred-height sizing.
+A48px body fallback was explored locally (7cases passed offscreen/WSLg), but
+the final correction retains the original65px minimum. A private native
+QStackedLayout now answers current-page minimum/height-for-width queries at the
+layout level; widget-only overrides can be bypassed when Qt asks an owned layout
+directly. The small view wrapper keeps the existing currentIndex/currentWidget
+API. Inactive inbox/preferred text-editor heights cannot inflate the reader.
+
+Retained all strict checks; added a three-text-line viewport assertion at1100×720
+and extended the oversized-hint case with an1800px preferred inactive inbox.
+Native active-layout focused selection: **7passed/25.35s** offscreen. No font,
+content, service/worker or persistence changes. Final WSLg/full/CI follows.
+
+Final native-layout WSLg source/UI/card suite: **41passed/128.22s**. Command:
+`QT_QPA_PLATFORM=wayland GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest tests/ui/test_email_constructor.py tests/test_email_source.py tests/ui/test_scenarios_ui.py::test_form_actions_and_internal_scroll -q --tb=short`.
+The refreshed screenshots are pixel-identical to the reviewed refinement
+captures. Arial/Segoe642px viewport probe passes. Lint/format93files and diff
+whitespace checks pass. No production edits after this stable verification;
+the complete704case suite is repeated before publishing the correction.
+
+Final active-layout full command (PTY, local asyncio sockets):
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**704passed/682.25s**, exit0; `/tmp/cyberforge-phase6-fidelity-layout-pytest.log`.
+This is final local evidence for the active-layout correction; all698previous
+cases remain, with6added cases and no new skips. Lint/format93files and diff
+whitespace checks pass. No production edits follow; final HEAD and both exact
+Linux/Windows CI job/log results are recorded in PR7/final report after push.
+
+### Wrapped-label minimum policy — reproduced final height cause
+
+Run43577486176 at7337ef3 again left the Windows page655px tall (3failed,
+699passed,2POSIX-only skips/302.53s); the inner-stack policy did not resolve
+this outer constraint. Inspected the EmailPage root labels: the shared label
+factory gives them vertical QSizePolicy.Minimum, which treats their preferred
+wrapped height as a hard minimum even when the actual width needs fewer lines.
+
+Added a native-label preferred-height fault test. Before the fix it reproduces
+locally: page1439px versus viewport656px,783px outer scroll (1failed/4.56s).
+EmailPage now uses vertical Preferred for its six wrapped title/status/helper
+labels, retaining height-for-width wrapping. This changes no text/fonts or
+global label behavior. The exact same regression and existing geometry/source/
+Save selection then pass: **8passed/29.59s** offscreen. The body keeps65px.
+Existing strict assertions, inactive/editor hint case and three-line body guard
+remain intact. Final focused/full/CI proof follows; Phase6 remains REVIEW.
+
+The local label policy explicitly preserves height-for-width. Final focused
+selection (label/editor/inactive hints,4compact states, long content, source/
+Save/reopen) passes **8cases/28.30s** offscreen and **8cases/32.43s** WSLg,
+including assertions that wrapped text receives its measured required height.
+Broader WSLg UI/source/card pass: **42cases/139.92s** before the final wrapping
+flag preservation. Refreshed/inspected inbox; opened/compact captures remain
+pixel-identical. Arial/Segoe642px probe passes. Lint/format93files pass. Final
+complete705case run follows; no further production edits are planned.
+
+Final wrapped-label full command (PTY, local asyncio sockets):
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**705passed/931.94s**, exit0; `/tmp/cyberforge-phase6-fidelity-label-pytest.log`.
+All698previous cases remain with7added cases, no new skips. This supersedes
+earlier local totals for the final label policy. Lint/format93files, diff and
+staged exact-scope/private-value checks pass before publishing. No production
+changes follow this gate. The visual pass now touches13files after adding the
+scoped EmailPage label fix; original references/temp/credentials stay excluded.
+Final HEAD and both CI job/log proofs are recorded in PR7/final report.
+
+
+## Phase 6 mandatory editing completion — 14.11.2026 (REVIEW)
+
+Owner approved the Gmail-inspired visuals at cec7d34 and authorized manual
+editing, protected AI refinement, JSON-only inspection and an owner-run live
+Groq acceptance procedure. No merge/Phase7/automatic live calls are authorized.
+SRS §§4.7,5.1–5.8,9.2,10,11,16,21 remain authoritative and unchanged.
+Earlier HTML-projection descriptions are historical and superseded: the unused
+projection/highlighter/tab are removed; native QTextEdit formatting remains.
+
+Manual edits pass through EmailMaterialService with current ownership, role,
+archive/version/revision and material-revision checks. A complete JSON roundtrip
+validates every candidate; main subject/body mirror the artifact. Main sender
+updates controlled context plus optional instructor_sender_name payload metadata
+and recomputes stable provenance. Authoritative scenario identity/parameters,
+organization/premise and internal resource remain fixed. Missing override in
+legacy payloads means original stable context. No migration or alternate store.
+Provenance remains consistency evidence, not authorization or a PII detector.
+
+Apply is local; Cancel discards dialog fields; Save is transactional persistence.
+AI receives the current working draft. Explicit main-body scope merges only the
+validated new body into previous slots; all other fields stay deterministic.
+Wider scope is explicit. Scope wins over conflicting natural-language requests.
+Regeneration after manual edits asks confirmation; failures preserve working and
+saved data. JSON inspection reflects the whole current draft and stays read-only.
+
+Email-only prompt v2 improves educational coherence and provider-neutral policy.
+Email max output4096, bounded512–8192; general request default512 unchanged.
+Provider/model quota accounting, retries and strict schema/local validation are
+unchanged. Scripted fixtures reserve both model/provider budgets for the larger
+prompt/output; no production quota checks are bypassed. Untyped generation
+parameters remain intentionally unsupported. No new dependencies.
+
+Owner-run live procedure: see PHASE_6_ACCEPTANCE.md. Module CLI requires --live,
+uses only the existing Groq key, stops on initial failure, allows at most2requests,
+zero retries/corrections/fallback, logs metadata only. Live acceptance is PENDING;
+Codex has not run it. Physical native Windows11 remains Phase12 risk.
+Focused/full/persistence/package/WSLg and final-head CI evidence follows in the
+log and PR7. The current task remains REVIEW until owner GUI/live acceptance.
+
+
+Editing increment evidence: new service/editing cases passed13/27.06s before
+three further restriction cases; acceptance-runner/prompt tests4/1.80s, with
+scripted providers only. Full Phase5 agent/provenance suite155/6.37s passes after
+explicit Email→Web input projection updates and fixture quota reservations.
+Initial incremental runs exposed those compatibility/fixture issues; they are
+not counted as final passes. The superseded combined focused run was terminated
+without a final success summary; final full/WSLg checks are authoritative.
+
+Build: `uv build --offline --out-dir /tmp/cyberforge-phase6-edit-dist` passed
+wheel+sdist. A fresh fully dependency-isolated offline install could not resolve
+google-genai from the temporary cache. Installed the built wheel with --no-deps
+into a separate /tmp venv, reused verified dependencies through a .pth path,
+and asserted cyberforge.__file__ is inside that venv. From /tmp with python -I:
+manual Apply→Save→reopen via the actual service/UI passed; packaged live-check
+--help passed without requests. This is wheel-content/installability evidence,
+not an independently redownloaded dependency resolution. No source tree fallback,
+owner DB/credentials or preserved Windows environment was used.
+
+The new UI failed-regeneration regression confirms the worker receives the
+manual draft and retains both working and saved content:1passed/6.15s offscreen.
+Ruff lint/format pass97Python files; whitespace checks pass. WSLg preview/editor/
+compact captures inspected; source view now JSON-only, native formatting retained.
+Final full/WSLg counts and exact PR HEAD/CI evidence follow.
+
+WSLg final constructor suite37passed/221.12s; final added manual-worker-failure
+case1passed/5.32s. These are Codex checks, not owner acceptance. All captures use
+fresh synthetic temporary databases; existing owner credentials were not read.
+The UI currently edits existing main/background entries; background add/remove
+is validated by the service but intentionally not added to this focused dialog.
+The explicit refinement scope is the deterministic protection mechanism; free
+text is not parsed as an authoritative patch specification. All-content scope
+requires instructor review and does not guarantee natural-language preservation.
+Context/provenance do not prove that arbitrary names are synthetic; the existing
+synthetic-only input policy, known unsafe-pattern checks and owner review remain.
+
+Final review found legacy fields could be silently truncated on dialog open.
+The editor now retains existing full values; narrower Apply limits are enforced
+by validation. Focused legacy/edit workflow:3passed/12.47s. Added a regression
+for preserving existing long fields on Cancel. Regeneration confirmation now
+uses explicit Ukrainian buttons with Keep as default, without changing worker
+semantics. The previous full run was superseded/interrupted after these final
+UI fixes; the complete stable suite is repeated. No failure is counted as a pass.
+
+Final installed-wheel and screenshot probes are repeated after the legacy-field
+fix. Full stable suite collects726cases; final WSLg selection evidence follows.
+
+Final WSLg selection:5passed/25.94s. Rebuilt wheel/sdist and installed-wheel
+Apply/Save/reopen passed after the legacy fix. Screenshot probe confirms all
+critical controls including Edit visible at1100×720, zero horizontal overflow,
+main/background artifact messages and a current unsaved edited candidate.
+No screenshots contain real identities from the owner's Gmail references.
+
+
+Final stable full command (PTY with local asyncio sockets):
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -vv --tb=short --durations=10`:
+**726passed/1021.98s**, exit0; `/tmp/phase6-edit-stable-full.log`.
+The705baseline cases retain meaningful security/persistence/worker regressions;
+four net HTML-projection-only cases were removed and25editing/source/prompt/
+live-runner/legacy/confirmation cases added. No new skips. Final lint/format:
+`uv run --offline --locked ruff check .` and `ruff format --check .` pass97files;
+`git diff --check` passes. Focused155agent/provenance cases, WSLg37+5 and final
+wheel/sdist/installed-wheel Apply→Save→reopen gates are recorded above.
+
+Final diff/staged exact-scope scan covers27intended files and excludes temp/,
+.env, credentials and databases. No code changes follow this stable full gate.
+Commit/push remain in the existing Phase6 branch/PR7. Exact final HEAD and both
+Linux/Windows CI jobs/log evidence will be recorded in PR7 and the final report
+without a documentation-only commit. No merge, ACCEPTED or Phase7 transition.
+Live Groq remains owner-initiated and PENDING; no real API calls were made.
+
+### Windows CI compact-layout correction
+
+Completion commit ee370503 passed Linux CI; Windows CI run43591272955 reported
+7layout failures (717passed,2platform skips). Native combo font metrics widened
+the Email page to812px inside a768px viewport. The AI scope selector now uses a
+shorter Ukrainian label,12px typography and a bounded minimum-content size hint.
+The existing compact tests also assert Edit/scope visibility; no assertions were
+removed. Focused compact/native-hint/long-Unicode suite:7passed/36.85s. Real
+WSLg capture confirms zero horizontal overflow, visible critical controls and a
+current unsaved edited candidate at1100×720; three mailbox screenshots refreshed.
+The sandbox's first Wayland attempt lacked socket access; the authorized WSLg
+probe then passed with local-display access. Ruff lint/format pass97files.
+Final correction full gate:
+`GOOGLE_API_KEY= GROQ_API_KEY= LANGSMITH_TRACING=false UV_CACHE_DIR=/tmp/cyberforge-phase6-ux-uv-cache uv run --offline --locked pytest -q --tb=short --durations=10`:
+**726passed/1010.40s**, exit0; `/tmp/phase6-edit-layout-full.log`.
+The same7focused layout cases also pass through real WSLg/Wayland in40.30s.
+Final lint/format and whitespace checks pass; no production edits follow this
+gate. Final-head Linux/Windows CI evidence will be recorded in PR7 and delivery.
+
+Run43596471556 for2efb258 passed Linux; Windows confirmed the width fix but
+reported4remaining opened-view height failures (720passed,2platform skips).
+The page needed8–16px more than the compact viewport. Edit now uses the same
+compact padding as Back, and page gaps decrease from3px to2px. This recovers
+space from controls without shrinking the body, hiding actions, changing
+functional behavior or relaxing tests. Focused/full/WSLg verification is repeated.
+
+Final height-correction checks:7focused cases passed offscreen/35.79s and
+WSLg/41.39s. Fresh synthetic WSLg captures retain every critical control and
+zero horizontal overflow; compact reading area gains19px. Final full command
+is the same offline `pytest -q --tb=short --durations=10` invocation above:
+**726passed/1049.72s**, exit0, `/tmp/phase6-edit-final-full.log`.
+Ruff lint/format97files and whitespace checks pass. No production edits follow
+this gate; final CI evidence is kept in PR7 and the delivery report.
+
+
+### Phase 6 ordinary email domains — 14.11.2026 (REVIEW)
+
+Owner authorized removal of the mandatory .invalid email-domain restriction.
+SRS §§5.4–5.8: shared text validation no longer infers synthetic identity from
+an email domain. MessageV1 enforces bounded ASCII mailbox syntax; ordinary
+domains and existing .invalid addresses remain unchanged through Apply/Save/
+reopen/refinement. Editor labels/errors and email-prompt-v3 reflect the rule;
+shared policy v2 retains fictional identities and forbids real personal data.
+Provider schema structure, persistence, provenance, RBAC and external URL
+restrictions are unchanged. No DNS/MX checks, SMTP, navigation or live API calls.
+Focused offline tests and Ruff locally; final Linux/Windows CI runs the full
+suite. Phase 6 stays REVIEW; no merge or Phase 7.
+
+Address-rule focused verification: `pytest -q tests/test_email_editing.py
+tests/test_email_live_check.py tests/test_agents.py tests/test_agent_provenance.py`:
+202passed/29.27s. UI `pytest -q tests/ui/test_email_constructor.py -k
+'visual_editor_apply_cancel_json_save_reopen or visual_editor_invalid'`:
+2passed/11.15s. All use offline Mock/scripted providers with socket guards.
+Ruff lint/format pass97files and `git diff --check` passes. The initial wider
+focused run used the old prompt marker and domain-only rejection expectation;
+those two expectations are superseded by prompt-v3/ordinary-address acceptance
+coverage. No repeated full local suite or live API calls. Final-head Linux/
+Windows full CI evidence will be recorded in PR7 and the delivery report.
+
+Address-rule CI run43642852695 found the long-address UI fixture used a single
+200-character domain label. It now uses multiple valid labels at the identical
+total address length; layout assertions are unchanged. Focused long-Unicode
+layout test:1passed/3.25s; Ruff/format97files and whitespace checks pass. This
+fixture-only follow-up adds no production change or repeated full local suite.
+
+
+### Optional provider token limits and refinement diagnosis — 15.11.2026
+
+Phase6 stays REVIEW in PR7. SRS §§5.6–5.8,10–11,16: owner explicitly removes
+implicit output and local token ceilings. Shared/Email output limits default to
+None, accept any explicit positive integer and have no application maximum.
+Email inherits shared settings unless explicitly overridden. Groq/Gemini omit
+unset output fields. Local quotas/dimensions are opt-in; explicit provider/model
+levels still apply together, while Retry-After, timeouts and bounded retries
+remain. Unknown provider-default output cannot be reserved; configured token
+budgets estimate prompt/schema bytes plus an explicit output allowance. They
+are not billing guarantees. Content length/artifact-size limits remain intact.
+
+Owner live evidence: initial Groq/gpt-oss-120b success,1452input/742output tokens,
+local validation passed; refinement invalid_request without usage/artifact.
+Root cause remains UNKNOWN from that category alone. No causal token claim.
+Offline real-SDK/in-memory HTTP tests exercise previous draft, prompt-v3,
+identical strict schema, low reasoning, initial+refinement success, protected
+main-body merge and injected400 failures. No request-construction defect is
+reproduced. New diagnostics retain only HTTP status, exact allowlisted error
+code/type and context/output/structured-output/invalid-request classification.
+Unknown strings, error messages, failed_generation and raw bodies are discarded.
+A fresh owner-only live run is required to identify the actual provider failure;
+no live call was made by Codex. Existing opt-in command remains unchanged,
+with optional --max-output-tokens N, no local token quotas, at most2requests,
+zero retries/corrections/fallback. No .env or owner demo data changes.
+
+Verification: initial provider/gateway/live-runner batch155passed/11.17s;
+additional optional-limit/diagnostic/CLI cases24passed/2.33s. The first wider
+focused attempt stalled at asyncio in the socket-restricted sandbox and was
+interrupted, not counted as a pass. Runnable-only rerun with local socket access:
+6passed/0.50s. Final stable focused selection (no real API keys, tracing off,
+offline/locked uv): tests/test_llm_token_policy.py, test_llm_gateway.py,
+test_llm_groq.py, test_llm_gemini.py, test_llm_hydrogen.py,
+test_email_live_check.py, test_agents.py, test_agent_provenance.py,
+test_email_editing.py, test_llm_review.py, test_llm_integration.py and
+test_llm_runnable.py: **471passed/43.32s**. Ruff lint/format98files, diff
+whitespace and packaged-module-style `python -m ...email_live_check --help`
+pass. No full local suite; Linux/Windows CI will verify the exact pushed HEAD.
+Official Groq Python API docs confirm optional max_completion_tokens omission
+and APIStatusError status_code/body metadata; local pinned SDK transports
+verify serialization without network. Raw provider messages/bodies are never
+exported. No packaging/dependency/migration changes or GUI redesign.
+
+Final scan found the separate connectivity CLI still hard-coded256tokens.
+It now inherits the configured optional provider limit too. Diagnostic/Hydrogen
+focused selection:70passed/4.82s, including absent and explicit50000-token
+settings. Ruff lint/format98files and whitespace pass. No live call; this small
+follow-up is covered by final-head CI rather than another full local run.
+
+
+### Groq Email compatibility default — 15.11.2026
+
+Owner approved targeted SRS §§5.4,5.6–5.7,10.4 configuration correction: after
+owner live HTTP400 with omitted output limit, explicit4096 passed initial/
+refinement (889/780output tokens), validation and protected-field checks.
+EmailScenarioAgent uses4096 only for Groq/openai/gpt-oss-120b when neither Email
+nor shared limit is explicit. CLI uses the same path, with flag > Email env >
+default. Explicit8192+ remains valid; no hard application maximum or default
+local quotas. Gemini, unrelated operations, validation and refinement protections
+remain intact. No live API calls by Codex. Focused tests/Ruff locally and final
+Linux/Windows CI; Phase6 stays REVIEW, no merge/acceptance/Phase7.
+
+Focused offline selection: `pytest -q tests/test_email_live_check.py
+tests/test_llm_token_policy.py tests/test_agents.py tests/test_llm_groq.py
+tests/test_llm_gemini.py`:172passed/11.98s. Updated provider-neutral assertion
+selection rerun:4cases verify Email4096 vs unrelated operations unset. Ruff
+lint/format98files and whitespace checks pass. Final-head CI evidence follows
+in PR7 and delivery; no full local suite or live requests.
+
+
+## Phase 6 — остаточне прийняття та дозволене злиття, 2026-11-15
+
+Власник явно оголосив Phase6 ACCEPTED і дозволив normal merge commit PR7 у
+main після final-head CI. Reviewed implementation HEAD:
+9653b72ddd65be590a60a21aeb2bb59ad3d4f2aa. PR відкритий, base main,
+mergeable_state clean; review threads, reviews і comments порожні, блокувальних
+зауважень немає. Reviewed CI43679237327: Linux783passed/280.37s,
+Windows781passed/2POSIX-only skips/476.08s; Ruff98files/import/Qt smoke success.
+
+Owner-reported прийняття: approved Gmail-inspired UI; manual main/background
+editing; Apply/Cancel/Save; canonical JSON, persistence/reopen; refinement і
+regeneration; GUI generation зі змістовними scenario parameters і GUI
+regeneration. Owner live Groq4096: initial889/refinement780output tokens,
+validation PASSED, protected_fields_preserved=true. Ці GUI/live докази належать
+власнику; Codex не запускав нових live API calls під час acceptance.
+
+Документаційний інкремент змінює лише README, PHASE_6_ACCEPTANCE,
+IMPLEMENTATION_PLAN, DEVELOPMENT_LOG та ADR-0006 status. Історію REVIEW збережено,
+SRS/runtime не змінено. Остаточний doc HEAD має пройти Linux/Windows CI перед
+звичайним merge через GitHub MCP із expected_head_sha; фактичний merge SHA і
+результати ff-only local main sync фіксуються в PR7/звіті.
+
+Прийняті Phase12 deferrals: подальше UX polishing, ширша scenario quality,
+фінальна оптимізація та physical Windows11/DPI/keyboard/installer acceptance.
+WSLg/Windows Server CI не є доказом фізичної Windows11 перевірки. Occasional
+failure за underspecified scenario input — nonblocking robustness/diagnostic
+opportunity, яку не приховано й не оголошено виправленою.
+
+Локально до змін: tracked tree clean, owner temp/ залишається untracked і
+зберігається. Baseline hashes8private/database files та metadata .venv збережено
+локально у /tmp без виведення вмісту секретів. Після merge перевірити їхню
+незмінність; не виконувати cleanup/reset/init-demo. Phase7 — NOT STARTED /
+PLANNING; лише майбутнє погодження Web Constructor, без branch/PR/реалізації.
+Phases8–12 лишаються NOT STARTED.

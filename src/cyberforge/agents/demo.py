@@ -138,7 +138,9 @@ def main() -> None:
     email = EmailScenarioAgent(gateway).run(source)
     assert email.status == "pending_review"
     web_source = WebInputV1(
-        **source.model_dump(exclude={"previous"}), email=email.draft, template="notice"
+        **source.model_dump(exclude={"previous", "refinement_scope"}),
+        email=email.draft,
+        template="notice",
     )
     gateway, _ = scripted_gateway(web_payload(web_source))
     web = WebScenarioAgent(gateway).run(web_source)

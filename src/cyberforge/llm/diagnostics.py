@@ -43,7 +43,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             model=args.model,
             parameters=GenerationParameters(
                 thinking="minimal" if args.model == "gemini-3.5-flash-lite" else "low",
-                max_output_tokens=256,
+                max_output_tokens=config.parameters.max_output_tokens,
                 timeout_seconds=20,
             ),
         )
