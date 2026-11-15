@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–6 — ACCEPTED (Phase6 прийнято власником2026-11-15); Phase7 — NOT STARTED / PLANNING; Phases8–12 — NOT STARTED.
+**State:** Phases 0–6 — ACCEPTED (Phase6 прийнято власником2026-11-15); Phase7 — REVIEW; Phases8–12 — NOT STARTED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -22,8 +22,8 @@
 | 3 | Scenario Management | ACCEPTED | Create/edit scenarios with unique IDs, persistence, statuses, versioned drafts; SQLite integration tests |
 | 4 | LLM Integration | ACCEPTED | Прийнято власником 13.11.2026; Groq primary/Hydrogen verified backup, explicit activation; Mock offline; F-01/F-02; accepted residual risks; ADR-0004 |
 | 5 | Specialized Agents | ACCEPTED | Прийнято власником 13.11.2026: four agents, typed contracts, bounded LangGraph, provenance/F-01, offline/provider-neutral integration; PHASE_5_ACCEPTANCE.md |
-| 6 | Email Constructor | REVIEW | Email preview, asynchronous agent generation, JSON, refinement, explicit SQLite save; 690 local tests; owner acceptance pending; PHASE_6_ACCEPTANCE.md |
-| 7 | Web Constructor | NOT STARTED | Web templates, isolated Qt WebEngine, generation, preview, code view, explicit save; security and UI tests |
+| 6 | Email Constructor | ACCEPTED | Прийнято власником15.11.2026: Email preview/editor, async generation, explicit SQLite Save; PHASE_6_ACCEPTANCE.md |
+| 7 | Web Constructor | REVIEW | Hybrid components, isolated WebEngine, visual editor, scoped AI, saved Email binding, explicit SQLite Save; PHASE_7_ACCEPTANCE.md |
 | 8 | Scenario Integration | NOT STARTED | Shared Email→Web context, internal link validation, readiness gate, immutable publishing; integration tests |
 | 9 | Learner Simulation | NOT STARTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
 | 10 | Scoring & Mentor | NOT STARTED | Versioned deterministic rubrics, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
@@ -967,3 +967,36 @@ Windows11 acceptance matrix залишаються відкладеними ри
 Constructor (SRS §23); architecture/UI/templates/editing/acceptance criteria
 потребують окремого погодження власника. Реалізацію, branch або PR Phase7
 не розпочато цим рішенням. Phases8–12 без змін: NOT STARTED.
+
+
+## Phase 7 — Hybrid Component-Based Web Constructor (15.11.2026)
+
+**REVIEW**; реалізацію та локальні gates завершено. Власник дозволив branch/commit/push/PR; merge й ACCEPTED заборонено.
+База: main 0fc97861e8e9c84393253e79c142c7c54adcb8b3, clean tree, fetch/ff-only.
+План та gates:
+
+1. §§6.4–6.10,9.3,11.3,26.3/26.5: scoped approved SRS amendment та ADR-0007.
+2. §§6,10–11,16: closed wire V2 → canonical component contracts, registry, provenance;
+   focused positive/negative/Groq strict tests, без зміни legacy contracts.
+3. §§6.2–6.7,15.3,16.3–16.5: deterministic renderer, isolated WebEngine/browser shell;
+   real browser network-isolation gate до подальшої інтеграції.
+4. §§4.9,6.9–6.10,11,14: additive migration, authorized WebMaterialService,
+   exact saved Email binding, explicit Save/concurrency/stale handling та workspace UI.
+5. §§6.8,21: validated modal component editor, apply/cancel/current candidate.
+6. §§9.3,10,16: web-prompt-v2, existing graph/gateway, protected scopes, current draft,
+   workers/guards та explicit offline demo; live requests лише власником.
+7. §§21,23–24: focused/full Ruff/pytest, actual WebEngine/WSLg, migration/package,
+   scoped diff/secret review, push/PR та exact-head Linux/Windows CI.
+
+Acceptance evidence: PHASE_7_ACCEPTANCE.md. Full publication/readiness — Phase 8,
+learner flow — Phase 9; physical Windows 11/DPI/installer — Phase 12 risk.
+
+
+Phase7 final local gate: Ruff lint/format117files PASS; full offline pytest
+882passed/504.65s. Два додаткові test-only session/close cases2passed/6.27s;
+application code після full-suite start не змінено. Real WSLg35passed/30.20s,
+actual Chromium isolation/clicks, migration/RBAC/concurrency та built/isolated-wheel
+checks passed. docs/screenshots/phase-7-web-*.png оглянуто. Final PR HEAD і exact
+Linux/Windows CI status — у PR/final report після push. Owner manual/live acceptance
+pending, native physical Windows11 лишається Phase12 risk. Phase7 REVIEW, не ACCEPTED;
+Phase8 NOT STARTED. Повний checklist — PHASE_7_ACCEPTANCE.md.

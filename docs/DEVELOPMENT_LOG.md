@@ -2553,3 +2553,101 @@ opportunity, яку не приховано й не оголошено випр�
 незмінність; не виконувати cleanup/reset/init-demo. Phase7 — NOT STARTED /
 PLANNING; лише майбутнє погодження Web Constructor, без branch/PR/реалізації.
 Phases8–12 лишаються NOT STARTED.
+
+
+## 15.11.2026 — Phase 7: затверджена архітектура та початок
+
+Власник явно дозволив complete Hybrid Component-Based Web Constructor, narrow SRS
+amendment, feature branch/commits/push/PR. Не дозволено merge, ACCEPTED або Phase 8.
+GitHub MCP підтвердив main 0fc97861e8e9c84393253e79c142c7c54adcb8b3; clean local tree,
+fetch/ff-only success; feat/phase-7-web-constructor. PySide6 installed6.10.3,
+lock/dependencies збережено. Context7/official Qt docs підтверджують off-record
+profile, interceptor до Chromium network stack, navigation gate та scheme registration
+before QApplication. Змінені лише погоджені normative Web sections SRS v3.0 із датою;
+історичні contracts й accepted Phase 0–6 не переписуються.
+
+### Phase 7 — contracts, renderer/isolation та persistence
+
+WebInputV2/WebSlotsV2/WebComponentSlotV2 → typed WebPageV2/WebDraftV3; registry9
+components, presets5, themes3/light-dark, deterministic scoped merges.
+Unchanged groq_strict_schema accepts compact required wire schema. Focused initial
+contracts+accepted agent/provenance regressions:205passed/5.35s. Renderer:7passed.
+Actual Chromium integration with controlled loopback HTTP endpoint: forbidden
+resources/redirects/file/data navigation blocked;3passed/2.86s після додавання
+actual popup/download/form/action clicks та JS-off evidence. Chromium sandbox
+залишено enabled; sandboxed test process initially exited133, successful runs
+потребують дозволеного host execution, не QTWEBENGINE_DISABLE_SANDBOX.
+
+0005_web_materials — additive table/triggers; canonical payload, source and Email
+revision/digest, transactional pre/post validation, optimistic concurrency; saved
+Email/context overrides mandatory.18service tests passed/29.35s;43existing Email
+service regressions passed у попередньому combined run. Перший combined run мав
+6failures у нових tests: Path fixture та warnings при forged nested models;
+виправлено без послаблення revalidation. Downgrade з Web даними fail closed.
+Old migration-head assertions updated to0005, coverage retained.
+
+### Phase 7 — UI/editor/gateway integration
+
+Scenario card має functional Web status/open; modal visual component editor,
+actual HTML/CSS/JSON inspector, explicit Save/reopen, scoped AI та safe local actions.
+Shared QRunnable/signals/request identity pattern retained; MainWindow чекає обидва
+workers. --web-demo ignores .env/keys and requires owner-selected --database.
+Groq Web-specific override → shared limit → GPT-OSS4096, no hard maximum;
+Gemini/Email policy unchanged. Real SDK/in-memory transport, contracts/renderer
+focused68passed/2.52s; no live API.
+
+Native debug виявив application-wide Python ClipboardShortcuts filter у
+PySide getWrapperForQObject при Chromium object destruction (Reload crash).
+Filter тепер attaches лише focused native editors, включно з dynamic dialogs;
+старі shortcut tests і нова binding regression retained. Page/view/profile explicit
+release та live QIODevice wrappers прибрали shutdown crash. Focused Web UI/security/
+clipboard suite33passed/22.51s with exit0. Це WSL offscreen automation, не physical
+Windows acceptance; real WSLg/full/package/CI gate ще попереду.
+
+### Phase 7 — WSLg та package gate
+
+Real Wayland command:
+`QT_QPA_PLATFORM=wayland .venv/bin/pytest tests/ui/test_web_constructor.py tests/ui/test_web_security.py tests/ui/test_clipboard_shortcuts.py tests/ui/test_email_constructor.py::test_mail_navigation_source_copy_explicit_save_reopen -q --tb=short`
+— **35passed/30.20s**, exit0. Earlier mistyped Email test selector зупинив collection
+без виконання; corrected exact selector наведений тут. Screenshot probe створив
+нову synthetic БД у /tmp: window1100×720, page768×656, browser662×453,
+Web viewport662×358, Save visible, off-record true. Screenshots compact/editor/
+saved card у docs/screenshots/phase-7-web-*.png оглянуто; critical actions доступні,
+сайт має незалежну світлу тему, card показує обидва saved materials/draft status.
+WSLg Mesa/EGL warnings присутні, але content/clicks/scroll/rendering тести успішні;
+це не native Windows11 evidence. Owner manual checklist ще не виконувався.
+
+`uv build --offline --out-dir /tmp/cyberforge-phase7-package.CZAt7h` — sdist/wheel
+success. `uv export --offline --locked --no-dev --no-emit-project --format requirements-txt`
+та new /tmp venv; hash-verified offline install locked runtime dependencies,
+no-deps install built wheel — success. Ізольований `python -I -m cyberforge --web-demo
+--database .../startup.sqlite3 --smoke-test` — exit0. Installed-wheel script:
+0005 migration, synthetic Email/Web generate/explicit Save/reopen, rendered CSS
+parity та PRAGMA foreign_key_check — PASS. Wheel/source parity й exclusion of
+.env/databases/credentials — PASS. Dependency/lock versions не змінено.
+
+Додаткові focused lifecycle tests після основного WSLg run:
+`QT_QPA_PLATFORM=offscreen .venv/bin/pytest tests/ui/test_web_constructor.py::test_actual_signout_switch_ignores_delayed_web_result tests/ui/test_web_constructor.py::test_closing_waits_asynchronously_for_web_worker -q --tb=short`
+— **2passed/6.27s**. Перевірено реальний signout→other session та asynchronous
+window close з running Web worker; stale result не потрапляє в іншу сесію.
+Це test-only доповнення, application code після stable full-suite start не змінено.
+
+
+### Phase 7 — stable local gate та PR REVIEW
+
+`uv run --offline --locked ruff check .` — PASS;
+`uv run --offline --locked ruff format --check .` — PASS,117Python files;
+`uv run --offline --locked pytest -q --tb=short` — **882passed/504.65s**, exit0,
+усі783accepted Phase0–6 regressions збережено. Два test-only lifecycle cases додано
+під час run після collection: окремо2passed/6.27s; application code не змінювався.
+Final CI має884Linux cases/882Windows+2POSIX skips, якщо середовище не додає skips;
+це очікування, не результат CI. `git -c core.whitespace=cr-at-eol diff --check`
+PASS (SRS CRLF збережено). Changed-file credential/private-file scan:40files,
+zero findings; .env/owner databases/credentials/environments не змінено.
+
+Focused commits: approved SRS/ADR; contracts/renderer/agent/persistence;
+UI/editor/actual browser security та worker/session lifecycle; delivery evidence/docs.
+Normal push/PR→main дозволено; final SHA/CI links фіксуються після push у PR та
+фінальному звіті, без circular docs commits. Phase7 — REVIEW, не ACCEPTED.
+Owner WSLg/manual/live Groq acceptance pending; no live API performed by Codex.
+No merge/force-push/deletion/Phase8. Physical Windows11/DPI/installer Phase12 risk.
