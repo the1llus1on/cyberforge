@@ -397,3 +397,20 @@ Runtime/test sources unchanged since full run began.15task files, owner AGENTS.m
 excluded. Exact final commit, Linux/Windows CI and run URL are recorded in PR9 and
 owner delivery after push; no additional docs-only commit is needed. Engineering
 local gate PASS; Phase8 remains **REVIEW**, owner manual acceptance pending.
+
+### Windows narrow-layout CI finding / correction
+
+Initial redesign CI43856088261: Linux1011PASS; Windows1007PASS/3skip/1failure in
+600px resize (856px content in556px viewport). All early layout/lifecycle gates
+passed; full suite caught native minimum-size pressure. Added deterministic420px
+card-minimum regression: old code1FAIL/1PASS, viewport-driven correction2PASS.
+No assertion weakened. Real WSLg resize/lifecycle/publish/history5PASS. Early CI
+now includes both resize variants. Final full suite1012cases/38Phase8 UI; exact-head
+CI must pass after correction. Details and exact commands in DEVELOPMENT_LOG.
+Wide960×680 screenshots remain representative. Owner acceptance still pending.
+
+Corrected stable full local gate: **1012passed/1403.08s**, Ruff127files and diff
+checks PASS; native-width2PASS and real WSLg5PASS. All992prior+20new cases retained,
+38Phase8 UI total. Source/tests stable during final full run. Combined16task files,
+owner AGENTS.md excluded. New exact-head CI results follow in PR9/delivery; initial
+Windows finding retained above. Owner acceptance and native Windows11 remain pending.

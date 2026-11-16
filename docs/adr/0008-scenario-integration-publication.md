@@ -108,3 +108,10 @@ preview/grants. Confirmations називають scenario/version/publication/gr
 після confirmation повторно перевіряється target. Audit collapsible, append-only.
 Новий draft не стає implicit grant target і не змінює історичний content.
 Physical Windows11/GPU/DPI лишаються Phase12 risk; CI не є physical acceptance.
+
+Windows CI finding: native card minima can prevent the material content from
+shrinking to the scroll viewport. Responsive direction must follow viewport Resize
+and actual card minima, not the content widget's own width. Deterministic420px/card
+regression reproduces the initial Windows overflow and preserves all assertions;
+early CI now covers ordinary and native-pressure resizing. This is a presentation
+correction only; modal/WebEngine/backend decisions above remain unchanged.

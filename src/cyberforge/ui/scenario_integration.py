@@ -264,6 +264,7 @@ class IntegrationDialog(QDialog):
         layout.addWidget(self.material_details)
         layout.addStretch()
         self.materials_step = preparation_scroll(layout)
+        self.material_cards.follow_viewport(self.materials_step.viewport())
         self.content.addWidget(self.materials_step)
 
     def _build_rubric(self):

@@ -3216,3 +3216,64 @@ remote head34e3198 before publication. Local feature commit/push authorized; fin
 exact-head Linux+Windows CI will be recorded in PR9/delivery after push, without a
 redundant documentation-only commit. Phase8 remains REVIEW; no owner acceptance,
 merge or Phase9. Native Windows11/GPU/DPI/installer acceptance remains Phase12 risk.
+
+## 16.11.2026 — UX Windows CI: responsive-card minimum-size correction
+
+First redesign commit95ebf362d3d6ac9076fce9c2e3833cae55617a55, workflow43856088261:
+GitHub App MCP confirms Linux **1011passed/633.37s**, all steps SUCCESS. Windows
+**1failed/1007passed/3POSIX-only skips/784.81s**; Ruff127files and early compact/
+production-lifecycle gates passed. Failure: new600×580 resize assertion found
+content856px inside viewport556px. Reported failure to owner before further push;
+no merge or acceptance. Data-integrity, RBAC, migration and WebEngine
+lifecycle/security cases passed; this was a real narrow-layout defect.
+
+Confirmed root cause: responsive cards chose horizontal/vertical layout from their
+own current width. Native card minima could keep the content wider than viewport,
+preventing a resize below the hardcoded threshold and therefore preventing stacking.
+Local deterministic reproduction adds420px minimum to each card (no font hacks):
+old code **1failed/1passed/36deselected/11.47s**, same material-step overflow864>556.
+Assertions retained; native-pressure case added as a second resize-test parameter.
+
+Correction: MaterialCards watches the scroll viewport's Resize events and chooses
+direction from available viewport width minus body margins, including actual card
+minimum widths and spacing. It no longer depends on its own potentially oversized
+width. Geometry is invalidated after direction changes; no WebEngine ownership or
+services/persistence changes. Early CI Phase8 gate now includes resizing_keyboard,
+so ordinary and forced-native-minimum cases run before the complete suite.
+
+After correction, same local resize test: **2passed/36deselected/9.90s**.
+`QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_scenario_integration.py -k 'compact_page or actual_constructor_button or resizing_keyboard or end_to_end_result' -q --tb=short`
+— **5passed/33deselected/35.64s**. Real viewport stacking, keyboard, actual3cycle
+WebEngine lifecycle and full publish/history flow retained. Existing wide-layout
+screenshots remain representative; only narrow-layout behavior changed.
+Ruff lint/format127files and diff check PASS. New full suite runs on stable corrected
+sources; final exact-head Linux/Windows evidence will follow in PR9/delivery.
+
+MCP capability limitation: direct GitHub PAT-backed check-runs read returned403.
+GitHub App MCP Actions run/job/log reads succeeded and supplied the actual failure
+and platform results; PR metadata/update via GitHub MCP also succeeded. Context7
+read succeeded. Credentials/configuration were not read or changed.
+
+Context7 official Qt check for the correction: QScrollArea.widgetResizable uses
+viewport geometry; QObject.eventFilter must preserve normal event delivery when
+observing Resize. The implementation delegates to the base filter and never deletes
+the watched widget. References:
+https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/QScrollArea.html
+https://doc.qt.io/qtforpython-6/PySide6/QtCore/QObject.html
+
+### Native-width correction — final stable local gate
+
+`UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short -o faulthandler_timeout=120`
+— **1012passed/1403.08s**, exit0. All992prior cases plus20new redesign cases retained;
+38Phase8 UI cases include both normal and forced-native-minimum resize variants.
+Ruff lint/format127files PASS, diff check PASS. Source/tests unchanged throughout
+this corrected complete run; only evidence docs appended. Focused resize2PASS and
+real WSLg compact/lifecycle/resize/publish-history5PASS precede this full gate.
+
+Corrective commit scope8files:2UI modules, existing UI tests, early CI gate and
+4documents. Combined redesign scope16files including the original7synthetic
+screenshots and3UI modules; owner AGENTS.md remains excluded. No backend/contracts/
+schema/dependencies/WebBrowser/security/startup changes. Commit/push the verified
+correction in existing branch/PR9; both platforms must pass on new exact HEAD.
+Final CI run/results will be recorded in PR9/delivery, preserving initial Windows
+failure history here. Phase8 REVIEW; owner acceptance pending; no merge/Phase9.

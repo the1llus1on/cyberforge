@@ -1073,17 +1073,27 @@ def test_redesign_actual_final_confirmation_cancel_and_publish(
     assert d.content.currentWidget() is d.result_view
 
 
-def test_redesign_resizing_keyboard_and_responsive_cards(integration_window, qtbot):
+@pytest.mark.parametrize("card_minimum", [0, 420])
+def test_redesign_resizing_keyboard_and_responsive_cards(
+    integration_window, qtbot, card_minimum
+):
     from PySide6.QtWidgets import QBoxLayout
 
     d = dialog(integration_window, qtbot)
+    # Reproduce Windows native minimum-size pressure without changing fonts.
+    for i in range(d.material_cards.cards_layout.count()):
+        d.material_cards.cards_layout.itemAt(i).widget().setMinimumWidth(card_minimum)
     for width, height in ((960, 680), (600, 580), (960, 680)):
         d.resize(width, height)
         for index in range(3):
             assert d.navigate(index)
             qtbot.wait(30)
             scroll = d.steps[index]
-            assert scroll.widget().width() <= scroll.viewport().width()
+            assert scroll.widget().width() <= scroll.viewport().width(), (
+                width,
+                index,
+                scroll.widget().minimumSizeHint(),
+            )
             assert d.width() <= width
             for control in (
                 d.back_button,

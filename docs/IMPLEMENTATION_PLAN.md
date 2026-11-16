@@ -1155,3 +1155,18 @@ synthetic screenshots inspected.15scoped files, owner AGENTS.md excluded. Source
 tests stable throughout full run; only evidence docs updated afterwards. Exact
 final-head Linux/Windows CI follows in PR9/delivery. Phase8 REVIEW; owner acceptance
 pending, no merge or Phase9.
+
+### UX Windows CI correction (16.11.2026)
+
+First-head Linux1011PASS; Windows1007PASS/3skip/1new narrow-resize failure. Native
+card minima prevented self-width-driven stacking. Forced420px/card reproduces the
+same failure locally; viewport-driven geometry fixes it, with assertions retained.
+Resize test now covers normal+native-pressure cases; early CI includes both.
+Focused2PASS and real WSLg5PASS, Ruff127files PASS. Final suite now1012cases
+(992prior+20new;38Phase8 UI); engineering gate requires new full run and both
+platforms on final HEAD. Phase8 REVIEW, no merge/ACCEPTED/Phase9.
+
+Corrected final local gate: **1012passed/1403.08s**, Ruff127files PASS, native-width
+focused2PASS, real WSLg5PASS. New stable run retains992prior+20new/38Phase8 UI.
+Combined redesign16files; corrective increment8files; owner AGENTS.md excluded.
+New final-head Linux/Windows CI follows in PR9/delivery. Phase8 stays REVIEW.

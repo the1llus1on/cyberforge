@@ -1,6 +1,6 @@
 """Native progressive disclosure and responsive preparation layouts."""
 
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QEvent, QSize, Qt
 from PySide6.QtWidgets import (
     QBoxLayout,
     QFrame,
@@ -48,17 +48,48 @@ class Disclosure(QWidget):
 class MaterialCards(QWidget):
     def __init__(self, cards: tuple[QFrame, QFrame]):
         super().__init__()
+        self.cards = cards
+        self.viewport = None
         self.cards_layout = QBoxLayout(QBoxLayout.Direction.LeftToRight, self)
         self.cards_layout.setContentsMargins(0, 0, 0, 0)
         for card in cards:
             self.cards_layout.addWidget(card, 1)
 
-    def resizeEvent(self, event):
-        self.cards_layout.setDirection(
+    def follow_viewport(self, viewport: QWidget) -> None:
+        self.viewport = viewport
+        viewport.installEventFilter(self)
+        self._adapt(viewport.width())
+
+    def _adapt(self, width: int) -> None:
+        # A wide native card minimum can prevent this widget from shrinking.
+        # Choose direction from the viewport, independently of that minimum.
+        parent_layout = self.parentWidget().layout() if self.parentWidget() else None
+        if parent_layout:
+            margins = parent_layout.contentsMargins()
+            width -= margins.left() + margins.right()
+        required = (
+            sum(
+                max(card.minimumWidth(), card.minimumSizeHint().width())
+                for card in self.cards
+            )
+            + self.cards_layout.spacing()
+        )
+        direction = (
             QBoxLayout.Direction.TopToBottom
-            if event.size().width() < 650
+            if width < max(650, required)
             else QBoxLayout.Direction.LeftToRight
         )
+        if self.cards_layout.direction() != direction:
+            self.cards_layout.setDirection(direction)
+            self.updateGeometry()
+
+    def eventFilter(self, watched, event):
+        if watched is self.viewport and event.type() == QEvent.Type.Resize:
+            self._adapt(event.size().width())
+        return super().eventFilter(watched, event)
+
+    def resizeEvent(self, event):
+        self._adapt(self.viewport.width() if self.viewport else event.size().width())
         super().resizeEvent(event)
 
 
