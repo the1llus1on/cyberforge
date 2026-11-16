@@ -29,8 +29,8 @@ jobs:
       - run: uv run --locked ruff format --check .
       - name: Compact Web native layout gate
         run: uv run --locked pytest tests/ui/test_web_constructor.py -k "compact or long_valid_tab_title" -q --tb=long
-      - name: Compact Scenario integration native layout gate
-        run: uv run --locked pytest tests/ui/test_scenario_integration.py -k "compact_page" -q --tb=long
+      - name: Scenario integration layout and browser lifecycle gate
+        run: uv run --locked pytest tests/ui/test_scenario_integration.py -k "compact_page or actual_constructor_button" -q --tb=long
       - run: uv run --locked pytest
       - name: Package import and Qt event-loop smoke
         run: |

@@ -72,6 +72,7 @@ class ScenarioPage(QWidget):
         self.integration = ScenarioIntegrationService(self.webs)
         self.readiness = ScenarioReadinessService(self.integration)
         self.publications = ScenarioPublicationService(self.readiness)
+        self.integration_dialog: IntegrationDialog | None = None
         self.scenario: Scenario | None = None
         self.observed: Scenario | None = None
         self.owned = False
@@ -343,6 +344,10 @@ class ScenarioPage(QWidget):
             self.integration_status.setText(str(error))
 
     def open_integration(self) -> None:
+        if self.integration_dialog is not None:
+            self.integration_dialog.raise_()
+            self.integration_dialog.activateWindow()
+            return
         if self.scenario is None or not self.can_leave():
             return
         try:
@@ -353,14 +358,30 @@ class ScenarioPage(QWidget):
                 owned=self.owned,
                 parent=self,
             )
-            dialog.exec()
-            changed = dialog.changed
-            dialog.deleteLater()
-            if self.scenario is not None:
-                current = self.service.get(self.token(), self.scenario.id)
-                self.load(current, editable=self.owned)
-                if changed:
-                    self.saved.emit(current)
+            self.integration_dialog = dialog
+            dialog.finished.connect(lambda _: self._integration_finished(dialog))
+            # WebEngine may recreate the native surface on its first load. A
+            # transient hide must not unwind exec() and delete a loading page.
+            dialog.open()
+        except ApplicationError as error:
+            self.message.setText(str(error))
+
+    def _integration_finished(self, dialog: IntegrationDialog) -> None:
+        if self.integration_dialog is dialog:
+            self.integration_dialog = None
+        dialog.deleteLater()
+        if (
+            dialog.forced
+            or dialog.session_token != self.token()
+            or self.scenario is None
+            or self.scenario.id != dialog.expected.id
+        ):
+            return
+        try:
+            current = self.service.get(self.token(), self.scenario.id)
+            self.load(current, editable=self.owned)
+            if dialog.changed:
+                self.saved.emit(current)
         except ApplicationError as error:
             self.message.setText(str(error))
 

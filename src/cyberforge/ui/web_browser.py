@@ -1,5 +1,6 @@
 """Isolated single-page browser with deny-by-default networking and navigation."""
 
+import logging
 from uuid import uuid4
 
 from PySide6.QtCore import QBuffer, QIODevice, QObject, Qt, QUrl, Signal
@@ -149,6 +150,8 @@ class BrowserTab(QLabel):
 class WebBrowser(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._disposed = False
+        self.render_failed = False
         self.setMinimumHeight(220)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -226,6 +229,8 @@ class WebBrowser(QFrame):
         self.feedback.setWordWrap(True)
         self.feedback.setStyleSheet("padding:4px;font-size:12px")
         layout.addWidget(self.feedback)
+        self.page.loadFinished.connect(self._load_finished)
+        self.page.renderProcessTerminated.connect(self._renderer_terminated)
         self.page.action_requested.connect(self.interact)
         self.reload.clicked.connect(self.reload_current)
         self.rendered: RenderedPage | None = None
@@ -234,7 +239,37 @@ class WebBrowser(QFrame):
         self.destroyed.connect(lambda: release_engine(view, page, profile))
 
     def dispose(self) -> None:
+        self._disposed = True
         release_engine(self.view, self.page, self.profile)
+
+    def _load_finished(self, success: bool) -> None:
+        if self._disposed:
+            return
+        if not success:
+            self.render_failed = True
+            self.feedback.setText(
+                "Не вдалося завантажити локальний перегляд. "
+                "Натисніть «Оновити» або закрийте й повторно відкрийте перегляд. "
+                "Збережені матеріали не змінено."
+            )
+        elif not self.render_failed:
+            self.feedback.clear()
+
+    def _renderer_terminated(self, status, exit_code: int) -> None:
+        if self._disposed:
+            return
+        self.render_failed = True
+        # Only engine status/code; never log URLs, artifact text or credentials.
+        logging.getLogger(__name__).warning(
+            "Web preview renderer terminated: status=%s exit_code=%d",
+            status.name,
+            exit_code,
+        )
+        self.feedback.setText(
+            "Процес відображення Web завершив роботу. "
+            "Натисніть «Оновити» або закрийте й повторно відкрийте перегляд. "
+            "Збережені матеріали не змінено."
+        )
 
     def closeEvent(self, event) -> None:
         self.dispose()
@@ -242,6 +277,7 @@ class WebBrowser(QFrame):
 
     def set_draft(self, draft: WebDraftV3 | None) -> None:
         self.draft = draft
+        self.render_failed = False
         self.feedback.clear()
         self.store.actions = {}
         self.store.html = b""
@@ -272,7 +308,9 @@ class WebBrowser(QFrame):
         self.page.setUrl(QUrl(self.store.url))
 
     def reload_current(self) -> None:
-        if self.draft is not None:
+        if self.draft is not None and not self._disposed:
+            self.render_failed = False
+            self.feedback.clear()
             self.page.setUrl(QUrl(self.store.url))
 
     def interact(self, action: str) -> None:

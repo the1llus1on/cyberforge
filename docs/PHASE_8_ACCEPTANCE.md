@@ -234,3 +234,94 @@ Initial restricted regression run не вважається PASS; identical allo
 в PR9; precise SHA/run/results додаються у PR description і delivery report.
 Owner manual acceptance pending; native physical Windows11 лишається Phase12 risk.
 Phase8 REVIEW, no merge/ACCEPTED/Phase9.
+
+## WSLg Web preview failure — 16.11.2026 (REVIEW)
+
+Owner reported loss of the application after opening Web in Integration/Publication.
+The actual production button path reproduced premature dialog deletion on default
+Wayland and with --disable-gpu; **no full app crash or renderer crash was observed**
+in the unrestricted-display UID1000 run. A Qt native rendering-surface hide made
+nested QDialog.exec return; the caller then deleted the loading dialog. This is a
+verified application lifecycle defect. The owner's exact fatal exit/freeze state
+cannot be inferred from the supplied Mesa messages alone.
+
+Fixed by window-modal open/finished with explicit ownership, safe refresh and
+cleanup. Guards/session changes retained. Load/renderer failures show Ukrainian
+messages with internal-only Reload; status/code logging excludes URLs/content.
+No graphics defaults, startup configuration, dependencies or migrations changed.
+
+Controlled AFTER-fix matrix:3actual render/close/reopen cycles per configuration,
+same isolated published synthetic DB, GUI heartbeat, nonempty text/pixels, zero
+renderer terminations and byte-identical DB: default Wayland, --disable-gpu,
+QT_QUICK_BACKEND=software, LIBGL_ALWAYS_SOFTWARE=1 and GALLIUM_DRIVER=llvmpipe PASS.
+Default and --disable-gpu retain Mesa warnings despite successful rendering.
+Xcb fails before QApplication due missing libxcb-cursor0; no package installation.
+The runner has no /dev/dxg, so these results do not prove physical GPU compatibility.
+
+Recommended normal launch after updating the existing PR branch:
+
+```bash
+QT_QPA_PLATFORM=wayland uv run --offline --locked cyberforge \
+  --database "$phase8_demo_dir/demo.sqlite3" --web-demo
+```
+
+Optional Qt-supported software-rendering comparison, set before application startup:
+
+```bash
+QTWEBENGINE_CHROMIUM_FLAGS="--disable-gpu" QT_QPA_PLATFORM=wayland \
+  uv run --offline --locked cyberforge \
+  --database "$phase8_demo_dir/demo.sqlite3" --web-demo
+```
+
+Use an isolated synthetic database; the commands do not edit .env. No application
+code adds flags or changes unrelated Windows startup. No unsafe renderer settings,
+root/sudo, network bypass or sandbox disablement is part of the fix.
+
+If a separate hardware-dependent problem remains, collect safe Qt diagnostics on
+that synthetic DB (logs stay local, do not share credentials or private content):
+
+```bash
+QT_QPA_PLATFORM=wayland \
+QT_LOGGING_RULES="qt.webenginecontext.debug=true;qt.webengine.compositor.debug=true" \
+uv run --offline --locked python -X faulthandler -m cyberforge \
+  --database "$phase8_demo_dir/demo.sqlite3" --web-demo \
+  2> "$phase8_demo_dir/webengine-diagnostics.log"
+printf 'CyberForge exit status: %s\n' "$?"
+```
+
+Owner recheck required: open Integration via the actual Constructor button, switch
+Email/Web repeatedly, close via Close and window-manager X, reopen at least3times,
+confirm page content and main GUI remain responsive, then repeat with only the
+optional software flag if needed. Report process exit status versus renderer-only
+failure. Earlier automation is not owner acceptance. Phase8 REVIEW; no merge,
+ACCEPTED or Phase9. Native physical Windows11/GPU/DPI remains an unverified risk.
+
+Preview-fix focused evidence: unchanged production-path WSLg regression
+**1failed/4.30s**, then **1passed/6.21s** after fix. Default WSLg integration/security/
+compact suite **30passed/173.37s**; single --disable-gpu suite **11passed/35.28s**.
+Real own-renderer SIGTERM produces the supported signal, safe Ukrainian message,
+responsive main app and successful internal-only Reload with a new renderer PID.
+Linux child Seccomp2/NoNewPrivs1/no --no-sandbox verified; direct portable diagnostic
+handler test supplements this real-process test (POSIX-only test skipped on Windows).
+Saved materials/publication data remain unchanged; three-cycle matrix DB hashes match.
+Exact commands and honest restricted-display/test-harness failures are in log.
+
+Additional default-backend trace confirms old QWindow.destroyed between Web tab
+selection/page.setUrl and successful loadFinished on all3cycles. The dialog itself
+survives until explicit close under open/finished. One /tmp synthetic rendered-view
+image inspected; no owner content or credentials recorded. Thus native surface
+recreation is observed directly, not inferred only from EGL log messages.
+
+Final preview-correction local gate:
+
+- Full offline suite **992passed/828.97s**, including all988prior cases plus4new.
+- Ruff lint/format PASS,126Python files; diff/private-file scan PASS,9changed files.
+- Default WSLg30passed; explicit --disable-gpu11passed;5working backend variants
+  each3complete published-scenario preview cycles; native-window trace3cycles PASS.
+- No source/test changes after stable full-suite start. Early CI Phase8 gate now
+  runs actual_constructor_button alongside compact_page; default Linux/Windows CI
+  on exact final HEAD is recorded in PR9 and delivery report after push.
+
+This fixes the reproduced modal-lifecycle defect. It does not claim a reproduced
+whole-app fatal crash on the owner's exact hardware, nor native Windows11/GPU
+acceptance. Owner workflow recheck remains required; Phase8 REVIEW, no merge or Phase9.

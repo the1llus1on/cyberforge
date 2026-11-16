@@ -1102,3 +1102,26 @@ GUI preflight defect fixed; claimed uncaught ValidationError not reproduced beca
 existing server BLOCKED gate already denied invalid groups. F8-02 exact historical
 target/reset reproduced and fixed with synchronized selection and explicit grant
 confirmation. Final-head CI evidence in PR9/delivery report; Phase8 remains REVIEW.
+
+## Phase8 — WSLg Web preview lifecycle correction (16.11.2026)
+
+**REVIEW**, existing PR9, baseline988bc421. Owner authorized investigation/fix/push,
+not merge/ACCEPTED/Phase9. Targeted plan, mapped to SRS:
+
+1. §§3.13,6.2–6.6,21: reproduce through real sign-in, saved scenario and ScenarioPage
+   button/QDialog lifecycle; distinguish native process exit, renderer exit, GUI
+   heartbeat, page load and native-window hide. Use one isolated published fixture.
+2. §§6.6,16.3–16.5: compare default and documented graphics overrides individually;
+   preserve sandbox/network isolation and existing runtime configuration.
+3. §§3.13,4.8,21: replace verified nested-modal lifetime defect with Qt open/finished,
+   explicit ownership/cleanup and retained guards; safe renderer/load diagnostics.
+4. §§14,16,21: repeated default/software WSLg rendering/close/reopen, actual renderer
+   termination/reload, source immutability, security/compact regressions, Ruff/full
+   offline suite and exact-head Linux/Windows CI in PR9. No startup/schema changes.
+
+Preview correction final local gate:992passed/828.97s, Ruff126files PASS;
+default WSLg30passed, single --disable-gpu11passed, five separate backend variants
+with3cycles each PASS. Actual native-window recreation verified; open/finished fixes
+premature exec return/deletion, renderer-only failure/reload covered independently.
+No startup/default graphics/security/schema changes. Owner hardware recheck pending;
+exact-head CI evidence follows in PR9. Phase8 REVIEW; no merge/ACCEPTED/Phase9.

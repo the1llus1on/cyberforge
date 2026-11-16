@@ -777,6 +777,8 @@ class IntegrationDialog(QDialog):
     def closeEvent(self, event):
         if self.forced or self.discard_or_save():
             self._dispose_browser()
+            # Complete the dialog so asynchronous owners receive finished().
+            super().reject()
             event.accept()
         else:
             event.ignore()

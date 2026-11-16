@@ -1,5 +1,7 @@
 """Instructor publication UX with isolated synthetic offline materials."""
 
+import os
+
 import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QMessageBox
@@ -534,3 +536,209 @@ def test_f8_02_history_selection_respects_unsaved_remain_and_discard(
     d.history.setCurrentIndex(d.history.findData(second.id))
     assert d.expected.version == 2 and d.history.currentData() == second.id
     assert d.mail.draft.scenario_version == 2 and not d.dirty
+
+
+def test_actual_constructor_button_repeated_web_preview_lifecycle(
+    integration_window, qtbot, monkeypatch
+):
+    from PySide6.QtCore import QTimer
+    from shiboken6 import isValid
+
+    from cyberforge.ui.web_browser import WebBrowser
+
+    window = integration_window
+    page = window.scenario_page
+    saved = page.integration.inspect(window._token, page.scenario)
+    loads, terminations, disposed = [], [], []
+    original_init = WebBrowser.__init__
+    state = dict(
+        cycle=0,
+        opening=False,
+        dialog=None,
+        switches=0,
+        content=False,
+        done=False,
+        error=None,
+    )
+
+    def observed_init(browser, *args, **kwargs):
+        original_init(browser, *args, **kwargs)
+        browser.page.loadFinished.connect(loads.append)
+        browser.page.renderProcessTerminated.connect(
+            lambda status, code: terminations.append((status, code))
+        )
+
+    monkeypatch.setattr(WebBrowser, "__init__", observed_init)
+    driver = QTimer(window)
+    driver.setInterval(50)
+
+    def tick():
+        try:
+            d = state["dialog"]
+            if d is not None:
+                assert isValid(d), "Web initialization destroyed the integration dialog"
+            else:
+                dialogs = [
+                    d for d in page.findChildren(IntegrationDialog) if d.isVisible()
+                ]
+                if not dialogs:
+                    if state["cycle"] == 3:
+                        state["done"] = True
+                        driver.stop()
+                    elif not state["opening"]:
+                        state["opening"] = True
+                        # A separate timer can drive the old nested exec loop too.
+                        QTimer.singleShot(0, page.integration_button.click)
+                    return
+                d = state["dialog"] = dialogs[0]
+                d.tabs.setCurrentIndex(3)
+                return
+            if len(loads) <= state["cycle"]:
+                return
+            assert loads[-1] is True
+            browser = d.browser
+            if not state["content"]:
+                browser.page.toPlainText(
+                    lambda text: state.update(content=bool(text and text.strip()))
+                )
+                return
+            assert d.isVisible() and browser.profile.isOffTheRecord()
+            if state["switches"] < 4:
+                d.tabs.setCurrentIndex(2 if state["switches"] % 2 == 0 else 3)
+                state["switches"] += 1
+                return
+            references = browser.view, browser.page, browser.profile
+            d.reject()
+            assert all(not isValid(value) for value in references)
+            disposed.append(d)
+            state.update(
+                cycle=state["cycle"] + 1,
+                opening=False,
+                dialog=None,
+                switches=0,
+                content=False,
+            )
+        except Exception as error:
+            state.update(error=error, done=True)
+            driver.stop()
+            d = state["dialog"]
+            if d is not None and isValid(d):
+                d.force_close()
+
+    driver.timeout.connect(tick)
+    driver.start()
+    try:
+        qtbot.waitUntil(lambda: state["done"], timeout=30000)
+    finally:
+        driver.stop()
+    assert state["error"] is None, str(state["error"])
+    qtbot.waitUntil(lambda: all(not isValid(d) for d in disposed))
+    assert state["cycle"] == 3 and terminations == [] and window.isVisible()
+    assert page.integration.inspect(window._token, page.scenario) == saved
+
+
+def test_production_dialog_close_signout_and_unsaved_guards(
+    integration_window, qtbot, monkeypatch
+):
+    from shiboken6 import isValid
+
+    window = integration_window
+    page = window.scenario_page
+    page.open_integration()
+    d = page.integration_dialog
+    assert d is not None and d.isVisible()
+    page.open_integration()
+    assert page.integration_dialog is d
+    d.link_label.setText("Незбережений зв’язок")
+    monkeypatch.setattr(d, "ask_unsaved", lambda: QMessageBox.StandardButton.Cancel)
+    d.close()
+    assert d.isVisible() and page.integration_dialog is d
+    monkeypatch.setattr(d, "ask_unsaved", lambda: QMessageBox.StandardButton.Discard)
+    d.close()
+    qtbot.waitUntil(lambda: not isValid(d))
+    assert page.integration_dialog is None
+    page.open_integration()
+    reopened = page.integration_dialog
+    assert reopened is not None
+    window._signed_out()
+    qtbot.waitUntil(lambda: not isValid(reopened))
+    assert page.integration_dialog is None and page.scenario is None
+
+
+def test_renderer_diagnostics_are_safe_and_preview_only(
+    integration_window, qtbot, caplog
+):
+    from PySide6.QtWebEngineCore import QWebEnginePage
+
+    window = integration_window
+    page = window.scenario_page
+    before = page.integration.inspect(window._token, page.scenario)
+    page.open_integration()
+    d = page.integration_dialog
+    d.tabs.setCurrentIndex(3)
+    browser = d.browser
+    done = []
+    browser.page.loadFinished.connect(done.append)
+    qtbot.waitUntil(lambda: bool(done) and done[-1] is True, timeout=15000)
+    # Qt6.10 cannot synthesize this enum-valued C++ signal through emit().
+    # Real signal delivery is covered by the separate renderer-process test.
+    browser._renderer_terminated(
+        QWebEnginePage.RenderProcessTerminationStatus.CrashedTerminationStatus, 17
+    )
+    assert browser.render_failed and "завершив роботу" in browser.feedback.text()
+    assert "status=CrashedTerminationStatus exit_code=17" in caplog.text
+    assert browser.draft.page.display_url not in caplog.text
+    assert d.isVisible() and window.isVisible()
+    with qtbot.waitSignal(browser.page.loadFinished, timeout=15000) as reloaded:
+        browser.reload_current()
+    assert reloaded.args == [True] and not browser.render_failed
+    browser.page.loadFinished.emit(False)
+    assert "Не вдалося завантажити" in browser.feedback.text()
+    assert page.integration.inspect(window._token, page.scenario) == before
+    d.reject()
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX renderer signal only")
+def test_actual_renderer_termination_recovery_preserves_application_and_sources(
+    integration_window, qtbot
+):
+    import os
+    import signal
+
+    window = integration_window
+    page = window.scenario_page
+    before = page.integration.inspect(window._token, page.scenario)
+    page.open_integration()
+    d = page.integration_dialog
+    d.tabs.setCurrentIndex(3)
+    browser = d.browser
+    loaded = []
+    browser.page.loadFinished.connect(loaded.append)
+    qtbot.waitUntil(lambda: bool(loaded) and loaded[-1] is True, timeout=15000)
+    text = []
+    browser.page.toPlainText(text.append)
+    qtbot.waitUntil(lambda: bool(text) and bool(text[-1].strip()), timeout=15000)
+    renderer_pid = browser.page.renderProcessPid()
+    assert renderer_pid > 0 and renderer_pid != os.getpid()
+    from pathlib import Path
+
+    process = Path(f"/proc/{renderer_pid}")
+    if process.is_dir():
+        assert b"--no-sandbox" not in (process / "cmdline").read_bytes().split(b"\0")
+        status = dict(
+            line.split(":", 1) for line in (process / "status").read_text().splitlines()
+        )
+        assert status["Seccomp"].strip() == "2"
+        assert status["NoNewPrivs"].strip() == "1"
+    with qtbot.waitSignal(browser.page.renderProcessTerminated, timeout=10000):
+        os.kill(
+            renderer_pid, signal.SIGTERM
+        )  # This view's own child, never a guessed PID.
+    assert d.isVisible() and window.isVisible() and browser.render_failed
+    assert "завершив роботу" in browser.feedback.text()
+    with qtbot.waitSignal(browser.page.loadFinished, timeout=15000) as loaded:
+        browser.reload_current()
+    assert loaded.args == [True] and not browser.render_failed
+    assert browser.page.renderProcessPid() != renderer_pid
+    assert page.integration.inspect(window._token, page.scenario) == before
+    d.reject()

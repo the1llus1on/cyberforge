@@ -2975,3 +2975,146 @@ canonical artifact changes. No real Groq/Gemini requests; only synthetic isolate
 Owner manual/physical Windows11 acceptance не заявляються. Phase8 REVIEW.
 Final commit/push та exact-head Linux/Windows CI evidence фіксуються в existing PR9
 і фінальному звіті без circular documentation commits. Merge/ACCEPTED/Phase9 заборонені.
+
+## 16.11.2026 — Phase8 owner-reported WSLg Web preview failure
+
+Scope: owner authorized targeted investigation/fix in existing PR9, baseline
+988bc421e3458678a9e4dca05a6ccdbd6b113e3c. GitHub MCP confirms exact head, main base,
+open/unmerged; clean tree and fetch/ff-only. Relevant SRS §§3.13,6.6,16.3–16.5,21,
+ADRs0007/0008, startup/custom scheme/renderer/browser/dialog cleanup and tests read.
+No owner .env/keys/DB/credentials inspected or modified; no live AI. All graphics
+experiments use one NEW synthetic published scenario/database under /tmp, seeded
+with explicit Mock demo services and private random demo credentials (never printed).
+Installed Python3.12/PySide6/Qt6.10.3, WSL Linux, Wayland; /dev/dxg absent in this
+runner. Only allowlisted graphics environment settings inspected; no full env dump.
+
+### Evidence and verified cause
+
+Restricted Wayland startup fails before QApplication: wl_display Operation not
+permitted, process134/SIGABRT. This is runner display isolation, not the owner's
+preview failure. Subsequent display tests run as the SAME UID1000 with host display
+access: no sudo, root privileges, package installs or system graphics changes.
+
+Production main --web-demo -> real demo-instructor login form -> saved published
+scenario -> actual ScenarioPage integration button -> Web tab reproduced failure.
+Default graphics logs contain the owner's EGL/Mesa/Zink messages. Qt/Chromium then
+report llvmpipe, GPU blocklisted/software compositor. The GUI timer remains alive;
+no renderer-termination signal and no whole-application native crash observed.
+Trace: page.setUrl causes a transient native dialog hide while Qt changes rendering
+surface; QDialog.exec returns0 WITHOUT finished/rejected. ScenarioPage's synchronous
+continuation schedules deleteLater on the loading dialog; no loadFinished arrives.
+The same failure occurs with only --disable-gpu. Mesa warnings therefore do not
+establish a fatal GPU failure; a verified application modal-lifetime defect causes
+loss of the preview. The owner's exact process-exit state remains unconfirmed.
+
+A diagnostic harness initially needed independent timer driving (same-timer callbacks
+cannot drive a nested exec while their own timeout slot remains active); corrected
+before extracting the regression. Actual production-path regression on unchanged
+code: **1failed/4.30s**, assertion 'Web initialization destroyed the integration dialog',
+with the same Mesa warnings. Existing tests only showed IntegrationDialog directly,
+so they did not exercise ScenarioPage.open_integration's nested exec continuation.
+A preload experiment rendered successfully before modal entry; the chosen smaller
+lifecycle fix follows Qt's recommended asynchronous open/finished API instead of
+forcing eager hidden WebEngine initialization or changing rendering defaults.
+
+Official version-matched Qt6.10.3 references, checked through Context7/official web:
+https://doc.qt.io/qt-6.10/qdialog.html#exec
+https://doc.qt.io/qt-6.10/qtwebengine-features.html#hardware-acceleration
+https://doc.qt.io/qt-6.10/qtwebengine-debugging.html
+https://doc.qt.io/qt-6.10/qtwebengine-platform-notes.html
+Unversioned Qt URLs redirect to newer docs; implementation decisions use6.10 docs.
+
+### Fix and controlled graphics comparisons
+
+ScenarioPage retains a single window-modal IntegrationDialog via open()/finished;
+transient hide no longer unwinds a nested loop or deletes a loading page. Finished
+clears ownership, refreshes the same authorized scenario, and schedules deletion;
+forced/session changes skip stale refresh. Window-manager close explicitly emits
+completion after the existing Save/Discard/Remain guard. Duplicate opens reuse
+the current dialog. WebBrowser retains accepted view->page->profile disposal order.
+loadFinished(false)/renderProcessTerminated show Ukrainian recovery instructions;
+logs contain only status/code, never URLs/content/credentials. Reload stays on the
+current approved internal resource; no fake automatic graphics fallback.
+
+Same isolated DB, actual production main/login/button path,3open/render/close cycles
+and4Email/Web switches per cycle; first default and --disable-gpu baseline failed
+as above, all following results are AFTER the lifecycle fix:
+
+| Single override | Exit | Rendered loads | Renderer terminations | EGL warnings | DB unchanged |
+| --- | --- | --- | --- | --- | --- |
+| none, Wayland default | 0 | 3 | 0 | 8 | yes |
+| QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu | 0 | 3 | 0 | 4 | yes |
+| QT_QUICK_BACKEND=software | 0 | 3 | 0 | 4 | yes |
+| LIBGL_ALWAYS_SOFTWARE=1 | 0 | 3 | 0 | 0 | yes |
+| GALLIUM_DRIVER=llvmpipe | 0 | 3 | 0 | 6 | yes |
+| QT_QPA_PLATFORM=xcb | -6/SIGABRT | 0 | 0 | 0 | yes |
+
+Each override used alone, established BEFORE QApplication by the child process
+environment. Screens had actual nonempty page text and19sampled pixel colors,
+GUI heartbeat continued;3view/page/profile sets invalidated after explicit close.
+Xcb cannot initialize without libxcb-cursor0 here; no packages installed and xcb
+not recommended as a verified workaround. Software flags do not repair the original
+exec defect; no app-wide rendering configuration/default was introduced. Qt's
+existing explicit environment overrides remain supported, with no Windows leakage.
+
+Initial new test errors (waitUntil predicate returning[]; synthetic enum-valued
+signal emit unsupported by PySide6.10) were test harness defects. Predicates fixed;
+portable diagnostic handler test plus real child-process termination cover the
+supported signal. Real renderer SIGTERM test passed: GUI alive, Ukrainian error,
+internal Reload succeeds with a new renderer, sources unchanged. Linux renderer
+status Seccomp2/NoNewPrivs1 and no --no-sandbox verified before terminating ONLY the
+PID returned by this page. Baseline process and renderer were never run as root.
+
+### Preview correction — stable focused gates
+
+Before-fix actual production-button WSLg regression1failed/4.30s; after lifecycle
+fix the same test1passed/6.21s,3cycles and explicit view/page/profile disposal.
+
+Default real WSLg command:
+`QT_QPA_PLATFORM=wayland .venv/bin/pytest tests/ui/test_scenario_integration.py tests/ui/test_web_security.py tests/ui/test_web_constructor.py -k 'not actual_signout and not closing_waits and not generation and not manual and not refinement' -q --tb=short`
+— **30passed/3deselected/173.37s**, exit0. Includes all18Phase8 UI cases, accepted
+actual browser/network isolation, real renderer termination/reload, F8-01/F8-02
+regressions, modal-close/session guards and compact layout. Four new cases added.
+
+Single software override, set before QApplication:
+`QT_QPA_PLATFORM=wayland QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu .venv/bin/pytest tests/ui/test_scenario_integration.py tests/ui/test_web_security.py tests/ui/test_web_constructor.py -k 'actual_constructor_button or renderer_ or production_dialog or actual_engine or actual_clicks or real_engine or compact or long_valid_tab_title' -q --tb=short`
+— **11passed/22deselected/35.28s**, exit0. Actual Chromium isolation remains enforced.
+No --no-sandbox, QTWEBENGINE_DISABLE_SANDBOX, disabled web security or remote access
+introduced. Default rendering and software override both preserve isolation.
+
+Ruff lint/format126Python files PASS; diff check PASS. Full offline992case suite
+running via unprivileged host execution. No Python source/test changes after its
+start; only documentation evidence. No entry point/config/dependency/migration
+changes, so repeated package/wheel checks not required for this UI lifecycle patch.
+CI's early Phase8 gate now includes the real Constructor-button lifecycle case,
+before full suite, to cover the path missed by show-only tests. No owner manual
+acceptance claimed; default native hardware GPU was unavailable in this runner.
+
+Final default-backend native-window trace independently confirms the surface
+transition: SELECT_WEB_TAB -> dialog hide inside page.setUrl -> old QWindow.destroyed
+-> loadFinished(true), on EACH of3cycles after the async fix. The IntegrationDialog
+itself survives until explicit close; zero renderProcessTerminated signals.
+One /tmp synthetic screenshot inspected: published version identity and actual
+rendered Web content visible, read-only display address, Close reachable. No extra
+repository screenshot/audit artifact. This confirms native-window recreation rather
+than inferring it solely from Mesa diagnostics or a dialog hide event.
+
+### Preview correction — final local gate / REVIEW
+
+`UV_CACHE_DIR=/tmp/cyberforge-phase8-uv-cache QT_QPA_PLATFORM=offscreen uv run --offline --locked pytest -q --tb=short`
+— **992passed/828.97s**, exit0. All988previous cases retained plus4new preview cases.
+No Python source/test changes after full-suite start. Ruff check and format --check
+PASS,126Python files. Diff/private-file scan PASS,9changed files; owner .env/DB/keys
+untouched. Actual Chromium sandbox/isolation retained; no root/sudo or new packages.
+
+Files: ui/scenario_page.py, scenario_integration.py, web_browser.py;
+tests/ui/test_scenario_integration.py; early CI lifecycle selector; existing
+IMPLEMENTATION_PLAN/DEVELOPMENT_LOG/PHASE_8_ACCEPTANCE/ADR0008. No source snapshots,
+new database schema/dependencies, startup config changes or new navigation modes.
+The verified premature-modal-deletion defect is fixed; a fatal exit on the owner's
+specific GPU/host was not established by the supplied warnings or reproduced here.
+Owner must repeat the documented real button/open/close/reopen workflow. Full app
+native failures outside supported Qt signals still require the safe diagnostic log.
+Phase8 remains REVIEW. Exact final commit and Linux/Windows CI run/results follow
+in existing PR9 description/final report, avoiding circular evidence-only commits.
+No merge, ACCEPTED, Phase9, force-push or history rewrite.

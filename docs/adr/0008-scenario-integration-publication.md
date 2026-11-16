@@ -54,3 +54,14 @@ transaction: sqlite3 legacy SELECT/DDL does not imply one. This protects upgrade
 and multi-revision downgrade schema/stamp rollback when an older material guard
 refuses a later downgrade step. Focused regression compares tables/triggers/stamp;
 owner data are never used for migration testing.
+
+## Owner preview failure — 16.11.2026
+
+The production entry used nested QDialog.exec while lazy WebEngine first load can
+hide/recreate its native rendering surface. Reproduced default Wayland and with
+--disable-gpu: exec returned without finished, and the caller deleted the loading
+dialog. Existing show-only tests missed this path. Use window-modal open/finished
+with explicit ScenarioPage ownership, guarded completion and normal disposal.
+Window-manager close emits completion; session invalidation skips stale refresh.
+No rendering/backend default or runtime security policy change. Qt6.10 explicitly
+recommends open over exec; version-matched references and experiments are in log.
