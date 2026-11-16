@@ -119,6 +119,7 @@ def test_explicit_publication_readonly_grants_and_next_draft(
     assert not d.publish_button.isEnabled()
     assert d.grant_groups.count() == 1
     d.grant_groups.setCurrentRow(0)
+    monkeypatch.setattr(d, "confirm_grant", lambda publication, group_id, active: True)
     d.change_grant(False)
     assert "revoke" in d.audit_text.toPlainText()
     d.change_grant(True)
@@ -136,6 +137,8 @@ def test_explicit_publication_readonly_grants_and_next_draft(
     assert page.emails.load(window._token, page.scenario).draft is None
     assert len(page.publications.history(window._token, page.scenario.id)) == 1
     historical = dialog(window, qtbot)
+    assert historical.history.currentData() is None  # New draft has no grant target.
+    historical.history.setCurrentIndex(0)
     historical.load_history()
     assert historical.expected.version == 1 and not historical.writable
     assert historical.mail.draft is not None
@@ -243,3 +246,291 @@ def test_actual_web_review_and_repeated_close(integration_window, qtbot):
     assert d.browser is None
     d.force_close()
     assert d.state is None
+
+
+@pytest.mark.parametrize("selection", ["empty", "unauthorized", "stale"])
+def test_f8_01_actual_publish_button_requires_authorized_groups(
+    integration_window, qtbot, monkeypatch, selection
+):
+    from sqlalchemy import text
+
+    window = integration_window
+    e = window.test_env
+    d = dialog(window, qtbot)
+    configure(d)
+    if selection == "empty":
+        d.groups.item(0).setCheckState(Qt.CheckState.Unchecked)
+    elif selection == "unauthorized":
+        group = GroupService(e.accounts).save_group(
+            e.tokens["admin"], "Чужа група", instructors=(), learners=()
+        )
+        # Simulates a stale/forged UI picker; service permissions remain authoritative.
+        d.groups.item(0).setData(Qt.ItemDataRole.UserRole, group.id)
+        d.check_readiness()
+    else:
+        GroupService(e.accounts).set_members(e.tokens["admin"], e.group.id, (), ())
+    assert d.report.technical_ready and not d.report.final_ready
+    d.ack.setChecked(True)
+    confirmations = []
+    monkeypatch.setattr(
+        d, "final_confirmation", lambda: confirmations.append(True) or True
+    )
+    d.tabs.setCurrentIndex(4)
+    d.tabs.widget(4).ensureWidgetVisible(d.publish_button)
+    qtbot.mouseClick(d.publish_button, Qt.MouseButton.LeftButton)
+    assert not confirmations
+    assert not d.publish_button.isEnabled()
+    # Direct slot calls must also be safe even if UI enablement is bypassed.
+    assert d.publish() is False
+    assert "груп" in d.message.text()
+    with e.database.engine.connect() as db:
+        assert (
+            db.execute(text("SELECT count(*) FROM publication_reviews")).scalar_one()
+            == 0
+        )
+        assert (
+            db.execute(text("SELECT count(*) FROM scenario_publications")).scalar_one()
+            == 0
+        )
+
+
+def two_publications(window, qtbot, monkeypatch):
+    e = window.test_env
+    first_dialog = dialog(window, qtbot)
+    configure(first_dialog)
+    first_dialog.ack.setChecked(True)
+    monkeypatch.setattr(first_dialog, "final_confirmation", lambda: True)
+    assert first_dialog.publish()
+    first = first_dialog.publications.history(window._token, e.scenario.id)[0]
+    first_dialog.reject()
+    page = window.scenario_page
+    published = window.scenarios.get(window._token, e.scenario.id)
+    draft = window.scenarios.create_next_draft(window._token, published)
+    ew = window.emails.load(window._token, draft)
+    window.emails.save(window._token, ew, window.emails.generate(window._token, ew))
+    ww = page.webs.load(window._token, draft)
+    page.webs.save(window._token, ww, page.webs.generate(window._token, ww))
+    second_group = GroupService(e.accounts).save_group(
+        e.tokens["admin"],
+        "Друга група UI",
+        instructors=(e.accounts.current(window._token).id,),
+        learners=(),
+    )
+    page.load(draft, editable=True)
+    second_dialog = dialog(window, qtbot)
+    configure(second_dialog)
+    second_dialog.groups.item(0).setCheckState(Qt.CheckState.Unchecked)
+    second_dialog.groups.item(1).setCheckState(Qt.CheckState.Checked)
+    second_dialog.ack.setChecked(True)
+    monkeypatch.setattr(second_dialog, "final_confirmation", lambda: True)
+    assert second_dialog.publish()
+    second = second_dialog.publications.history(window._token, e.scenario.id)[0]
+    second_dialog.reject()
+    page.load(window.scenarios.get(window._token, e.scenario.id), editable=True)
+    return first, second, second_group
+
+
+def test_f8_02_historical_reload_keeps_publication_target(
+    integration_window, qtbot, monkeypatch
+):
+    window = integration_window
+    first, second, second_group = two_publications(window, qtbot, monkeypatch)
+    d = dialog(window, qtbot)
+    d.history.setCurrentIndex(d.history.findData(first.id))
+    d.load_history()
+    assert d.expected.version == 1
+    assert d.mail.draft.scenario_version == 1
+    assert d.history.currentData() == first.id
+    d.load()
+    assert d.history.currentData() == first.id
+    assert (
+        d.grant_groups.item(0).data(Qt.ItemDataRole.UserRole).group_id
+        == window.test_env.group.id
+    )
+
+
+def test_f8_01_groups_revalidated_after_final_dialog(
+    integration_window, qtbot, monkeypatch
+):
+    from sqlalchemy import text
+
+    window = integration_window
+    e = window.test_env
+    d = dialog(window, qtbot)
+    configure(d)
+    d.ack.setChecked(True)
+
+    def stale_during_confirmation():
+        GroupService(e.accounts).set_members(e.tokens["admin"], e.group.id, (), ())
+        return True
+
+    monkeypatch.setattr(d, "final_confirmation", stale_during_confirmation)
+    d.tabs.setCurrentIndex(4)
+    d.tabs.widget(4).ensureWidgetVisible(d.publish_button)
+    qtbot.mouseClick(d.publish_button, Qt.MouseButton.LeftButton)
+    assert "груп" in d.message.text()
+    with e.database.engine.connect() as db:
+        assert (
+            db.execute(text("SELECT count(*) FROM publication_reviews")).scalar_one()
+            == 0
+        )
+        assert (
+            db.execute(text("SELECT count(*) FROM scenario_publications")).scalar_one()
+            == 0
+        )
+
+
+def test_f8_02_grant_confirmation_tracks_exact_publication_and_group(
+    integration_window, qtbot, monkeypatch
+):
+    from PySide6.QtCore import QTimer
+    from PySide6.QtWidgets import QApplication
+
+    window = integration_window
+    e = window.test_env
+    first, second, second_group = two_publications(window, qtbot, monkeypatch)
+    d = dialog(window, qtbot)
+    publications = d.publications
+    before = {
+        p.id: (
+            p,
+            d.integration.inspect(
+                window._token,
+                window.scenarios.get(
+                    window._token,
+                    e.scenario.id,
+                    version=p.manifest.snapshot.scenario_version,
+                ),
+            ),
+        )
+        for p in (first, second)
+    }
+
+    def assert_target(publication, group_id):
+        assert d.history.currentData() == publication.id
+        assert d.expected.version == publication.manifest.snapshot.scenario_version
+        assert d.mail.draft.scenario_version == d.expected.version
+        assert d.state.web.scenario_version == d.expected.version
+        assert (
+            d.grant_groups.item(0).data(Qt.ItemDataRole.UserRole).group_id == group_id
+        )
+        assert all(
+            event.publication_id == publication.id
+            for event in publications.audit(window._token, publication.id)
+        )
+
+    assert_target(second, second_group.id)
+    d.history.setCurrentIndex(d.history.findData(first.id))
+    assert_target(first, e.group.id)  # Selection itself synchronizes previews/context.
+    d.refresh_grants()
+    d.load()
+    assert_target(first, e.group.id)
+    d.reject()
+    window.scenario_page.load(
+        window.scenarios.get(window._token, e.scenario.id, version=1), editable=True
+    )
+    d = dialog(window, qtbot)
+    assert_target(first, e.group.id)
+    d.tabs.setCurrentIndex(5)
+    scroll = d.tabs.widget(5)
+    d.grant_groups.setCurrentRow(0)
+    scroll.ensureWidgetVisible(d.revoke_grant)
+    confirmations = []
+
+    def respond(accept):
+        box = next(
+            w
+            for w in QApplication.topLevelWidgets()
+            if isinstance(w, QMessageBox) and w.isVisible()
+        )
+        confirmations.append(box.text())
+        button = next(
+            b
+            for b in box.buttons()
+            if box.buttonRole(b)
+            == (
+                QMessageBox.ButtonRole.AcceptRole
+                if accept
+                else QMessageBox.ButtonRole.RejectRole
+            )
+        )
+        button.click()
+
+    # Real Qt modal cancel must preserve both sets of grants/audit.
+    QTimer.singleShot(0, lambda: respond(False))
+    qtbot.mouseClick(d.revoke_grant, Qt.MouseButton.LeftButton)
+    assert len(publications.audit(window._token, first.id)) == 1
+    assert len(publications.audit(window._token, second.id)) == 1
+    QTimer.singleShot(0, lambda: respond(True))
+    qtbot.mouseClick(d.revoke_grant, Qt.MouseButton.LeftButton)
+    assert f"сценарій {e.scenario.id}" in confirmations[-1]
+    assert f"версія 1, публікація {first.id}" in confirmations[-1]
+    assert f"навчальна група {e.group.id}" in confirmations[-1]
+    assert [g.active for g in publications.grants(window._token, first.id)] == [False]
+    assert [g.active for g in publications.grants(window._token, second.id)] == [True]
+    d.available_group.setCurrentIndex(d.available_group.findData(e.group.id))
+    scroll.ensureWidgetVisible(d.add_grant)
+    QTimer.singleShot(0, lambda: respond(True))
+    qtbot.mouseClick(d.add_grant, Qt.MouseButton.LeftButton)
+    assert [a.operation for a in publications.audit(window._token, first.id)] == [
+        "grant",
+        "revoke",
+        "grant",
+    ]
+    d.history.setCurrentIndex(d.history.findData(second.id))
+    assert_target(second, second_group.id)
+    d.history.setCurrentIndex(d.history.findData(first.id))
+    assert_target(first, e.group.id)
+
+    # A selection change while the confirmation is open cannot redirect the write.
+    d.grant_groups.setCurrentRow(0)
+
+    def switch_during_confirmation(publication, group_id, active):
+        assert publication.id == first.id and group_id == e.group.id and not active
+        d.history.setCurrentIndex(d.history.findData(second.id))
+        return True
+
+    monkeypatch.setattr(d, "confirm_grant", switch_during_confirmation)
+    d.change_grant(False)
+    assert "Зміни доступу не виконано" in d.message.text()
+    assert len(publications.audit(window._token, first.id)) == 3
+    assert len(publications.audit(window._token, second.id)) == 1
+    for p in (first, second):
+        assert before[p.id] == (
+            p,
+            d.integration.inspect(
+                window._token,
+                window.scenarios.get(
+                    window._token,
+                    e.scenario.id,
+                    version=p.manifest.snapshot.scenario_version,
+                ),
+            ),
+        )
+    assert publications.history(window._token, e.scenario.id) == (second, first)
+
+
+def test_f8_02_history_selection_respects_unsaved_remain_and_discard(
+    integration_window, qtbot, monkeypatch
+):
+    window = integration_window
+    first, second, _ = two_publications(window, qtbot, monkeypatch)
+    page = window.scenario_page
+    draft = window.scenarios.create_next_draft(
+        window._token, window.scenarios.get(window._token, window.test_env.scenario.id)
+    )
+    page.load(draft, editable=True)
+    d = dialog(window, qtbot)
+    assert d.history.currentData() is None
+    assert not d.add_grant.isEnabled() and not d.revoke_grant.isEnabled()
+    d.link_label.setText("Незбережений зв’язок нової версії")
+    monkeypatch.setattr(d, "ask_unsaved", lambda: QMessageBox.StandardButton.Cancel)
+    d.history.setCurrentIndex(d.history.findData(first.id))
+    assert d.expected == draft and d.dirty
+    assert d.history.currentData() is None
+    assert not d.add_grant.isEnabled() and not d.revoke_grant.isEnabled()
+    assert d.grant_groups.count() == 0 and d.audit_text.toPlainText() == ""
+    monkeypatch.setattr(d, "ask_unsaved", lambda: QMessageBox.StandardButton.Discard)
+    d.history.setCurrentIndex(d.history.findData(second.id))
+    assert d.expected.version == 2 and d.history.currentData() == second.id
+    assert d.mail.draft.scenario_version == 2 and not d.dirty

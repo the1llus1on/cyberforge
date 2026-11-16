@@ -803,3 +803,26 @@ def test_refused_lower_phase_downgrade_rolls_back_entire_schema(publication_env)
     # The current schema remains usable without a repair/reinitialization.
     link(e)
     assert e.webs.load(e.token, e.scenario) == e.saved_web
+
+
+@pytest.mark.parametrize("selection", ["empty", "unauthorized", "stale", "deleted"])
+def test_f8_01_confirmation_rejects_group_inputs_without_receipt(
+    publication_env, selection
+):
+    e = publication_env
+    ready(e)
+    groups = (
+        ()
+        if selection == "empty"
+        else (e.other_group.id if selection == "unauthorized" else e.group.id,)
+    )
+    report = e.readiness.evaluate(e.token, e.scenario, selected_group_ids=groups)
+    assert report.technical_ready and not report.final_ready
+    if selection == "stale":
+        e.groups.set_members(e.tokens["admin"], e.group.id, (), (e.learner_id,))
+    elif selection == "deleted":
+        e.groups.delete_group(e.tokens["admin"], e.group.id)
+    with pytest.raises(ApplicationError, match="груп"):
+        confirm(e, report)
+    assert count(e, "publication_reviews") == 0
+    assert count(e, "scenario_publications") == 0

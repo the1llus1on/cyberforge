@@ -161,6 +161,15 @@ class ScenarioReadinessService:
             actor = self.accounts.require(
                 db, token, Role.INSTRUCTOR, Role.ADMINISTRATOR
             )
+            # Validate publication inputs explicitly before constructing the strict
+            # receipt; technical readiness intentionally excludes group selection.
+            if not report.selected_group_ids:
+                raise ApplicationError("Оберіть хоча б одну навчальну групу.")
+            if not authorized_groups(db, actor, report.selected_group_ids):
+                raise ApplicationError(
+                    "Доступ до вибраних груп відсутній або змінився. "
+                    "Оновіть список навчальних груп."
+                )
             if (
                 not report.technical_ready
                 or not report.snapshot

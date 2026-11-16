@@ -1,6 +1,6 @@
 """Instructor integration workspace; explicit saves and publication confirmation."""
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QSignalBlocker, Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -208,7 +208,7 @@ class IntegrationDialog(QDialog):
         self.close_buttons.rejected.connect(self.reject)
         outer.addWidget(self.close_buttons)
         self.groups.itemChanged.connect(self.invalidate_review)
-        self.history.currentIndexChanged.connect(self.refresh_grants)
+        self.history.currentIndexChanged.connect(self.load_history)
         self.tabs.currentChanged.connect(self.tab_changed)
         self.load()
         self._loading = False
@@ -323,15 +323,26 @@ class IntegrationDialog(QDialog):
         self.groups.setEnabled(self.writable)
         self._loading = False
         self.check_readiness()
-        self.history.clear()
-        for publication in self.publications.history(
-            self.session_token, self.expected.id
-        ):
-            self.history.addItem(
-                f"v{publication.manifest.snapshot.scenario_version} · "
-                f"публікація {publication.id}",
-                publication.id,
-            )
+        # Rebuild without temporarily targeting the first (latest) publication.
+        # Expected version is the content currently displayed, even after reopen.
+        with QSignalBlocker(self.history):
+            self.history.clear()
+            selected = -1
+            for publication in self.publications.history(
+                self.session_token, self.expected.id
+            ):
+                self.history.addItem(
+                    f"v{publication.manifest.snapshot.scenario_version} · "
+                    f"публікація {publication.id}",
+                    publication.id,
+                )
+                if (
+                    publication.manifest.snapshot.scenario_version
+                    == self.expected.version
+                ):
+                    selected = self.history.count() - 1
+            # A draft has no publication target until an instructor selects one.
+            self.history.setCurrentIndex(selected)
         self.refresh_grants()
 
     def _reload_state(self):
@@ -452,13 +463,24 @@ class IntegrationDialog(QDialog):
                 + " критеріїв."
             )
             self.publish_button.setEnabled(
-                self.writable and self.report.technical_ready
+                self.writable and self._publication_inputs_ready(self.report)
             )
             self.message.clear()
         except ApplicationError as error:
             self.message.setText(str(error))
             self.publish_button.setEnabled(False)
             self.report = None
+
+    @staticmethod
+    def _publication_inputs_ready(report):
+        return (
+            report.technical_ready
+            and bool(report.selected_group_ids)
+            and not any(
+                c.status == "BLOCKED" and c.check_id != "instructor_confirmation"
+                for c in report.checks
+            )
+        )
 
     def final_confirmation(self):
         groups = [
@@ -488,6 +510,26 @@ class IntegrationDialog(QDialog):
                     "Спочатку збережіть або відкиньте правки зв’язку та рубрики."
                 )
             report = self.report
+            # Recheck current assignments before opening the final dialog. The
+            # service still repeats this inside its write transaction afterwards.
+            current = self.readiness.evaluate(
+                self.session_token,
+                self.expected,
+                selected_group_ids=self.selected_groups(),
+            )
+            if not self._publication_inputs_ready(current):
+                self.publish_button.setEnabled(False)
+                raise ApplicationError(
+                    "Публікацію заблоковано: оберіть дозволені навчальні групи "
+                    "та усуньте блокувальні помилки."
+                )
+            if (
+                report is not None
+                and current.review_fingerprint != report.review_fingerprint
+            ):
+                raise ApplicationError(
+                    "Дані огляду змінилися. Перевірте готовність повторно."
+                )
             if report is None or not self.ack.isChecked():
                 raise ApplicationError(
                     "Перевірте готовність і явно підтвердьте зміст та попередження."
@@ -518,19 +560,42 @@ class IntegrationDialog(QDialog):
             )
             return True
         except ApplicationError as error:
+            self.publish_button.setEnabled(False)
             self.message.setText(str(error))
             return False
+
+    def _selected_publication(self):
+        publication = next(
+            (
+                p
+                for p in self.publications.history(self.session_token, self.expected.id)
+                if p.id == self.history.currentData()
+            ),
+            None,
+        )
+        if publication is None or (
+            publication.manifest.snapshot.scenario_id != self.expected.id
+            or publication.manifest.snapshot.scenario_version != self.expected.version
+        ):
+            raise ApplicationError(
+                "Вибрана публікація не відповідає відкритій версії. "
+                "Повторно відкрийте потрібну публікацію."
+            )
+        return publication
 
     def refresh_grants(self, *args):
         self.grant_groups.clear()
         self.audit_text.clear()
         publication_id = self.history.currentData()
-        self.add_grant.setEnabled(self.owned and publication_id is not None)
-        self.revoke_grant.setEnabled(self.owned and publication_id is not None)
+        self.add_grant.setEnabled(False)
+        self.revoke_grant.setEnabled(False)
         if publication_id is None:
             return
         try:
             self._authorized()
+            self._selected_publication()
+            self.add_grant.setEnabled(self.owned)
+            self.revoke_grant.setEnabled(self.owned)
             for grant in self.publications.grants(self.session_token, publication_id):
                 item = QListWidgetItem(
                     f"Група {grant.group_id} · "
@@ -550,12 +615,32 @@ class IntegrationDialog(QDialog):
                 )
             )
         except ApplicationError as error:
+            self.add_grant.setEnabled(False)
+            self.revoke_grant.setEnabled(False)
             self.message.setText(str(error))
+
+    def confirm_grant(self, publication, group_id, active):
+        box = QMessageBox(self)
+        box.setWindowTitle("Підтвердити зміну доступу")
+        operation = "Надати доступ" if active else "Відкликати доступ"
+        snapshot = publication.manifest.snapshot
+        box.setText(
+            f"{operation}: сценарій {snapshot.scenario_id}, "
+            f"версія {snapshot.scenario_version}, публікація {publication.id}, "
+            f"навчальна група {group_id}.\nЗміну буде записано до аудиту."
+        )
+        action = box.addButton(operation, QMessageBox.ButtonRole.AcceptRole)
+        cancel = box.addButton("Скасувати", QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(cancel)
+        box.setEscapeButton(cancel)
+        box.exec()
+        return box.clickedButton() == action
 
     def change_grant(self, active):
         try:
             self._authorized()
-            publication_id = self.history.currentData()
+            publication = self._selected_publication()
+            publication_id = publication.id
             if active:
                 group_id = self.available_group.currentData()
                 grants = self.publications.grants(self.session_token, publication_id)
@@ -568,6 +653,14 @@ class IntegrationDialog(QDialog):
                     raise ApplicationError("Оберіть grant для відкликання.")
                 grant = item.data(Qt.ItemDataRole.UserRole)
                 group_id, revision = grant.group_id, grant.revision
+            if not self.confirm_grant(publication, group_id, active):
+                return
+            self._authorized()
+            if self._selected_publication().id != publication_id:
+                raise ApplicationError(
+                    "Публікацію змінено під час підтвердження. "
+                    "Зміни доступу не виконано."
+                )
             self.publications.change_grant(
                 self.session_token,
                 publication_id,
@@ -581,9 +674,24 @@ class IntegrationDialog(QDialog):
         except ApplicationError as error:
             self.message.setText(str(error))
 
-    def load_history(self):
+    def load_history(self, *args):
+        if self.forced or self.history.currentData() is None:
+            return
         try:
+            self._authorized()
+            previous = next(
+                (
+                    p.id
+                    for p in self.publications.history(
+                        self.session_token, self.expected.id
+                    )
+                    if p.manifest.snapshot.scenario_version == self.expected.version
+                ),
+                None,
+            )
             if not self.discard_or_save():
+                with QSignalBlocker(self.history):
+                    self.history.setCurrentIndex(self.history.findData(previous))
                 return
             self._authorized()
             publication = next(

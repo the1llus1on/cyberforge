@@ -2890,3 +2890,88 @@ changed-file/private-key scan27files/zero findings, owner data поза scope.
 merge/force-push/branch deletion або Phase9. GitHub MCP повторно підтвердив main
 b84e2fbd… незмінним. Feature commits auditable; final push/PR/exact-head Linux та
 Windows CI фіксуються у PR і delivery report без circular evidence commits.
+
+## 16.11.2026 — Phase8 independent review F8-01/F8-02 remediation
+
+Owner дозволив targeted investigation/fix у PR9 від reviewed
+c8f95eb786b850e9171054aed72ea1a5a35271f7. GitHub MCP підтвердив exact head/base main,
+PR open/unmerged; local tree clean, fetch/ff-only current branch без змін. Жодних
+reset/rewrite/merge/ACCEPTED/Phase9. Relevant SRS §§4.8–4.9,11.6,14/ADR0008 та
+current service/UI/contracts/tests перевірено; owner .env/DB/keys не використовувалися.
+
+**Baseline reproduction**, до implementation edits:
+`.venv/bin/pytest tests/test_scenario_integration.py tests/ui/test_scenario_integration.py -k 'f8_01 or f8_02' -q --tb=short`
+— **4failed/4passed/91deselected/26.12s**. Три actual Qt clicks відкривали final
+confirmation при empty/unauthorized/stale groups. Historical v1 preview після
+load_history мав selector publication2. Тести фіксували це до змін.
+
+**F8-01 уточнення review:** заявлений uncaught Pydantic ValidationError не
+відтворено. На reviewed HEAD confirm() already rejects groups BLOCKED через
+existing any(BLOCKED except instructor_confirmation); усі4direct-service cases
+empty/unauthorized/reassigned/deleted давали controlled ApplicationError, zero
+review receipts/publications. Confirmed root cause — GUI enablement лише за
+technical_ready, без групового gate/pre-dialog recheck. Додано explicit empty та
+current group authorization в confirm() до InstructorConfirmationV1; contract
+min_length=1 незмінний. GUI enablement враховує groups/checks, click preflight
+оновлює authorization/source fingerprint до final dialog; service write transaction
+зберігає незалежну повторну валідацію, включно з reassignment під час modal.
+
+**F8-02 root cause:** load() clear/addItem автоматично обирав first/latest pub,
+а load_history() не відновлював selected ID. refresh_grants/change_grant читали
+currentData незалежно від displayed expected/preview. Тепер QSignalBlocker
+охоплює rebuild і відновлення publication, відповідної opened version; draft
+не має grant target до явного вибору historical publication. Selection synchronizes
+expected/read-only Email/Web preview/grants/audit. Перед grant read/write перевіряється
+publication identity/version; modal вказує exact scenario/version/publication/group,
+Cancel нічого не пише, після modal recheck не дає redirect write на іншу publication.
+Unsaved Remain відновлює попередній selector; no automatic grant target switch.
+Official Qt QSignalBlocker context-manager/currentIndexChanged behavior звірено через
+Context7. Нових API/dependencies/міграцій або SRS requirement changes немає.
+
+Initial post-fix reproduction gate8passed/26.56s; expanded actual Qt group/modal/
+history tests6passed/40.53s. Final focused/regression/full/WSLg/CI results follow.
+
+### F8-01/F8-02 — stable focused/WSLg gates
+
+Final focused command:
+`.venv/bin/pytest tests/test_scenario_integration.py tests/ui/test_scenario_integration.py -k 'f8_01 or f8_02' -q --tb=short`
+— **11passed/91deselected/63.64s**. Включено actual click path і receipt zero writes,
+після-dialog reassignment, two-publication grant targeting, real modal Cancel/Confirm,
+refresh/reload/reopen, selection change during modal, immutable sources/manifest,
+та unsaved draft Remain/Discard. Before-fix4failures збережено вище як reproduction.
+
+Real WSLg:
+`QT_QPA_PLATFORM=wayland .venv/bin/pytest tests/ui/test_scenario_integration.py -k 'f8_01 or f8_02' -q --tb=short`
+— **7passed/7deselected/59.55s**, exit0. Це Codex automation на isolated synthetic DB,
+не owner manual або native Windows11 acceptance. Ruff lint/format126Python files
+PASS. Ширші regressions і final full988case run виконуються; application/test code
+після початку full run стабільний. Packaging/dependencies/migrations/startup не
+змінено, повторний build/wheel не потрібен для цих service/UI corrections.
+
+Relevant regression command
+`.venv/bin/pytest tests/test_scenario_integration.py tests/ui/test_scenario_integration.py tests/ui/test_scenarios_ui.py -k 'not f8_01 and not f8_02' -q --tb=short`
+initial restricted execution завершився133 під час actual Chromium setup без
+assertion report (accepted environment behavior, documented in Phase7). Повторено
+ту саму команду через allowed host execution; Chromium sandbox не вимикався.
+Final full suite також запускається через host execution. Owner data не зачіпалася.
+
+Повторний relevant regression run через allowed host execution —
+**131passed/11deselected/287.78s**, exit0. Це всі existing integration/persistence/
+ScenarioPage UI cases у targeted modules;11new finding tests виконано окремо.
+
+### F8-01/F8-02 — final local gate / REVIEW
+
+`UV_CACHE_DIR=/tmp/cyberforge-phase8-uv-cache QT_QPA_PLATFORM=offscreen uv run --offline --locked pytest -q --tb=short`
+— **988passed/857.37s**, exit0;977previous cases retained та11new finding cases.
+Після початку final full run application/test code не змінювався.
+`UV_CACHE_DIR=/tmp/cyberforge-phase8-uv-cache uv run --offline --locked ruff check .`
+та `... ruff format --check .` — PASS,126Python files. `git -c core.whitespace=cr-at-eol diff --check`
+PASS. Changed-file scan7files: no private-key patterns, no owner DB/.env in scope.
+
+Виправлення: application/scenario_readiness.py та ui/scenario_integration.py;
+regressions: tests/test_scenario_integration.py і tests/ui/test_scenario_integration.py;
+docs: цей log, IMPLEMENTATION_PLAN і PHASE_8_ACCEPTANCE. No dependencies/schema/
+canonical artifact changes. No real Groq/Gemini requests; only synthetic isolated DB.
+Owner manual/physical Windows11 acceptance не заявляються. Phase8 REVIEW.
+Final commit/push та exact-head Linux/Windows CI evidence фіксуються в existing PR9
+і фінальному звіті без circular documentation commits. Merge/ACCEPTED/Phase9 заборонені.

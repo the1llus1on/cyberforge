@@ -176,3 +176,61 @@ future internal-navigation API. Review receipt є authenticated instructor attes
 - ui/scenario_integration.py, scenario_page.py, email_preview.py, email_body.py.
 - tests/test_scenario_integration.py, ui/test_scenario_integration.py;
  existing Email/Web/database migration-head assertions оновлено, tests збережено.
+
+## Independent review F8-01/F8-02 — 16.11.2026
+
+Phase8 **REVIEW**, existing PR9. Reviewed baseline c8f95eb; previous evidence вище
+збережено. No merge/ACCEPTED/Phase9, owner databases/.env/keys поза scope.
+
+- **F8-01 частково відтворено:** actual Qt button відкривав final confirmation без
+  груп, з unauthorized або stale group selection. Uncaught ValidationError не
+  підтверджено: existing service BLOCKED check уже давав ApplicationError без receipt.
+  Додано explicit group validation до strict confirmation contract, GUI groups gate
+  та click-time preflight; transaction-side revalidation retained, min_length=1 unchanged.
+- **F8-02 відтворено:** при2publications відкритий v1 залишався preview, selector
+  reset на first/latest publication2. Rebuild відновлює exact ID під QSignalBlocker;
+  selection synchronizes opened content/grants/audit, mismatch блокує grant write.
+  Grant/revoke confirmation ідентифікує scenario/version/publication/group; Cancel
+  не пише, selection change during modal не redirects write. Draft не отримує
+  автоматично target historical publication. Existing source/manifest immutability
+  перевіряється після grant/regrant.
+
+Baseline automated gate:4failed/4passed/26.12s; exact commands і final evidence —
+DEVELOPMENT_LOG. Additional tests охоплюють service empty/unauthorized/reassigned/
+deleted groups, actual button no groups/forged group/stale assignment, loss of
+assignment during final confirmation,2published versions із separate grants,
+selection/refresh/reload/reopen, actual grant modal Cancel/Confirm, source/manifest
+immutability, target switch during modal та unsaved Remain/Discard.
+
+Owner checklist доповнення (не заявляється виконаним):
+
+1. Технічно валідний draft без обраних груп показує technical readiness, але Publish
+   disabled. Оберіть assigned group → дія доступна; зміна прав адміністратором до
+   click або final confirmation блокує publish з українським поясненням.
+2. Створіть2published versions із різними group grants. В history оберіть v1:
+   version identity, Email/Web previews, selector і grants/audit мають показувати v1.
+   Оновіть/reopen v1; target не має змінюватися на v2.
+3. Revoke/grant показує exact publication/group. Cancel залишає grants/audit без
+   змін; Confirm змінює лише selected publication, published content незмінний.
+4. На новій draft версії history не має обраного grant target. Якщо є unsaved edits,
+   Remain при виборі history залишає draft і поля; Discard відкриває selected version.
+
+Remediation final local evidence:
+
+| Gate | Actual result |
+| --- | --- |
+| Baseline reproduction before fixes | 4failed/4passed/26.12s; service ValidationError не відтворено |
+| Focused F8-01/F8-02 | 11passed/63.64s |
+| Relevant integration/persistence/ScenarioPage UI regressions | 131passed/287.78s |
+| Real WSLg finding tests / actual Qt clicks and modals | 7passed/59.55s |
+| Full offline pytest after stable fixes | **988passed/857.37s** |
+| Ruff lint/format | PASS,126Python files |
+| Diff/private-file check | PASS,7changed files; owner DB/.env/keys поза scope |
+
+Точні команди й initial restricted Chromium exit133/retry evidence — DEVELOPMENT_LOG.
+Initial restricted regression run не вважається PASS; identical allowed-host run
+пройшов131tests із Chromium sandbox enabled. Packaging/migrations/dependencies не
+змінено, repeated wheel/build не потрібні. Final-head Linux/Windows CI перевіряється
+в PR9; precise SHA/run/results додаються у PR description і delivery report.
+Owner manual acceptance pending; native physical Windows11 лишається Phase12 risk.
+Phase8 REVIEW, no merge/ACCEPTED/Phase9.

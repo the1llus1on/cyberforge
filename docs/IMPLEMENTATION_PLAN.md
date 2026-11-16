@@ -1078,3 +1078,27 @@ DDL hardening; final977run includes the rollback regression. CI includes early
 native compact check, final-head Linux/Windows evidence follows in PR/final report.
 Owner manual acceptance pending; physical Windows11/DPI/installer Phase12 risk.
 Phase8 REVIEW, no merge/ACCEPTED/Phase9. ADR0008 and PHASE_8_ACCEPTANCE contain details.
+
+## Phase8 — independent review F8-01/F8-02 (16.11.2026)
+
+**REVIEW**, продовження PR9 від reviewed c8f95eb; без merge/ACCEPTED/Phase9.
+План точкової remediation:
+
+1. SRS §§4.8,11.6,16.6: reproduce no/unauthorized/stale groups через actual Qt
+   click та direct service. Зберегти technical readiness окремо; explicit group
+   validation перед strict receipt, GUI preflight до confirmation, write revalidation.
+2. §§2.5,4.9,14: two published versions/separate grants; selection/reload/reopen
+   має зберігати exact publication, preview та audit target. Grant/revoke dialog
+   вказує scenario/version/publication/group; recheck target після modal.
+3. Focused failure evidence → targeted fixes → integration/persistence/UI regressions,
+   relevant real WSLg, Ruff/full pytest та final-head Linux/Windows CI; push у PR9.
+
+Нових contracts/dependencies/migrations немає; accepted content immutability та
+SRS scope не змінюються. Actual evidence — DEVELOPMENT_LOG/PHASE_8_ACCEPTANCE.
+
+F8 remediation final local gate:988passed/857.37s, Ruff126files PASS;
+focused11passed, relevant regressions131passed, actual WSLg7passed. F8-01 confirmed
+GUI preflight defect fixed; claimed uncaught ValidationError not reproduced because
+existing server BLOCKED gate already denied invalid groups. F8-02 exact historical
+target/reset reproduced and fixed with synchronized selection and explicit grant
+confirmation. Final-head CI evidence in PR9/delivery report; Phase8 remains REVIEW.
