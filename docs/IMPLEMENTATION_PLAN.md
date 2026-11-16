@@ -1170,3 +1170,17 @@ Corrected final local gate: **1012passed/1403.08s**, Ruff127files PASS, native-w
 focused2PASS, real WSLg5PASS. New stable run retains992prior+20new/38Phase8 UI.
 Combined redesign16files; corrective increment8files; owner AGENTS.md excluded.
 New final-head Linux/Windows CI follows in PR9/delivery. Phase8 stays REVIEW.
+
+### UX acknowledgement native-width correction
+
+Second Windows early gate confirms cards fixed, exposes step2 native multiline
+QCheckBox minimum686>556. Native668px hint regression reproduces1FAIL/1PASS.
+Wrapping buddy label plus native checkbox fixes2PASS; label click/focus/Space
+assertions retained. Real WSLg compact/resize/lifecycle/full flow/final modal6PASS,
+Ruff127files PASS. New stable full run required; final CI must pass both platforms.
+Scope remains UI/tests/docs/CI, Phase8 REVIEW, no merge/Phase9.
+
+Final wrapped-attestation/harness gate: **1012passed/1119.68s**, zero errors;
+Ruff127files PASS, real WSLg6PASS plus isolated fixture3PASS. All992prior+20new/
+38Phase8 UI retained. Final increment10files, combined16; owner AGENTS.md excluded.
+Final-head Linux/Windows CI follows in PR9/delivery. Phase8 REVIEW; no merge/Phase9.

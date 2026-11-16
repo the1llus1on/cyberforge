@@ -30,6 +30,7 @@ from cyberforge.scenario_integration.contracts import CRITERIA, criterion
 from cyberforge.ui.email_preview import MailPreview
 from cyberforge.ui.pages import label
 from cyberforge.ui.preparation_widgets import (
+    CheckLabel,
     Disclosure,
     MaterialCards,
     PreparationStack,
@@ -378,21 +379,20 @@ class IntegrationDialog(QDialog):
         layout.addWidget(self.group_hint)
         self.attestation_summary = label("")
         layout.addWidget(self.attestation_summary)
-        self.ack = QCheckBox(
-            "Я перевірив навчальні матеріали, їхній зв’язок і критерії оцінювання."
-        )
+        self.ack = QCheckBox()
         self.ack.setToolTip(
             "Підтвердження точних збережених джерел, вибраних груп і всіх "
             "зазначених попереджень."
         )
-        # A wrapped native checkbox label keeps the control usable on narrow windows.
-        self.ack.setText(
-            "Я перевірив навчальні матеріали, їхній зв’язок\nі критерії оцінювання."
-        )
         self.ack.setAccessibleName(
             "Я перевірив навчальні матеріали, їхній зв’язок і критерії оцінювання."
         )
-        layout.addWidget(self.ack)
+        self.ack_label = CheckLabel(self.ack.accessibleName(), self.ack)
+        attestation = QHBoxLayout()
+        attestation.setContentsMargins(0, 0, 0, 0)
+        attestation.addWidget(self.ack, 0, Qt.AlignmentFlag.AlignTop)
+        attestation.addWidget(self.ack_label, 1)
+        layout.addLayout(attestation)
         self.details = QPlainTextEdit()
         self.details.setReadOnly(True)
         self.details.setMinimumHeight(140)

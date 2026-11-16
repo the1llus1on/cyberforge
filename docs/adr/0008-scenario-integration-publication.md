@@ -115,3 +115,10 @@ and actual card minima, not the content widget's own width. Deterministic420px/c
 regression reproduces the initial Windows overflow and preserves all assertions;
 early CI now covers ordinary and native-pressure resizing. This is a presentation
 correction only; modal/WebEngine/backend decisions above remain unchanged.
+
+Windows native QCheckBox can retain an oversized minimum for multiline text.
+Attestation uses a native textless checkbox plus wrapping plain-text buddy label
+with full Ukrainian accessible name, click/focus/Space behavior preserved. The
+same narrow-layout regression models both card and multiline-checkbox native
+minimum pressure. This changes geometry only; attestation binding remains in the
+existing readiness/publication services.

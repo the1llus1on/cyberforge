@@ -414,3 +414,20 @@ checks PASS; native-width2PASS and real WSLg5PASS. All992prior+20new cases retai
 38Phase8 UI total. Source/tests stable during final full run. Combined16task files,
 owner AGENTS.md excluded. New exact-head CI results follow in PR9/delivery; initial
 Windows finding retained above. Owner acceptance and native Windows11 remain pending.
+
+### Windows acknowledgement wrapping finding
+
+Second early CI gate43886284383 confirms card fix and exposes publication-step
+686px native checkbox minimum in556px viewport (2resize failures/2passes).
+Deterministic668px multiline-checkbox hint reproduces exact failure locally.
+Wrapped plain-text buddy label preserves native checkbox, full Ukrainian accessible
+name, label clicking, focus and Space; local2PASS, real WSLg6PASS. Publication
+screenshot refreshed/inspected. All width assertions and all prior tests retained.
+Final complete local suite and new exact-head CI follow; Phase8 remains REVIEW.
+
+Final complete gate after checkbox/harness isolation: **1012passed/1119.68s**, no
+errors; Ruff127files/diff checks PASS, real WSLg application6PASS and isolated fixture
+sequence3PASS. All992prior+20new/38Phase8 UI retained. Final sources stable throughout
+full run; screenshots reflect final wrapping behavior. Exact final commit/platform
+CI results follow in PR9/delivery. Combined16task files; owner AGENTS.md excluded.
+Engineering local gate PASS; Phase8 REVIEW and owner acceptance pending.

@@ -13,13 +13,14 @@ from cyberforge.llm.factory import create_gateway
 from cyberforge.ui.navigation import View
 from cyberforge.ui.scenario_integration import IntegrationDialog
 from cyberforge.ui.shell import MainWindow
-from cyberforge.ui.theme import apply_theme
+from cyberforge.ui.theme import STYLE, apply_theme
 
 
 @pytest.fixture
 def integration_window(qtbot, qapp, scenario_env):
     env = scenario_env
-    apply_theme(qapp)
+    if qapp.styleSheet() != STYLE:
+        apply_theme(qapp)
     token = env.tokens["teacher"]
     emails = EmailMaterialService(env.service, create_gateway(), demo=True)
     webs = WebMaterialService(emails, demo=True)
@@ -1075,10 +1076,21 @@ def test_redesign_actual_final_confirmation_cancel_and_publish(
 
 @pytest.mark.parametrize("card_minimum", [0, 420])
 def test_redesign_resizing_keyboard_and_responsive_cards(
-    integration_window, qtbot, card_minimum
+    integration_window, qtbot, monkeypatch, card_minimum
 ):
-    from PySide6.QtWidgets import QBoxLayout
+    from PySide6.QtWidgets import QBoxLayout, QCheckBox
 
+    if card_minimum:
+        from cyberforge.ui import scenario_integration
+
+        class NativeCheckBox(QCheckBox):
+            def minimumSizeHint(self):
+                hint = super().minimumSizeHint()
+                if "\n" in self.text():
+                    hint.setWidth(max(668, hint.width()))
+                return hint
+
+        monkeypatch.setattr(scenario_integration, "QCheckBox", NativeCheckBox)
     d = dialog(integration_window, qtbot)
     # Reproduce Windows native minimum-size pressure without changing fonts.
     for i in range(d.material_cards.cards_layout.count()):
@@ -1126,6 +1138,14 @@ def test_redesign_resizing_keyboard_and_responsive_cards(
     qtbot.keyClick(disclosure.toggle, Qt.Key.Key_Space)
     assert disclosure.content.isVisible()
     assert disclosure.toggle.accessibleDescription() == "Розгорнуто"
+    d.navigate(2)
+    d.publication_step.ensureWidgetVisible(d.ack_label)
+    d.groups.item(0).setCheckState(Qt.CheckState.Checked)
+    assert not d.ack.isChecked()
+    qtbot.mouseClick(d.ack_label, Qt.MouseButton.LeftButton)
+    assert d.ack.isChecked() and d.focusWidget() is d.ack
+    qtbot.keyClick(d.ack, Qt.Key.Key_Space)
+    assert not d.ack.isChecked()
 
 
 def test_redesign_group_assignment_changes_clear_picker_and_acknowledgement(

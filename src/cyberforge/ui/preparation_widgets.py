@@ -4,6 +4,7 @@ from PySide6.QtCore import QEvent, QSize, Qt
 from PySide6.QtWidgets import (
     QBoxLayout,
     QFrame,
+    QLabel,
     QPushButton,
     QStackedWidget,
     QVBoxLayout,
@@ -43,6 +44,29 @@ class Disclosure(QWidget):
             )
 
         self.toggle.toggled.connect(expand)
+
+
+class CheckLabel(QLabel):
+    """Wrapping text with the same click target behavior as a native checkbox."""
+
+    def __init__(self, text, checkbox):
+        super().__init__(text)
+        self.setTextFormat(Qt.TextFormat.PlainText)
+        self.setWordWrap(True)
+        self.setBuddy(checkbox)
+
+    def mouseReleaseEvent(self, event):
+        checkbox = self.buddy()
+        if (
+            event.button() == Qt.MouseButton.LeftButton
+            and checkbox is not None
+            and checkbox.isEnabled()
+        ):
+            checkbox.setFocus()
+            checkbox.click()
+            event.accept()
+        else:
+            super().mouseReleaseEvent(event)
 
 
 class MaterialCards(QWidget):

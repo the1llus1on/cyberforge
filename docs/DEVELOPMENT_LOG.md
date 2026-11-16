@@ -3277,3 +3277,75 @@ schema/dependencies/WebBrowser/security/startup changes. Commit/push the verifie
 correction in existing branch/PR9; both platforms must pass on new exact HEAD.
 Final CI run/results will be recorded in PR9/delivery, preserving initial Windows
 failure history here. Phase8 REVIEW; owner acceptance pending; no merge/Phase9.
+
+## 16.11.2026 — UX Windows early gate: acknowledgement wrapping
+
+Correction commit2a223b89a11ae81c14045c420e3a3f59f4e05d9d, workflow43886284383:
+early Windows gate now reaches step2 at600px, confirming material stacking fixed.
+It reports2resize failures/2passes/34deselected/13.49s: publication content686px
+in556px viewport, in both ordinary and card-pressure variants. Full Windows suite
+is correctly skipped after early failure; Linux complete suite continues.
+
+Root: native QCheckBox multiline text minimum-size hint. Local regression models
+668px native multiline hint (plus18px content margins = actual686px), preserving
+all original widths and assertions. Before correction: **1failed/1passed/11.12s**,
+exact same step2 686>556. Native card420px pressure remains covered as well.
+
+Use native textless QCheckBox plus wrapping plain-text CheckLabel with buddy/full
+Ukrainian accessible name. Label click focuses/toggles the native checkbox; keyboard
+Space remains native. No review semantics/service checks changed. The regression
+also verifies label click, focus ownership and Space toggling, with an authorized
+group selected to keep the source/group acknowledgement stable during interaction.
+
+After correction, narrow tests: **2passed/36deselected/10.56s**.
+`QT_QPA_PLATFORM=wayland CYBERFORGE_UX_SCREENSHOTS=docs/screenshots UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_scenario_integration.py -k 'compact_page or actual_constructor_button or resizing_keyboard or end_to_end_result or actual_final_confirmation' -q --tb=short`
+— **6passed/32deselected/39.48s**, including actual final Cancel/Publish, full
+publish/history, native-pressure cases and3WebEngine cycles. Screenshots refreshed;
+new publication view visually inspected. Ruff127files/diff checks PASS. New stable
+full run follows; no further source/test edits during it. Backend/contracts/DB/
+WebBrowser/security/dependencies unchanged. Owner AGENTS.md still excluded.
+
+Second-head Linux CI completed SUCCESS: **1012passed/456.97s**, Ruff127files,
+Web compact3PASS, strengthened preparation early gate4PASS and startup smoke PASS.
+This is workflow43886284383 / head2a223b8; Windows early acknowledgement-width
+failures remain recorded above. The final correction requires a new exact-head
+CI run on both platforms after its fresh complete local gate.
+
+### Final verification harness isolation
+
+First full run of wrapped-checkbox candidate: **1011passed/1setup error/1418.65s**.
+The error occurs in the following integration fixture's apply_theme(qapp) at
+app.setStyle("Fusion"), with an old AdminPage.heightForWidth callback reporting
+missing layout. It is a Qt fixture/global-style cleanup error, not an assertion
+in the wrapped-checkbox interaction. Nothing was committed/pushed from this run.
+
+Keep AdminPage and application behavior unchanged. The integration fixture now
+reuses an already identical STYLE instead of repeatedly resetting global Qt style.
+Native multiline-size pressure uses a test-local QCheckBox subclass substituted
+only into the integration module, rather than monkeypatching Qt's global class.
+This retains the668px native-hint regression while isolating Qt virtual callbacks.
+
+Same resize variants plus the following group-assignment fixture:
+`UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_scenario_integration.py -k 'resizing_keyboard or group_assignment_changes' -q --tb=short`
+— **3passed/35deselected/13.02s**. With QT_QPA_PLATFORM=wayland, identical selector:
+**3passed/35deselected/15.00s**. No tests removed/deselected from the new complete
+run. Ruff127files/diff PASS; fresh stable full gate runs before commit/push.
+
+### Final wrapped-attestation / isolated-harness gate
+
+`UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short -o faulthandler_timeout=120`
+— **1012passed/1119.68s**, exit0, no errors. All992prior+20new/38Phase8 UI retained;
+both native-pressure variants and the next fixture pass in complete-suite order.
+Ruff lint/format127files and diff checks PASS. Application/test sources unchanged
+throughout this final complete run; only evidence documentation appended.
+
+Real WSLg application gate6PASS/39.48s and isolated fixture sequence3PASS/15.00s;
+local fixture sequence3PASS/13.02s. Refreshed publication/history/Web captures are
+synthetic; final publication view inspected with wrapping, clickable Ukrainian
+attestation and native keyboard control. Existing wide-layout material/rubric/
+Email/result images remain current. No backend/contracts/DB/WebBrowser/security/
+dependency/startup changes. Final increment10files (2UI, tests,4docs,3screenshots),
+combined redesign16files; owner AGENTS.md excluded. Push a focused third task
+commit, then require both CI platforms on its exact HEAD. Final run/results in
+PR9/delivery; retain both Windows findings and the local harness failure above.
+Phase8 stays REVIEW, owner acceptance pending; no merge or Phase9.
