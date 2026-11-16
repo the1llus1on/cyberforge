@@ -220,11 +220,15 @@ class ScenarioPage(QWidget):
         self.integration_status = label("")
         integration_layout.addWidget(self.integration_status)
         integration_actions = QHBoxLayout()
-        self.integration_button = QPushButton("Зв’язок · Рубрика · Публікація")
+        self.integration_button = QPushButton("Підготовка сценарію")
         self.integration_button.clicked.connect(self.open_integration)
+        self.publications_button = QPushButton("Опубліковані версії")
+        self.publications_button.clicked.connect(self.open_publications)
+        self.publications_button.hide()
         self.new_version_button = QPushButton("Створити нову версію")
         self.new_version_button.clicked.connect(self.create_next_version)
         integration_actions.addWidget(self.integration_button)
+        integration_actions.addWidget(self.publications_button)
         integration_actions.addWidget(self.new_version_button)
         integration_layout.addLayout(integration_actions)
         layout.addWidget(self.integration_panel)
@@ -314,6 +318,7 @@ class ScenarioPage(QWidget):
 
     def refresh_integration(self) -> None:
         self.integration_panel.setVisible(self.scenario is not None)
+        self.publications_button.hide()
         self.new_version_button.setVisible(
             bool(
                 self.scenario
@@ -326,6 +331,9 @@ class ScenarioPage(QWidget):
         if self.scenario is None:
             return
         try:
+            self.publications_button.setVisible(
+                bool(self.publications.history(self.token(), self.scenario.id))
+            )
             state = self.integration.inspect(self.token(), self.scenario)
             if self.scenario.status == "published":
                 text = "Опубліковано · вміст незмінний · доступ груп керується окремо"
@@ -344,7 +352,15 @@ class ScenarioPage(QWidget):
             self.integration_status.setText(str(error))
 
     def open_integration(self) -> None:
+        self._open_preparation(history_only=False)
+
+    def open_publications(self) -> None:
+        self._open_preparation(history_only=True)
+
+    def _open_preparation(self, *, history_only: bool) -> None:
         if self.integration_dialog is not None:
+            if history_only:
+                self.integration_dialog.show_history()
             self.integration_dialog.raise_()
             self.integration_dialog.activateWindow()
             return
@@ -357,8 +373,13 @@ class ScenarioPage(QWidget):
                 self.scenario,
                 owned=self.owned,
                 parent=self,
+                history_only=history_only,
             )
             self.integration_dialog = dialog
+            dialog.requested_constructor = None
+            dialog.constructor_requested.connect(
+                lambda kind: setattr(dialog, "requested_constructor", kind)
+            )
             dialog.finished.connect(lambda _: self._integration_finished(dialog))
             # WebEngine may recreate the native surface on its first load. A
             # transient hide must not unwind exec() and delete a loading page.
@@ -382,6 +403,10 @@ class ScenarioPage(QWidget):
             self.load(current, editable=self.owned)
             if dialog.changed:
                 self.saved.emit(current)
+            if dialog.requested_constructor == "email":
+                self.open_email()
+            elif dialog.requested_constructor == "web":
+                self.open_web()
         except ApplicationError as error:
             self.message.setText(str(error))
 
@@ -670,6 +695,8 @@ class ScenarioPage(QWidget):
         return QMessageBox.StandardButton(box.exec())
 
     def can_leave(self) -> bool:
+        if self.integration_dialog and not self.integration_dialog.discard_or_save():
+            return False
         if not self.web_page.can_leave():
             return False
         if not self.email_page.can_leave():

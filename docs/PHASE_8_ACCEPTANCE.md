@@ -18,7 +18,7 @@
 | §§11.7,14 | Manifest references/digests замість дублювання JSON; sources/version/history захищено FK, existing/new triggers і INSERT OR REPLACE guards. Новий draft не змінює historical publication |
 | §§2.3–2.5,14,16.6 | Grants окремі від content; owner додає assigned group, може revoke після reassignment. Кожна state transition додає audit DB trigger; history append-only, regrant не стирає revoke |
 | §§2.4–2.5,4.9 | Read-only future learner catalog/content/internal resolution: active session/account, grant/current membership/archive; dedup, max eligible version per scenario, older publications читаються окремо |
-| §§3–4,21,24 | Constructor integration section, link/rubric modals, read-only Email/Web review, detailed checks/groups/final confirmation, grants/history, explicit next draft; compact1100×720, scroll, guards, session clearing |
+| §§3–4,21,24 | Three-step preparation modal, internal read-only Email/Web previews, checklist/groups/final confirmation/result, contextual publication history/access, explicit next draft; compact1100×720, scroll, guards, session clearing |
 
 Нормативна dated Phase8 amendment збережена в SRSv3.0; accepted history не видалено.
 Рішення — [ADR-0008](adr/0008-scenario-integration-publication.md).
@@ -119,33 +119,56 @@ QT_QPA_PLATFORM=wayland uv run --offline --locked cyberforge \
 live AI і не fallback. Owner environments/native Phase2 snapshot не змінюються.
 
 1. «+» → «Новий сценарій» → synthetic parameters → «Зберегти».
-2. Створіть Email → review → explicit Save; створіть Web → Generate → review → Save.
-   Зелені картки означають saved artifacts; стан ще «Чернетка».
-3. Нижче карток відкрийте «Зв’язок · Рубрика · Публікація».
-   Налаштуйте label, HTTPS URL і єдину дозволену internal target; Save link.
-4. «Email preview»: main показує label/URL/internal ID та інертний CTA.
-   Прокрутіть body до ресурсу; фоновий лист не отримує primary CTA.
-   «Web preview» показує exact saved Web; URL не навігує назовні.
-5. «Рубрика»: позначте email.sender, transition.safe_decline та web.address.
-   Змініть додатні weights; Web applicability лише після відвідування.
-   Збережіть. Спробуйте empty rubric/недодатну чи нечислову вагу — save blocked.
-6. «Готовність і публікація»: перегляньте individual reasons/corrections, exact
-   material revisions і rubric count. Без груп/підтвердження publication не проходить.
-7. За бажанням явно змініть link URL на інший safe synthetic HTTPS URL; Save.
-   Перевірте display_url_mismatch warning. Перегляньте обидва матеріали й зміст.
-8. Позначте GroupA. Позначка attestation підтверджує semantic review та warnings
-   exact snapshot. «Публікувати сценарій» відкриває фінальне підтвердження;
-   Cancel нічого не публікує. Повторіть і явно підтвердьте.
-9. Перевірте published identity/version і read-only Link/Rubric/Email/Web.
-   Немає learner screens/events/scores. Закрийте діалог: картка показує publication.
-10. «Історія та доступ»: revoke GroupA, перевірте audit; regrant GroupA додає
-    нову подію, не стирає revoke. Вміст і manifest незмінні.
-11. «Створити нову версію» без зміни parameters: v2 DRAFT, матеріалів/рубрики/link
-    немає. Історія дозволяє відкрити v1 read-only незалежно від нової чернетки.
-12. Archive/restore: history/grants/audit збережені. У draft після створення нових
-    materials/review повторне Email Save робить Web stale; publication blocked.
-13. Перевірте Save/Discard/Remain у link/rubric editor, account switch/signout,
-   1100×720, вкладки/прокручування/клавіатуру, reopen/restart тієї самої synthetic DB.
+2. Створіть лист і сайт через existing constructors; review → explicit Save.
+   Зелені картки означають saved artifacts, сценарій ще є чернеткою.
+3. «Підготовка сценарію» відкриває окреме window-modal вікно. Перевірте identity,
+   compact summary та три вільно доступні кроки; перехід «Далі» не публікує.
+4. «Матеріали»: картки показують exact saved subject/title. «Переглянути лист» →
+   main CTA інертний; background не має primary CTA. «Повернутися до матеріалів».
+   «Переглянути сайт» → actual isolated Web; адреса read-only, зовнішньої навігації
+   немає. Повторіть Email/Web/повернення; контекст scenario/version незмінний.
+5. Змініть «Назва посилання» та «Відображувана адреса» → «Зберегти зв’язок».
+   Target лише read-only у «Технічні деталі». Safe synthetic HTTPS mismatch дає
+   попередження, не rewrite/автоматичну відмову. Email/Web JSON не змінюються.
+6. «Оцінювання»:8criteria у3groups, розгорніть рядок для weight/applicability.
+   Web має лише permitted applicability. Перевірте0.000000000123, потім explicit
+   «Зберегти критерії» й reopen. Недодатні/nonfinite/нечислові weights, empty rubric
+   та Web-only rubric мають відхилятися; попередня saved rubric зберігається.
+7. «Використати базовий набір критеріїв» лише готує unsaved editable selection;
+   replacement існуючого набору потребує confirmation. Cancel не змінює редактор.
+   Після застосування Save виконується окремо; preset не є validated methodology.
+8. Змініть link або rubric й перейдіть в інший крок/preview/constructor/Close/X:
+   «Залишитися» зберігає edits/view, «Відкинути» відновлює editor baseline без DB
+   writes, «Зберегти» виконує explicit service Save. Без правок prompt не з’являється.
+9. «Публікація»: checklist походить із readiness service; all reason codes/statuses
+   лишаються в «Показати технічні результати». Correction buttons відкривають
+   відповідний existing workflow без generation/Save/publication. У missing/stale
+   state показано потребу створити/оновити матеріал; target не вигадується.
+10. Без груп «Опублікувати сценарій» disabled і показано «Виберіть хоча б одну
+    навчальну групу». Оберіть authorized group, прочитайте exact version/statuses,
+    критерії, групи й попередження; позначте instructor acknowledgement.
+    Зміна editor/group/source має скинути acknowledgement. External changes
+    помічаються read-only refresh; незбережені buffers не стираються.
+11. «Опублікувати сценарій» → final confirmation називає scenario/version/groups
+    та immutable content. «Скасувати» не публікує. Повторіть і явно підтвердьте.
+    Result: version зафіксовано, показано groups і повідомлення про future learner
+    module. «Переглянути публікацію» відкриває history; «Повернутися до сценарію»
+    закриває modal. Learner screens/attempts/events/scoring відсутні.
+12. «Опубліковані версії» на ScenarioPage → selected version/date, exact read-only
+    Email/Web, link/rubric summary, group state. Revoke → Cancel не записує змін;
+    confirm називає exact scenario/version/publication/group/operation. Regrant
+    додає audit event, не стирає revoke; audit розгортається окремо.
+13. «Створити нову версію»: новий draft без materials/link/rubric/grants.
+    «Опубліковані версії» лишається доступним. Виберіть попередню version й
+    перевірте exact historical materials/grants/audit, потім close: current draft
+    лишається відкритим. Archive/restore зберігає publication content/history.
+14. Через actual ScenarioPage button повторіть open → Web → Email → Web → return →
+    close → reopen щонайменше3times; використайте «Закрити» та window-manager X.
+    Main GUI/renderer мають залишатися responsive; повторіть із maximized window,
+    1100×720, keyboard Tab/Space та resize зі stacked material cards.
+15. При unsaved edits перевірте voluntary signout/account navigation guard.
+    Forced session expiration очищує review/private buffers і не дозволяє writes
+    старою сесією. Restart тієї самої synthetic DB зберігає saved publications.
 
 Не використовуйте звичайний owner database для демонстрації або migration tests.
 Групові права, account invalidation, multiple memberships/latest eligibility та
@@ -325,3 +348,52 @@ Final preview-correction local gate:
 This fixes the reproduced modal-lifecycle defect. It does not claim a reproduced
 whole-app fatal crash on the owner's exact hardware, nor native Windows11/GPU
 acceptance. Owner workflow recheck remains required; Phase8 REVIEW, no merge or Phase9.
+
+
+## UX redesign — 16.11.2026 (REVIEW)
+
+Owner direction approved; implementation acceptance pending. Before:6permanent
+tabs. After:3preparation steps with responsive material cards, internal previews,
+compact grouped rubric, readiness checklist, explicit review/publish/result;
+publication history/access is a separate contextual ScenarioPage action, available
+when any version is published even with a newer current draft. Current manual
+procedure above replaces the old tab-based walkthrough; earlier evidence retained.
+
+UI files: `scenario_integration.py`, `scenario_page.py`, new `preparation_widgets.py`;
+existing UI test module extended, prior18cases retained. No accepted backend
+contract/service/DB semantics, migration, dependency, renderer/security/startup
+changes. Source of truth: SRS §§3–4,6.10,11–12,14,16,21 and ADR0008 UX addendum.
+No live Groq/Gemini, owner .env/credentials/databases or Phase2 Windows snapshot use.
+Owner's preexisting AGENTS.md edit is preserved outside task commit.
+
+WSLg synthetic review screenshots:
+[Матеріали](screenshots/phase-8-ux-materials.png),
+[Оцінювання](screenshots/phase-8-ux-rubric.png),
+[Публікація](screenshots/phase-8-ux-publication.png),
+[Лист](screenshots/phase-8-ux-email.png),
+[Сайт](screenshots/phase-8-ux-web.png),
+[Результат](screenshots/phase-8-ux-result.png),
+[Історія](screenshots/phase-8-ux-history.png).
+
+Visual inspection: all8collapsed criteria+summary fit960×680; group/warning/
+acknowledgement visible on publication step; preview readable at full content
+width.600×580 tested with stacked cards, scrollable content and accessible footer.
+Screenshots are synthetic automation, not owner functional acceptance. Physical
+Windows11/hardware GPU/DPI/installer verification remains deferred Phase12 risk.
+Stable automated evidence is recorded below after full local gates.
+
+UX focused verification: prior18adapted UI regressions PASS; initial16new behavior
+cases PASS; Scenario Integration backend88PASS. Real default WSLg stable gate
+**48passed/3deselected/502.92s**, actual final-confirmation/resize/keyboard probe3PASS,
+final all8rows/both previews/screenshots probe2PASS. Supplemental actual production
+Close-button/WM-X lifecycle probe1PASS with3complete cycles, disposal and unchanged
+persisted sources. All existing security/isolation/renderer-recovery checks retained.
+Full commands, counts and limitations: DEVELOPMENT_LOG (UX focused / real WSLg gates).
+
+Stable full local gate: **1011passed/1091.99s** (all992prior+19new), Ruff lint/format
+**127files PASS**, staged diff check PASS.37Phase8 UI cases total in full suite,
+including authorized-group reassignment refresh/acknowledgement invalidation.
+Runtime/test sources unchanged since full run began.15task files, owner AGENTS.md
+excluded. Exact final commit, Linux/Windows CI and run URL are recorded in PR9 and
+owner delivery after push; no additional docs-only commit is needed. Engineering
+local gate PASS; Phase8 remains **REVIEW**, owner manual acceptance pending.

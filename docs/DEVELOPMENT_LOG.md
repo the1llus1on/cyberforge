@@ -3118,3 +3118,101 @@ native failures outside supported Qt signals still require the safe diagnostic l
 Phase8 remains REVIEW. Exact final commit and Linux/Windows CI run/results follow
 in existing PR9 description/final report, avoiding circular evidence-only commits.
 No merge, ACCEPTED, Phase9, force-push or history rewrite.
+
+
+## 16.11.2026 — Phase8 UX: три кроки підготовки (REVIEW)
+
+Owner-approved redesign у чинній feature branch/PR9, baseline34e3198; GitHub MCP
+підтвердив open/unmerged/main base. Єдину початкову локальну зміну AGENTS.md
+(власника) збережено й виключено з task commit. SRS §§3–4,6.10,11–12,14,16,21,
+plan/log/acceptance, ADR0007/0008, service contracts та UI/security tests прочитано.
+Немає live AI, роботи з owner .env/keys/DB, migrations/dependencies/startup changes.
+
+План: stable three-step modal structure → material cards/internal previews/link →
+compact registry rubric → service-derived readiness/attestation/result → separate
+history/access → focused/full/WSLg/final-head CI. Owner English session/PR language
+застосовано; Ukrainian application UI та existing documents збережено.
+
+Context7 functional read PASS (official Qt for Python). Qt документація рекомендує
+open()/finished замість nested exec; QStackedWidget володіє inserted widgets.
+https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/QDialog.html
+https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/QStackedWidget.html
+Existing safe WebBrowser/disposal/security та service/persistence implementations
+залишено без змін. Лише native UI presentation/interaction redesign.
+
+Інкременти1–5 реалізовано:3steps, responsive materials, inert exact previews,
+optional read-only technical details, grouped8criteria, lossless weights/preset,
+readiness checklist/corrections/groups/review, explicit publish/result, separate
+history доступний із newer draft. Save/Discard/Remain та session clearing збережено;
+baselines відновлюються при Discard, relevant edits скидають review. Історичний
+preview показує exact version; link/rubric read-only summary доступний окремо.
+
+Перший editor/precision probe:2passed/8.17s. Existing18Phase8 UI regressions adapted
+від obsolete tab indexes до behavioral navigation:18passed/161.52s, including
+F8-01/F8-02, source/manifest immutability, real browser/renderer recovery, production
+button3cycles, signout/Close/X та compact viewport checks. Жоден prior case не видалено.
+Додаткові redesign tests і backend regressions виконуються; stable gates нижче.
+Default uv cache був read-only в sandbox: використано task-specific
+UV_CACHE_DIR=/tmp/cyberforge-uv-cache з --no-sync та чинним .venv; dependency updates
+не виконуються. Host-access Qt tests працюють без root/sudo чи sandbox disablement,
+лише з synthetic pytest fixtures. Owner manual acceptance не стверджується.
+
+### UX redesign — focused / real WSLg gates
+
+- `UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_scenario_integration.py -q --tb=short`
+  (prior18adapted cases, before adding new coverage): **18passed/161.52s**.
+- Same module `-k redesign -q --tb=short`, initial new behavior set:
+  **16passed/18deselected/230.71s**. Additional final-confirmation, compact/keyboard
+  and group-reassignment cases retained in final complete suite.
+- `UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/test_scenario_integration.py -q --tb=short`:
+  **88passed/150.55s** (RBAC, publication, persistence, integrity, migration, races).
+- `QT_QPA_PLATFORM=wayland CYBERFORGE_UX_SCREENSHOTS=docs/screenshots UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_scenario_integration.py -k 'end_to_end_result or actual_final_confirmation or resizing_keyboard' -q --tb=short`:
+  **3passed/33deselected/19.08s**. Actual final modal Cancel/Publish,600×580 and
+  960×680, stacked/side-by-side cards, keyboard Space/focus, result/history.
+- After visual spacing correction, same prefix/module with
+  `-k 'rubric_groups or end_to_end_result' -q --tb=short`:
+  **2passed/34deselected/10.36s**. All8collapsed rows visible in viewport; both exact
+  persisted previews, explicit publication and seven screenshots visually inspected.
+- Final real WSLg command:
+  `QT_QPA_PLATFORM=wayland CYBERFORGE_UX_SCREENSHOTS=docs/screenshots UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_scenario_integration.py tests/ui/test_web_security.py tests/ui/test_web_constructor.py -k 'not actual_signout and not closing_waits and not generation and not manual and not refinement' -q --tb=short -o faulthandler_timeout=90`
+  — **48passed/3deselected/502.92s**. Includes all36Phase8 UI cases existing at
+  collection, F8-01/F8-02, real browser isolation, renderer termination/internal
+  Reload, production entry3cycles, compact/keyboard/Close/signout. The later extra
+  group-assignment-refresh case is included in the final full offline suite.
+- Supplemental existing production-path test with temporary observation plugin:
+  `QT_QPA_PLATFORM=wayland PYTHONPATH=/tmp UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -p cyberforge_ux_close_probe tests/ui/test_scenario_integration.py -k actual_constructor_button -q -s --tb=short`
+  — **1passed/36deselected/7.61s**. Plugin only routes existing final reject calls
+  through actual Close button (cycles1/3) and window-manager closeEvent (cycle2),
+  after return-to-materials; all3engines disposed and main GUI alive. Original
+  lifecycle test retains its exact source equality and view/page/profile validity
+  assertions. Temporary plugin is outside repository, not runtime code.
+- Real renderer test verifies off-record profile, own-renderer PID termination,
+  Seccomp2/NoNewPrivs1/no --no-sandbox, responsive application, Ukrainian diagnostic
+  and successful internal-only reload. Existing network/JS/file/navigation tests
+  retained. Default graphics; no unsafe flags or system/package changes.
+- `UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync ruff check .` PASS;
+  `UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync ruff format --check .` PASS
+  (**127Python files**); `git diff --check` PASS.
+
+No runtime/test changes after stable full-suite start. Documentation/evidence only.
+No repeat wheel/build gate: UI-only change; no dependencies/migrations/installation/
+entry point changes. Existing package evidence retained and CI startup smoke remains.
+
+### UX redesign — stable full local gate / REVIEW
+
+`UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short -o faulthandler_timeout=120`
+— **1011passed/1091.99s**, exit0. All992prior cases retained plus19new redesign
+cases (37Phase8 UI cases total). Includes final authorized-group refresh/ack reset,
+invalid weights, missing/stale sources, source/manifest integrity, RBAC/migrations/
+concurrency, real browser lifecycle/security, unrelated accepted regressions.
+Ruff lint/format127files PASS; staged diff check PASS. No runtime/test changes
+since this run started; only documentation evidence updated afterwards.
+
+15scoped files:3UI modules (including new progressive-disclosure/responsive helpers),
+existing UI test module,4documents,7synthetic screenshots. No SRS/backend/service/
+contract/schema/dependency/WebBrowser/startup changes. Owner AGENTS.md edit remains
+unstaged and excluded. GitHub MCP rechecked PR9 main base/open/unmerged/unchanged
+remote head34e3198 before publication. Local feature commit/push authorized; final
+exact-head Linux+Windows CI will be recorded in PR9/delivery after push, without a
+redundant documentation-only commit. Phase8 remains REVIEW; no owner acceptance,
+merge or Phase9. Native Windows11/GPU/DPI/installer acceptance remains Phase12 risk.

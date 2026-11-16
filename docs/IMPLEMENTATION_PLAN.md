@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–6 — ACCEPTED (Phase6 прийнято власником2026-11-15); Phase7 — ACCEPTED власником2026-11-15; Phase8 — NOT STARTED / PLANNING; Phases9–12 — NOT STARTED.
+**State:** Phases 0–6 — ACCEPTED (Phase6 прийнято власником2026-11-15); Phase7 — ACCEPTED власником2026-11-15; Phase8 — REVIEW (UX redesign authorized 16.11.2026); Phases9–12 — NOT STARTED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -1125,3 +1125,33 @@ with3cycles each PASS. Actual native-window recreation verified; open/finished f
 premature exec return/deletion, renderer-only failure/reload covered independently.
 No startup/default graphics/security/schema changes. Owner hardware recheck pending;
 exact-head CI evidence follows in PR9. Phase8 REVIEW; no merge/ACCEPTED/Phase9.
+
+
+## Phase8 — UX redesign: підготовка й публікація (16.11.2026)
+
+**REVIEW**, owner acceptance pending. Власник дозволив реалізацію, commit/push та
+оновлення PR9; без merge/ACCEPTED/Phase9. База redesign — `34e3198`.
+
+| Інкремент | SRS | Поведінка / gate |
+| --- | --- | --- |
+| Структура | §§3.13,4,21 | Три вільно доступні кроки; stable modal open/finished; один central stack |
+| Матеріали | §§6.10,11.4–11.6 | Responsive картки, exact persisted previews, read-only technical target, explicit link Save, URL warning |
+| Оцінювання | §§12.2–12.6 | Registry8 у3групах, expandable rows, lossless numeric text, unsaved editable preset, explicit Save |
+| Публікація | §§4.8–4.9,14 | Service-derived checklist, correction navigation, groups, exact-source attestation, final confirmation/result |
+| Історія | §§4.9,14,16 | Окремий ScenarioPage action навіть із newer draft; exact version, grants та collapsible audit |
+| Перевірки | §§16,21,24 | Existing regressions retained; focused new UI, real WSLg lifecycle/security/compact, full suite/Ruff, final-head Linux/Windows CI |
+
+Save/Discard/Remain охоплює кроки, previews, history, Close/X, constructor handoff,
+workspace/account navigation. Session invalidation примусово очищує buffers.
+Редагування й зміна груп скидають attestation; відкритий огляд періодично повторює
+read-only service checks для external changes без втрати незбережених правок.
+Accepted contracts/services/DB triggers/atomic publication не змінено. Нових
+залежностей, migrations, startup flags або runtime security exceptions немає.
+Деталі дизайну — dated addendum ADR0008; результати — log/PHASE_8_ACCEPTANCE.
+
+UX stable local gate: **1011passed/1091.99s** (992prior+19new cases), Ruff127files
+PASS; real default WSLg48PASS, extra production Close/WM-X3cycles PASS. Seven
+synthetic screenshots inspected.15scoped files, owner AGENTS.md excluded. Source/
+tests stable throughout full run; only evidence docs updated afterwards. Exact
+final-head Linux/Windows CI follows in PR9/delivery. Phase8 REVIEW; owner acceptance
+pending, no merge or Phase9.

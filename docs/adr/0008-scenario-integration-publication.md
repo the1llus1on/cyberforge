@@ -65,3 +65,46 @@ with explicit ScenarioPage ownership, guarded completion and normal disposal.
 Window-manager close emits completion; session invalidation skips stale refresh.
 No rendering/backend default or runtime security policy change. Qt6.10 explicitly
 recommends open over exec; version-matched references and experiments are in log.
+
+
+## UX addendum — 16.11.2026 (owner-approved direction; implementation REVIEW)
+
+Шість рівноправних tabs (Link, Rubric, Email, Web, Readiness, History) замінено
+трьома вільно доступними preparation steps: «Навчальні матеріали», «Критерії
+оцінювання», «Перевірка та публікація». Preview — тимчасовий internal state з
+поверненням; history — окремий contextual ScenarioPage action за наявності будь-якої
+публікації, навіть коли поточна версія є новою чернеткою. Published result явно
+відокремлено від ще не реалізованого learner module Phase9.
+
+Усі persisted contracts, service validation, provenance, RBAC, BEGIN IMMEDIATE
+publication, immutable sources та append-only access audit збережено. Немає нової
+migration/API/dependency. Один validated saved Web resource є read-only target.
+URL mismatch залишається warning і ніколи не переписує Email/Web автоматично.
+Technical source revisions/digests/target та raw readiness reasons доступні через
+progressive disclosure; основний екран показує українські стани й наступні дії.
+
+Registry criteria згруповано за existing phase. QLineEdit+QDoubleValidator лише
+перевіряє введення, не конвертує/округлює текст; existing float contract validation
+та serialization залишаються authoritative. Значення0.000000000123 зберігається.
+Базовий editable набір використовує8existing criteria з вагою1 та permitted default
+applicability; не є науково валідованою методикою. Не autosave; replacement поточного
+набору потребує confirmation, saved rubric змінюється лише explicit Save.
+
+Save/Discard/Remain guard діє перед усіма переходами й закриттям; Discard відновлює
+editor baselines без DB writes. Constructor correction закриває guarded preparation
+через finished, потім відкриває existing Email/Web workflow у тому самому контексті.
+Acknowledgement скидається після editor/group/source changes. Read-only2s timer
+помічає external source/group changes, зберігаючи recovery buffers; click preflight,
+confirmation receipt та transactional publication повторно перевіряють authority.
+
+QDialog.open()/finished ownership architecture залишається. Lazy WebBrowser створює
+engine лише після explicit preview action; hidden preview зберігає свої page/profile
+до explicit close, reuse across switches. Safe disposal і renderer recovery не
+змінено; немає QDialog.exec для preparation або окремого preview dialog. Ordinary
+Save/Discard/final confirmation message boxes зберігають established behavior.
+
+History selector синхронізує exact publication/version/materials/link/rubric перед
+preview/grants. Confirmations називають scenario/version/publication/group/operation;
+після confirmation повторно перевіряється target. Audit collapsible, append-only.
+Новий draft не стає implicit grant target і не змінює історичний content.
+Physical Windows11/GPU/DPI лишаються Phase12 risk; CI не є physical acceptance.

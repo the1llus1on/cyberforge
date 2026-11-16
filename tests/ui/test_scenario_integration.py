@@ -202,20 +202,14 @@ def test_compact_page_and_scrollable_dialog(integration_window, qtbot):
     d = dialog(window, qtbot)
     configure(d)
     assert d.width() <= 1100 and d.height() <= 720
-    for index in (0, 1, 4, 5):
-        d.tabs.setCurrentIndex(index)
+    for index in range(3):
+        assert d.navigate(index)
         qtbot.wait(10)
-        scroll = d.tabs.widget(index)
+        scroll = d.steps[index]
         assert scroll.widget().width() <= scroll.viewport().width()
-        scroll.ensureWidgetVisible(
-            d.publish_button
-            if index == 4
-            else d.save_rubric_button
-            if index == 1
-            else d.save_link_button
-            if index == 0
-            else d.audit_text
-        )
+        action = (d.save_link_button, d.save_rubric_button, d.publish_button)[index]
+        assert action.isVisible()
+        assert d.rect().contains(action.mapTo(d, action.rect().bottomRight()))
     assert d.rect().contains(
         d.close_buttons.mapTo(d, d.close_buttons.rect().bottomRight())
     )
@@ -237,7 +231,7 @@ def test_published_weight_precision_and_explicit_invalid_weight(
 def test_actual_web_review_and_repeated_close(integration_window, qtbot):
     d = dialog(integration_window, qtbot)
     configure(d)
-    d.tabs.setCurrentIndex(3)
+    d.open_preview("web")
     assert d.browser is not None
     qtbot.waitUntil(
         lambda: d.browser.view.url().scheme() == "cyberforge", timeout=10000
@@ -277,8 +271,7 @@ def test_f8_01_actual_publish_button_requires_authorized_groups(
     monkeypatch.setattr(
         d, "final_confirmation", lambda: confirmations.append(True) or True
     )
-    d.tabs.setCurrentIndex(4)
-    d.tabs.widget(4).ensureWidgetVisible(d.publish_button)
+    d.navigate(2)
     qtbot.mouseClick(d.publish_button, Qt.MouseButton.LeftButton)
     assert not confirmations
     assert not d.publish_button.isEnabled()
@@ -367,8 +360,7 @@ def test_f8_01_groups_revalidated_after_final_dialog(
         return True
 
     monkeypatch.setattr(d, "final_confirmation", stale_during_confirmation)
-    d.tabs.setCurrentIndex(4)
-    d.tabs.widget(4).ensureWidgetVisible(d.publish_button)
+    d.navigate(2)
     qtbot.mouseClick(d.publish_button, Qt.MouseButton.LeftButton)
     assert "груп" in d.message.text()
     with e.database.engine.connect() as db:
@@ -433,8 +425,8 @@ def test_f8_02_grant_confirmation_tracks_exact_publication_and_group(
     )
     d = dialog(window, qtbot)
     assert_target(first, e.group.id)
-    d.tabs.setCurrentIndex(5)
-    scroll = d.tabs.widget(5)
+    d.show_history()
+    scroll = d.history_view
     d.grant_groups.setCurrentRow(0)
     scroll.ensureWidgetVisible(d.revoke_grant)
     confirmations = []
@@ -591,7 +583,7 @@ def test_actual_constructor_button_repeated_web_preview_lifecycle(
                         QTimer.singleShot(0, page.integration_button.click)
                     return
                 d = state["dialog"] = dialogs[0]
-                d.tabs.setCurrentIndex(3)
+                d.open_preview("web")
                 return
             if len(loads) <= state["cycle"]:
                 return
@@ -604,7 +596,7 @@ def test_actual_constructor_button_repeated_web_preview_lifecycle(
                 return
             assert d.isVisible() and browser.profile.isOffTheRecord()
             if state["switches"] < 4:
-                d.tabs.setCurrentIndex(2 if state["switches"] % 2 == 0 else 3)
+                d.open_preview("email" if state["switches"] % 2 == 0 else "web")
                 state["switches"] += 1
                 return
             references = browser.view, browser.page, browser.profile
@@ -675,7 +667,7 @@ def test_renderer_diagnostics_are_safe_and_preview_only(
     before = page.integration.inspect(window._token, page.scenario)
     page.open_integration()
     d = page.integration_dialog
-    d.tabs.setCurrentIndex(3)
+    d.open_preview("web")
     browser = d.browser
     done = []
     browser.page.loadFinished.connect(done.append)
@@ -710,7 +702,7 @@ def test_actual_renderer_termination_recovery_preserves_application_and_sources(
     before = page.integration.inspect(window._token, page.scenario)
     page.open_integration()
     d = page.integration_dialog
-    d.tabs.setCurrentIndex(3)
+    d.open_preview("web")
     browser = d.browser
     loaded = []
     browser.page.loadFinished.connect(loaded.append)
@@ -742,3 +734,403 @@ def test_actual_renderer_termination_recovery_preserves_application_and_sources(
     assert browser.page.renderProcessPid() != renderer_pid
     assert page.integration.inspect(window._token, page.scenario) == before
     d.reject()
+
+
+def test_redesign_three_steps_free_navigation_and_readonly_details(
+    integration_window, qtbot
+):
+    from PySide6.QtWidgets import QTabWidget
+
+    d = dialog(integration_window, qtbot)
+    assert d.windowTitle() == "Підготовка сценарію"
+    assert len(d.step_buttons) == 3
+    assert not d.findChildren(QTabWidget)
+    assert d.browser is None
+    for i in (2, 0, 1, 2):
+        d.step_buttons[i].click()
+        assert d.content.currentWidget() is d.steps[i]
+        assert d.step_buttons[i].isChecked()
+        assert "Поточний крок" in d.step_buttons[i].accessibleDescription()
+        assert not d.publish_button.isEnabled()
+    d.navigate(0)
+    assert not d.target.isEnabled()
+    assert d.target.currentData() == d.state.web.page.internal_resource_id
+    assert not d.material_details.content.isVisible()
+    d.material_details.toggle.click()
+    assert d.material_details.content.isVisible()
+    assert str(d.state.checked_sources["email_revision"]) in d.source_details.text()
+    assert d.material_labels["email"].text().startswith(d.state.email.artifact.subject)
+    assert d.material_labels["web"].text().startswith(d.state.web.page.tab_title)
+    assert not d.technical_results.content.isVisible()
+
+
+@pytest.mark.parametrize("destination", ["step", "preview", "constructor"])
+def test_redesign_unsaved_navigation_remain_discard_and_save(
+    integration_window, qtbot, monkeypatch, destination
+):
+    window = integration_window
+    d = dialog(window, qtbot)
+    before = d.integration.inspect(window._token, d.expected)
+    d.link_label.setText("Незбережена правка")
+    requested = []
+    d.constructor_requested.connect(requested.append)
+    actions = {
+        "step": lambda: d.navigate(1),
+        "preview": lambda: d.open_preview("email"),
+        "constructor": lambda: d.request_constructor("email"),
+    }
+    monkeypatch.setattr(d, "ask_unsaved", lambda: QMessageBox.StandardButton.Cancel)
+    actions[destination]()
+    assert d.content.currentWidget() is d.materials_step and d.dirty
+    assert not requested
+    monkeypatch.setattr(d, "ask_unsaved", lambda: QMessageBox.StandardButton.Discard)
+    actions[destination]()
+    assert not d.dirty
+    assert d.integration.inspect(window._token, d.expected) == before
+    if destination == "constructor":
+        assert requested == ["email"] and not d.isVisible()
+    else:
+        assert d.isVisible()
+        if destination == "preview":
+            d.go_back()
+        d.navigate(0)
+        d.link_label.setText("Явно збережено при переході")
+        monkeypatch.setattr(d, "ask_unsaved", lambda: QMessageBox.StandardButton.Save)
+        d.navigate(1)
+        after = d.integration.inspect(window._token, d.expected)
+        assert after.link.link_label == "Явно збережено при переході"
+        assert (after.email, after.web) == (before.email, before.web)
+
+
+def test_redesign_rubric_groups_precision_preset_and_unsaved_guard(
+    integration_window, qtbot, monkeypatch
+):
+    from cyberforge.scenario_integration.contracts import CRITERIA
+
+    d = dialog(integration_window, qtbot)
+    d.navigate(1)
+    assert set(d.criteria) == {c.id for c in CRITERIA}
+    for spec in CRITERIA:
+        assert spec.id in d.criterion_groups[spec.phase]
+        _, weight, applicability = d.criteria[spec.id]
+        assert (
+            tuple(applicability.itemData(i) for i in range(applicability.count()))
+            == spec.applicability
+        )
+        assert weight.validator() is not None
+        assert not d.criterion_details[spec.id].content.isVisible()
+    d.apply_preset()
+    assert d.dirty and d.state.rubric is None
+    qtbot.wait(30)
+    viewport = d.rubric_step.viewport()
+    last_criterion = d.criteria["web.report"][0]
+    assert viewport.rect().contains(
+        last_criterion.mapTo(viewport, last_criterion.rect().bottomRight())
+    )
+    assert "Обрано 8 із 8" in d.rubric_summary.text()
+    assert "Підтримується безпечний шлях" in d.rubric_summary.text()
+    assert d.integration.inspect(d.session_token, d.expected).rubric is None
+    d.criteria["email.sender"][1].setText("0.000000000123")
+    assert d.save_rubric()
+    saved = d.state.rubric
+    d.load()
+    assert float(d.criteria["email.sender"][1].text()) == 0.000000000123
+    monkeypatch.setattr(d, "confirm_preset", lambda: False)
+    d.apply_preset()
+    assert not d.dirty and d.state.rubric == saved
+    monkeypatch.setattr(d, "confirm_preset", lambda: True)
+    d.apply_preset()
+    assert d.dirty and d.state.rubric == saved
+    assert d.integration.inspect(d.session_token, d.expected).rubric == saved
+    for identifier, (enabled, _, _) in d.criteria.items():
+        enabled.setChecked(identifier.startswith("web."))
+    assert "Додайте критерій" in d.rubric_summary.text()
+    assert not d.save_rubric()
+    assert not d.publish_button.isEnabled()
+
+
+@pytest.mark.parametrize("value", ["0", "-1", "inf", "nan", "10000.1", "abc"])
+def test_redesign_invalid_weights_do_not_replace_saved_rubric(
+    integration_window, qtbot, value
+):
+    d = dialog(integration_window, qtbot)
+    d.criteria["email.sender"][0].setChecked(True)
+    assert d.save_rubric()
+    saved = d.state.rubric
+    d.criteria["email.sender"][1].setText(value)
+    assert not d.save_rubric()
+    assert "Вага" in d.message.text()
+    assert d.integration.inspect(d.session_token, d.expected).rubric == saved
+
+
+def test_redesign_missing_stale_materials_and_contextual_corrections(
+    integration_window, qtbot, monkeypatch
+):
+    window = integration_window
+    page = window.scenario_page
+    e = window.test_env
+    empty = window.scenarios.create(
+        window._token, dict(topic="Без матеріалів", difficulty="beginner")
+    )
+    page.load(empty, editable=True)
+    page.open_integration()
+    d = page.integration_dialog
+    assert not d.preview_buttons["email"].isEnabled()
+    assert not d.preview_buttons["web"].isEnabled()
+    assert d.target.currentData() is None and not d.save_link_button.isEnabled()
+    assert "не збережено" in d.status_summary.text()
+    d.navigate(2)
+    from PySide6.QtWidgets import QPushButton
+
+    d.check_rows["rubric"].findChild(QPushButton).click()
+    assert d.content.currentWidget() is d.rubric_step
+    d.navigate(2)
+    d.check_rows["email"].findChild(QPushButton).click()
+    assert page.integration_dialog is None
+    assert page.content_stack.currentWidget() is page.email_page
+    assert page.email_page.workspace.draft is None
+    # Re-saving the original Email invalidates its saved Web without replacing it.
+    page.load(e.scenario, editable=True)
+    ew = window.emails.load(window._token, e.scenario)
+    window.emails.save(window._token, ew, ew.draft)
+    stale = dialog(window, qtbot)
+    assert stale.state.web is None
+    assert "потребує оновлення" in stale.material_labels["web"].text().lower()
+    assert not stale.open_preview("web") and stale.browser is None
+
+
+def test_redesign_readiness_warnings_attestation_and_source_invalidation(
+    integration_window, qtbot, monkeypatch
+):
+    d = dialog(integration_window, qtbot)
+    configure(d)
+    d.display_url.setText("https://different.training.invalid/review")
+    assert "Адреса в листі відрізняється" in d.url_warning.text()
+    assert d.save_link()
+    d.navigate(2)
+    assert d.report.technical_ready
+    assert {"email", "web", "link", "rubric", "security"} <= set(d.check_rows)
+    assert all(check.check_id in d.details.toPlainText() for check in d.report.checks)
+    assert "display_url_mismatch" in d.report.acknowledgement_requirements
+    assert "Відмінність адрес" in d.attestation_summary.text()
+    assert not d.publish_button.isEnabled()
+    d.ack.setChecked(True)
+    assert d.publish_button.isEnabled()
+    d.link_label.setText("Нова назва")
+    assert not d.ack.isChecked() and not d.publish_button.isEnabled()
+    monkeypatch.setattr(d, "ask_unsaved", lambda: QMessageBox.StandardButton.Discard)
+    d.navigate(0)
+    d.ack.setChecked(True)
+    ew = integration_window.emails.load(d.session_token, d.expected)
+    integration_window.emails.save(d.session_token, ew, ew.draft)
+    d._check_external_changes()
+    assert d.report is None and not d.ack.isChecked()
+    assert not d.publish_button.isEnabled()
+    assert "змінилися" in d.status_summary.text()
+
+
+def test_redesign_history_entry_from_new_draft_and_exact_preview(
+    integration_window, qtbot, monkeypatch
+):
+    from shiboken6 import isValid
+
+    window = integration_window
+    page = window.scenario_page
+    assert not page.publications_button.isVisible()
+    first, second, _ = two_publications(window, qtbot, monkeypatch)
+    draft = window.scenarios.create_next_draft(
+        window._token, window.scenarios.get(window._token, page.scenario.id)
+    )
+    page.load(draft, editable=True)
+    assert page.publications_button.isVisible()
+    page.publications_button.click()
+    d = page.integration_dialog
+    assert d.content.currentWidget() is d.history_view
+    assert d.expected.version == 2 and d.history.currentData() == second.id
+    d.history.setCurrentIndex(d.history.findData(first.id))
+    assert d.expected.version == 1
+    before = d.integration.inspect(window._token, d.expected)
+    d.open_history.click()
+    assert d.content.currentWidget() is d.mail
+    assert d.mail.draft == before.email and d.state.rubric == before.rubric
+    assert d.state.link == before.link and d.link_label.isReadOnly()
+    assert d.published_definition.isReadOnly()
+    d.go_back()
+    assert d.content.currentWidget() is d.history_view
+    assert "Перевірка відправника" in d.published_definition.toPlainText()
+    assert not d.audit_details.content.isVisible()
+    assert "Доступ надано" in d.grant_groups.item(0).text()
+    assert d.integration.inspect(window._token, d.expected) == before
+    d.close()
+    qtbot.waitUntil(lambda: not isValid(d))
+    assert page.scenario == draft
+
+
+def test_redesign_account_switch_guard_preserves_unsaved_editor(
+    integration_window, qtbot, monkeypatch
+):
+    window = integration_window
+    window.scenario_page.open_integration()
+    d = window.scenario_page.integration_dialog
+    d.link_label.setText("Правка перед виходом")
+    monkeypatch.setattr(d, "ask_unsaved", lambda: QMessageBox.StandardButton.Cancel)
+    assert not window.scenario_page.can_leave()
+    assert d.dirty and d.isVisible()
+    # Forced expiration must clear private buffers without saving through an old token.
+    window._signed_out()
+    assert d.forced and d.state is None and d.link_label.text() == ""
+
+
+def test_redesign_end_to_end_result_and_screenshot_states(
+    integration_window, qtbot, monkeypatch
+):
+    from pathlib import Path
+
+    window = integration_window
+    page = window.scenario_page
+    page.integration_button.click()
+    d = page.integration_dialog
+    screenshot_dir = os.environ.get("CYBERFORGE_UX_SCREENSHOTS")
+
+    def capture(name):
+        qtbot.wait(80)
+        if screenshot_dir:
+            folder = Path(screenshot_dir)
+            folder.mkdir(parents=True, exist_ok=True)
+            assert d.grab().save(str(folder / f"phase-8-ux-{name}.png"))
+
+    assert d.save_link()
+    capture("materials")
+    d.navigate(1)
+    d.apply_preset()
+    assert d.save_rubric()
+    capture("rubric")
+    d.navigate(2)
+    d.groups.item(0).setCheckState(Qt.CheckState.Checked)
+    capture("publication")
+    before = d.integration.inspect(window._token, d.expected)
+    d.open_preview("email")
+    capture("email")
+    d.go_back()
+    d.open_preview("web")
+    loaded = []
+    d.browser.page.loadFinished.connect(loaded.append)
+    qtbot.waitUntil(lambda: bool(loaded) and loaded[-1], timeout=15000)
+    capture("web")
+    d.go_back()
+    assert d.integration.inspect(window._token, d.expected) == before
+    d.navigate(2)
+    d.ack.setChecked(True)
+    monkeypatch.setattr(d, "final_confirmation", lambda: True)
+    assert d.publish(), d.message.text()
+    assert d.content.currentWidget() is d.result_view
+    assert "захищені від змін" in d.result_summary.text()
+    assert "Група UI" in d.result_summary.text()
+    capture("result")
+    d.view_publication.click()
+    assert d.content.currentWidget() is d.history_view
+    assert not d.writable and d.history.currentData() is not None
+    capture("history")
+
+
+def test_redesign_actual_final_confirmation_cancel_and_publish(
+    integration_window, qtbot
+):
+    from PySide6.QtCore import QTimer
+    from PySide6.QtWidgets import QApplication
+
+    d = dialog(integration_window, qtbot)
+    configure(d)
+    d.navigate(2)
+    d.ack.setChecked(True)
+    confirmations = []
+
+    def respond(accept):
+        box = next(
+            w
+            for w in QApplication.topLevelWidgets()
+            if isinstance(w, QMessageBox) and w.isVisible()
+        )
+        confirmations.append(box.text())
+        role = (
+            QMessageBox.ButtonRole.AcceptRole
+            if accept
+            else QMessageBox.ButtonRole.RejectRole
+        )
+        next(
+            button for button in box.buttons() if box.buttonRole(button) == role
+        ).click()
+
+    QTimer.singleShot(0, lambda: respond(False))
+    qtbot.mouseClick(d.publish_button, Qt.MouseButton.LeftButton)
+    assert d.expected.status == "draft" and d.ack.isChecked()
+    assert not d.publications.history(d.session_token, d.expected.id)
+    assert f"Сценарій {d.expected.id}, версія 1" in confirmations[-1]
+    assert "Група UI" in confirmations[-1] and "незмінним" in confirmations[-1]
+    QTimer.singleShot(0, lambda: respond(True))
+    qtbot.mouseClick(d.publish_button, Qt.MouseButton.LeftButton)
+    assert d.expected.status == "published"
+    assert d.content.currentWidget() is d.result_view
+
+
+def test_redesign_resizing_keyboard_and_responsive_cards(integration_window, qtbot):
+    from PySide6.QtWidgets import QBoxLayout
+
+    d = dialog(integration_window, qtbot)
+    for width, height in ((960, 680), (600, 580), (960, 680)):
+        d.resize(width, height)
+        for index in range(3):
+            assert d.navigate(index)
+            qtbot.wait(30)
+            scroll = d.steps[index]
+            assert scroll.widget().width() <= scroll.viewport().width()
+            assert d.width() <= width
+            for control in (
+                d.back_button,
+                d.next_button,
+                d.save_link_button,
+                d.save_rubric_button,
+                d.publish_button,
+                d.close_buttons,
+            ):
+                if control.isVisible():
+                    assert d.rect().contains(
+                        control.mapTo(d, control.rect().bottomRight())
+                    ), (
+                        width,
+                        index,
+                        control.text() if hasattr(control, "text") else "Close",
+                    )
+        d.navigate(0)
+        qtbot.wait(30)
+        assert d.material_cards.cards_layout.direction() == (
+            QBoxLayout.Direction.TopToBottom
+            if width == 600
+            else QBoxLayout.Direction.LeftToRight
+        )
+    d.step_buttons[1].setFocus()
+    qtbot.keyClick(d.step_buttons[1], Qt.Key.Key_Space)
+    assert d.content.currentWidget() is d.rubric_step
+    disclosure = d.criterion_details["email.sender"]
+    disclosure.toggle.setFocus()
+    qtbot.keyClick(disclosure.toggle, Qt.Key.Key_Space)
+    assert disclosure.content.isVisible()
+    assert disclosure.toggle.accessibleDescription() == "Розгорнуто"
+
+
+def test_redesign_group_assignment_changes_clear_picker_and_acknowledgement(
+    integration_window, qtbot
+):
+    window = integration_window
+    d = dialog(window, qtbot)
+    configure(d)
+    d.ack.setChecked(True)
+    assert d.publish_button.isEnabled()
+    GroupService(window.test_env.accounts).set_members(
+        window.test_env.tokens["admin"], window.test_env.group.id, (), ()
+    )
+    d._check_external_changes()
+    assert d.groups.count() == d.available_group.count() == 0
+    assert not d.ack.isChecked() and not d.publish_button.isEnabled()
+    assert "Виберіть хоча б одну" in d.group_hint.text()
+    assert not d.publish()
