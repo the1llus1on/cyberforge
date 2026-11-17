@@ -103,12 +103,20 @@ def test_real_web_navigation_actions_revocation_restore_resume(learner_window, q
     assert browser.address.text() == sim.state.web.page.display_url
     # Native keyboard activation goes through Chromium and the trusted callback;
     # JavaScript stays disabled. The first published link is the hero confirm.
+    native_load_outcomes = []
+    browser.page.loadFinished.connect(native_load_outcomes.append)
     browser.view.setFocus()
     qtbot.keyClick(browser.view.focusProxy(), Qt.Key.Key_Tab)
     before_native = sim.controller.attempt.last_event_sequence
     qtbot.keyClick(browser.view.focusProxy(), Qt.Key.Key_Return)
     qtbot.waitUntil(lambda: sim.controller.attempt.last_event_sequence > before_native)
     assert e.attempts.events(e.learner, a.attempt_id)[-1].action_id == "confirm"
+    qtbot.waitUntil(lambda: False in native_load_outcomes)
+    assert not browser.render_failed
+    before_native = sim.controller.attempt.last_event_sequence
+    qtbot.keyClick(browser.view.focusProxy(), Qt.Key.Key_Return)
+    qtbot.waitUntil(lambda: sim.controller.attempt.last_event_sequence > before_native)
+    assert not browser.render_failed
     _, state = e.attempts.content(e.learner, a.attempt_id)
     pairs = [
         (c.id, action.id)

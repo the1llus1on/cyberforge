@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from PySide6.QtCore import QBuffer, QIODevice, QObject, Qt, QUrl, Signal
 from PySide6.QtWebEngineCore import (
+    QWebEngineLoadingInfo,
     QWebEnginePage,
     QWebEngineProfile,
     QWebEngineSettings,
@@ -238,7 +239,7 @@ class WebBrowser(QFrame):
         self.feedback.setWordWrap(True)
         self.feedback.setStyleSheet("padding:4px;font-size:12px")
         layout.addWidget(self.feedback)
-        self.page.loadFinished.connect(self._load_finished)
+        self.page.loadingChanged.connect(self._loading_changed)
         self.page.renderProcessTerminated.connect(self._renderer_terminated)
         self.page.action_requested.connect(self._preview_interact)
         self.page.action_context_requested.connect(self._learner_interact)
@@ -251,6 +252,21 @@ class WebBrowser(QFrame):
     def dispose(self) -> None:
         self._disposed = True
         release_engine(self.view, self.page, self.profile)
+
+    def _loading_changed(self, info: QWebEngineLoadingInfo) -> None:
+        # Qt emits a failed load after acceptNavigationRequest delegates an
+        # action and returns False. Only the owned document can fail/recover
+        # rendering or establish a visit; rejected action/external URLs cannot.
+        if self._disposed or info.url().toString() != self.store.url:
+            return
+        status = info.status()
+        if status == QWebEngineLoadingInfo.LoadStatus.LoadSucceededStatus:
+            self._load_finished(True)
+        elif status in (
+            QWebEngineLoadingInfo.LoadStatus.LoadStoppedStatus,
+            QWebEngineLoadingInfo.LoadStatus.LoadFailedStatus,
+        ):
+            self._load_finished(False)
 
     def _load_finished(self, success: bool) -> None:
         if self._disposed:

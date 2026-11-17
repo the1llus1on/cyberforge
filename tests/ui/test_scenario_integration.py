@@ -685,8 +685,14 @@ def test_renderer_diagnostics_are_safe_and_preview_only(
     with qtbot.waitSignal(browser.page.loadFinished, timeout=15000) as reloaded:
         browser.reload_current()
     assert reloaded.args == [True] and not browser.render_failed
-    browser.page.loadFinished.emit(False)
-    assert "Не вдалося завантажити" in browser.feedback.text()
+    # Fail the actual owned document resource, rather than synthesizing the
+    # legacy boolean signal also emitted for intentional action cancellation.
+    browser.profile.removeUrlSchemeHandler(browser.handler)
+    with qtbot.waitSignal(browser.page.loadFinished, timeout=15000) as failed:
+        browser.reload_current()
+    assert failed.args == [False]
+    qtbot.waitUntil(lambda: "Не вдалося завантажити" in browser.feedback.text())
+    assert browser.render_failed
     assert page.integration.inspect(window._token, page.scenario) == before
     d.reject()
 

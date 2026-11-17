@@ -1230,3 +1230,32 @@ Intermediate full1053PASS/655.75s and1053PASS/728.93s retained; final source/tes
 unchanged throughout670.67s run. Owner manual acceptance pending. Final-head
 Linux/Windows CI will be recorded in PR/delivery without changing verified HEAD.
 No merge/ACCEPTED/Phase10. PHASE_9_ACCEPTANCE contains exact manual steps.
+
+### Phase9 first-head Linux CI correction
+
+PR10 initial edcc7d3: Linux learner early gate4PASS/1FAIL exposed expected
+delegated-navigation loadFinished(False) being treated as render failure.
+Use exact owned-document loadingChanged URL/status; keep actual failed-resource
+and renderer diagnostics. Offscreen focused10PASS/19.32s; real WSLg10PASS/23.95s.
+No new dependencies/schema/authorization/scoring semantics. New stable full and
+exact updated PR HEAD Linux/Windows CI required; Phase9 REVIEW unchanged.
+
+### Corrected final local gate — current delivery evidence
+
+After the CI-derived loading-signal correction, stable offline full suite
+**1053PASS/595.76s**, exit0; all1014prior +39new cases retained. Command:
+`QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short`.
+Source/tests frozen throughout. Previous670.67s/728.93s gates are superseded
+for delivery by this595.76s result, with history retained.
+
+Focused actual offscreen10PASS/19.32s and default WSLg10PASS/23.95s:
+`QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_learner_simulation.py tests/ui/test_web_security.py tests/ui/test_scenario_integration.py -k 'learner or actual_engine or real_engine or actual_constructor_button or renderer_diagnostics or production_dialog' -q --tb=short`.
+The offscreen variant uses QT_QPA_PLATFORM=offscreen. Both assert actual native
+Qt cancellation, continued interaction and actual owned-resource failure.
+Ruff check/format136files PASS; CRLF-aware diff check PASS. Corrected offline
+sdist/wheel rebuilt, reinstalled in isolated wheel environment (existing read-only
+dependencies reused); actual installed-wheel WSLg startup/shutdown exits0.
+
+Append-only corrective commit/push in PR10; new exact-head Linux+Windows CI
+mandatory. Final SHA/CI evidence recorded in PR/delivery without another commit.
+Phase9 REVIEW, owner acceptance pending; no merge/Phase10.

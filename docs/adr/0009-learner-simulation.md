@@ -109,3 +109,10 @@ covering inspect_address/report/leave/confirm/submit_synthetic without model
 callbacks or editable credentials. Strict canonical tuples revalidate through
 JSON, consistent with accepted content loaders. Actual Chromium Tab/Enter
 activation is verified separately from deterministic callback mapping checks.
+
+First-head Linux CI exposed Qt delegated-action cancellation emitting
+loadFinished(False), as documented by QWebEnginePage. Browser diagnostics and
+visit acknowledgement now consume loadingChanged URL/status only for the exact
+owned document. Rejected action/external navigation never becomes a renderer
+failure or successful visit. Real native cancellation→second action and actual
+owned-resource failure are distinct regression checks. No security relaxation.

@@ -208,3 +208,48 @@ Final engineering state: REVIEW. Stable full1053PASS/670.67s, Ruff136files PASS,
 focused actual WSLg8PASS/18.71s, packaged offline startup/lifecycle PASS.
 Source/tests frozen during final suite; owner manual acceptance pending.
 CI final-head evidence remains a mandatory independent remote gate.
+
+### First-head CI correction — delegated navigation cancellation
+
+PR10 initial head edcc7d3: Linux run44040059722 failed learner early gate
+(4PASS/1FAIL), Windows passed early gate and continued full suite. Native
+Chromium action wrote its event, then Qt loadFinished(False) for intentionally
+rejected action navigation marked render_failed and blocked subsequent actions.
+Official Context7 Qt6 docs explicitly describe this false signal after delegation:
+https://doc.qt.io/qtforpython-6/PySide6/QtWebEngineCore/QWebEnginePage.html
+
+WebBrowser now uses loadingChanged URL/status for the exact application-owned
+document. Rejected action/external URL loads cannot mark render failure, recover
+rendering or count a Web visit. Actual document failure/renderer termination
+remain errors. Regression waits for the real false signal and then performs
+a second native action; no sleeps replace this signal assertion. Security flags,
+network denial, JS restrictions and event semantics unchanged. Focused/full/WSLg
+and new exact-head CI results follow. Phase9 stays REVIEW, no merge/acceptance.
+
+Corrected focused offscreen gate:10PASS/19.32s (38deselected). The accepted
+preview diagnostic test now removes the resource handler and verifies an actual
+failed owned-document reload, retaining error/immutability assertions rather
+than emitting the obsolete boolean-only signal. Native learner test waits for
+Qt's real cancellation False signal, verifies no render error, then activates
+a second actual action before the rest of the event/revocation workflow.
+Security settings unchanged. New stable full suite/WSLg/final CI follows.
+
+### Corrected final local gate — current delivery evidence
+
+After the CI-derived loading-signal correction, stable offline full suite
+**1053PASS/595.76s**, exit0; all1014prior +39new cases retained. Command:
+`QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short`.
+Source/tests frozen throughout. Previous670.67s/728.93s gates are superseded
+for delivery by this595.76s result, with history retained.
+
+Focused actual offscreen10PASS/19.32s and default WSLg10PASS/23.95s:
+`QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_learner_simulation.py tests/ui/test_web_security.py tests/ui/test_scenario_integration.py -k 'learner or actual_engine or real_engine or actual_constructor_button or renderer_diagnostics or production_dialog' -q --tb=short`.
+The offscreen variant uses QT_QPA_PLATFORM=offscreen. Both assert actual native
+Qt cancellation, continued interaction and actual owned-resource failure.
+Ruff check/format136files PASS; CRLF-aware diff check PASS. Corrected offline
+sdist/wheel rebuilt, reinstalled in isolated wheel environment (existing read-only
+dependencies reused); actual installed-wheel WSLg startup/shutdown exits0.
+
+Append-only corrective commit/push in PR10; new exact-head Linux+Windows CI
+mandatory. Final SHA/CI evidence recorded in PR/delivery without another commit.
+Phase9 REVIEW, owner acceptance pending; no merge/Phase10.
