@@ -19,7 +19,7 @@ Phase 0 та Phase 1 — ACCEPTED. Phase 2 — Users & Groups: **ACCEPTED вла
 постійні ID, SQLite persistence, чернеткові версії та зворотне архівування. Аналіз використовує
 ті самі ID та показує відсутність результатів. Email/Web Constructor підтримують
 явну AI-генерацію або позначене офлайн-демо; Web використовує ізольований Qt WebEngine.
-Phase 9 learner flow — REVIEW; scoring належить Phase 10. Для офлайн-демо ключі та `.env` не потрібні.
+Phase 9 learner flow — ACCEPTED власником 2026-11-17; scoring належить Phase 10. Для офлайн-демо ключі та `.env` не потрібні.
 
 ## Встановлення й звичайний запуск
 
@@ -519,12 +519,15 @@ Phase8 — **ACCEPTED власником 2026-11-17** після ручної WS
 Implementation CI: Linux1014PASS, Windows Server2022 1011PASS/3POSIX skips;
 Ruff/GUI/security gates PASS. PR9 merged у main `dfba3fbaa1b2b8b94d279d3cef3f132c03cc9391`;
 release evidence — PHASE_8_ACCEPTANCE.md та PR9.
-Phase0–8 ACCEPTED; Phase9 — **REVIEW**, окремо дозволено 17.11.2026.
+Phases0–9 ACCEPTED; Phase9 прийнято власником 2026-11-17.
+Phase10 — NOT STARTED / PLANNING, Phase11–12 — NOT STARTED.
 Physical Windows11, DPI, GPU-specific behavior та installer — Phase12 risks.
 
 ## Phase 9 — ізольоване офлайн-демо проходження
 
-Phase0–8 ACCEPTED (Phase8 merged PR9); Phase9 REVIEW, без scoring/Mentor/analytics.
+Phases0–9 ACCEPTED; Phase9 прийнято власником 2026-11-17 після independent
+review/remediation та п’яти manual WSLg scenarios. Scoring/Mentor/analytics
+залишаються наступними фазами; Phase10 потребує окремого architecture approval.
 Нова additive migration0007, durable attempts та immutable events.
 Demo setup потребує **нового** файлу БД; наявні demo/owner БД не перезаписуються.
 

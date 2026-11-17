@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–8 — ACCEPTED (Phase8 прийнято власником 2026-11-17); Phase9 — REVIEW (implementation authorized 2026-11-17; owner acceptance pending); Phases10–12 — NOT STARTED (без змін).
+**State:** Phases 0–9 — ACCEPTED (Phase9 прийнято власником 2026-11-17); Phase10 — NOT STARTED / PLANNING; Phases11–12 — NOT STARTED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -25,8 +25,8 @@
 | 6 | Email Constructor | ACCEPTED | Прийнято власником15.11.2026: Email preview/editor, async generation, explicit SQLite Save; PHASE_6_ACCEPTANCE.md |
 | 7 | Web Constructor | ACCEPTED | Hybrid components, isolated WebEngine, visual editor, scoped AI, saved Email binding, explicit SQLite Save; PHASE_7_ACCEPTANCE.md |
 | 8 | Scenario Integration | ACCEPTED | Typed Email→Web link, rubric definitions/editor, exact readiness/review, atomic immutable publication, audited grants/access; PHASE_8_ACCEPTANCE.md |
-| 9 | Learner Simulation | REVIEW | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
-| 10 | Scoring & Mentor | NOT STARTED | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
+| 9 | Learner Simulation | ACCEPTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
+| 10 | Scoring & Mentor | NOT STARTED / PLANNING | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
 | 11 | Analytics Mode | NOT STARTED | Read-only scenario statistics, deduplicated learner table, missing-data rules, filters, CSV/JSON export, RBAC; analytics tests |
 | 12 | Finalization | NOT STARTED | Full regression/security checks, Windows 11 package, demonstration dataset, docs and release checklist |
 
@@ -1281,3 +1281,19 @@ Ruff check . and format --check .136files PASS; CRLF-aware diff check PASS.
 No dependencies/startup/schema changes; no repeated package gate necessary.
 Final-head Linux/Windows CI recorded in PR10/delivery after push to preserve
 verified HEAD. Phase9 REVIEW; independent owner acceptance still pending.
+
+## Phase9 — остаточне прийняття та release gate (17.11.2026)
+
+**Phase 9 — ACCEPTED on 2026-11-17.** Власник підтвердив усі п'ять manual WSLg
+сценаріїв на5bd1854: safe decline, Email→Web/native controls, personal history,
+restart/resume, revoke/restore. Зауважень/додаткових змін немає. Увесь Phase9 scope
+та F9-01/F9-02 RESOLVED прийнято; PHASE_9_ACCEPTANCE містить attributable evidence,
+non-blocking graphics warnings та local-process trust limitation. Попередні
+REVIEW/pending записи збережено й замінено поточним acceptance decision.
+Docs-only release: commit/push чинної feature branch → exact-final-head Linux/
+Windows CI → standard merge PR10 з expected head → fetch/ff-only main → verify
+remote/local equality та clean tree. При CI failure/conflict/unexpected runtime
+change зупинитися. Final SHA/merge/CI evidence у PR10/delivery без нового commit.
+Phases0–9 ACCEPTED; Phase10 NOT STARTED / PLANNING, окреме architecture approval;
+Phase11–12 NOT STARTED. Physical Windows11/DPI/hardware GPU/installer/executable/
+final release acceptance — Phase12 risks. No runtime/SRS/test/dependency changes.

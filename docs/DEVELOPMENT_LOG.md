@@ -3571,3 +3571,43 @@ Ruff check . and format --check .136files PASS; CRLF-aware diff check PASS.
 No dependencies/startup/schema changes; no repeated package gate necessary.
 Final-head Linux/Windows CI recorded in PR10/delivery after push to preserve
 verified HEAD. Phase9 REVIEW; independent owner acceptance still pending.
+
+## 17.11.2026 — Phase9 explicit owner acceptance / authorized release
+
+**Phase 9 — ACCEPTED on 2026-11-17.** Owner reports all five manual WSLg scenarios
+PASS at5bd1854: safe decline without Web (sender/link inspected), Email→Web/all
+three native controls, own history without grades, close/restart/original resume,
+teacher_demo_1 Group A revoke blocking / restore resuming same saved attempt.
+Власник не має зауважень або вимог додаткових змін. Увесь Phase9 scope прийнято;
+F9-01/F9-02 RESOLVED після independent review/remediation. Owner manual evidence
+відокремлено від automated checks; не стверджується every UI variation/native Win11.
+
+Owner occasionally observed known libEGL/MESA-LOADER/ZINK/dri2 initialization
+warnings. Усі сценарії працювали, restart можливий, наступний launch без warnings;
+observable functional impact відсутній за повідомленням власника. Non-blocking
+WSLg warnings, не доказ exact owner process exit status. No driver/Mesa/GPU/
+rendering/WebEngine flag changes. Internal API trust limit documented in ADR0009.
+
+Before edits: clean synchronized feature HEAD5bd185431434f43a85664fadcfd4af71899bc605;
+local/origin main dfba3fbaa1b2b8b94d279d3cef3f132c03cc9391. GitHub MCP PR10 open,
+unmerged/clean/base main/expected HEAD; existing fixes inspected. Revalidated
+implementation-head run44049089386 SUCCESS: Linux1056PASS, Windows1053PASS/3POSIX
+skips, Ruff136files and GUI/security/lifecycle/startup PASS. No implementation drift.
+
+Focused docs-only acceptance update: PHASE_9_ACCEPTANCE, IMPLEMENTATION_PLAN,
+DEVELOPMENT_LOG, README current state, ADR0009 status. Historical failures/review/
+corrections preserved. No SRS/runtime/migration/dependency/test changes; local
+full/GUI/package reruns unnecessary. New documentation HEAD still requires both
+platform CI SUCCESS before authorized standard merge with expected_head_sha.
+Then fetch, switch clean main, ff-only, verify merge/local/origin/remote SHA and
+preserved feature branch. Stop for unexpected CI/conflict/history/integrity issue.
+Final SHA/CI/merge evidence goes in PR10/delivery to avoid moving verified HEAD.
+Phases0–9 ACCEPTED; Phase10 NOT STARTED / PLANNING; Phase11–12 NOT STARTED.
+Owner databases/credentials/env/keys/Phase2 snapshot preserved; no live AI.
+Physical Windows11/DPI/hardware GPU/installer/executable/final release acceptance
+remain Phase12 risks. Phase10 architecture requires separate owner approval.
+
+Acceptance docs lightweight checks: `uv run --no-sync ruff check .` PASS;
+`uv run --no-sync ruff format --check .`136files PASS; relative Markdown file
+targets in all5changed docs PASS; `git -c core.whitespace=cr-at-eol diff --check`
+PASS. Exact diff reviewed: only5documentation files, no secrets or runtime drift.

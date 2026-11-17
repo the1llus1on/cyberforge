@@ -1,7 +1,12 @@
 # Phase 9 — Learner Simulation
 
-**REVIEW — implementation and local gates complete; owner acceptance pending.** Architecture та implementation
-окремо дозволено власником 17.11.2026; merge/ACCEPTED/Phase10 не дозволено.
+**Phase 9 — ACCEPTED on 2026-11-17.** Власник явно прийняв Phase9 після
+independent review, remediation, automated verification та ручної WSLg перевірки
+implementation HEAD `5bd185431434f43a85664fadcfd4af71899bc605`.
+Commit/push acceptance docs, final-head CI, standard merge PR10 і safe local main
+synchronization явно дозволено; Phase10 не дозволено.
+Попередні REVIEW/pending/no-merge записи нижче збережено як датовану історію;
+їх замінює це рішення власника, а не ретроспективна зміна evidence.
 Base main `dfba3fbaa1b2b8b94d279d3cef3f132c03cc9391` (accepted Phase8, merged PR9).
 Feature branch: `feat/phase-9-learner-simulation`.
 
@@ -275,3 +280,66 @@ Ruff check . and format --check .136files PASS; CRLF-aware diff check PASS.
 No dependencies/startup/schema changes; no repeated package gate necessary.
 Final-head Linux/Windows CI recorded in PR10/delivery after push to preserve
 verified HEAD. Phase9 REVIEW; independent owner acceptance still pending.
+
+## Остаточне прийняття власником — 17.11.2026
+
+**Phase 9 — ACCEPTED on 2026-11-17.** Architecture approval, engineering gates,
+independent review/remediation та owner manual acceptance є окремими етапами.
+За повідомленням власника, усі п'ять acceptance scenarios на `5bd1854` пройдено
+успішно, без функціональних проблем; зауважень або додаткових змін немає.
+Це owner-provided WSLg evidence, не новий automated check чи physical Windows11.
+
+| Owner manual WSLg scenario | Результат та межа твердження |
+| --- | --- |
+| Safe decline без Web | PASS: learner_demo_1 увійшов, відкрив Email, перевірив sender/link, відмовився від переходу та завершив без Web |
+| Email → Web | PASS: нова спроба, authorized internal transition, isolated Web; усі три native controls «Перевірити адресу», «Повідомити про сайт», «Залишити сторінку» працюють |
+| Personal history | PASS: «Мої результати» показує attempts без fabricated numerical grades |
+| Restart/resume | PASS: unfinished attempt після закриття/restart відновлено через «Продовжити проходження» |
+| Revoke/restore | PASS: teacher_demo_1 revoke Group A блокує продовження; restore дозволяє resume тієї самої збереженої спроби |
+
+Прийнято весь Phase9 scope: authorized catalog/introduction/Start/Continue,
+immutable publication-bound ScenarioAttemptV1, transactional lifecycle та
+one-active learner/Scenario, versioned append-only factual AttemptEventV1,
+safe no-Web decline, controlled Email→Web, isolated Web/native browser controls/
+authored interactions/session-bound display acknowledgement/renderer safeguards,
+revocation/restoration, durable resume, explicit completion/abandonment/repeats,
+personal history без grades, migration0007 та Phase10-compatible manifest/rubric/
+event references. Прийняття всього scope не означає ручну перевірку кожного
+можливого UI variation або всіх заборонених service paths власником.
+
+**F9-01 RESOLVED:** native inspect_address/report/leave незалежні від optional
+authored components; closed validated identities і typed provenance. Exact
+published artifacts/rubric semantics незмінні. **F9-02 RESOLVED:** generic record
+відхиляє system/web_entered; окремий session/attempt-bound callback підтверджує
+owned-document success зі збереженням authorization/binding/revision/idempotency.
+Internal API separation довіреного desktop process не є cryptographic protection
+проти arbitrary local code/DB modification. Обидва findings прийнято як resolved.
+
+Під час owner sessions іноді спостерігалися `libEGL warning: failed to get driver
+name for fd -1`, `MESA-LOADER: failed to retrieve device information`, `MESA:
+error: ZINK: failed to choose pdev`, `libEGL warning: egl: failed to create dri2
+screen`. Ці patterns раніше досліджено у Phase8 та спостерігалися при успішному
+WebEngine execution. Власник підтвердив відсутність observable functional impact,
+можливість restart та наступний launch без warnings. Це observed non-blocking
+WSLg graphics initialization warnings; точний process exit status owner sessions
+окремо не captured і не стверджується. Drivers/Mesa/GPU/rendering/security flags
+не змінюються.
+
+Перед acceptance docs: clean synchronized feature tree, HEAD5bd1854, base main
+`dfba3fbaa1b2b8b94d279d3cef3f132c03cc9391`; GitHub MCP PR10 open/unmerged/clean.
+Implementation-head CI [44049089386](https://github.com/the1llus1on/cyberforge/actions/runs/44049089386)
+повторно перевірено SUCCESS: Linux1056PASS, Windows Server2022 1053PASS/3POSIX-only
+skips; Ruff136files, GUI/security/lifecycle/startup gates PASS.
+
+Acceptance increment — docs only. Local repeated pytest/GUI/package runs не
+потрібні; exact new documentation HEAD мусить пройти Linux+Windows CI до merge.
+Release: focused docs commit/push → final-head CI → recheck scope/base/conflicts →
+standard merge commit з expected_head_sha → fetch/ff-only local main → verify
+merge/local/origin/remote SHA, clean tree. Final SHA/CI/merge evidence записується
+в PR10/delivery без циклічних docs-only commits, що змінюють verified HEAD.
+
+Phases0–9 ACCEPTED; Phase10 NOT STARTED / PLANNING, architecture потребує окремого
+обговорення/дозволу; Phase11–12 NOT STARTED. Physical Windows11/DPI/hardware GPU/
+installer/executable/final release acceptance залишаються Phase12 risks.
+No live AI, owner databases/credentials/.env/API keys/native Phase2 environment
+changes. Feature branch зберігається; history не переписується.

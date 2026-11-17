@@ -1,7 +1,10 @@
 # ADR-0009 — Проходження учнем та незмінні події
 
 Дата: 17.11.2026. Архітектуру й реалізацію Phase 9 дозволено власником.
-Статус реалізації: REVIEW; acceptance лише окремим рішенням власника.
+Статус реалізації: **ACCEPTED власником 2026-11-17** після independent review,
+F9-01/F9-02 remediation та п’яти manual WSLg acceptance scenarios на5bd1854.
+Попередні implementation/review notes нижче збережено; detailed evidence —
+PHASE_9_ACCEPTANCE.md. Physical Windows11 та hardware acceptance — Phase12 risk.
 Нормативна основа: вузька поправка SRS v3.0 від 17.11.2026,
 §§3.9, 8, 11.4, 12.8, 14.2, 16, 23–24.
 
