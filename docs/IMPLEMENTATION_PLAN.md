@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–8 — ACCEPTED (Phase8 прийнято власником 2026-11-17); Phase9 — NOT STARTED / PLANNING; Phases10–12 — NOT STARTED (без змін).
+**State:** Phases 0–9 — ACCEPTED (Phase9 прийнято власником 2026-11-17); Phase10 — NOT STARTED / PLANNING; Phases11–12 — NOT STARTED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -24,9 +24,9 @@
 | 5 | Specialized Agents | ACCEPTED | Прийнято власником 13.11.2026: four agents, typed contracts, bounded LangGraph, provenance/F-01, offline/provider-neutral integration; PHASE_5_ACCEPTANCE.md |
 | 6 | Email Constructor | ACCEPTED | Прийнято власником15.11.2026: Email preview/editor, async generation, explicit SQLite Save; PHASE_6_ACCEPTANCE.md |
 | 7 | Web Constructor | ACCEPTED | Hybrid components, isolated WebEngine, visual editor, scoped AI, saved Email binding, explicit SQLite Save; PHASE_7_ACCEPTANCE.md |
-| 8 | Scenario Integration | REVIEW | Typed Email→Web link, rubric definitions/editor, exact readiness/review, atomic immutable publication, audited grants/access; PHASE_8_ACCEPTANCE.md |
-| 9 | Learner Simulation | NOT STARTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
-| 10 | Scoring & Mentor | NOT STARTED | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
+| 8 | Scenario Integration | ACCEPTED | Typed Email→Web link, rubric definitions/editor, exact readiness/review, atomic immutable publication, audited grants/access; PHASE_8_ACCEPTANCE.md |
+| 9 | Learner Simulation | ACCEPTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
+| 10 | Scoring & Mentor | NOT STARTED / PLANNING | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
 | 11 | Analytics Mode | NOT STARTED | Read-only scenario statistics, deduplicated learner table, missing-data rules, filters, CSV/JSON export, RBAC; analytics tests |
 | 12 | Finalization | NOT STARTED | Full regression/security checks, Windows 11 package, demonstration dataset, docs and release checklist |
 
@@ -1204,3 +1204,96 @@ head SHA → fetch/local main fast-forward-only → verify remote/local merge SH
 clean tree. За unexpected CI failure/conflict/integrity issue зупинитися.
 Без runtime/test/dependency changes або live AI. Physical Windows11/DPI/GPU/
 installer залишаються Phase12 risks. Phase9 NOT STARTED / PLANNING; не починати.
+
+## Phase 9 — Learner Simulation (17.11.2026)
+
+**REVIEW**, implementation/local engineering gates complete; commit/push/PR owner-approved.
+Phase 0–8 ACCEPTED; Phase 8 merged PR9 at dfba3fbaa1b2b8b94d279d3cef3f132c03cc9391.
+This supersedes earlier Phase 9 NOT STARTED entries; prior history is retained.
+
+| Increment | SRS | Gate |
+| --- | --- | --- |
+| Contracts / ADR0009 / amendment | §§3.9,8,11.4,12.8,14,16,23–24 | closed state/event vocabulary |
+| Persistence / services | §§8,14,16 | migration, exact binding, races, RBAC, immutable events |
+| Catalog / Email / Web | §§3.9,8,11.4,16 | existing renderers, no external navigation, actual actions |
+| Completion / recovery / history | §§8.5–8.6,12.8,14 | decline, resume, revoke/restore, repeats, no scores |
+| Demo / verification / PR | §§21,24 | offline, Qt/WSLg, full Ruff/pytest/package, final-head CI |
+
+No merge/ACCEPTED/Phase10 authorization. Details: ADR0009/PHASE_9_ACCEPTANCE.
+
+Phase9 final stable local gate: **1053PASS/670.67s**, including all1014accepted
+regressions +39learner/demo/UI cases; Ruff136files PASS, actual default WSLg
+learner/security8PASS/18.71s, native Chromium keyboard interaction PASS.
+Offline sdist/wheel, packaged migration/publication/learner lifecycle and
+installed-wheel Qt startup PASS with dependency-reuse limit documented.
+Intermediate full1053PASS/655.75s and1053PASS/728.93s retained; final source/test
+unchanged throughout670.67s run. Owner manual acceptance pending. Final-head
+Linux/Windows CI will be recorded in PR/delivery without changing verified HEAD.
+No merge/ACCEPTED/Phase10. PHASE_9_ACCEPTANCE contains exact manual steps.
+
+### Phase9 first-head Linux CI correction
+
+PR10 initial edcc7d3: Linux learner early gate4PASS/1FAIL exposed expected
+delegated-navigation loadFinished(False) being treated as render failure.
+Use exact owned-document loadingChanged URL/status; keep actual failed-resource
+and renderer diagnostics. Offscreen focused10PASS/19.32s; real WSLg10PASS/23.95s.
+No new dependencies/schema/authorization/scoring semantics. New stable full and
+exact updated PR HEAD Linux/Windows CI required; Phase9 REVIEW unchanged.
+
+### Corrected final local gate — current delivery evidence
+
+After the CI-derived loading-signal correction, stable offline full suite
+**1053PASS/595.76s**, exit0; all1014prior +39new cases retained. Command:
+`QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short`.
+Source/tests frozen throughout. Previous670.67s/728.93s gates are superseded
+for delivery by this595.76s result, with history retained.
+
+Focused actual offscreen10PASS/19.32s and default WSLg10PASS/23.95s:
+`QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_learner_simulation.py tests/ui/test_web_security.py tests/ui/test_scenario_integration.py -k 'learner or actual_engine or real_engine or actual_constructor_button or renderer_diagnostics or production_dialog' -q --tb=short`.
+The offscreen variant uses QT_QPA_PLATFORM=offscreen. Both assert actual native
+Qt cancellation, continued interaction and actual owned-resource failure.
+Ruff check/format136files PASS; CRLF-aware diff check PASS. Corrected offline
+sdist/wheel rebuilt, reinstalled in isolated wheel environment (existing read-only
+dependencies reused); actual installed-wheel WSLg startup/shutdown exits0.
+
+Append-only corrective commit/push in PR10; new exact-head Linux+Windows CI
+mandatory. Final SHA/CI evidence recorded in PR/delivery without another commit.
+Phase9 REVIEW, owner acceptance pending; no merge/Phase10.
+
+## Phase9 independent review remediation — 17.11.2026
+
+REVIEW; F9-01/F9-02 confirmed at3c44281. Plan mapped to SRS §§8,11.4,14,16:
+native application-owned Web actions independent of authored components; closed
+service provenance; separate bound owned-display acknowledgement; regular-preset
+regressions without all-action demo helper; existing security/migration/lifecycle
+checks, full offline suite, real WSLg and exact-final-head Linux/Windows CI.
+No Phase8 publication/rubric contract changes, scoring or later phases.
+ADR0009 records event identity compatibility and realistic local trust limits.
+Evidence follows; owner data/credentials/env untouched.
+
+Remediation final local evidence: full offline **1056PASS/683.61s**, source/tests
+frozen throughout. `QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short` includes all prior regression/security/
+migration/integrity tests. Focused learner backend/UI/security42PASS/54.10s
+preceded the extra closed-control authorization regression (included in full).
+Actual WSLg11PASS/31.05s:
+`QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_learner_simulation.py tests/ui/test_web_security.py tests/ui/test_scenario_integration.py -k 'learner or actual_engine or real_engine or actual_constructor_button or renderer_diagnostics or production_dialog' -q --tb=short`.
+Ruff check . and format --check .136files PASS; CRLF-aware diff check PASS.
+No dependencies/startup/schema changes; no repeated package gate necessary.
+Final-head Linux/Windows CI recorded in PR10/delivery after push to preserve
+verified HEAD. Phase9 REVIEW; independent owner acceptance still pending.
+
+## Phase9 — остаточне прийняття та release gate (17.11.2026)
+
+**Phase 9 — ACCEPTED on 2026-11-17.** Власник підтвердив усі п'ять manual WSLg
+сценаріїв на5bd1854: safe decline, Email→Web/native controls, personal history,
+restart/resume, revoke/restore. Зауважень/додаткових змін немає. Увесь Phase9 scope
+та F9-01/F9-02 RESOLVED прийнято; PHASE_9_ACCEPTANCE містить attributable evidence,
+non-blocking graphics warnings та local-process trust limitation. Попередні
+REVIEW/pending записи збережено й замінено поточним acceptance decision.
+Docs-only release: commit/push чинної feature branch → exact-final-head Linux/
+Windows CI → standard merge PR10 з expected head → fetch/ff-only main → verify
+remote/local equality та clean tree. При CI failure/conflict/unexpected runtime
+change зупинитися. Final SHA/merge/CI evidence у PR10/delivery без нового commit.
+Phases0–9 ACCEPTED; Phase10 NOT STARTED / PLANNING, окреме architecture approval;
+Phase11–12 NOT STARTED. Physical Windows11/DPI/hardware GPU/installer/executable/
+final release acceptance — Phase12 risks. No runtime/SRS/test/dependency changes.

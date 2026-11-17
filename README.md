@@ -19,7 +19,7 @@ Phase 0 та Phase 1 — ACCEPTED. Phase 2 — Users & Groups: **ACCEPTED вла
 постійні ID, SQLite persistence, чернеткові версії та зворотне архівування. Аналіз використовує
 ті самі ID та показує відсутність результатів. Email/Web Constructor підтримують
 явну AI-генерацію або позначене офлайн-демо; Web використовує ізольований Qt WebEngine.
-Scoring/learner flow ще не реалізовано. Для офлайн-демо ключі та `.env` не потрібні.
+Phase 9 learner flow — ACCEPTED власником 2026-11-17; scoring належить Phase 10. Для офлайн-демо ключі та `.env` не потрібні.
 
 ## Встановлення й звичайний запуск
 
@@ -511,13 +511,36 @@ Physical Windows11/DPI/installer та інші Phase12 checks залишають
 У Конструкторі відкрийте «Підготовка сценарію»: матеріали → оцінювання →
 публікація. «Опубліковані версії» окремо відкриває history/access навіть із нової чернетки.
 
-Підтримується safe-decline applicability; оцінки/спроби/learner simulation ще
-не реалізовано. Phase8 не потребує AI calls; `--web-demo` дозволяє всю synthetic
+Підтримується safe-decline applicability; спроби/learner simulation додає
+Phase9 нижче, числові оцінки — Phase10. Phase8 не потребує AI calls; `--web-demo` дозволяє всю synthetic
 демонстрацію офлайн в окремій БД. Owner checklist, міграція, security evidence та
 limitations: [PHASE_8_ACCEPTANCE.md](docs/PHASE_8_ACCEPTANCE.md).
 Phase8 — **ACCEPTED власником 2026-11-17** після ручної WSLg перевірки.
 Implementation CI: Linux1014PASS, Windows Server2022 1011PASS/3POSIX skips;
-Ruff/GUI/security gates PASS. Остаточний documentation HEAD перевіряється перед
-дозволеним standard merge PR9; release evidence — PHASE_8_ACCEPTANCE.md та PR9.
-Phase0–8 ACCEPTED; Phase9 — **NOT STARTED / PLANNING**, окремий дозвіл потрібний.
+Ruff/GUI/security gates PASS. PR9 merged у main `dfba3fbaa1b2b8b94d279d3cef3f132c03cc9391`;
+release evidence — PHASE_8_ACCEPTANCE.md та PR9.
+Phases0–9 ACCEPTED; Phase9 прийнято власником 2026-11-17.
+Phase10 — NOT STARTED / PLANNING, Phase11–12 — NOT STARTED.
 Physical Windows11, DPI, GPU-specific behavior та installer — Phase12 risks.
+
+## Phase 9 — ізольоване офлайн-демо проходження
+
+Phases0–9 ACCEPTED; Phase9 прийнято власником 2026-11-17 після independent
+review/remediation та п’яти manual WSLg scenarios. Scoring/Mentor/analytics
+залишаються наступними фазами; Phase10 потребує окремого architecture approval.
+Нова additive migration0007, durable attempts та immutable events.
+Demo setup потребує **нового** файлу БД; наявні demo/owner БД не перезаписуються.
+
+```bash
+demo_dir=$(mktemp -d /tmp/cyberforge-phase9.XXXXXX)
+uv run cyberforge --init-demo --learner-demo --database "$demo_dir/demo.sqlite3" --credentials-file "$demo_dir/demo-credentials.json"
+uv run cyberforge --learner-demo --database "$demo_dir/demo.sqlite3"
+```
+
+Відкрийте приватний JSON у локальному редакторі. `teacher_demo_1` має готову
+публікацію для Групи A; `learner_demo_1` має доступ. «Мої сценарії» → вступ →
+Start → main Email → inspection/report → decline/confirmation або internal CTA
+→ isolated Web → actions → explicit completion. «Мої результати» містить реальну
+history та «Оцінка ще не обчислена». Restart із тією самою БД відновлює unfinished
+attempt. Повний checklist: [Phase 9 acceptance](docs/PHASE_9_ACCEPTANCE.md).
+`--learner-demo` явно використовує offline Mock/demo services без `.env`/cloud keys.

@@ -3429,3 +3429,185 @@ in PR9/delivery to avoid another docs-only commit changing the verified HEAD.
 Physical Windows11/DPI/GPU-specific/installer acceptance remains Phase12 risk;
 owner databases/credentials/.env/API keys/Phase2 snapshot untouched, no live AI.
 Phase0–8 ACCEPTED; Phase9 NOT STARTED / PLANNING; Phases10–12 unchanged.
+
+## 17.11.2026 — Phase 9 authorized implementation
+
+Phase0–8 ACCEPTED; verified clean main matches dfba3fb Phase8 merge PR9.
+GitHub MCP functional branch read and Context7 SQLAlchemy partial-index docs PASS.
+Safe fetch/ff-only and feat/phase-9-learner-simulation created. Sandbox read-only
+.git required authorized escalation; no owner data/credentials touched.
+Plan: contracts/SRS/ADR → database/services → catalog/Email/Web → completion/history
+→ offline demo/security/concurrency/migration/Qt/WSLg/full/package/final-head CI.
+Current increment IN PROGRESS. Scoring/Mentor/analytics excluded.
+
+### Phase9 increments 1–6 — contracts, persistence, learner workspace
+
+SRS dated narrow amendment та ADR0009; migration0007, attempt/event contracts,
+transactional services, effective-access/history separation, exact publication
+binding, cross-version one-active constraint, immutable event/terminal guards.
+Learner catalog/intro, reused MailPreview/WebBrowser with explicit interactions,
+safe decline/confirmed completion, explicit abandonment, persistent recovery,
+repeats та real personal history без numerical scores. Demo --learner-demo creates
+validated immutable publication only with explicit fresh --init-demo, ignores
+cloud configuration та не торкається owner databases/credentials.
+
+Focused backend19PASS; expanded30PASS/2test path failures corrected; focused11PASS;
+demo2PASS. Final real WSLg learner/security8PASS/16.83s, three resume cycles,
+settled1100×720 captures inspected. Initial deprecated Qt method and compact
+reading/footer space corrected; existing constructor defaults preserved.
+Long sandbox backend batches signal143 без summary не зараховано як PASS;
+Chromium outer sandbox initialization refused, so actual GUI/full checks run
+outside outer sandbox with Chromium sandbox retained. No insecure flags.
+Ruff136files PASS; CRLF-aware diff check PASS. Offline wheel/sdist PASS;
+installed-wheel source isolation/migration/publication/learner lifecycle PASS
+using read-only existing dependencies (empty cache prevented fresh offline
+resolution). Full offline suite currently running; final evidence below.
+See PHASE_9_ACCEPTANCE for exact commands, limitations and owner checklist.
+
+Expanded demonstration uses app-owned Form/Actions via existing strict contracts
+and accepted save/publication services. All five canonical Web actions exposed;
+no metadata/values stored. Initial Python-list/strict-tuple validation failure
+fixed using existing JSON validation convention. Learner backend32PASS/46.39s;
+demo+real WSLg/security10PASS/22.80s; actual offline WSLg CLI smoke exits0.
+Initial full run started before this refinement is not the final stable gate;
+new final suite follows after focused checks. No scope beyond Phase9.
+
+Pre-refinement full run1053PASS/655.75s, exit0. Because the all-action demo/native
+keyboard test changed after that run began, it is not the stable final gate.
+Final source/test suite rerun is in progress with output in temporary local log;
+no additional source changes planned. Final installed-wheel probe repeated with
+updated demo: imports/migrations/publication/learner lifecycle PASS.
+
+### Leave cancellation regression — final correction
+
+Actual WSLg regression reproduced1FAIL/3.97s: Web leave recorded correctly,
+but cancelling completion left the Web view hidden. Guarded asynchronous
+confirmation cancellation now restores the current browser surface; persisted
+leave evidence stays immutable and status remains IN_PROGRESS. Test asserts
+visible recovery, deliberate repeat leave, then confirmed completion.
+Final focused learner/WebEngine security8PASS/18.71s; Ruff136files PASS.
+One new stable full suite is running after this correction; preceding full
+runs are retained as intermediate evidence and not used as final-head proof.
+
+### Phase9 final stable local engineering gate
+
+`QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short`
+— **1053PASS/670.67s**, exit0. All1014prior regressions plus39new learner/demo/UI
+cases. Source/tests frozen throughout; only evidence/status docs changed after.
+Ruff check . / format --check .136files PASS; CRLF-aware diff check PASS.
+Actual WSLg learner/security8PASS/18.71s, native Chromium Tab/Enter1PASS; final
+wheel/sdist rebuilt, installed-wheel isolated import/migration/publication/attempt
+lifecycle and Qt WSLg startup/shutdown PASS. Existing dependency reuse limit
+explicit; no claim of fresh offline dependency resolution or physical Windows11.
+Intermediate full1053PASS/728.93s also retained, superseded by stable final run.
+Phase9 REVIEW. Next: verified commit/push, PRmain, exact-head Linux/Windows CI;
+no merge/owner ACCEPTED/Phase10. Final SHA/CI/PR evidence in PR and delivery report
+to avoid another docs-only commit changing final verified HEAD. Owner data,
+credentials, .env, keys and native Phase2 environment untouched; no live AI.
+
+### First-head CI correction — delegated navigation cancellation
+
+PR10 initial head edcc7d3: Linux run44040059722 failed learner early gate
+(4PASS/1FAIL), Windows passed early gate and continued full suite. Native
+Chromium action wrote its event, then Qt loadFinished(False) for intentionally
+rejected action navigation marked render_failed and blocked subsequent actions.
+Official Context7 Qt6 docs explicitly describe this false signal after delegation:
+https://doc.qt.io/qtforpython-6/PySide6/QtWebEngineCore/QWebEnginePage.html
+
+WebBrowser now uses loadingChanged URL/status for the exact application-owned
+document. Rejected action/external URL loads cannot mark render failure, recover
+rendering or count a Web visit. Actual document failure/renderer termination
+remain errors. Regression waits for the real false signal and then performs
+a second native action; no sleeps replace this signal assertion. Security flags,
+network denial, JS restrictions and event semantics unchanged. Focused/full/WSLg
+and new exact-head CI results follow. Phase9 stays REVIEW, no merge/acceptance.
+
+Corrected focused offscreen gate:10PASS/19.32s (38deselected). The accepted
+preview diagnostic test now removes the resource handler and verifies an actual
+failed owned-document reload, retaining error/immutability assertions rather
+than emitting the obsolete boolean-only signal. Native learner test waits for
+Qt's real cancellation False signal, verifies no render error, then activates
+a second actual action before the rest of the event/revocation workflow.
+Security settings unchanged. New stable full suite/WSLg/final CI follows.
+
+### Corrected final local gate — current delivery evidence
+
+After the CI-derived loading-signal correction, stable offline full suite
+**1053PASS/595.76s**, exit0; all1014prior +39new cases retained. Command:
+`QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short`.
+Source/tests frozen throughout. Previous670.67s/728.93s gates are superseded
+for delivery by this595.76s result, with history retained.
+
+Focused actual offscreen10PASS/19.32s and default WSLg10PASS/23.95s:
+`QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_learner_simulation.py tests/ui/test_web_security.py tests/ui/test_scenario_integration.py -k 'learner or actual_engine or real_engine or actual_constructor_button or renderer_diagnostics or production_dialog' -q --tb=short`.
+The offscreen variant uses QT_QPA_PLATFORM=offscreen. Both assert actual native
+Qt cancellation, continued interaction and actual owned-resource failure.
+Ruff check/format136files PASS; CRLF-aware diff check PASS. Corrected offline
+sdist/wheel rebuilt, reinstalled in isolated wheel environment (existing read-only
+dependencies reused); actual installed-wheel WSLg startup/shutdown exits0.
+
+Append-only corrective commit/push in PR10; new exact-head Linux+Windows CI
+mandatory. Final SHA/CI evidence recorded in PR/delivery without another commit.
+Phase9 REVIEW, owner acceptance pending; no merge/Phase10.
+
+## Phase9 independent review remediation — 17.11.2026
+
+REVIEW; F9-01/F9-02 confirmed at3c44281. Plan mapped to SRS §§8,11.4,14,16:
+native application-owned Web actions independent of authored components; closed
+service provenance; separate bound owned-display acknowledgement; regular-preset
+regressions without all-action demo helper; existing security/migration/lifecycle
+checks, full offline suite, real WSLg and exact-final-head Linux/Windows CI.
+No Phase8 publication/rubric contract changes, scoring or later phases.
+ADR0009 records event identity compatibility and realistic local trust limits.
+Evidence follows; owner data/credentials/env untouched.
+
+Remediation final local evidence: full offline **1056PASS/683.61s**, source/tests
+frozen throughout. `QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short` includes all prior regression/security/
+migration/integrity tests. Focused learner backend/UI/security42PASS/54.10s
+preceded the extra closed-control authorization regression (included in full).
+Actual WSLg11PASS/31.05s:
+`QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_learner_simulation.py tests/ui/test_web_security.py tests/ui/test_scenario_integration.py -k 'learner or actual_engine or real_engine or actual_constructor_button or renderer_diagnostics or production_dialog' -q --tb=short`.
+Ruff check . and format --check .136files PASS; CRLF-aware diff check PASS.
+No dependencies/startup/schema changes; no repeated package gate necessary.
+Final-head Linux/Windows CI recorded in PR10/delivery after push to preserve
+verified HEAD. Phase9 REVIEW; independent owner acceptance still pending.
+
+## 17.11.2026 — Phase9 explicit owner acceptance / authorized release
+
+**Phase 9 — ACCEPTED on 2026-11-17.** Owner reports all five manual WSLg scenarios
+PASS at5bd1854: safe decline without Web (sender/link inspected), Email→Web/all
+three native controls, own history without grades, close/restart/original resume,
+teacher_demo_1 Group A revoke blocking / restore resuming same saved attempt.
+Власник не має зауважень або вимог додаткових змін. Увесь Phase9 scope прийнято;
+F9-01/F9-02 RESOLVED після independent review/remediation. Owner manual evidence
+відокремлено від automated checks; не стверджується every UI variation/native Win11.
+
+Owner occasionally observed known libEGL/MESA-LOADER/ZINK/dri2 initialization
+warnings. Усі сценарії працювали, restart можливий, наступний launch без warnings;
+observable functional impact відсутній за повідомленням власника. Non-blocking
+WSLg warnings, не доказ exact owner process exit status. No driver/Mesa/GPU/
+rendering/WebEngine flag changes. Internal API trust limit documented in ADR0009.
+
+Before edits: clean synchronized feature HEAD5bd185431434f43a85664fadcfd4af71899bc605;
+local/origin main dfba3fbaa1b2b8b94d279d3cef3f132c03cc9391. GitHub MCP PR10 open,
+unmerged/clean/base main/expected HEAD; existing fixes inspected. Revalidated
+implementation-head run44049089386 SUCCESS: Linux1056PASS, Windows1053PASS/3POSIX
+skips, Ruff136files and GUI/security/lifecycle/startup PASS. No implementation drift.
+
+Focused docs-only acceptance update: PHASE_9_ACCEPTANCE, IMPLEMENTATION_PLAN,
+DEVELOPMENT_LOG, README current state, ADR0009 status. Historical failures/review/
+corrections preserved. No SRS/runtime/migration/dependency/test changes; local
+full/GUI/package reruns unnecessary. New documentation HEAD still requires both
+platform CI SUCCESS before authorized standard merge with expected_head_sha.
+Then fetch, switch clean main, ff-only, verify merge/local/origin/remote SHA and
+preserved feature branch. Stop for unexpected CI/conflict/history/integrity issue.
+Final SHA/CI/merge evidence goes in PR10/delivery to avoid moving verified HEAD.
+Phases0–9 ACCEPTED; Phase10 NOT STARTED / PLANNING; Phase11–12 NOT STARTED.
+Owner databases/credentials/env/keys/Phase2 snapshot preserved; no live AI.
+Physical Windows11/DPI/hardware GPU/installer/executable/final release acceptance
+remain Phase12 risks. Phase10 architecture requires separate owner approval.
+
+Acceptance docs lightweight checks: `uv run --no-sync ruff check .` PASS;
+`uv run --no-sync ruff format --check .`136files PASS; relative Markdown file
+targets in all5changed docs PASS; `git -c core.whitespace=cr-at-eol diff --check`
+PASS. Exact diff reviewed: only5documentation files, no secrets or runtime drift.

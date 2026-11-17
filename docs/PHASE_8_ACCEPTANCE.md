@@ -2,8 +2,9 @@
 
 **Phase 8 — ACCEPTED on 2026-11-17.** Власник проєкту явно прийняв фазу
 17.11.2026 після успішної ручної WSLg перевірки redesigned Scenario Preparation.
-Merge PR9 дозволено стандартним merge commit лише після Linux/Windows CI на
-точному остаточному documentation HEAD. Phase9 — **NOT STARTED / PLANNING**.
+PR9 merged у main: `dfba3fbaa1b2b8b94d279d3cef3f132c03cc9391`,
+перевірено GitHub MCP/local main 17.11.2026. Phase9 implementation окремо
+дозволено власником 17.11.2026; чинний стан — IMPLEMENTATION_PLAN/PHASE_9_ACCEPTANCE.
 
 Поточне рішення замінює попередні REVIEW/acceptance-pending обмеження нижче;
 датовані review findings, corrections та перевірки збережено як історію.

@@ -32,6 +32,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="Явне офлайн-демо Web та Email, без AI й мережі",
     )
+    parser.add_argument(
+        "--learner-demo",
+        action="store_true",
+        help=(
+            "Явне офлайн-демо проходження; з --init-demo створює публікацію в новій БД"
+        ),
+    )
     setup = parser.add_mutually_exclusive_group()
     setup.add_argument(
         "--init-admin",
@@ -49,6 +56,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Новий приватний JSON-файл випадкових demo-паролів",
     )
     args = parser.parse_args(argv)
+    if args.learner_demo and (
+        args.database is None or (args.init_demo and args.database.exists())
+    ):
+        parser.error(
+            "Для --learner-demo вкажіть окрему БД; ініціалізація потребує нового файлу."
+        )
     if args.web_demo and args.database is None:
         parser.error("Для --web-demo вкажіть окрему або явно обрану --database.")
     if args.init_demo and (args.database is None or args.credentials_file is None):
@@ -95,6 +108,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             from cyberforge.application.demo import initialize_demo
 
             created = initialize_demo(accounts, args.credentials_file)
+            if args.learner_demo and created:
+                from cyberforge.application.learner_demo import prepare_publication
+
+                prepare_publication(accounts, args.credentials_file)
             print(
                 (
                     "Демонстраційні дані створено. Паролі записано лише у "
@@ -131,7 +148,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         apply_theme(app)
         try:
             config = (
-                GatewayConfig() if args.email_demo or args.web_demo else load_config()
+                GatewayConfig()
+                if args.email_demo or args.web_demo or args.learner_demo
+                else load_config()
             )
         except GenerationError:
             raise ApplicationError(
@@ -140,10 +159,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         emails = EmailMaterialService(
             ScenarioService(accounts),
             create_gateway(config),
-            demo=args.email_demo or args.web_demo,
+            demo=args.email_demo or args.web_demo or args.learner_demo,
         )
         window = MainWindow(
-            accounts, emails, WebMaterialService(emails, demo=args.web_demo)
+            accounts,
+            emails,
+            WebMaterialService(emails, demo=args.web_demo or args.learner_demo),
         )
         window.show()
         if args.smoke_test:

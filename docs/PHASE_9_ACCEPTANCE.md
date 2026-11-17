@@ -1,0 +1,345 @@
+# Phase 9 — Learner Simulation
+
+**Phase 9 — ACCEPTED on 2026-11-17.** Власник явно прийняв Phase9 після
+independent review, remediation, automated verification та ручної WSLg перевірки
+implementation HEAD `5bd185431434f43a85664fadcfd4af71899bc605`.
+Commit/push acceptance docs, final-head CI, standard merge PR10 і safe local main
+synchronization явно дозволено; Phase10 не дозволено.
+Попередні REVIEW/pending/no-merge записи нижче збережено як датовану історію;
+їх замінює це рішення власника, а не ретроспективна зміна evidence.
+Base main `dfba3fbaa1b2b8b94d279d3cef3f132c03cc9391` (accepted Phase8, merged PR9).
+Feature branch: `feat/phase-9-learner-simulation`.
+
+## Scope та нормативне узгодження
+
+Вузька dated amendment SRS v3.0, 17.11.2026: §§3.9,8.1,8.3,8.5–8.6,
+11.4,12.8,14.2,16.6,23–24; первісний текст та CRLF збережено.
+ADR-0009 фіксує approved lifecycle, authorization, event semantics, Qt boundary
+та Phase10 handoff. Phase0–8 залишаються ACCEPTED; старі planning/review записи
+є датованою історією, а не чинним станом. Phase10–12 NOT STARTED.
+
+## Реалізована поведінка
+
+- Learner navigation: «Мої сценарії» та «Мої результати». Catalog має лише
+  eligible immutable publications, dedup Scenario, latest eligible new start.
+  Introduction не створює attempt. Active older publication має пріоритет над
+  newer version; revoked active attempt видимий зі станом restriction.
+- ScenarioAttemptV1: UUID, learner/scenario/publication/version/manifest,
+  original verified grant provenance, immutable title, EMAIL/WEB, decision,
+  web_visited, UTC timestamps, revision/sequence. IN_PROGRESS переходить лише
+  до explicit COMPLETED або ABANDONED. Нові independent repeats без ліміту.
+- SQLite partial unique index за learner+Scenario через всі версії; transactional
+  start-or-resume, BEGIN IMMEDIATE, optimistic revision, unique request UUID,
+  stable positive sequence. Migration0007 additive, FK/index/checks, immutable
+  events/attempt binding, terminal consistency guards. Unsafe downgrade blocked.
+- AttemptEventV1 — лише factual actions, закрита vocabulary без score judgment.
+  Email: email_opened/inspect_sender/inspect_link/report; transition:
+  decline/open_internal; Web: inspect_address/leave/report/confirm/submit_synthetic;
+  system: started/web_entered/completed/abandoned. Web component ID звіряється
+  з exact immutable artifact. Event API взагалі не приймає form values/metadata.
+- Request replay перевіряє current access і operation digest, не дублює events;
+  intentional repeated inspection має новий UUID. Insert failure відкочує state.
+- Revocation/membership removal/archive/deactivation блокують наступні actions;
+  attempts/events зберігаються. Alternative current grant залишається valid.
+  Restore resumes original publication. Ownership history/events read не потребує
+  current grant, але не завантажує restricted content; foreign learner та
+  Instructor/Admin endpoints denied.
+- Email використовує MailPreview/MessageBody з learner controls, published
+  content без regenerate/edit. Відкриття листа не є sender/link inspection.
+  Report не завершує спробу. Decline зберігає pending decision; confirmation
+  окремо завершує без Web. Cancel/restart не вигадує terminal outcome.
+- InternalNavigationV1 перевіряє exact publication/scenario/version/manifest/
+  resource/source main. display_url ніколи не передається URL loader/DNS.
+  open_internal commit переводить stage=WEB; тільки successful local load
+  записує web_entered/web_visited. Failed load не є visit або inspection.
+- WebBrowser/WebPageV2 використовують прийняті isolated off-record profile,
+  request interception, popup/download/file/JS restrictions та fixed synthetic
+  fields. Component-aware signal додає factual persistence через trusted controller.
+  Renderer recovery і disposal order збережено. Confirmation використовує
+  asynchronous open/finished; stale session/browser callbacks guarded.
+- Completion/abandonment explicit confirmed та terminal. Navigation/logout/close
+  очищують widgets, але зберігають unfinished attempt. Resume restores DB stage.
+- Personal history показує title/version/status/start/end/basic details та
+  «Оцінка ще не обчислена». Жодних points/percent/pass-fail/AI assessments.
+
+## Точна межа Phase10
+
+Future deterministic scorer отримує immutable manifest → snapshot/rubric
+reference, rubric-declarations-v1/criterion-registry-v1 та ordered AttemptEventV1.
+`web_visited` потребує system/web_entered після successful display;
+transition/open_internal сам по собі не означає visit. Safe-decline completion
+має transition/decline → system/completed без web_entered. Missing Web evidence
+не є failure/zero; applicability застосовує Phase10. Revisioned rubric meanings
+не змінюються. ScoringService, penalties, numerical results, Mentor та analytics
+не реалізовано/не викликаються. Runtime learning не використовує LLMGateway.
+
+## Перевірки та evidence
+
+Використано лише isolated synthetic fixtures/DB, без live Groq/Gemini та owner DB.
+
+- Initial backend focused: 16PASS/3FAIL; safe-message constructor і archive test
+  invocation виправлено; наступний `tests/test_learner_attempts.py`: **19PASS**.
+- Expanded backend run: 30PASS/2FAIL (test used nonexistent Database.path);
+  test виправлено; focused restart/navigation/rollback/migration: **11PASS**.
+- Дві довші sandboxed backend batches завершено signal143 без final summary;
+  їх не зараховано як full PASS. Required full run виконується окремо нижче.
+- Real Qt first path виявив deprecated QMessageBox.setButtonText під warnings
+  as errors; button(...).setText виправлено відповідно до official Context7 docs.
+- Outer workspace sandbox не запускає Chromium (`Operation not permitted` у
+  sandbox_host_linux.cc); tests повторено поза outer sandbox зі збереженим
+  Chromium sandbox, без insecure flags чи runtime policy exceptions.
+- Real default WSLg learner E2E/revoke/restore/recovery/compact/lifecycle:
+  `QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_learner_simulation.py -q --tb=short`
+  **5PASS**; latest 14.10s before final reading-space adjustment.
+- Final targeted WSLg learner + actual WebEngine isolation:
+  `QT_QPA_PLATFORM=wayland CYBERFORGE_LEARNER_SCREENSHOTS=/tmp/cf9-screens UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_learner_simulation.py tests/ui/test_web_security.py -q --tb=short`
+  **8PASS/16.83s**, exit0. Settled synthetic Email/Web screenshots inspected at
+  1100×720; footer within viewport, body text readable, no horizontal clipping.
+  Three render/leave/resume cycles retain one attempt and responsive MainWindow.
+  WSLg may emit existing nonfatal Mesa/Zink/EGL initialization messages.
+- `tests/test_learner_demo.py`: **2PASS/1.99s**, socket.connect forbidden,
+  valid publication through accepted services, private credentials preserved,
+  existing DB sentinel untouched by refused learner-demo initialization.
+- `uv run --no-sync ruff check .`: PASS; `ruff format --check .`: **136files PASS**.
+  `git -c core.whitespace=cr-at-eol diff --check`: PASS (SRS retains existing CRLF).
+- `UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv build --offline --out-dir /tmp/cf9-build`:
+  wheel+sdist PASS. Fresh installed wheel under `/tmp/cf9-wheel-env`, Python `-I`:
+  wheel-origin import, packaged migration0007, offline publication, learner safe
+  decline/completion/history PASS. Empty dependency cache lacked google-genai,
+  so wheel installed with --no-deps and read-only existing verified dependencies
+  added through a temporary .pth; fresh dependency resolution is not claimed.
+- Expanded all-action demo correction: strict Form tuples require JSON validation;
+  fixture failure corrected before delivery. Final learner backend **32PASS/46.39s**.
+  Final demo/WSLg/WebEngine security **10PASS/22.80s** with all five Web actions,
+  including submit_synthetic and explicit leave→confirmed completion.
+- Native Chromium keyboard activation (Tab→Enter) records published hero confirm
+  through the real page/controller/event path with JavaScript disabled:
+  `QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_learner_simulation.py -k real_web_navigation -q --tb=short`
+  **1PASS/4.33s**. No runtime JavaScript bridge added.
+- Actual offline WSLg CLI startup/shutdown smoke with fresh `/tmp` DB exits0:
+  `QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync cyberforge --database /tmp/cf9-cli-smoke-final.sqlite3 --learner-demo --smoke-test`.
+- Final stable full offline gate (source/tests frozen throughout):
+  `QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short`
+  **1053PASS/670.67s**, exit0: 1014 prior +39 new cases. Includes migration,
+  data-integrity, RBAC, concurrency, actual Qt/WebEngine security and regression
+  checks. Intermediate full1053PASS/655.75s and1053PASS/728.93s are not the final
+  stable-source evidence. Only evidence/status documents changed afterwards.
+- Final delivery wheel/sdist rebuilt in `/tmp/cf9-delivery-build`; installed-wheel
+  Qt WSLg startup/shutdown smoke with fresh DB exits0. No source import fallback.
+- Final commit/PR and exact-head Linux/Windows CI: recorded in PR/delivery report
+  after push, avoiding another documentation commit that would change that HEAD.
+
+## Owner manual WSLg acceptance — точні кроки
+
+З root репозиторію, у звичайному терміналі власника (не у Chromium-incompatible
+outer execution sandbox), без ключів і мережі:
+
+```bash
+demo_dir=$(mktemp -d /tmp/cyberforge-phase9.XXXXXX)
+uv run cyberforge --init-demo --learner-demo --database "$demo_dir/demo.sqlite3" --credentials-file "$demo_dir/demo-credentials.json"
+QT_QPA_PLATFORM=wayland uv run cyberforge --learner-demo --database "$demo_dir/demo.sqlite3"
+```
+
+Нова initialization потребує nonexistent DB; повторний запуск використовує лише
+останню команду. Відкрийте приватний JSON у локальному редакторі для паролів;
+не надсилайте/не копіюйте credentials до PR чи logs. Setup не друкує паролів.
+
+1. Sign in `teacher_demo_1`; Constructor → створений scenario → «Опубліковані
+   версії». Перевірте version1 та grant «Група A». Нічого не регенеруйте.
+2. Sign out, sign in `learner_demo_1`; «Мої сценарії». Є один training scenario;
+   Constructor/Analytics/Admin не доступні. «Переглянути інформацію» показує
+   simulated objective/no-real-credentials notice; history ще порожня.
+3. Explicit «Розпочати навчання». Відкрийте main Email, виконайте sender/link
+   inspections і report. Report залишає IN_PROGRESS.
+4. «Не переходити за посиланням» → «Повернутися»: completion не відбувся.
+   «Завершити сценарій» → «Підтвердити»: neutral completion без Web/grade.
+5. «Мої результати»: version1/COMPLETED/start/end, factual details, «Оцінка ще
+   не обчислена». Немає 0%,100%,pass/fail або AI feedback.
+6. Start repeat з catalog; нова спроба. Main Email → approved CTA → Web. Адреса
+   лише visual; actual content internal. Прокрутіть сторінку до allowed action
+   controls, перевірте адресу/report та доступні synthetic actions. Fields readonly.
+   Leave або explicit complete → confirmation. History має дві terminal attempts.
+7. Start третю спробу; виконайте кілька Email actions, закрийте застосунок без
+   abandonment. Запустіть останню CLI-команду, sign in; «Продовжити проходження»
+   відновлює ту саму спробу/Email. Перейдіть Web, повторіть restart; stage=WEB,
+   новий open_internal не дублюється. Back/Forward не завершують attempt.
+8. Для revocation залиште unfinished Web attempt; sign out, sign in instructor;
+   «Опубліковані версії» → selected version1 → revoke Group A з confirmation.
+   Sign in learner: restricted active attempt збережено; нові actions/content
+   blocked, власна history доступна. Instructor відновлює Group A grant;
+   learner resumes original attempt/version. Publication artifact/manifest не змінено.
+9. «Припинити проходження» → cancel не змінює status; confirm → ABANDONED,
+   history збережена, наступний start створює нову спробу.
+10. Повторіть кілька open/Web/Back/resume/logout циклів, 1100×720, Tab/Space;
+    основне вікно має залишатися responsive. Запишіть owner evidence та issues.
+
+## Ризики й acceptance gate
+
+Owner manual acceptance та independent review ще не виконані цим документом.
+Physical native Windows11, DPI, hardware GPU, executable/installer залишаються
+Phase12 risks; Windows Server2022 CI не є physical acceptance. Історичні results
+не оцінено: це навмисний Phase9 boundary. Тест failed-load відтворює Qt failure
+callback і реальне recovery load; accepted renderer-process termination/security
+regressions зберігаються в загальній suite. No sandbox/graphics flags changed.
+
+Після engineering checks статус лише REVIEW. Next action: незалежний review та
+owner checklist; без merge/ACCEPTED/Phase10 до окремого дозволу власника.
+
+## Змінені файли
+
+- SRS; README; IMPLEMENTATION_PLAN; DEVELOPMENT_LOG; PHASE_8_ACCEPTANCE status;
+  цей PHASE_9_ACCEPTANCE; ADR0009.
+- learning/__init__.py, learning/contracts.py; application/learner_attempts.py,
+  learner_demo.py; publication `_content` transaction reuse.
+- persistence/models.py, migrations/versions/0007_learner_attempts.py.
+- ui/learner_pages.py, shell.py, email_preview.py, email_body.py, web_browser.py;
+  main.py explicit offline demo flag.
+- tests/test_learner_attempts.py, test_learner_demo.py,
+  ui/test_learner_simulation.py; existing migration tests' expected head updated
+  без видалення assertion/regression; CI early learner gate/30min allowance.
+
+### Leave cancellation regression — final correction
+
+Actual WSLg regression reproduced1FAIL/3.97s: Web leave recorded correctly,
+but cancelling completion left the Web view hidden. Guarded asynchronous
+confirmation cancellation now restores the current browser surface; persisted
+leave evidence stays immutable and status remains IN_PROGRESS. Test asserts
+visible recovery, deliberate repeat leave, then confirmed completion.
+Final focused learner/WebEngine security8PASS/18.71s; Ruff136files PASS.
+One new stable full suite is running after this correction; preceding full
+runs are retained as intermediate evidence and not used as final-head proof.
+
+Final engineering state: REVIEW. Stable full1053PASS/670.67s, Ruff136files PASS,
+focused actual WSLg8PASS/18.71s, packaged offline startup/lifecycle PASS.
+Source/tests frozen during final suite; owner manual acceptance pending.
+CI final-head evidence remains a mandatory independent remote gate.
+
+### First-head CI correction — delegated navigation cancellation
+
+PR10 initial head edcc7d3: Linux run44040059722 failed learner early gate
+(4PASS/1FAIL), Windows passed early gate and continued full suite. Native
+Chromium action wrote its event, then Qt loadFinished(False) for intentionally
+rejected action navigation marked render_failed and blocked subsequent actions.
+Official Context7 Qt6 docs explicitly describe this false signal after delegation:
+https://doc.qt.io/qtforpython-6/PySide6/QtWebEngineCore/QWebEnginePage.html
+
+WebBrowser now uses loadingChanged URL/status for the exact application-owned
+document. Rejected action/external URL loads cannot mark render failure, recover
+rendering or count a Web visit. Actual document failure/renderer termination
+remain errors. Regression waits for the real false signal and then performs
+a second native action; no sleeps replace this signal assertion. Security flags,
+network denial, JS restrictions and event semantics unchanged. Focused/full/WSLg
+and new exact-head CI results follow. Phase9 stays REVIEW, no merge/acceptance.
+
+Corrected focused offscreen gate:10PASS/19.32s (38deselected). The accepted
+preview diagnostic test now removes the resource handler and verifies an actual
+failed owned-document reload, retaining error/immutability assertions rather
+than emitting the obsolete boolean-only signal. Native learner test waits for
+Qt's real cancellation False signal, verifies no render error, then activates
+a second actual action before the rest of the event/revocation workflow.
+Security settings unchanged. New stable full suite/WSLg/final CI follows.
+
+### Corrected final local gate — current delivery evidence
+
+After the CI-derived loading-signal correction, stable offline full suite
+**1053PASS/595.76s**, exit0; all1014prior +39new cases retained. Command:
+`QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short`.
+Source/tests frozen throughout. Previous670.67s/728.93s gates are superseded
+for delivery by this595.76s result, with history retained.
+
+Focused actual offscreen10PASS/19.32s and default WSLg10PASS/23.95s:
+`QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_learner_simulation.py tests/ui/test_web_security.py tests/ui/test_scenario_integration.py -k 'learner or actual_engine or real_engine or actual_constructor_button or renderer_diagnostics or production_dialog' -q --tb=short`.
+The offscreen variant uses QT_QPA_PLATFORM=offscreen. Both assert actual native
+Qt cancellation, continued interaction and actual owned-resource failure.
+Ruff check/format136files PASS; CRLF-aware diff check PASS. Corrected offline
+sdist/wheel rebuilt, reinstalled in isolated wheel environment (existing read-only
+dependencies reused); actual installed-wheel WSLg startup/shutdown exits0.
+
+Append-only corrective commit/push in PR10; new exact-head Linux+Windows CI
+mandatory. Final SHA/CI evidence recorded in PR/delivery without another commit.
+Phase9 REVIEW, owner acceptance pending; no merge/Phase10.
+
+## Phase9 independent review remediation — 17.11.2026
+
+REVIEW; F9-01/F9-02 confirmed at3c44281. Plan mapped to SRS §§8,11.4,14,16:
+native application-owned Web actions independent of authored components; closed
+service provenance; separate bound owned-display acknowledgement; regular-preset
+regressions without all-action demo helper; existing security/migration/lifecycle
+checks, full offline suite, real WSLg and exact-final-head Linux/Windows CI.
+No Phase8 publication/rubric contract changes, scoring or later phases.
+ADR0009 records event identity compatibility and realistic local trust limits.
+Evidence follows; owner data/credentials/env untouched.
+
+Remediation final local evidence: full offline **1056PASS/683.61s**, source/tests
+frozen throughout. `QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short` includes all prior regression/security/
+migration/integrity tests. Focused learner backend/UI/security42PASS/54.10s
+preceded the extra closed-control authorization regression (included in full).
+Actual WSLg11PASS/31.05s:
+`QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_learner_simulation.py tests/ui/test_web_security.py tests/ui/test_scenario_integration.py -k 'learner or actual_engine or real_engine or actual_constructor_button or renderer_diagnostics or production_dialog' -q --tb=short`.
+Ruff check . and format --check .136files PASS; CRLF-aware diff check PASS.
+No dependencies/startup/schema changes; no repeated package gate necessary.
+Final-head Linux/Windows CI recorded in PR10/delivery after push to preserve
+verified HEAD. Phase9 REVIEW; independent owner acceptance still pending.
+
+## Остаточне прийняття власником — 17.11.2026
+
+**Phase 9 — ACCEPTED on 2026-11-17.** Architecture approval, engineering gates,
+independent review/remediation та owner manual acceptance є окремими етапами.
+За повідомленням власника, усі п'ять acceptance scenarios на `5bd1854` пройдено
+успішно, без функціональних проблем; зауважень або додаткових змін немає.
+Це owner-provided WSLg evidence, не новий automated check чи physical Windows11.
+
+| Owner manual WSLg scenario | Результат та межа твердження |
+| --- | --- |
+| Safe decline без Web | PASS: learner_demo_1 увійшов, відкрив Email, перевірив sender/link, відмовився від переходу та завершив без Web |
+| Email → Web | PASS: нова спроба, authorized internal transition, isolated Web; усі три native controls «Перевірити адресу», «Повідомити про сайт», «Залишити сторінку» працюють |
+| Personal history | PASS: «Мої результати» показує attempts без fabricated numerical grades |
+| Restart/resume | PASS: unfinished attempt після закриття/restart відновлено через «Продовжити проходження» |
+| Revoke/restore | PASS: teacher_demo_1 revoke Group A блокує продовження; restore дозволяє resume тієї самої збереженої спроби |
+
+Прийнято весь Phase9 scope: authorized catalog/introduction/Start/Continue,
+immutable publication-bound ScenarioAttemptV1, transactional lifecycle та
+one-active learner/Scenario, versioned append-only factual AttemptEventV1,
+safe no-Web decline, controlled Email→Web, isolated Web/native browser controls/
+authored interactions/session-bound display acknowledgement/renderer safeguards,
+revocation/restoration, durable resume, explicit completion/abandonment/repeats,
+personal history без grades, migration0007 та Phase10-compatible manifest/rubric/
+event references. Прийняття всього scope не означає ручну перевірку кожного
+можливого UI variation або всіх заборонених service paths власником.
+
+**F9-01 RESOLVED:** native inspect_address/report/leave незалежні від optional
+authored components; closed validated identities і typed provenance. Exact
+published artifacts/rubric semantics незмінні. **F9-02 RESOLVED:** generic record
+відхиляє system/web_entered; окремий session/attempt-bound callback підтверджує
+owned-document success зі збереженням authorization/binding/revision/idempotency.
+Internal API separation довіреного desktop process не є cryptographic protection
+проти arbitrary local code/DB modification. Обидва findings прийнято як resolved.
+
+Під час owner sessions іноді спостерігалися `libEGL warning: failed to get driver
+name for fd -1`, `MESA-LOADER: failed to retrieve device information`, `MESA:
+error: ZINK: failed to choose pdev`, `libEGL warning: egl: failed to create dri2
+screen`. Ці patterns раніше досліджено у Phase8 та спостерігалися при успішному
+WebEngine execution. Власник підтвердив відсутність observable functional impact,
+можливість restart та наступний launch без warnings. Це observed non-blocking
+WSLg graphics initialization warnings; точний process exit status owner sessions
+окремо не captured і не стверджується. Drivers/Mesa/GPU/rendering/security flags
+не змінюються.
+
+Перед acceptance docs: clean synchronized feature tree, HEAD5bd1854, base main
+`dfba3fbaa1b2b8b94d279d3cef3f132c03cc9391`; GitHub MCP PR10 open/unmerged/clean.
+Implementation-head CI [44049089386](https://github.com/the1llus1on/cyberforge/actions/runs/44049089386)
+повторно перевірено SUCCESS: Linux1056PASS, Windows Server2022 1053PASS/3POSIX-only
+skips; Ruff136files, GUI/security/lifecycle/startup gates PASS.
+
+Acceptance increment — docs only. Local repeated pytest/GUI/package runs не
+потрібні; exact new documentation HEAD мусить пройти Linux+Windows CI до merge.
+Release: focused docs commit/push → final-head CI → recheck scope/base/conflicts →
+standard merge commit з expected_head_sha → fetch/ff-only local main → verify
+merge/local/origin/remote SHA, clean tree. Final SHA/CI/merge evidence записується
+в PR10/delivery без циклічних docs-only commits, що змінюють verified HEAD.
+
+Phases0–9 ACCEPTED; Phase10 NOT STARTED / PLANNING, architecture потребує окремого
+обговорення/дозволу; Phase11–12 NOT STARTED. Physical Windows11/DPI/hardware GPU/
+installer/executable/final release acceptance залишаються Phase12 risks.
+No live AI, owner databases/credentials/.env/API keys/native Phase2 environment
+changes. Feature branch зберігається; history не переписується.

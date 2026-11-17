@@ -236,3 +236,102 @@ class PublicationGrantAuditEvent(Base):
     previous_active: Mapped[bool] = mapped_column(Boolean)
     new_active: Mapped[bool] = mapped_column(Boolean)
     grant_revision: Mapped[int] = mapped_column(Integer)
+
+
+class ScenarioAttemptRecord(Base):
+    __tablename__ = "scenario_attempts"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('IN_PROGRESS','COMPLETED','ABANDONED')", name="attempt_status"
+        ),
+        CheckConstraint("current_stage IN ('EMAIL','WEB')", name="attempt_stage"),
+        CheckConstraint(
+            "decision IN ('NONE','DECLINED','LEFT')", name="attempt_decision"
+        ),
+        CheckConstraint(
+            "revision > 0 AND last_event_sequence >= 0 AND scenario_version > 0",
+            name="attempt_revision",
+        ),
+        CheckConstraint(
+            (
+                "(status = 'COMPLETED') = (completed_at IS NOT NULL) AND (status "
+                "= 'ABANDONED') = (abandoned_at IS NOT NULL)"
+            ),
+            name="attempt_terminal_time",
+        ),
+        CheckConstraint(
+            (
+                "(completed_at IS NULL OR completed_at >= started_at) AND "
+                "(abandoned_at IS NULL OR abandoned_at >= started_at)"
+            ),
+            name="attempt_time_order",
+        ),
+        CheckConstraint(
+            "current_stage = 'WEB' OR web_visited = 0", name="attempt_visit"
+        ),
+    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    learner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    publication_id: Mapped[int] = mapped_column(ForeignKey("scenario_publications.id"))
+    scenario_id: Mapped[int] = mapped_column(ForeignKey("scenarios.id"))
+    scenario_version: Mapped[int] = mapped_column(Integer)
+    manifest_digest: Mapped[str] = mapped_column(String(64))
+    authorization_group_id: Mapped[int] = mapped_column(
+        ForeignKey("learning_groups.id")
+    )
+    scenario_name: Mapped[str] = mapped_column(String(200))
+    status: Mapped[str] = mapped_column(String(20))
+    current_stage: Mapped[str] = mapped_column(String(10))
+    email_opened: Mapped[bool] = mapped_column(Boolean)
+    decision: Mapped[str] = mapped_column(String(10))
+    web_visited: Mapped[bool] = mapped_column(Boolean)
+    started_at: Mapped[datetime] = mapped_column(DateTime())
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime())
+    abandoned_at: Mapped[datetime | None] = mapped_column(DateTime())
+    revision: Mapped[int] = mapped_column(Integer)
+    last_event_sequence: Mapped[int] = mapped_column(Integer)
+
+
+class AttemptEventRecord(Base):
+    __tablename__ = "attempt_events"
+    __table_args__ = (
+        UniqueConstraint("attempt_id", "sequence", name="attempt_event_sequence"),
+        UniqueConstraint(
+            "attempt_id", "request_id", "operation_index", name="attempt_event_request"
+        ),
+        CheckConstraint(
+            "sequence > 0 AND operation_index BETWEEN 0 AND 2", name="event_order"
+        ),
+        CheckConstraint(
+            "surface IN ('email','transition','web','system')", name="event_surface"
+        ),
+    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    attempt_id: Mapped[str] = mapped_column(ForeignKey("scenario_attempts.id"))
+    sequence: Mapped[int] = mapped_column(Integer)
+    surface: Mapped[str] = mapped_column(String(12))
+    action_id: Mapped[str] = mapped_column(String(32))
+    component_id: Mapped[str | None] = mapped_column(String(80))
+    timestamp: Mapped[datetime] = mapped_column(DateTime())
+    request_id: Mapped[str] = mapped_column(String(36))
+    operation_digest: Mapped[str] = mapped_column(String(64))
+    operation_index: Mapped[int] = mapped_column(Integer)
+
+
+# Kept with metadata so migration parity detects accidental schema drift.
+from sqlalchemy import Index, text  # noqa: E402
+
+Index(
+    "uq_active_learner_scenario",
+    ScenarioAttemptRecord.learner_id,
+    ScenarioAttemptRecord.scenario_id,
+    unique=True,
+    sqlite_where=text("status = 'IN_PROGRESS'"),
+)
+Index(
+    "ix_attempt_learner_started",
+    ScenarioAttemptRecord.learner_id,
+    ScenarioAttemptRecord.started_at,
+)
+Index("ix_attempt_scenario", ScenarioAttemptRecord.scenario_id)
+Index("ix_attempt_publication", ScenarioAttemptRecord.publication_id)

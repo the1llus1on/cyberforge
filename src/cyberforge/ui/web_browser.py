@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from PySide6.QtCore import QBuffer, QIODevice, QObject, Qt, QUrl, Signal
 from PySide6.QtWebEngineCore import (
+    QWebEngineLoadingInfo,
     QWebEnginePage,
     QWebEngineProfile,
     QWebEngineSettings,
@@ -45,6 +46,7 @@ class ResourceStore(QObject):
         self.url = ""
         self.html = b""
         self.actions: dict[str, str] = {}
+        self.components: dict[str, str] = {}
 
 
 class RequestGate(QWebEngineUrlRequestInterceptor):
@@ -92,6 +94,7 @@ class LocalHandler(QWebEngineUrlSchemeHandler):
 
 class IsolatedPage(QWebEnginePage):
     action_requested = Signal(str)
+    action_context_requested = Signal(str, str)
 
     def __init__(self, profile, store, parent=None):
         super().__init__(profile, parent)
@@ -111,6 +114,9 @@ class IsolatedPage(QWebEnginePage):
             and address in self.store.actions
         ):
             self.action_requested.emit(self.store.actions[address])
+            self.action_context_requested.emit(
+                self.store.actions[address], self.store.components.get(address, "")
+            )
             return False
         return bool(is_main_frame and address == self.store.url)
 
@@ -148,9 +154,14 @@ class BrowserTab(QLabel):
 
 
 class WebBrowser(QFrame):
+    interaction_requested = Signal(str, str)
+    load_succeeded = Signal()
+    browser_control_requested = Signal(str)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self._disposed = False
+        self.learner_mode = False
         self.render_failed = False
         self.setMinimumHeight(220)
         layout = QVBoxLayout(self)
@@ -182,6 +193,24 @@ class WebBrowser(QFrame):
         self.address.setAccessibleName("Навчальна адреса, лише відображення")
         controls.addWidget(self.address, 1)
         layout.addLayout(controls)
+        self.learner_controls = QFrame()
+        native = QHBoxLayout(self.learner_controls)
+        self.control_buttons = {}
+        for action, title in (
+            ("inspect_address", "Перевірити адресу"),
+            ("report", "Повідомити про сайт"),
+            ("leave", "Залишити сторінку"),
+        ):
+            control = QPushButton(title)
+            control.setAccessibleName(title)
+            control.clicked.connect(
+                lambda checked=False,
+                action=action: self.browser_control_requested.emit(action)
+            )
+            native.addWidget(control)
+            self.control_buttons[action] = control
+        self.learner_controls.hide()
+        layout.addWidget(self.learner_controls)
         self.view = QWebEngineView(self)
         self.store = ResourceStore(self)
         # Dedicated profile, independent of application authentication state.
@@ -229,9 +258,10 @@ class WebBrowser(QFrame):
         self.feedback.setWordWrap(True)
         self.feedback.setStyleSheet("padding:4px;font-size:12px")
         layout.addWidget(self.feedback)
-        self.page.loadFinished.connect(self._load_finished)
+        self.page.loadingChanged.connect(self._loading_changed)
         self.page.renderProcessTerminated.connect(self._renderer_terminated)
-        self.page.action_requested.connect(self.interact)
+        self.page.action_requested.connect(self._preview_interact)
+        self.page.action_context_requested.connect(self._learner_interact)
         self.reload.clicked.connect(self.reload_current)
         self.rendered: RenderedPage | None = None
         self.draft: WebDraftV3 | None = None
@@ -241,6 +271,21 @@ class WebBrowser(QFrame):
     def dispose(self) -> None:
         self._disposed = True
         release_engine(self.view, self.page, self.profile)
+
+    def _loading_changed(self, info: QWebEngineLoadingInfo) -> None:
+        # Qt emits a failed load after acceptNavigationRequest delegates an
+        # action and returns False. Only the owned document can fail/recover
+        # rendering or establish a visit; rejected action/external URLs cannot.
+        if self._disposed or info.url().toString() != self.store.url:
+            return
+        status = info.status()
+        if status == QWebEngineLoadingInfo.LoadStatus.LoadSucceededStatus:
+            self._load_finished(True)
+        elif status in (
+            QWebEngineLoadingInfo.LoadStatus.LoadStoppedStatus,
+            QWebEngineLoadingInfo.LoadStatus.LoadFailedStatus,
+        ):
+            self._load_finished(False)
 
     def _load_finished(self, success: bool) -> None:
         if self._disposed:
@@ -254,6 +299,7 @@ class WebBrowser(QFrame):
             )
         elif not self.render_failed:
             self.feedback.clear()
+            self.load_succeeded.emit()
 
     def _renderer_terminated(self, status, exit_code: int) -> None:
         if self._disposed:
@@ -276,10 +322,12 @@ class WebBrowser(QFrame):
         super().closeEvent(event)
 
     def set_draft(self, draft: WebDraftV3 | None) -> None:
+        self.learner_controls.setVisible(self.learner_mode)
         self.draft = draft
         self.render_failed = False
         self.feedback.clear()
         self.store.actions = {}
+        self.store.components = {}
         self.store.html = b""
         self.store.url = ""
         self.rendered = None
@@ -302,6 +350,11 @@ class WebBrowser(QFrame):
             for c in draft.page.components
             for a in getattr(c, "actions", ())
         }
+        self.store.components = {
+            action_url(nonce, c.id, a.id): c.id
+            for c in draft.page.components
+            for a in getattr(c, "actions", ())
+        }
         self.tab.set_title(draft.page.tab_title)
         self.address.setText(draft.page.display_url)
         self.view.show()
@@ -312,6 +365,14 @@ class WebBrowser(QFrame):
             self.render_failed = False
             self.feedback.clear()
             self.page.setUrl(QUrl(self.store.url))
+
+    def _preview_interact(self, action):
+        if not self.learner_mode:
+            self.interact(action)
+
+    def _learner_interact(self, action, component):
+        if self.learner_mode and not self._disposed:
+            self.interaction_requested.emit(action, component)
 
     def interact(self, action: str) -> None:
         # The page emits only allowed IDs; independently gate direct controller calls.

@@ -21,6 +21,13 @@ from PySide6.QtWidgets import (
 
 from cyberforge.application.accounts import AccountService
 from cyberforge.application.email_materials import EmailMaterialService
+from cyberforge.application.learner_attempts import LearnerAttemptService
+from cyberforge.application.scenario_integration import ScenarioIntegrationService
+from cyberforge.application.scenario_publication import (
+    PublicationAccessService,
+    ScenarioPublicationService,
+)
+from cyberforge.application.scenario_readiness import ScenarioReadinessService
 from cyberforge.application.scenarios import ScenarioService
 from cyberforge.application.web_materials import WebMaterialService
 from cyberforge.domain.accounts import (
@@ -36,6 +43,7 @@ from cyberforge.ui.account_pages import AccountPage
 from cyberforge.ui.admin_page import AdminPage
 from cyberforge.ui.clipboard_shortcuts import ClipboardShortcuts
 from cyberforge.ui.icons import icon
+from cyberforge.ui.learner_pages import LearnerCatalogPage, LearnerHistoryPage
 from cyberforge.ui.navigation import AuthenticationState, NavigationState, View
 from cyberforge.ui.pages import WorkspacePage, label
 from cyberforge.ui.scenario_page import ScenarioPage
@@ -81,6 +89,14 @@ class MainWindow(QMainWindow):
         self.groups = GroupService(accounts)
         self.scenarios = ScenarioService(accounts)
         self.emails = emails or EmailMaterialService(self.scenarios, create_gateway())
+        publication_service = ScenarioPublicationService(
+            ScenarioReadinessService(
+                ScenarioIntegrationService(webs or WebMaterialService(self.emails))
+            )
+        )
+        self.learner_attempts = LearnerAttemptService(
+            PublicationAccessService(publication_service)
+        )
         self._closing_pending = False
         self.selected_scenario_id: int | None = None
         self._catalog: tuple[Scenario, ...] = ()
@@ -218,6 +234,12 @@ class MainWindow(QMainWindow):
                 self.scenario_page = page
                 page.saved.connect(self._scenario_saved)
                 page.archive_changed.connect(self._scenario_archive_changed)
+            elif view == View.MY_SCENARIOS:
+                page = LearnerCatalogPage(self.learner_attempts, lambda: self._token)
+                self.learner_catalog = page
+            elif view == View.MY_RESULTS:
+                page = LearnerHistoryPage(self.learner_attempts, lambda: self._token)
+                self.learner_history = page
             elif view == View.PROFILE:
                 page = AccountPage(self.accounts)
                 self.account_page = page
@@ -249,6 +271,8 @@ class MainWindow(QMainWindow):
         self._render()
 
     def _authenticated(self, token: str) -> None:
+        self.learner_catalog.invalidate()
+        self.learner_history.invalidate()
         self.scenario_page.email_page.invalidate()
         self.scenario_page.web_page.invalidate()
         self._token = token
@@ -267,6 +291,8 @@ class MainWindow(QMainWindow):
         return True
 
     def _signed_out(self) -> None:
+        self.learner_catalog.invalidate()
+        self.learner_history.invalidate()
         self.accounts.logout(self._token)
         self._token = None
         self.authentication_state = AuthenticationState.GUEST
@@ -603,9 +629,16 @@ class MainWindow(QMainWindow):
         self.nav_buttons[current].setChecked(True)
         self.back_button.setEnabled(self.navigation.can_go_back)
         self.forward_button.setEnabled(self.navigation.can_go_forward)
-        self.scenario_panel.setVisible(
-            current in (View.CONSTRUCTOR, View.ANALYTICS, View.MY_SCENARIOS)
-        )
+        self.scenario_panel.setVisible(current in (View.CONSTRUCTOR, View.ANALYTICS))
+        if learner:
+            self.learner_catalog.refresh()
+            if current == View.MY_RESULTS:
+                self.learner_history.refresh()
+            if (
+                current != View.MY_SCENARIOS
+                and self.learner_catalog.simulation.controller
+            ):
+                self.learner_catalog.show_catalog()
         self.new_scenario_button.setVisible(current == View.CONSTRUCTOR)
         self.context_label.setText(
             {

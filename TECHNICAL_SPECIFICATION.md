@@ -639,6 +639,13 @@ CyberForge повинен мати сучасний темний інтерфе�
 
 ## 3.9. Інтерфейс Learner
 
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 9, 17.11.2026]**
+
+Phase 9 надає чинний catalog «Мої сценарії», isolated Email/Web workspace та
+«Мої результати» як персональну історію спроб без числової оцінки. Introduction
+не створює спроби; start є explicit. Hidden rubric/cues не показуються.
+
+
 **[ТЕХНІЧНЕ РІШЕННЯ]**
 
 Для учня права інтерфейсу відрізняються.
@@ -1528,6 +1535,13 @@ Administrator може переглядати статистику всіх гр
 
 ## 8.1. Початок
 
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 9, 17.11.2026]**
+
+ScenarioAttemptV1 створюється explicit start або відновлює єдину IN_PROGRESS
+спробу learner+Scenario через усі версії. Exact immutable publication/manifest
+не змінюються. Після COMPLETED/ABANDONED дозволено новий незалежний repeat.
+
+
 Учень відкриває доступний сценарій.
 
 Натискає «Розпочати».
@@ -1552,6 +1566,14 @@ Administrator може переглядати статистику всіх гр
 
 ## 8.3. Перехід до Web Simulator
 
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 9, 17.11.2026]**
+
+Перед записом/переходом сервіс повторно перевіряє session, ownership, effective
+grant/membership/archive, publication/version/manifest/source main/resource.
+open_internal і WEB stage commit атомарно; лише successful local display
+створює web_entered/web_visited. Failed renderer load не є відвідуванням.
+
+
 Якщо учень натискає навчальне посилання:
 
 1. Система реєструє подію.
@@ -1575,6 +1597,13 @@ Administrator може переглядати статистику всіх гр
 
 ## 8.5. Завершення без переходу
 
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 9, 17.11.2026]**
+
+Explicit decline записується окремо; наступне confirmed completion завершує
+спробу без Web і без judgment. Pending decision відновлюється після restart.
+Missing Web evidence не означає failed Web criterion або нульову оцінку.
+
+
 **[ОБОВ'ЯЗКОВА ВИМОГА]**
 
 Учень повинен мати можливість правильно завершити сценарій без переходу за підозрілим посиланням.
@@ -1582,6 +1611,15 @@ Administrator може переглядати статистику всіх гр
 Відсутність Web-дій у такому випадку не вважається автоматичною помилкою.
 
 ## 8.6. Завершення
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 9, 17.11.2026]**
+
+Наведений нижче повний pipeline реалізується поетапно. Phase 9 лише атомарно
+зберігає factual events, terminal state/timestamp та особисту history. Phase 10
+окремо запускає ScoringService, versioned rubric/critical semantics, numerical
+results та MentorAgent. Phase 11 надає instructor analytics. У Phase 9 немає
+provisional scores, pass/fail або AI performance assessment.
+
 
 Система:
 
@@ -1848,6 +1886,12 @@ Legacy контракти залишаються читабельними без
 
 ## 11.4. Зв'язок компонентів
 
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 9, 17.11.2026]**
+
+Phase 9 використовує ScenarioLinkV1/InternalNavigationV1 для exact immutable
+resource resolution у поточній attempt transaction; display_url — лише текст.
+
+
 
 **[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
 
@@ -2078,6 +2122,13 @@ NIST Phish Scale використовується для визначення с
 
 ## 12.8. Версіонування
 
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 9, 17.11.2026]**
+
+Phase 9 зберігає publication/version/manifest binding та ordered AttemptEventV1
+для майбутнього scorer. Algorithm/result з переліку нижче додає Phase 10;
+web_visited визначає successful display event, а не намір переходу.
+
+
 Зберігати:
 
 - ID учня;
@@ -2172,6 +2223,15 @@ AI не призначає сценарії самостійно.
 Одна база використовується для всіх користувачів.
 
 ## 14.2. Основні сутності
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 9, 17.11.2026]**
+
+Additive migration0007 додає scenario_attempts та append-only attempt_events.
+DB partial unique index захищає one IN_PROGRESS learner+Scenario; FK, UTC,
+optimistic revisions, BEGIN IMMEDIATE, idempotent request UUID, stable sequences
+та immutable event/rebinding/terminal guards забезпечують consistency.
+Downgrade з attempt history заборонено. Звичайне закриття не є abandonment.
+
 
 
 **[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
@@ -2448,6 +2508,16 @@ CyberForge — навчальний симулятор.
 Використовувати синтетичні навчальні дані.
 
 ## 16.6. Рольова безпека
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 9, 17.11.2026]**
+
+Кожен learner write повторно перевіряє effective access; revoke/membership
+removal/archive/deactivation блокують дії без знищення спроби. Restore дозволяє
+resume original publication, alternative active grant зберігає доступ. History
+metadata/events readable лише власнику з чинним learner account/session після
+revoke, але не дають права завантажувати restricted content. Event API не
+приймає form values/passwords/free text; Web actions — exact artifact components.
+
 
 Права перевіряються на рівні програмної логіки.
 
@@ -3228,6 +3298,13 @@ group grants, explicit next draft і authorized discovery/internal read contract
 
 ## Phase 9. Learner Simulation
 
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 9, 17.11.2026]**
+
+Scope: persistent attempts/events, authorized catalog, Email/Web, explicit
+completion/abandonment, restart/resume, repeats та personal history без scoring.
+Статус REVIEW після engineering gates; ACCEPTED лише explicit owner decision.
+
+
 
 **[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
 
@@ -3279,6 +3356,15 @@ compatibility, safe-decline applicability та окремо погодженим
 ---
 
 # 24. КРИТЕРІЇ ГОТОВНОСТІ
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 9, 17.11.2026]**
+
+Phase 9 gate: обидва learner E2E paths, durable restart/resume, exact versions,
+revocation/restoration, one active attempt across versions, immutable ordered
+idempotent events, personal history, privacy/RBAC/concurrency/migration/Qt
+security/compact WSLg checks та final-head Linux/Windows CI. Немає scoring або
+analytics. Owner acceptance окремо; native Windows 11 відкладено до Phase 12.
+
 
 
 **[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**

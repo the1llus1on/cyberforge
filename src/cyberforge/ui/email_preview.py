@@ -231,6 +231,7 @@ class _MailViews(QWidget):
 
 class MailPreview(QFrame):
     message_opened = Signal(int)
+    link_requested = Signal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -248,6 +249,7 @@ class MailPreview(QFrame):
             palette.setColor(role, QColor(color))
         self.setPalette(palette)
         self.setMinimumWidth(0)
+        self.learner_mode = False
         self.draft: EmailDraftV2 | None = None
         self.selected_index: int | None = None
         self.read_messages: set[int] = set()
@@ -471,6 +473,10 @@ class MailPreview(QFrame):
         self.resource = _text("", "resource")
         self.resource.setWordWrap(True)
         reading.addWidget(self.resource)
+        self.learner_link = QPushButton()
+        self.learner_link.hide()
+        self.learner_link.clicked.connect(self.link_requested)
+        reading.addWidget(self.learner_link)
         self.reply_actions = QWidget()
         reply_row = QHBoxLayout(self.reply_actions)
         reply_row.setContentsMargins(46, 5, 0, 5)
@@ -510,7 +516,7 @@ class MailPreview(QFrame):
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
-        compact = self.width() < 850
+        compact = self.width() < 850 or self.learner_mode
         self.folders.setFixedWidth(48 if compact else 168)
         self.compose.setText("" if compact else "Написати")
         self.inbox_button.setText("" if compact else "Вхідні")
@@ -539,6 +545,7 @@ class MailPreview(QFrame):
             self.open_message(self.selected_index)
 
     def set_draft(self, draft: EmailDraftV2 | None) -> None:
+        self.learner_link.hide()
         self.link = None
         self.draft = draft
         self.selected_index = None
@@ -606,6 +613,7 @@ class MailPreview(QFrame):
             message,
             self.draft.slots.internal_resource_id if index == 0 else None,
             self.link if index == 0 else None,
+            learner_mode=self.learner_mode,
         )
         self.resource.setText(
             "Навчальне посилання: "
@@ -619,6 +627,9 @@ class MailPreview(QFrame):
             if index == 0
             else "Фоновий синтетичний лист"
         )
+        if self.learner_mode and index == 0 and self.link:
+            self.resource.setText("Навчальна адреса: " + self.link.display_url)
+        self.resource.setVisible(not self.learner_mode)
         self.views.setCurrentIndex(1)
         self.inbox_tools.hide()
         self.reading_tools.show()
@@ -627,9 +638,15 @@ class MailPreview(QFrame):
             f"https://mail.training.invalid/#inbox/message-{index + 1}"
         )
         self.counter.setText(f"{index + 1} із {self.messages.count()}")
+        self.learner_link.setVisible(
+            self.learner_mode and index == 0 and self.link is not None
+        )
+        if self.link is not None:
+            self.learner_link.setText(self.link.link_label)
         self.message_opened.emit(index)
 
     def show_inbox(self) -> None:
+        self.learner_link.hide()
         self.views.setCurrentIndex(0)
         self.inbox_tools.show()
         self.reading_tools.hide()
