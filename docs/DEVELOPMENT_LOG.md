@@ -1,8 +1,9 @@
 # CyberForge — журнал розробки
 
-**Поточний стан:** Phase 2 — **ACCEPTED власником 12.11.2026**;
-Phase 3 — **ACCEPTED власником 12.11.2026**. Нижче збережено хронологію попередніх REVIEW;
-історичні рішення Phase0–2 збережено, актуальні докази Phase3 — наприкінці журналу.
+**Поточний стан (17.11.2026):** Phases0–9 — **ACCEPTED**;
+Phase10 — **NOT STARTED / ARCHITECTURE APPROVED**, implementation/migration
+authorization pending; Phases11–12 — NOT STARTED. Нижче збережено хронологію
+попередніх REVIEW/PLANNING та acceptance evidence; актуальний запис — наприкінці журналу.
 
 ## 11.11.2026 — Phase 0: Project Foundation
 
@@ -3611,3 +3612,162 @@ Acceptance docs lightweight checks: `uv run --no-sync ruff check .` PASS;
 `uv run --no-sync ruff format --check .`136files PASS; relative Markdown file
 targets in all5changed docs PASS; `git -c core.whitespace=cr-at-eol diff --check`
 PASS. Exact diff reviewed: only5documentation files, no secrets or runtime drift.
+
+
+## 17.11.2026 — Phase10: погоджена архітектура, лише документація
+
+Власник погодив scoring architecture 17.11.2026. Статус Phase10 —
+**NOT STARTED / ARCHITECTURE APPROVED**. Implementation та migration authorization
+залишаються pending. Погодження дизайну не є дозволом писати runtime/tests/schema,
+не є implementation acceptance і не дозволяє commit/push/PR/merge або Phase11.
+
+Початковий стан: clean main/origin-main tracking, HEAD
+`fd4f29dcbef23dec9b98b424fac100beefb89bb7` за local Git; remote повторно не
+опитувався. Owner work/дані/env/credentials/native Phase2 workspace збережено.
+Переглянуто AGENTS, relevant SRS §§8–9,12,14,23–24,26.2, plan/log, ADR0008/0009,
+PHASE_8_ACCEPTANCE/PHASE_9_ACCEPTANCE та accepted source contracts:
+RubricDefinitionV1/criterion-registry-v1/rubric-declarations-v1/publication manifest,
+ScenarioAttemptV1/AttemptEventV1, migration0007, MentorAgent/MentorInputV1/FactV1/
+ExplanationV1 та grounding. Runtime contract files лише читалися.
+
+Додано [ADR-0010](adr/0010-deterministic-scoring-mentor.md), narrow owner-approved
+SRS amendments зі збереженням попереднього тексту/labels, expanded Phase10 work
+packages та future acceptance specification P10-01–P10-15. Strategy
+cyberforge-weighted-actions-v1: seven binary numerical + descriptive decision,
+applicable-only Decimal mean, persisted-float conversion, canonical order/digests,
+ROUND_HALF_EVEN 2dp; no implicit threshold. No-Web/Web paths визначаються accepted
+chronological events; inspection не доводить правильну інтерпретацію загрози.
+Evaluation contracts/lifecycle/persistence/idempotency/RBAC/critical observations/
+Mentor offline/privacy/UI/Phase11 boundary зафіксовано як майбутню архітектуру.
+
+Виявлені compatibility limits: Phase8 non-Web validation допускає descriptive
+criterion і не гарантує numerical denominator для обох paths. Prospective
+publication rule застосовуватиметься лише до future publications; historical
+path без numerical criteria → UNSCORABLE/null/reason. Phase5 completed
+ResultFactsV1 потребує non-null float score; UNSCORABLE отримує deterministic
+local explanation без incompatible MentorInputV1, а не forged zero/incomplete.
+NOT_CONFIGURED critical policy не доводить відсутності порушень. SRS historical
+critical proposals залишено; current v1 amendment явно обмежує їх observation
+policy без penalties. Непогодженого конфлікту не виявлено; accepted meanings не
+змінено. Stale log header Phase2/3 та current README architecture-pending status
+оновлено; dated historical entries збережено. Змінено лише п'ять Markdown files:
+SRS, ADR-0010, IMPLEMENTATION_PLAN, DEVELOPMENT_LOG та README.
+NIST methodological boundary звірено з official
+[TN2276 abstract](https://csrc.nist.gov/pubs/tn/2276/final): email detection difficulty,
+не learner score; методику не використано для scoring.
+
+Фактична документаційна верифікація:
+
+- `python3 /tmp/cyberforge_phase10_docs_check.py` — PASS: exactly five Markdown
+  files, no staged changes/unchanged HEAD; 50 relative file targets існують;
+  UTF-8 без BOM, original LF/CRLF styles збережено. SRS має рівно 11 insertion-only
+  amendments: увесь попередній byte content збережено в початковому порядку.
+  Source AST comparison усіх восьми criterion IDs/labels/phases/evidence actions/
+  applicability та canonical order — PASS. Вісім future work packages,
+  15 future acceptance criteria, A–K coverage та architecture status — PASS.
+  Це одноразовий read-only documentation verifier у /tmp, не новий project test.
+- `git -c core.whitespace=cr-at-eol diff --check` — PASS.
+- `git diff -- README.md docs/IMPLEMENTATION_PLAN.md docs/DEVELOPMENT_LOG.md`,
+  `git diff -- TECHNICAL_SPECIFICATION.md` та огляд нового ADR — лише
+  documentation baseline; changes/links/history/compatibility перевірено.
+
+Documentation baseline gate PASS: review-ready; owner review ще попереду.
+Phase10 implementation acceptance не пройдено/не заявляється. Ruff/pytest/GUI,
+build/package, migration та CI не запускалися для цього docs-only increment.
+
+Future acceptance tests не створювалися/не виконувалися. Немає runtime,
+migration/schema, dependency або existing-test changes, live LLM calls чи DB
+operations. Physical Windows11 та ще не виконані Decimal/digest/concurrency/
+migration/privacy/UI acceptance checks залишаються ризиками майбутньої реалізації.
+Наступна дія — owner review baseline та окремий implementation authorization;
+Phase10 implementation і Phase11 не почато.
+
+
+## 17.11.2026 — Phase10 architecture remediation F10-01–F10-04 (docs only)
+
+Власник дозволив лише documentation remediation чотирьох review findings.
+Preflight: main, HEAD fd4f29dcbef23dec9b98b424fac100beefb89bb7; чотири tracked
+Markdown modifications і untracked ADR-0010 від попереднього baseline збережено.
+Зроблено hashes project files та snapshots чотирьох document inputs у /tmp для
+перевірки scope; accepted sources read-only. README вже коректний, у цьому
+increment не змінювався. Попередні preparation/verification записи вище є історією,
+а не підтвердженням architectural acceptance або виконаних runtime tests.
+
+Нормативні corrections інтегровано в ADR-0010, existing dated SRS amendments
+§§12.2/12.8/14.7/23–24 та Phase10 work packages:
+
+- F10-01: StoredEvaluationIntegrityValidation, відповідальний future internal
+  EvaluationService, authorization → consistent DB snapshot → exact source/
+  envelope/criterion/arithmetic validation → authorized consumer. На read/retry/
+  Mentor/future analytics corruption fail closed, record preserved; жодного
+  automatic overwrite/delete/repair/rescore. Future P10-16 містить усі негативні
+  payload/digest/detail/binding/evidence/sequence та consumer/retry cases.
+- F10-02: closed reference event_id UUID string + strict positive sequence;
+  full stream, per-criterion та completed-path references distinct; усі matching
+  ordinary actions, unique/ascending, без repeat score credit. Safe decline —
+  final effective decline+completion; descriptive decision — chronological
+  transition history/final action. P10-17 — repeated-action/reversed-decision vectors.
+- F10-03: approved invariants відокремлено від exact schemas, які ще не fully
+  frozen. Mandatory Contract Freeze Gate WP1 → WP3 до першої migration/persisted
+  result/feedback: typed definitions, serialization/golden/compatibility/corruption
+  vectors, DB mapping, documented ADR/SRS review. WP5 feedback schema також у
+  gate; incompatible post-freeze changes versioned. P10-18; gate зараз не пройдено.
+- F10-04: §D.2 і P10-07 окремо визначають same arithmetic/canonical detail order
+  для equivalent inputs та distinct source-bound digests для different published
+  rubric identities. Original fingerprint/payload не нормалізуються/не змінюються.
+
+Збережено strategy/formula, seven numerical/one descriptive criteria, applicability,
+prospective per-path readiness, historical UNSCORABLE, critical_action=null /
+NOT_CONFIGURED без penalties, Phase5 Mentor та Phase8–9 contracts/lifecycle/events.
+Усі P10-01–18 — future acceptance specification, не executed tests.
+Фактична verification цього remediation:
+
+- `python3 /tmp/cf10_remediation_docs_check.py` — PASS: рівно чотири document
+  changes від preflight; інші 203 project files byte-identical, включно з README,
+  accepted sources/tests/migrations; нових repository files немає. 50 relative
+  Markdown links valid; вісім registry IDs/labels/phases/actions/applicability/
+  canonical order та Phase8–9 version references matched. Вісім work packages,
+  18 future acceptance criteria, explicit F10-01–04 normative rules та mandatory
+  WP1 → WP3/feedback freeze dependency перевірено. HEAD/staging незмінні.
+  UTF-8 без BOM, SRS CRLF/original line endings збережено; original SRS HEAD
+  content лишається byte-preserved із 11 insertion-only amendment regions.
+- `git -c core.whitespace=cr-at-eol diff --check` — PASS.
+- `git status --short`, `git diff --name-only`, `git diff --stat` та exact
+  pre-remediation document diff review — лише очікуваний documentation scope.
+  Untracked ADR-0010 прочитано explicitly, його remediation delta оглянуто
+  окремо від ordinary git diff. README pending baseline change збережено без
+  нового редагування. Local main/HEAD fd4f29d незмінні, нічого не staged.
+
+F10-01/F10-02/F10-03/F10-04 — RESOLVED у документації за engineering review;
+documentation acceptance залишається власнику. Checks підтверджують лише
+documentation consistency/scope, не runtime correctness. Ruff/pytest/GUI,
+migrations/build/CI/live AI не запускалися для цього documentation increment.
+Phase10 — NOT STARTED / ARCHITECTURE APPROVED; implementation unauthorized,
+acceptance лише власником. No runtime/migration/test/dependency/live LLM/Git
+publication changes; Phase11 не розпочато. Нових approved-requirement conflicts
+або unresolved MAJOR findings у цьому remediation не виявлено; exact schema
+freeze та runtime/security/concurrency/migration/Windows acceptance ще попереду.
+
+## 17.11.2026 — Phase10 documentation baseline: дозволена публікація
+
+Власник дозволив лише commit/push dedicated documentation branch та PR до main.
+F10-01–04 resolved у документації; Phase10 NOT STARTED / ARCHITECTURE APPROVED.
+Цей дозвіл замінює попередню заборону Git publication для baseline, але не надає
+дозволу merge, runtime implementation, migration, test changes або Phase11.
+ADR header і current plan authorization notes уточнено без зміни архітектури.
+
+Preflight local main/HEAD/origin-main fd4f29dcbef23dec9b98b424fac100beefb89bb7;
+GitHub MCP list_branches підтвердив той самий remote main і функціональний read.
+Тому fetch/fast-forward не потрібні; existing owner modifications збережено.
+Повністю переглянуто pending tracked diffs та untracked ADR-0010. Очікувані лише
+README, TECHNICAL_SPECIFICATION, IMPLEMENTATION_PLAN, DEVELOPMENT_LOG, ADR-0010.
+
+Final docs gate: `python3 /tmp/cf10_remediation_docs_check.py` PASS — 50 relative
+links, eight exact registry definitions, accepted Phase8–9 versions, eight work
+packages, P10-01–18, mandatory Contract Freeze Gate та F10-01–04 rules. Повторено
+після authorization-note edits. UTF-8/SRS CRLF і pre-existing SRS bytes збережено;
+runtime/migrations/tests/dependencies unchanged. Команда
+`git -c core.whitespace=cr-at-eol diff --check` PASS. Не запускали local pytest,
+GUI/package/migration/live AI для documentation-only publication. CI після push
+перевіряється на exact PR HEAD; результати/PR/SHA — у delivery report, без
+додаткового commit, який змінює перевірений HEAD. No implementation acceptance.

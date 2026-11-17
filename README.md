@@ -520,14 +520,16 @@ Implementation CI: Linux1014PASS, Windows Server2022 1011PASS/3POSIX skips;
 Ruff/GUI/security gates PASS. PR9 merged у main `dfba3fbaa1b2b8b94d279d3cef3f132c03cc9391`;
 release evidence — PHASE_8_ACCEPTANCE.md та PR9.
 Phases0–9 ACCEPTED; Phase9 прийнято власником 2026-11-17.
-Phase10 — NOT STARTED / PLANNING, Phase11–12 — NOT STARTED.
+Phase10 — NOT STARTED / ARCHITECTURE APPROVED (17.11.2026), Phase11–12 — NOT STARTED.
 Physical Windows11, DPI, GPU-specific behavior та installer — Phase12 risks.
 
 ## Phase 9 — ізольоване офлайн-демо проходження
 
 Phases0–9 ACCEPTED; Phase9 прийнято власником 2026-11-17 після independent
 review/remediation та п’яти manual WSLg scenarios. Scoring/Mentor/analytics
-залишаються наступними фазами; Phase10 потребує окремого architecture approval.
+залишаються наступними фазами. Архітектуру Phase10 погоджено 17.11.2026:
+[ADR-0010](docs/adr/0010-deterministic-scoring-mentor.md); implementation/migration
+authorization не надано. Це documentation baseline, не реалізований scoring.
 Нова additive migration0007, durable attempts та immutable events.
 Demo setup потребує **нового** файлу БД; наявні demo/owner БД не перезаписуються.
 

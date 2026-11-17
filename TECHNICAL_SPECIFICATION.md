@@ -1612,6 +1612,16 @@ Missing Web evidence не означає failed Web criterion або нульо�
 
 ## 8.6. Завершення
 
+**[ЗАТВЕРДЖЕНО — вузька архітектурна поправка Phase 10, 17.11.2026]**
+
+Completion залишається незалежною atomic операцією Phase 9. Лише після
+confirmed COMPLETED окреме idempotent scoring створює один immutable result;
+failure допускає retry без зміни completed attempt. No attempt, IN_PROGRESS,
+ABANDONED, completed awaiting scoring, SCORED (включно з 0%), UNSCORABLE та
+technical error розрізняються. open_internal не доводить Web visitation:
+потрібна trusted system/web_entered. Earlier decline, змінений на open_internal,
+не є фінальним safe-decline path. Архітектура погоджена, реалізацію не дозволено.
+
 **[ЗАТВЕРДЖЕНО — вузька поправка Phase 9, 17.11.2026]**
 
 Наведений нижче повний pipeline реалізується поетапно. Phase 9 лише атомарно
@@ -1675,6 +1685,17 @@ WebSlotsV2, title/display-only URL, текст, підписи, картки й 
 Захист refinement scope виконує код. Prompt version: web-prompt-v2.
 
 ## 9.4. MentorAgent
+
+**[ЗАТВЕРДЖЕНО — вузька архітектурна поправка Phase 10, 17.11.2026]**
+
+Scoring незалежний від AI. Trusted local code формує sanitized FactV1 з
+готового result; MentorAgent лише обирає/пояснює supplied facts. Unsupported
+claims, нові scores та персональні/raw sensitive attempt data заборонені.
+Чинні MentorInputV1/ExplanationV1 повторно використовуються там, де сумісні;
+UNSCORABLE має deterministic local explanation без incompatible completed
+MentorInputV1 з null score. Phase 5 contracts тихо не змінюються: необхідні
+extensions мають бути явно versioned. Offline explanation доступне завжди;
+Mentor failure не змінює scoring. Деталі — ADR-0010, реалізація не почата.
 
 Отримує:
 
@@ -1990,6 +2011,27 @@ AI не виставляє оцінки самостійно.
 
 ## 12.2. Попередня формула
 
+**[ЗАТВЕРДЖЕНО — вузька архітектурна поправка Phase 10, 17.11.2026]**
+
+Наведена нижче попередня формула конкретизована для Phase 10 v1 без зміни
+історичних declarations. Immutable strategy cyberforge-weighted-actions-v1
+сумісна з rubric-declarations-v1 / criterion-registry-v1: сім numerical
+критеріїв з binary 0/1 та один descriptive transition.decision.
+score_percent = 100 * sum(weight_i * score_i) / sum(weight_i), лише для
+applicable numerical criteria зі strictly positive denominator. Default weight
+1, configurable positive finite weights з чинним bound збережено. Decimal
+arithmetic: persisted validated float → Decimal(str(weight)), exact sums,
+canonical registry order/serialization; final display ROUND_HALF_EVEN до двох
+десяткових знаків. Non-applicable/descriptive criteria не дають ні нулів, ні ваг
+у сумах. Немає implicit pass/fail threshold чи NIST individual scoring.
+Нормативні деталі й future test vectors — docs/adr/0010-deterministic-scoring-mentor.md.
+Це approved architecture, не implemented functionality; попередні labels збережено.
+Computational equivalence (same criterion IDs/weights/applicability/outcomes)
+зберігає score, numerator/denominator та canonical detail order незалежно від
+selection order. Exact published rubric content_digest не нормалізується:
+різні source digests залишають evidence/result digests різними, навіть за
+однакової arithmetic. Existing rubric fingerprint/payload незмінні (ADR-0010 §D.2).
+
 
 **[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
 
@@ -2023,6 +2065,17 @@ S_{\%}=100S
 Вона не є формулою NIST Phish Scale.
 
 ## 12.3. Email-критерії
+
+**[ЗАТВЕРДЖЕНО — вузька архітектурна поправка Phase 10, 17.11.2026]**
+
+Зберігаються всі вісім IDs, labels/descriptions, phases, evidence declarations
+та applicability Phase 8. Numerical: email.sender, email.link, email.report,
+transition.safe_decline, web.address, web.leave, web.report. Descriptive:
+transition.decision. Applicable numerical criterion отримує 1 лише за defined
+evidence, інакше 0. Safe_decline потребує фінального completed no-Web path;
+Web visitation — trusted successful-display system/web_entered. Inspection
+доводить виконання огляду, а не правильну інтерпретацію загрози. Точна таблиця
+умов/chronological replay — ADR-0010; registry meanings не змінюються.
 
 
 **[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
@@ -2065,6 +2118,16 @@ unknown IDs/actions, порожні й непридатні рубрики ві�
 
 ## 12.5. Спільне оцінювання
 
+**[ЗАТВЕРДЖЕНО — вузька архітектурна поправка Phase 10, 17.11.2026]**
+
+Applicability all_attempts / web_visited / web_not_visited збережено.
+Майбутня readiness/publication validation вимагає хоча б одного applicable
+numerical criterion на кожному completed path: safe decline без Web та
+confirmed Web visitation. Це prospective правило після реалізації Phase 10,
+не посилення historical rubric loader і не переписування accepted publications.
+Historical rubric без applicable numerical criteria → UNSCORABLE з reason
+NO_APPLICABLE_NUMERICAL_CRITERIA, нульовими сумами та null percentage, не 0%.
+
 
 **[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
 
@@ -2089,6 +2152,17 @@ unknown IDs/actions, порожні й непридатні рубрики ві�
 Критерії, які не застосовуються до фактичного шляху, не повинні автоматично отримувати нуль.
 
 ## 12.6. Критичні помилки
+
+**[ЗАТВЕРДЖЕНО — вузька архітектурна поправка Phase 10, 17.11.2026]**
+
+Approved v1 policy: historical critical_action=null незмінний; numerical
+critical penalties, caps і retroactive critical declarations відсутні.
+confirm/submit_synthetic — можливі factual observations, не automatic critical
+mistakes. Без declared critical rules status NOT_CONFIGURED, що не доводить
+відсутність порушень. Наведені нижче proposals не стають реалізованими правилами;
+formal instructor-defined violations/penalties потребують окремо погодженого
+versioned publication contract. Поточна Phase 10 охоплює observations/policy,
+а не класифікацію чи штрафи; accepted historical text збережено.
 
 
 **[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
@@ -2121,6 +2195,40 @@ NIST Phish Scale використовується для визначення с
 До Web Simulator офіційна шкала не застосовується.
 
 ## 12.8. Версіонування
+
+**[ЗАТВЕРДЖЕНО — вузька архітектурна поправка Phase 10, 17.11.2026]**
+
+Проєктовані EvaluationEvidenceV1 та immutable EvaluationResultV1 визначено
+в ADR-0010: exact attempt/publication/version/manifest/rubric identities,
+revisions/digests, ordered immutable events/count/terminal sequence, validated
+terminal state/path, per-criterion evidence, strategy version, Decimal sums,
+nullable percentage/status/reason, descriptive decision, factual observations,
+evaluation timestamp/result digest. Malformed/inconsistent/unsupported evidence
+відхиляється до scoring. Technical errors не є valid final evaluations.
+Повторний запит повертає stored result; concurrency не створює duplicates;
+algorithm upgrades не змінюють historical results. Scoped internal historical
+source read не потребує active learner grant, але зберігає session/account,
+learner ownership і restricted-content boundaries Phase 9.
+StoredEvaluationIntegrityValidation (ADR-0010 §E.1) обов'язкова для кожного
+stored read/retry, Mentor preparation і future analytics consumption. Trusted
+internal EvaluationService після endpoint authorization/session/account/ownership
+у consistent DB read snapshot перевіряє schema/strategy, canonical result digest,
+exact attempt/publication/version/manifest/rubric/registry/semantics binding,
+authoritative evidence/events digests/count/terminal sequence, envelope/detail
+agreement, exactly one detail на selected criterion, canonical order,
+applicability та Decimal contributions/sums/status/reason/null percentage.
+Це verification exact immutable inputs, не створення нового result чи scoring
+за новішим algorithm. Corruption → STORED_EVALUATION_INTEGRITY_ERROR: fail closed,
+не valid score для UI/Mentor/analytics, без overwrite/delete/repair/rescore;
+record зберігається для controlled investigation. Grant-free internal source
+read не розширює learner content rights; authorization лишається обов'язковою.
+Canonical event reference: closed object event_id (persisted UUID string) та
+sequence (strict positive integer), unique/ascending sequence. Complete stream
+охоплює всі події; action criteria — усі qualifying references без repeated
+score credit; safe_decline — final effective decline+terminal completion на
+valid no-Web path; descriptive decision — усі chronological transition events
+і deterministic final action, без judgment. Web proof — trusted web_entered;
+окремі completed-path references визначено ADR-0010 §D.1. Vocabulary незмінна.
 
 **[ЗАТВЕРДЖЕНО — вузька поправка Phase 9, 17.11.2026]**
 
@@ -2326,6 +2434,24 @@ Learner read model перевіряє active account/grant/current membership/ar
 - Detection Difficulty.
 
 ## 14.7. Дані оцінювання
+
+**[ЗАТВЕРДЖЕНО — вузька архітектурна поправка Phase 10, 17.11.2026]**
+
+Проєктована additive migration після accepted 0007_learner_attempts додасть
+evaluation_results, evaluation_criteria та mentor_feedback в єдиній SQLite.
+Один authoritative immutable result на completed attempt; UNIQUE/FK/guards,
+exact source binding, atomic result+details, independent feedback commit,
+retry/concurrency protection та unsafe downgrade rejection обов'язкові.
+Historical publications/events/results не переписуються. Деталі keys,
+referential integrity, Decimal serialization й rollback — ADR-0010.
+Це документація: migration не створена/не виконана, authorization pending.
+Contract Freeze Gate (ADR-0010 §J.1) обов'язковий до persistence implementation,
+першої Phase10 migration та persisted result/feedback. WP1 готує complete typed
+contracts (включно з feedback/errors), exact serialization, golden/compatibility/
+corruption vectors, contract-to-DB mapping/constraints та documented ADR/SRS
+review. Approved invariants вже normative, exact wire/storage schemas ще не
+fully frozen. WP3 не обходить gate; incompatible post-freeze changes explicit
+versioned, без silent mutation v1. Gate не пройдено цим docs-only increment.
 
 Зберігати:
 
@@ -3320,6 +3446,21 @@ navigation contract; окремо визначає політику вже ро�
 
 ## Phase 10. Scoring & Mentor
 
+**[ЗАТВЕРДЖЕНО — вузька архітектурна поправка Phase 10, 17.11.2026]**
+
+Статус: NOT STARTED / ARCHITECTURE APPROVED. Власник погодив архітектуру
+17.11.2026; implementation/migration authorization не надано. ADR-0010 є
+нормативною основою окремо дозволеної реалізації. Work packages: contracts/
+evidence, deterministic scoring, persistence/idempotency, critical observations,
+Mentor/offline grounding, learner results/history/details UI, security/migration/
+concurrency/regression verification та owner review/acceptance.
+Наведені нижче critical mistakes у v1 означають лише factual observations та
+NOT_CONFIGURED policy без invented penalties. Instructor analytics, aggregation,
+comparison, dashboards та exports — Phase 11; вони читають stored evaluations,
+не recompute. Phase 11 не починається автоматично.
+Contract Freeze Gate у WP1 перед WP3 включає також local Mentor feedback
+schema; жодної migration або persisted v1 output до documented contract review.
+
 
 **[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
 
@@ -3356,6 +3497,23 @@ compatibility, safe-decline applicability та окремо погодженим
 ---
 
 # 24. КРИТЕРІЇ ГОТОВНОСТІ
+
+**[ЗАТВЕРДЖЕНО — вузька архітектурна поправка Phase 10, 17.11.2026]**
+
+Phase 10 future acceptance specification — ADR-0010, P10-01–P10-18:
+обидва completion paths, сім binary criteria/descriptive decision, applicability/
+denominator, reversed decisions, genuine 0%/missing/UNSCORABLE, Decimal rounding,
+canonical digests/compatibility/corruption denial, idempotency/concurrency/retry,
+atomic rollback/migration/immutability/downgrade, revoke/archive/history/RBAC/
+privacy, critical observations та offline/grounded Mentor. Потрібні focused/full
+regressions, final-head Linux/Windows CI та owner manual WSLg acceptance.
+Це майбутні вимоги, не passed tests; architecture approval не є implementation
+acceptance. Native Windows 11/DPI/GPU/installer/executable — Phase 12 risk,
+WSLg/CI не підміняють physical Windows validation. Загальний MVP gate незмінний.
+P10-16–18 додають stored-result corruption на read/retry/Mentor/analytics,
+no silent overwrite, canonical repeated-action/decision/path reference vectors,
+Contract Freeze Gate до migration/persistence. P10-07 окремо перевіряє arithmetic
+selection-order invariance та sensitivity повного digest до exact source identity.
 
 **[ЗАТВЕРДЖЕНО — вузька поправка Phase 9, 17.11.2026]**
 
@@ -3483,6 +3641,16 @@ CyberForge вважається завершеним MVP, якщо:
 - AssistantAgent.
 
 ## 26.2. Рубрики оцінювання
+
+**[ЗАТВЕРДЖЕНО — вузька архітектурна поправка Phase 10, 17.11.2026]**
+
+Для Phase 10 v1 питання criteria/weights/no-Web scoring вирішені ADR-0010:
+cyberforge-weighted-actions-v1, сім binary numerical/один descriptive criterion,
+Decimal normalized weighted mean та prospective per-path publication rule.
+Critical policy v1 — observations/NOT_CONFIGURED, без penalties/caps.
+Наведений нижче перелік збережено як історію питань; formal instructor-defined
+critical violations/penalties лишаються поза v1 й потребують нового погодженого
+versioned publication contract. Approved architecture не дозволяє реалізацію.
 
 Визначити:
 
