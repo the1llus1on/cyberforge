@@ -253,3 +253,22 @@ F10-R01 MAJOR and F10-R02 MINOR: **RESOLVED / PENDING INDEPENDENT RE-REVIEW**.
 No known unresolved BLOCKER/MAJOR/MINOR implementation findings. Native Windows11
 and owner manual acceptance limitations unchanged. New final HEAD/CI evidence is
 recorded in existing Draft PR13/delivery without circular documentation commits.
+
+## 18.11.2026 — F10-R03 evaluation integrity surfaced by Mentor read
+
+R01/R02 accepted as resolved by independent re-review; R03 correction classifies
+integrity by error code regardless of read call-site. Evaluation/source integrity
+errors clear displayed score/feedback and invalidate selected cached score summary,
+without new DB operations. Genuine feedback integrity/busy/unavailable errors
+preserve verified score. Access denial clears protected content. Three new tests
+include actual isolated corruption between reads and verify history is not repaired.
+Only learner_results.py, its UI tests, development log and this review are modified.
+Frozen contracts/scorer/migration/rubric semantics untouched. Final evidence follows;
+Draft PR13, Phase10 REVIEW / PENDING OWNER ACCEPTANCE, no merge/next phase.
+
+R03 verification: focused real WSLg UI + evaluation persistence **87PASS/256.56s**;
+complete offline **1357PASS/1731.42s**,0failures/0skips; Ruff lint/format154files PASS.
+Three added cases, all previous regressions retained. Exact commands recorded in
+DEVELOPMENT_LOG. F10-R03 RESOLVED / PENDING INDEPENDENT RE-REVIEW. No known
+unresolved implementation findings after local verification; owner manual and
+physical Windows11 limitations unchanged. Final SHA/CI evidence in PR/delivery.

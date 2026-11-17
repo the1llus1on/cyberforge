@@ -1,5 +1,6 @@
 """Personal result history and details; all data arrives through authorized services."""
 
+from dataclasses import replace
 from uuid import uuid4
 
 from PySide6.QtCore import QObject, QRunnable, Qt, QThreadPool, Signal, Slot
@@ -276,7 +277,21 @@ class LearnerResultsPage(QWidget):
 
     def _details_error(self, exc, *, feedback_only=False):
         if isinstance(exc, EvaluationFailure) and exc.error.code != "ACCESS_DENIED":
-            if feedback_only:
+            if exc.error.code in {
+                "STORED_EVALUATION_INTEGRITY_ERROR",
+                "IMMUTABLE_SOURCE_INTEGRITY_ERROR",
+            }:
+                index = self.list.currentRow()
+                if 0 <= index < len(self.rows):
+                    row = replace(self.rows[index], result=None, error=exc.error)
+                    self.rows = self.rows[:index] + (row,) + self.rows[index + 1 :]
+                    item = self.list.item(index)
+                    item.setText(item.text().rsplit("\n", 1)[0] + "\n" + summary(row))
+                self.detail.setText(str(exc))
+                self.feedback.clear()
+                self.evaluate_button.setEnabled(False)
+                self.feedback_button.setEnabled(False)
+            elif feedback_only:
                 self.feedback.setText(str(exc))
             else:
                 self.detail.setText(str(exc))

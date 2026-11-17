@@ -333,3 +333,71 @@ def test_feedback_operational_error_preserves_verified_score(
     e.mentor.generate(e.learner, e.aid)
     p.refresh_button.click()
     assert "100.00%" in p.detail.text() and "Навчальне пояснення" in p.feedback.text()
+
+
+@pytest.mark.parametrize(
+    "code", ["STORED_EVALUATION_INTEGRITY_ERROR", "IMMUTABLE_SOURCE_INTEGRITY_ERROR"]
+)
+def test_mentor_result_integrity_failure_invalidates_cached_score(
+    runtime,  # noqa: F811
+    qtbot,
+    qapp,
+    monkeypatch,
+    code,  # noqa: F811
+):
+    from cyberforge.application.evaluations import EvaluationFailure
+
+    e = runtime
+    e.mentor.generate(e.learner, e.aid)
+    p = page_for(e, qtbot, qapp)
+    assert "100.00%" in p.detail.text() and p.rows[0].result is not None
+    calls = []
+
+    def failed(*args):
+        calls.append(args)
+        raise EvaluationFailure(
+            code, operation="feedback", reason="IMMUTABLE_SOURCE_INVALID"
+        )
+
+    monkeypatch.setattr(p.mentor, "read", failed)
+    p.details(0)
+    assert len(calls) == 1
+    assert "%" not in p.detail.text() and not p.feedback.text()
+    assert "%" not in p.list.item(0).text()
+    assert p.rows[0].result is None and p.rows[0].error.code == code
+    assert not p.evaluate_button.isEnabled() and not p.feedback_button.isEnabled()
+
+
+def test_real_corruption_between_result_and_mentor_reads(
+    runtime,  # noqa: F811
+    qtbot,
+    qapp,
+    monkeypatch,  # noqa: F811
+):  # noqa: F811
+    e = runtime
+    original = e.ev.evaluate(e.learner, e.aid)
+    p = page_for(e, qtbot, qapp)
+    read = p.mentor.read
+
+    def corrupt_then_read(*args):
+        with e.database.engine.begin() as c:
+            c.exec_driver_sql("DROP TRIGGER evaluation_results_no_update")
+            c.exec_driver_sql(
+                "UPDATE evaluation_results SET result_digest='corrupt' WHERE id=?",
+                (str(original.result_id),),
+            )
+        return read(*args)
+
+    monkeypatch.setattr(p.mentor, "read", corrupt_then_read)
+    p.details(0)
+    assert "%" not in p.detail.text() and "%" not in p.list.item(0).text()
+    assert not p.feedback.text() and p.rows[0].result is None
+    assert p.rows[0].error.code == "STORED_EVALUATION_INTEGRITY_ERROR"
+    with e.database.engine.connect() as c:
+        assert (
+            c.exec_driver_sql(
+                "SELECT result_digest FROM evaluation_results WHERE id=?",
+                (str(original.result_id),),
+            ).scalar_one()
+            == "corrupt"
+        )

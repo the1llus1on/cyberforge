@@ -4144,3 +4144,34 @@ UI-only remediation does not require repeating build/wheel checks under approved
 workflow. Existing CI package/startup smoke remains enabled. F10-R01/R02 RESOLVED
 by implementation and local verification; final exact-head CI in PR/delivery.
 Phase10 REVIEW / PENDING OWNER ACCEPTANCE, independent re-review pending.
+
+## 18.11.2026 — F10-R03 final UI integrity boundary
+
+Owner authorized focused UI/tests/docs correction and push to Draft PR13, reviewed
+20ccfb9e248d9c5387b4d61cb29bd80e31c0aac9. Clean branch and matching remote Draft
+head verified. SRS §12/ADR0010 P10-16: Mentor.read revalidates evaluation in a
+subsequent transaction; R02's call-site-only feedback classification could retain
+stale score after this second validation failed. Error code now takes precedence:
+evaluation/source integrity errors remove score/feedback, replace the selected
+cached history result with an integrity-error entry and disable actions. No extra
+read, refresh loop, write, repair or rescore. Feedback integrity/operational errors
+continue preserving independently verified score; access denial clears content.
+Three added cases: both evaluation/source error codes and real controlled result
+corruption between reads in isolated DB, with corrupted record preserved. Existing
+feedback failure/recovery, corrupt feedback, access and R01 heartbeat tests retained.
+Scoring/contracts/migration0008/source semantics unchanged. Evidence follows.
+
+F10-R03 final local gates: `QT_QPA_PLATFORM=wayland
+UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q
+ tests/ui/test_learner_results.py tests/test_evaluation_persistence.py --tb=short`:
+87PASS/256.56s, including real WSLg UI and isolated persistence corruption tests.
+`QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync
+pytest -q --tb=short`: **1357PASS/1731.42s**,0failures/0skips, all1354previous +3new.
+`uv run --no-sync ruff check .` and `uv run --no-sync ruff format --check .`
+(UV_CACHE_DIR=/tmp/cyberforge-uv-cache): PASS,154files; diff --check PASS.
+No live credentials/providers; UI-only change requires no repeated build/wheel
+checks under approved workflow. Existing CI package/startup gates retained.
+F10-R03 RESOLVED locally, pending independent re-review. Exact new HEAD and
+final-head Linux/Windows CI recorded in existing Draft PR13 and delivery.
+Automated WSLg evidence is not owner manual acceptance; native Windows11 remains
+Phase12 deferral. No merge/acceptance/Phase11/12 work.
