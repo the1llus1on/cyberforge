@@ -3967,3 +3967,140 @@ NOT AUTHORIZED**. Production ScoringService/EvaluationService, result UI, cloud
 Mentor integration та analytics не дозволені. Phases11–12 — **NOT STARTED**.
 Після acceptance recording/merge/ff-only synchronization роботу зупинити;
 цей дозвіл не починає наступний work package. SRS v3.0/ADR-0010 незмінні.
+
+## 17.11.2026 — Phase 10 remaining implementation authorized; WP2 increment
+
+Clean main/local origin/main та GitHub MCP remote main підтвердили accepted
+`de40af1899b913cbbdb152117900a25e7c9d6b02`. Створено один feature branch
+`feat/phase-10-complete-scoring-mentor`. Owner authorization: WP2–WP7, WP8 review,
+commits/push/Draft PR, без merge/whole-phase acceptance/Phase11–12.
+GitHub MCP functional read PASS; Context7 SQLAlchemy documentation read PASS
+(explicit real SQLite read BEGIN та serialized write transaction). Dependencies
+не змінено. Frozen WP1 serialization/schema/fixtures/contract semantics збережено.
+
+WP2: production pure scorer використовує accepted projection/source validator,
+Decimal exact arithmetic та half-even final representation; no LLM dependency.
+Prospective readiness/atomic publication перевіряє numerical denominator кожного
+шляху. Historical rubric loader unchanged; historical test fixture явно відтворює
+pre-Phase10 decision-only publication у вузькому test-only context.
+`UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q tests/test_scoring.py --tb=short`:
+11PASS/0.97s. First real production evaluate/retry/read on six source bundles:
+6PASS/7.73s. WP3 schema/integrity/migration hardening та решта WP тривають.
+Owner DB, credentials та native Phase2 environment не змінювалися.
+
+## 17.11.2026 — Phase10 WP3–WP6 integration та focused verification
+
+Production migration `0008_evaluations` additive після0007: three approved tables,
+Decimal TEXT, six result FKs, UNIQUE authoritative attempt/result/feedback identities,
+deferred detail FK, detail-first/parent-last complete-source seal,11immutable/
+projection/order/binding triggers. Empty downgrade allowed; any history blocks
+unsafe downgrade. Explicit real BEGIN/BEGIN IMMEDIATE evaluation-scoped boundary
+до DB auth; trusted historical source loader не обходить ownership і не повертає
+restricted content. `StoredEvaluationIntegrityValidation` обов'язковий для
+retry/read/history/Mentor; structural/source/detail/arithmetic corruption explicit,
+operational failures retryable, no repair/delete/rescore.
+
+Mentor scoring-independent commit: educational-facts-v1, existing provider-neutral
+MentorAgent/gateway, bounded model selection, deterministic Ukrainian offline/
+timeout/invalid-output fallback; UNSCORABLE separate compatibility path. No raw
+learner events/IDs/source text/credentials/form values у provider request.
+First verified feedback immutable, reauthentication після provider call.
+Initial valid-selection probe виявив incorrect telemetry.model access; corrected
+на existing effective_model, з actual recorded-provider regression. Test-only
+migration FK-count expectation corrected6; frozen contracts unchanged.
+
+UI замінює Phase9 placeholder на actual results/history/detail, explicit evaluation,
+background feedback, empty/incomplete/abandoned/pending/zero/nonzero/UNSCORABLE/
+missing/error/denied states, plain Ukrainian text, compact scrolling. Dedicated
+one-thread Qt pool/session epoch та existing shell close-wait flow забезпечують
+logout cleanup, stale-response rejection та safe close while generation runs.
+No Phase11 UI/analytics/exports. Minor reversible choices documented у review;
+no approved architecture/semantics change або SRS/ADR edit.
+
+Executed offline focused checks (UV_CACHE_DIR=/tmp/cyberforge-uv-cache):
+- `uv run --no-sync pytest -q tests/test_scoring.py --tb=short`:37PASS/2.27s.
+- `uv run --no-sync pytest -q tests/test_evaluation_persistence.py -x --tb=short`:
+  60PASS/152.32s; real schema concurrent winner, failures/rollback/retry, corruption,
+  immutable operations з recursive_triggers0/1, RBAC/revoke/archive/restart.
+- Added real-read snapshot/deactivation та busy/unavailable/prospective-publication
+  focused selection:3PASS/8.47s; no source/data repair.
+- `uv run --no-sync pytest -q tests/test_mentor_feedback.py tests/test_evaluation_migration.py
+  tests/test_scoring.py tests/test_evaluation_service.py tests/test_evaluation_protocol.py
+  tests/test_scenario_integration.py tests/test_learner_attempts.py --tb=short`:
+  209PASS/390.59s. Earlier runs interrupted across session limit, not passing evidence.
+- `QT_QPA_PLATFORM=offscreen ... pytest -q tests/ui/test_learner_results.py
+  tests/ui/test_learner_simulation.py --tb=short`:21PASS/83.08s.
+- Same two files on real `QT_QPA_PLATFORM=wayland` WSLg:21PASS/86.00s.
+  Це automated agent evidence, не owner manual acceptance чи physical Windows11.
+- Actual production-window visual probe на fresh offline temp demo:1100×720 PNG
+  inspected; score/applicability/details/actions readable, feedback scrollable.
+  Requested900×650 resize залишив1100×720 через accepted shell minimum; smaller
+  screenshot не зараховується як окремий compact-window proof. Standalone results
+  widget tests680×600 PASS. Screenshots лише /tmp, без owner credentials у output.
+- Ruff check . / format --check .:154files PASS; whitespace та documentation links PASS.
+
+Offline sdist/wheel build та isolated target install PASS. Installed-package-only
+probe: six golden vectors, actual migration0008, fresh offline demo, persisted
+score/feedback/reconnect/FK, all-source-byte parity PASS, socket.connect forbidden.
+Installed wheel desktop startup/migration/Qt event-loop smoke на real WSLg PASS.
+SRS/ADR/WP1 freeze doc/contracts/fixtures/dependencies byte-identical accepted main.
+Legacy latest-head migration assertions updated0007→0008; all existing regression
+probes retained. Scratch-only protocol tables renamed proof_* to coexist with
+production tables. Owner DB та native Phase2 environment untouched.
+
+WP7 final full regression на frozen source/test/fixture hashes триває; first run
+stopped early to update remaining three legacy migration-head expectations,
+не counted as PASS. WP8 review/checklist prepared у PHASE_10_IMPLEMENTATION_REVIEW.md;
+exact final suite/package/CI/Git evidence follows. No acceptance/merge/next phase.
+
+### Phase10 final integrity hardening — malformed attempt metadata
+
+Final audit додав production corruption probe: пустий persisted scenario_name у
+isolated DB після контрольованого видалення immutability trigger. Existing result
+read уже fail closed, але history error branch повторно викликав attempt_value
+поза safe validation boundary і піднімав raw Pydantic ValidationError. Regression
+спочатку відтворив defect (1FAIL), без зміни authoritative evaluation.
+
+History тепер перевіряє typed immutable attempt metadata та повертає explicit
+IMMUTABLE_SOURCE_INTEGRITY_ERROR перед будь-яким invalid history entry. Stored
+read/retry errors використовують safe nullable UUID projection навіть при malformed
+source/result identity. Немає repair/rescore/history deletion або contract change.
+Focused production read/retry six paths + malformed metadata:7PASS/10.03s.
+Actual WSLg cached-results clearing/source-integrity message:1PASS/2.18s.
+Full regression з попереднім code snapshot перервано, не counted as PASS;
+final full gate перезапущено на нових frozen hashes разом із two new regressions.
+Final offline package rebuilt/reinstalled для цієї source revision; результати нижче.
+
+Final local implementation checkpoint:
+`27e99f482766dfac50caa794ab313f979511da53`
+(`feat(evaluation): implement deterministic scoring and learner feedback`).
+22source/test files,2814insertions/124deletions; exact staged scope/whitespace та
+credential-pattern audit PASS. Four documentation files retained for final evidence
+commit. No push/PR until full local gate passes. Remote GitHub MCP main reverified
+at accepted de40af1; origin target verified without exposing URL credentials.
+
+
+## Phase10 final stable engineering gate — 17.11.2026
+
+**1349PASS/942.96s**, exit0,0failures/0skips. Exact command:
+`QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short --junitxml=/tmp/cf-p10-final-gate.xml`.
+All1203accepted baseline tests retained +146new Phase10 implementation tests;
+source/test/fixture hashes unchanged from frozen final gate manifest. Initial
+interrupted runs are superseded by this complete final run, not counted as PASS.
+Ruff check . та format --check .154files PASS. No live provider use.
+
+Final rebuilt package commands (UV_CACHE_DIR=/tmp/cyberforge-uv-cache):
+`uv build --offline --out-dir /tmp/cyberforge-p10-final-dist` PASS;
+`uv pip install --offline --no-deps --python .venv/bin/python --target /tmp/cyberforge-p10-final-installed /tmp/cyberforge-p10-final-dist/cyberforge-0.1.0-py3-none-any.whl` PASS;
+`.venv/bin/python -I /tmp/cf-p10-final-wheel-probe.py` PASS, installed package only,
+network forbidden, all source bytes identical. `QT_QPA_PLATFORM=wayland
+.venv/bin/python -I /tmp/cf-p10-final-startup-smoke.py` PASS: new temp DB migration0008,
+actual desktop startup та Qt event loop. Earlier21WSLg/21offscreen UI cases та
+final1WSLg source-corruption probe retained; not owner manual acceptance.
+
+WP2–WP6 implemented/locally verified; WP7 local gate PASSED; WP8 review/checklist
+READY. Overall Phase10 REVIEW / PENDING OWNER ACCEPTANCE. No known unresolved
+implementation BLOCKER/MAJOR/MINOR after self-audit; independent review pending.
+Exact final docs HEAD, Draft PR та Linux/Windows CI URLs/conclusions recorded
+in PR/delivery after publication, avoiding circular commits. Native Windows11/
+DPI/GPU/executable/installer remains Phase12 deferral. No merge/Phase11/12 start.

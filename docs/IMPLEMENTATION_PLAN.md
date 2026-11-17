@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–9 — ACCEPTED (Phase9 прийнято власником 2026-11-17); Phase10 — IN PROGRESS / WP1 ACCEPTED / CONTRACT FREEZE PASSED (owner decision 17.11.2026); Phases11–12 — NOT STARTED.
+**State:** Phases 0–9 — ACCEPTED; Phase10 — REVIEW / PENDING OWNER ACCEPTANCE (17.11.2026), architecture/WP1 ACCEPTED, Contract Freeze PASSED; Phases11–12 — NOT STARTED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -27,7 +27,7 @@
 | 7 | Web Constructor | ACCEPTED | Hybrid components, isolated WebEngine, visual editor, scoped AI, saved Email binding, explicit SQLite Save; PHASE_7_ACCEPTANCE.md |
 | 8 | Scenario Integration | ACCEPTED | Typed Email→Web link, rubric definitions/editor, exact readiness/review, atomic immutable publication, audited grants/access; PHASE_8_ACCEPTANCE.md |
 | 9 | Learner Simulation | ACCEPTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
-| 10 | Scoring & Mentor | IN PROGRESS / WP1 ACCEPTED / CONTRACT FREEZE PASSED | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
+| 10 | Scoring & Mentor | REVIEW / PENDING OWNER ACCEPTANCE | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
 | 11 | Analytics Mode | NOT STARTED | Read-only scenario statistics, deduplicated learner table, missing-data rules, filters, CSV/JSON export, RBAC; analytics tests |
 | 12 | Finalization | NOT STARTED | Full regression/security checks, Windows 11 package, demonstration dataset, docs and release checklist |
 
@@ -1465,3 +1465,61 @@ NOT AUTHORIZED**. Production ScoringService/EvaluationService, result UI, cloud
 Mentor integration та analytics не дозволені. Phases11–12 — **NOT STARTED**.
 Після acceptance recording/merge/ff-only synchronization роботу зупинити;
 цей дозвіл не починає наступний work package. SRS v3.0/ADR-0010 незмінні.
+
+## 17.11.2026 — Phase 10 WP2–WP8: owner authorization та implementation
+
+Власник окремо дозволив повну послідовну реалізацію WP2–WP7 та review preparation
+WP8 одним feature branch `feat/phase-10-complete-scoring-mentor`, локальні commits,
+normal push та один Draft PR до main. Цей дозвіл замінює попередній NOT AUTHORIZED
+для remaining WP; WP1 ACCEPTED / Contract Freeze PASSED залишаються normative.
+Main baseline: `de40af1899b913cbbdb152117900a25e7c9d6b02`, clean local/remote.
+Merge, whole-phase acceptance, Phases11–12 не дозволені.
+
+WP2 increment: production `ScoringService`, exact immutable-source validation,
+frozen canonical arithmetic та prospective numerical coverage обох completion
+paths. Six frozen golden parity vectors і historical-loader/path checks:11PASS.
+WP3–WP8 у роботі; schema0008/real transaction/integrity verification виконуються
+до будь-яких заяв про engineering gate. SRS/ADR/frozen v1 contracts незмінні.
+
+### Phase10 WP3–WP6 — integrated focused gates
+
+WP3 production migration0008/evaluation integrity, WP4 factual observations,
+WP5 sanitized grounded Mentor/offline fallback, WP6 learner results UI та cleanup
+реалізовано без змін frozen v1/SRS/ADR. Reviewed detail-first deferred-FK protocol
+перевірено на production schema, не лише WP1 proof. Model telemetry field correction
+та legacy migration-head test expectations узгоджено з actual existing APIs/schema.
+Focused scorer37PASS; production persistence60PASS; extra transaction/readiness3PASS;
+combined integration209PASS; offscreen UI21PASS; real WSLg UI21PASS. Offline
+sdist/wheel, isolated installed-wheel migration/evaluation/feedback/source-parity
+та startup smoke PASS. Full stable regression gate running; final-head CI pending
+publication. Actual source/fixture preservation, scope, commands та limitations:
+[Phase10 review](PHASE_10_IMPLEMENTATION_REVIEW.md), DEVELOPMENT_LOG.
+Owner manual acceptance лишається PENDING; Phase11–12 не розпочато.
+
+
+### Phase10 WP2–WP8 — final local engineering gate / review preparation
+
+Final full offline regression: **1349PASS/942.96s,0failures/0skips**, exit0.
+Command: `QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync
+pytest -q --tb=short --junitxml=/tmp/cf-p10-final-gate.xml`.
+Source/test/fixture hashes unchanged throughout; all1203accepted baseline tests
+retained +146new Phase10 implementation tests. Final Ruff lint/format154files PASS.
+Final rebuilt offline sdist/wheel, isolated installed-wheel golden/migration/
+demo/scoring/feedback/reconnect/FK/source-parity та WSLg startup smoke PASS.
+Real WSLg UI21PASS + final malformed-source UI1PASS; owner manual acceptance pending.
+
+| WP | Current engineering status |
+| --- | --- |
+| WP2 | IMPLEMENTED / LOCAL ENGINEERING VERIFIED — deterministic source-bound scoring та prospective publication rule |
+| WP3 | IMPLEMENTED / LOCAL ENGINEERING VERIFIED — migration0008, atomic immutable persistence, integrity/transactions/concurrency |
+| WP4 | IMPLEMENTED / LOCAL ENGINEERING VERIFIED — factual observations, NOT_CONFIGURED, no penalties |
+| WP5 | IMPLEMENTED / LOCAL ENGINEERING VERIFIED — grounded Mentor, privacy, offline/provider fallback та separate feedback commit |
+| WP6 | IMPLEMENTED / LOCAL ENGINEERING VERIFIED — learner results/history/details/feedback та session lifecycle |
+| WP7 | LOCAL VERIFICATION PASSED; final-head Linux/Windows CI to be recorded in Draft PR/delivery |
+| WP8 | READY FOR OWNER REVIEW — traceability/checklist/evidence; owner acceptance PENDING |
+
+Phase10 overall **REVIEW / PENDING OWNER ACCEPTANCE**, не ACCEPTED.
+One feature branch, implementation checkpoint27e99f482766dfac50caa794ab313f979511da53;
+final documentation HEAD/PR/CI evidence у delivery/PR для exact published revision,
+без circular commits. No merge; Phase11/12 NOT STARTED. Next: independent review
+та owner manual WSLg checklist у PHASE_10_IMPLEMENTATION_REVIEW.md.
