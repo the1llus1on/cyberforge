@@ -1,12 +1,13 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–9 — ACCEPTED (Phase9 прийнято власником 2026-11-17); Phase10 — NOT STARTED / PLANNING; Phases11–12 — NOT STARTED.
+**State:** Phases 0–9 — ACCEPTED (Phase9 прийнято власником 2026-11-17); Phase10 — NOT STARTED / ARCHITECTURE APPROVED (17.11.2026; implementation authorization pending); Phases11–12 — NOT STARTED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
 
 - **NOT STARTED** — no implementation evidence.
+- **ARCHITECTURE APPROVED** — owner-approved normative design; combined with NOT STARTED, it grants no implementation or migration authorization.
 - **IN PROGRESS** — approved work underway.
 - **BLOCKED** — material prerequisite or decision unavailable.
 - **REVIEW** — implementation finished; tests, user review or acceptance outstanding.
@@ -26,7 +27,7 @@
 | 7 | Web Constructor | ACCEPTED | Hybrid components, isolated WebEngine, visual editor, scoped AI, saved Email binding, explicit SQLite Save; PHASE_7_ACCEPTANCE.md |
 | 8 | Scenario Integration | ACCEPTED | Typed Email→Web link, rubric definitions/editor, exact readiness/review, atomic immutable publication, audited grants/access; PHASE_8_ACCEPTANCE.md |
 | 9 | Learner Simulation | ACCEPTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
-| 10 | Scoring & Mentor | NOT STARTED / PLANNING | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
+| 10 | Scoring & Mentor | NOT STARTED / ARCHITECTURE APPROVED | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
 | 11 | Analytics Mode | NOT STARTED | Read-only scenario statistics, deduplicated learner table, missing-data rules, filters, CSV/JSON export, RBAC; analytics tests |
 | 12 | Finalization | NOT STARTED | Full regression/security checks, Windows 11 package, demonstration dataset, docs and release checklist |
 
@@ -1297,3 +1298,68 @@ change зупинитися. Final SHA/merge/CI evidence у PR10/delivery без
 Phases0–9 ACCEPTED; Phase10 NOT STARTED / PLANNING, окреме architecture approval;
 Phase11–12 NOT STARTED. Physical Windows11/DPI/hardware GPU/installer/executable/
 final release acceptance — Phase12 risks. No runtime/SRS/test/dependency changes.
+
+
+## Phase 10 — архітектурна основа, 17.11.2026
+
+**NOT STARTED / ARCHITECTURE APPROVED.** Власник погодив архітектуру 17.11.2026,
+але не дозволив реалізацію або migration. Нормативна основа — dated amendment
+SRS v3.0 §§8–9,12,14,23–24,26.2 та [ADR-0010](adr/0010-deterministic-scoring-mentor.md).
+Phases0–9 ACCEPTED; Phase11–12 NOT STARTED. Новий запис замінює попередні
+Phase10 PLANNING/architecture-pending позначки, зберігаючи їх як історію.
+
+Dependencies: accepted Phase8 immutable publication/rubric-declarations-v1/
+criterion-registry-v1 та Phase9 exact attempts/events/migration0007. Phase5
+Mentor contracts повторно використовуються лише за сумісності; жодних historical
+contract/data rewrites. Strategy: cyberforge-weighted-actions-v1, seven binary
+numerical/one descriptive criterion, applicable-only Decimal mean та half-even
+2dp display; no threshold/critical penalties/caps. Historical empty numerical
+path → UNSCORABLE/null, не fabricated 0. Точні semantics — ADR-0010.
+
+**Майбутні work packages — усі NOT STARTED; виконання лише після окремого дозволу:**
+
+| WP | SRS / майбутня робота | Acceptance specification ADR-0010 |
+| --- | --- | --- |
+| 1 | §§8,12.8,14: complete typed evaluation/evidence/feedback/error contracts, canonical reference schemas, serialization/golden/compatibility/corruption vectors, contract-to-DB mapping; mandatory Contract Freeze Gate із documented ADR/SRS review перед WP3/першою migration/persisted v1 output | P10-01–03, P10-07–08, P10-16–18 |
+| 2 | §§12.1–12.5,12.7: ScoringService, сім binary criteria та descriptive decision, Decimal conversion/exact sums/final rounding, applicability/UNSCORABLE; prospective readiness/publication rule на обох paths без зміни historical loader | P10-02–08 |
+| 3 | §§12.8,14: лише після documented Contract Freeze Gate WP1; additive migration після0007, evaluation_results/evaluation_criteria/mentor_feedback, atomic persistence/idempotency/retry, internal exact historical source read та shared StoredEvaluationIntegrityValidation перед read/retry/Mentor/future analytics | P10-09–11, P10-16, P10-18 |
+| 4 | §12.6: factual confirm/submit_synthetic observations, NOT_CONFIGURED policy; critical_action=null без invented penalties/caps/violations | P10-12 |
+| 5 | §§9.4,9.6: trusted sanitized FactV1, compatible Mentor adapter, local feedback envelope frozen у WP1 до WP3, integrity-validated result, deterministic offline fallback; UNSCORABLE без incompatible MentorInputV1 | P10-13 |
+| 6 | §§3.9,8.6,12: learner «Мої результати», history/details/criterion applicability/feedback, explicit missing/pending/abandoned/UNSCORABLE/error/0% states; no instructor analytics | P10-05, P10-12–14 |
+| 7 | §§14,16,21,24: focused security/privacy/RBAC/migration/concurrency/regression gates, stable full lint/format/pytest, isolated migration/build/wheel evidence, real WSLg, final-head Linux/Windows CI | P10-01–18 |
+| 8 | §§23–24: independent review/remediation, attributable owner WSLg acceptance, limitations/files/checks/risks; owner acceptance та separately authorized merge | P10-14–15; implementation acceptance pending |
+
+F10-01–04 remediation (17.11.2026): authoritative stored results проходять
+StoredEvaluationIntegrityValidation (§E.1 ADR) після authorization в consistent
+DB snapshot, до read/retry/Mentor/analytics; corruption fail closed без repair/
+rescore/overwrite. Canonical supporting refs (§D.1) включають усі repeated
+qualifying actions, final effective decline/completion та chronological decisions;
+stream, criterion і path structures окремі. P10-07 розрізняє arithmetic/order
+invariance та exact immutable source-digest sensitivity. P10-16–18 задають
+negative stored-corruption cases, reference golden vectors та freeze evidence.
+
+**Contract Freeze Gate — mandatory dependency WP1 → WP3.** Approved invariants
+залишаються normative; exact wire/storage/feedback schemas ще не fully frozen.
+Complete typed definitions, exact serialization, deterministic golden vectors,
+compatibility/corruption vectors, DB mapping/constraints та documented ADR/SRS
+review мають бути перевірені й reviewed до persistence implementation, першої
+migration або persisted evaluation/feedback. WP5 schema входить до WP1 gate.
+Gate не можна обійти; incompatible post-freeze changes explicit versioned.
+Це майбутня робота після окремого дозволу; gate зараз не пройдено.
+
+Future verification commands: focused pytest за зміненими contracts/services/UI,
+потім `uv run ruff check .`, `uv run ruff format --check .`, `uv run pytest` на
+стабільному implementation changeset. Зберегти security/RBAC/data-integrity/
+concurrent-write/migration regression checks. Реальна WSLg перевірка обох paths,
+results/details, revoke/archive historical access та session clearing; owner
+manual evidence окремо. Migration changes потребують build/isolated-wheel checks.
+Final PR HEAD має пройти Linux і Windows CI до окремо дозволеного merge.
+Ці команди/сценарії ще **не виконано для Phase10**. Physical native Windows11,
+DPI/hardware GPU/package/executable/installer acceptance — Phase12 risks.
+
+Documentation baseline gate: узгоджені ADR/SRS/plan/log, links/diff/encoding та
+scope перевірки, без runtime/migration/test changes. Це review-ready design,
+не implementation acceptance. Власник 17.11.2026 дозволив documentation-only
+commit/push/PR baseline; merge та реалізація потребують окремого дозволу.
+Phase11 analytics/comparison/dashboards/exports читають stored results без
+recompute та потребують окремого phase approval.
