@@ -1,8 +1,8 @@
 # CyberForge — журнал розробки
 
 **Поточний стан (17.11.2026):** Phases0–9 — **ACCEPTED**;
-Phase10 — **NOT STARTED / ARCHITECTURE APPROVED**, implementation/migration
-authorization pending; Phases11–12 — NOT STARTED. Нижче збережено хронологію
+Phase10 — **IN PROGRESS / WP1 ONLY**, Contract Freeze Gate PENDING OWNER ACCEPTANCE;
+production scoring/persistence/migration authorization pending; Phases11–12 — NOT STARTED. Нижче збережено хронологію
 попередніх REVIEW/PLANNING та acceptance evidence; актуальний запис — наприкінці журналу.
 
 ## 11.11.2026 — Phase 0: Project Foundation
@@ -3771,3 +3771,199 @@ runtime/migrations/tests/dependencies unchanged. Команда
 GUI/package/migration/live AI для documentation-only publication. CI після push
 перевіряється на exact PR HEAD; результати/PR/SHA — у delivery report, без
 додаткового commit, який змінює перевірений HEAD. No implementation acceptance.
+
+
+## 17.11.2026 — Phase10 / WP1 implementation, only authorized contracts/verification
+
+Owner explicitly дозволив WP1 після read-only design/clarifications. Preflight
+clean main e5213314c88ca6844384b1349ecf8bc2d7428336; GitHub MCP main matched;
+створено feat/phase-10-wp1-contracts. Немає Git publication authorization.
+План перед coding mapped SRS §§12.2/12.8/14.7/23–24 та ADR0010 D/E/J.1:
+closed candidates → canonical/pure replay/facts → static accepted-source vectors
+і isolated SQLite proof → focused/full/package checks → owner gate review.
+
+Додано лише evaluation package, focused tests/static fixtures/schema snapshot та
+[WP1 review evidence](PHASE_10_WP1_CONTRACT_FREEZE_REVIEW.md). Contract Freeze Gate
+PENDING OWNER ACCEPTANCE; Phase10 only WP1 engineering REVIEW. All later WPs
+not started. Production source models/services/UI/migrations не змінювалися.
+
+12 exact candidate models preserve field/version/null semantics; error taxonomy
+includes integrity_reason, permanent missing/corrupted source cannot become
+retryable transient failure. Closed canonical JSON boundary rejects coercions,
+unknown/duplicate/noncanonical data. Pure validation checks exact authoritative
+attempt/publication identity, accepted legacy source/operation hashes, complete
+Phase9 lifecycle, references/applicability/observations та stored projections.
+No DB or LLM calls in evaluation package. Reference arithmetic verification
+helpers не є production ScoringService. Catalogue wording follows final owner
+correction; recommendations and Phase5 contracts unchanged. Context7 official
+Pydantic v2 strict/JSON/frozen docs used; no new dependency.
+
+Accepted service paths породили six frozen-clock/UUID source-valid fixture bundles,
+включно з SCORED/UNSCORABLE feedback. Independent test projection/Fraction та
+external OpenSSL18envelope digest checks перед static snapshot. Synthetic original
+hash fixture retained окремо без false source-valid claim. Test-only scratch
+protocol proves explicit BEGIN before account authorization, snapshot consistency,
+registry-derived sealed detail set, deferred FK/rollback, replace/UPSERT guards,
+concurrent one-winner and recovery; no migration0008. Initial scaffolding/API/
+fixture/negative-case refinements retained у focused review notes, не final PASS.
+
+Actual focused104PASS/89.79s, expanded129PASS/99.38s; final protocol47PASS/46.72s,
+schema+Mock3PASS/0.61s. Ruff check ./format143files PASS. Stable full offline
+suite running; no code/test edits during full. Package sdist/wheel build and
+isolated installed-wheel six-vector roundtrip/import/source parity PASS.
+Exact commands/final results у linked review doc. No live AI/owner DB/credentials/
+env/native Phase2 snapshot changes; no commits/push/PR/merge. Gate disposition
+only recommendation; final owner acceptance required. Windows CI not run without
+publication; physical native Windows11 remains Phase12 risk.
+
+
+WP1 final review hardening: hostile manually constructed legacy ExplanationV1
+could retain mutable selected_facts under model-selection feedback. Added fresh
+accepted-JSON revalidation after field validation (before-validator intermediate
+broke strict JSON tuple parsing і був виправлений до final run). Phase5 contracts
+unchanged; no new fields/digest/schema changes. Regression asserts independent
+immutable copy after hostile list mutation. Focused16PASS/13.90s. First full run
+stopped at78%, exit143, not PASS; code/tests unchanged during it. Final full run
+restarted after fix; source/tests frozen, captured hashes для final comparison.
+Final offline wheel rebuilt/reinstalled, isolated imports/six-fixture roundtrips/
+source parity PASS. Detailed evidence у WP1 review; owner gate acceptance pending.
+
+
+Final WP1 delivery gate: **1189PASS/656.89s**, exit0, no failures/skips. Command:
+`QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short`.
+Normal Chromium sandbox retained outside outer workspace restriction. All1056
+accepted baseline tests +133new WP1 cases; final source/tests/fixtures hashes
+unchanged. Final16focused PASS covers nested legacy revalidation; protocol47PASS
+and original synthetic five SHA vectors/source-valid six bundles retained.
+Ruff lint/format143files PASS, final rebuilt installed wheel isolated import/
+roundtrip/parity PASS. Earlier interrupted full is not final evidence.
+
+Final audit: exactly18WP1files,36relative documentation links, diff --check PASS,
+accepted sources/tests/migrations/dependencies/SRS/ADR byte-identical. No runtime
+scoring/persistence/production authorization/Mentor cloud integration/UI/Phase11,
+no owner DB or native Phase2 snapshot changes. Branch feat/phase-10-wp1-contracts,
+HEAD remains e5213314c88ca6844384b1349ecf8bc2d7428336, staging empty. No unresolved
+implementation findings after final verification; native Windows11/remote CI/
+future migration checks remain documented limitations. WP1 engineering REVIEW;
+Contract Freeze Gate PENDING OWNER ACCEPTANCE. No Git publication without owner.
+
+## 17.11.2026 — WP1 publication explicitly authorized, Draft PR only
+
+Owner дозволив commit/push feat/phase-10-wp1-contracts та Draft PR targeting main
+для independent architectural/code review. Acceptance/merge/next WP не дозволені.
+Preflight branch/HEAD/main/origin-main e5213314c88ca6844384b1349ecf8bc2d7428336;
+GitHub MCP confirmed same remote main. Owner work preserved; exactly18WP1 files.
+All15code/test/fixture hashes match final verified run. Accepted Phase0–9 source/
+existing tests/production persistence/migrations/dependencies/SRS/ADR untouched.
+No secrets/credentials/private DB/temp build/unrelated files in publication scope.
+
+Previous execution evidence remains1189full PASS/656.89s,47protocol PASS,
+16hardening PASS, offline sdist/wheel/isolated installed-wheel/import/parity PASS,
+source-valid vectors/independent OpenSSL hashes PASS. Full suite/package не
+повторюються лише для publication byte-identical implementation. New checks:
+`UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync ruff check .`,
+`UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync ruff format --check .`,
+relative links/hash/scope/secret-pattern audit та
+`git -c core.whitespace=cr-at-eol diff --check` (also staged variant).
+Publication updates лише current authorization notes у three WP1 docs; code/tests
+unchanged. Exact commit/Draft PR/CI evidence у delivery report без circular commits.
+WP1 NOT ACCEPTED; gate PENDING OWNER ACCEPTANCE; no merge or implementation advance.
+
+
+## 17.11.2026 — WP1 independent review F10-WP1-01–03 remediation
+
+Reviewed HEAD90ff3976fcaefd2371d6ec31b71c61a17f246e87, clean feature branch;
+GitHub MCP confirmed PR#12 OPEN/Draft/base main. Owner дозволив corrective
+implementation/tests/docs/commit/push лише до цього PR, без merge/next WP.
+
+F10-WP1-01: fixed-point formatting/scaling раніше не обмежували compact Decimal
+exponent. Новий bound -324..4,329coefficient digits,345raw chars,abs≤70000
+перевіряється до expansion; strict JSON/Python guards та direct helper guards.
+Seven numerical criteria максимум, event-count cap не додано. No intermediate
+rounding; accepted Phase8 float loader unchanged. Binade/subnormal/neighbor probe
+3263historical float conversions PASS. Strict JSON before-validator interaction
+виправлено перед final24focused PASS; schema зберігає standard maximum/minimum.
+
+F10-WP1-02: rubric_id містив scenario identity у Mentor summary. Замінено на
+validated snapshot revision label з bounded large-revision fallback; score/schema
+Phase5 незмінні. Five SCORED feedback labels/digests оновлено; source/evidence/
+result objects та UNSCORABLE/synthetic fixtures unchanged. Privacy regression
+перевіряє actual MentorInputV1 та Mock path без provider network calls.
+
+F10-WP1-03: explicit narrowing scratch retry claim/comment: winner identity only,
+не stored-integrity proof. Separate source-valid stored pipeline/corruption/detail
+checks retained; future WP3 must invoke pure integrity validation before returning
+existing result. No production EvaluationService/migration0008.
+
+Executed: `uv run --no-sync pytest -q tests/test_evaluation.py
+tests/test_evaluation_protocol.py --tb=short`147PASS/95.68s (QT_QPA_PLATFORM=offscreen,
+UV_CACHE_DIR=/tmp/cyberforge-uv-cache). Final focused `-k 'decimal or rounding or tiny
+or mentor or schema'`24PASS/0.62s. Ruff lint/format143files PASS; diff --check PASS.
+18golden envelope hashes independently recomputed using openssl dgst -sha256;
+Fraction arithmetic і unchanged source/evidence/result comparisons PASS.
+`uv build --offline --out-dir /tmp/cyberforge-wp1-remediation-dist` sdist/wheel PASS;
+`uv pip install --offline --no-deps --python .venv/bin/python
+--target /tmp/cyberforge-wp1-remediation-installed
+/tmp/cyberforge-wp1-remediation-dist/cyberforge-0.1.0-py3-none-any.whl` PASS.
+`.venv/bin/python -I /tmp/cf-wp1-remediation-wheel-probe.py` PASS: all six
+source-valid fixture roundtrips/full stored-source integrity/feedback,97source files
+identical installed wheel, imports only installed package; socket.connect forbidden.
+Full suite in progress on frozen11code/test/fixture hashes; final evidence follows.
+WP1 NOT ACCEPTED, Contract Freeze Gate PENDING OWNER ACCEPTANCE. No live AI.
+
+
+Final remediation verification: **1203PASS/649.98s**, exit0, no failures/skips.
+Command: `QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache
+uv run --no-sync pytest -q --tb=short --junitxml=/tmp/cf-wp1-remediation-pytest.xml`.
+Normal Chromium sandbox retained; all1056accepted baseline +147WP1 tests, including
+14new remediation cases. Frozen11code/test/fixture hashes unchanged throughout.
+Final Ruff lint/format143files, whitespace/link/scope audit PASS; exactly14corrective
+files within original18file PR scope, accepted SRS/ADR/Phase5/8/9/production DB/
+migrations/dependencies untouched. F10-WP1-01/02 RESOLVED by guards/privacy adapter;
+F10-WP1-03 RESOLVED by explicit proof-scope correction (not a production retry proof).
+Corrective commit/push to Draft PR#12 authorized; exact SHA/CI evidence у delivery
+і PR description to avoid circular commits. No merge. Gate pending owner acceptance
+and independent re-review; physical native Windows11 remains Phase12 risk.
+
+
+## Owner decision — November 17, 2026 — WP1 acceptance / Contract Freeze
+
+Власник формально прийняв Phase10 / WP1 — Contracts & Evidence Validation
+і затвердив Contract Freeze Gate після незалежного review та remediation.
+Це актуальне рішення замінює попередні REVIEW/PENDING записи лише як поточний
+статус; усі попередні review records збережено як історичні докази.
+
+- Phase10 / WP1: **ACCEPTED**.
+- Contract Freeze Gate: **PASSED / OWNER APPROVED**.
+- Phase10: **IN PROGRESS / WP1 ACCEPTED / CONTRACT FREEZE PASSED**; не whole-phase ACCEPTED.
+- Approved implementation commit: `5d91716544b8a7764f3e2735783e0289b3803c82`.
+- [PR #12](https://github.com/the1llus1on/cyberforge/pull/12): owner-authorized
+  standard merge-commit лише після final documentation HEAD Linux/Windows CI.
+- F10-WP1-01 (Decimal bounds), F10-WP1-02 (sanitized Mentor revision) та
+  F10-WP1-03 (scratch retry-proof boundary): **RESOLVED**, прийнято власником.
+- У прийнятому WP1 scope немає outstanding BLOCKER, MAJOR або MINOR findings.
+
+Verified evidence: local full offline regression **1203 passed**, focused WP1
+**147 passed**, isolated SQLite protocol **47 passed**, final Decimal/Mentor/schema
+**24 passed**. Golden vectors/independent digest checks, Ruff lint/format, offline
+sdist/wheel та isolated installed-wheel verification — **PASS**.
+Original final implementation [CI run44131758053](https://github.com/the1llus1on/cyberforge/actions/runs/44131758053):
+Linux `checks (ubuntu-latest)` **SUCCESS**; Windows Server2022
+`checks (windows-2022)` **SUCCESS**, verified через GitHub MCP.
+Ці CI results стосуються approved implementation SHA, не нового acceptance commit.
+Для нового exact PR HEAD обидва CI jobs мають завершитися SUCCESS до merge;
+final SHA/run/merge evidence фіксуються у PR description і delivery без circular commits.
+
+Frozen v1 contracts, canonical serialization/golden vectors та documented mapping
+тепер normative inputs для майбутньої окремо approved роботи. Incompatible changes
+до frozen v1 потребують explicit versioning і documented review. Це не створює
+production storage schema: deferred-FK SQLite proof ізольований і test-only;
+production migration та actual persisted-result lifecycle ще не реалізовано.
+Physical Windows11 release acceptance залишається відповідальністю Phase12.
+
+Phases0–9 та Phase10 architecture — ACCEPTED. WP2 deterministic scoring і WP3
+persistence — **NOT STARTED / NOT AUTHORIZED**; migration0008 — **NOT CREATED /
+NOT AUTHORIZED**. Production ScoringService/EvaluationService, result UI, cloud
+Mentor integration та analytics не дозволені. Phases11–12 — **NOT STARTED**.
+Після acceptance recording/merge/ff-only synchronization роботу зупинити;
+цей дозвіл не починає наступний work package. SRS v3.0/ADR-0010 незмінні.
