@@ -1,0 +1,1262 @@
+{
+  "evidence": {
+    "attempt": {
+      "abandoned_at": null,
+      "attempt_id": "00000000-0000-0000-0000-000000000002",
+      "authorization_group_id": 1,
+      "completed_at": "2026-11-17T00:00:00.000000Z",
+      "current_stage": "EMAIL",
+      "decision": "DECLINED",
+      "email_opened": true,
+      "last_event_sequence": 7,
+      "learner_id": 4,
+      "manifest_digest": "66f277e91930114d42f6ec3233f8076747136aa551ee0ae946612e1d673dad90",
+      "publication_id": 1,
+      "revision": 8,
+      "scenario_id": 1,
+      "scenario_name": "Сценарій 1",
+      "scenario_version": 1,
+      "schema_version": "scenario-attempt-v1",
+      "started_at": "2026-11-17T00:00:00.000000Z",
+      "status": "COMPLETED",
+      "web_visited": false
+    },
+    "criteria": [
+      {
+        "applicable": true,
+        "condition_satisfied": true,
+        "criterion": {
+          "applicability": "all_attempts",
+          "criterion_id": "email.sender",
+          "critical_action": null,
+          "description": "Огляд відправника листа.",
+          "evidence_actions": [
+            "inspect_sender"
+          ],
+          "label": "Перевірка відправника",
+          "phase": "email",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "schema_version": "criterion-evidence-v1",
+        "supporting_event_refs": [
+          {
+            "event_id": "00000000-0000-0000-0000-000000000006",
+            "sequence": 3
+          }
+        ]
+      },
+      {
+        "applicable": true,
+        "condition_satisfied": true,
+        "criterion": {
+          "applicability": "all_attempts",
+          "criterion_id": "email.link",
+          "critical_action": null,
+          "description": "Огляд навчального посилання.",
+          "evidence_actions": [
+            "inspect_link"
+          ],
+          "label": "Перевірка посилання",
+          "phase": "email",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "schema_version": "criterion-evidence-v1",
+        "supporting_event_refs": [
+          {
+            "event_id": "00000000-0000-0000-0000-000000000007",
+            "sequence": 4
+          }
+        ]
+      },
+      {
+        "applicable": true,
+        "condition_satisfied": true,
+        "criterion": {
+          "applicability": "all_attempts",
+          "criterion_id": "email.report",
+          "critical_action": null,
+          "description": "Повідомлення про підозрілий лист.",
+          "evidence_actions": [
+            "report"
+          ],
+          "label": "Повідомлення про лист",
+          "phase": "email",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "schema_version": "criterion-evidence-v1",
+        "supporting_event_refs": [
+          {
+            "event_id": "00000000-0000-0000-0000-000000000008",
+            "sequence": 5
+          }
+        ]
+      },
+      {
+        "applicable": true,
+        "condition_satisfied": true,
+        "criterion": {
+          "applicability": "all_attempts",
+          "criterion_id": "transition.safe_decline",
+          "critical_action": null,
+          "description": "Відмова від підозрілого переходу є успішним шляхом.",
+          "evidence_actions": [
+            "decline"
+          ],
+          "label": "Безпечна відмова",
+          "phase": "transition",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "schema_version": "criterion-evidence-v1",
+        "supporting_event_refs": [
+          {
+            "event_id": "00000000-0000-0000-0000-000000000009",
+            "sequence": 6
+          },
+          {
+            "event_id": "00000000-0000-0000-0000-00000000000a",
+            "sequence": 7
+          }
+        ]
+      },
+      {
+        "applicable": true,
+        "condition_satisfied": null,
+        "criterion": {
+          "applicability": "all_attempts",
+          "criterion_id": "transition.decision",
+          "critical_action": null,
+          "description": "Перевірка рішення за навчальною метою викладача; без числового результату.",
+          "evidence_actions": [
+            "decline",
+            "open_internal"
+          ],
+          "label": "Рішення про перехід",
+          "phase": "transition",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "schema_version": "criterion-evidence-v1",
+        "supporting_event_refs": [
+          {
+            "event_id": "00000000-0000-0000-0000-000000000009",
+            "sequence": 6
+          }
+        ]
+      },
+      {
+        "applicable": false,
+        "condition_satisfied": null,
+        "criterion": {
+          "applicability": "web_visited",
+          "criterion_id": "web.address",
+          "critical_action": null,
+          "description": "Огляд відображуваної адреси.",
+          "evidence_actions": [
+            "inspect_address"
+          ],
+          "label": "Перевірка адреси сайту",
+          "phase": "web",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "schema_version": "criterion-evidence-v1",
+        "supporting_event_refs": []
+      },
+      {
+        "applicable": false,
+        "condition_satisfied": null,
+        "criterion": {
+          "applicability": "web_visited",
+          "criterion_id": "web.leave",
+          "critical_action": null,
+          "description": "Вихід із підозрілої сторінки.",
+          "evidence_actions": [
+            "leave"
+          ],
+          "label": "Безпечний вихід",
+          "phase": "web",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "schema_version": "criterion-evidence-v1",
+        "supporting_event_refs": []
+      },
+      {
+        "applicable": false,
+        "condition_satisfied": null,
+        "criterion": {
+          "applicability": "web_visited",
+          "criterion_id": "web.report",
+          "critical_action": null,
+          "description": "Повідомлення про підозрілий сайт.",
+          "evidence_actions": [
+            "report"
+          ],
+          "label": "Повідомлення про сайт",
+          "phase": "web",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "schema_version": "criterion-evidence-v1",
+        "supporting_event_refs": []
+      }
+    ],
+    "critical_observations": [],
+    "critical_policy_status": "NOT_CONFIGURED",
+    "event_count": 7,
+    "events": [
+      {
+        "action_id": "started",
+        "attempt_id": "00000000-0000-0000-0000-000000000002",
+        "component_id": null,
+        "event_id": "00000000-0000-0000-0000-000000000004",
+        "operation_digest": "799c173fb4f17336c373578afff17ed7ced37411376108fe60597efdcd062726",
+        "operation_index": 0,
+        "request_id": "00000000-0000-0000-0000-000000000003",
+        "schema_version": "attempt-event-v1",
+        "sequence": 1,
+        "surface": "system",
+        "timestamp": "2026-11-17T00:00:00.000000Z"
+      },
+      {
+        "action_id": "email_opened",
+        "attempt_id": "00000000-0000-0000-0000-000000000002",
+        "component_id": null,
+        "event_id": "00000000-0000-0000-0000-000000000005",
+        "operation_digest": "212ce81f953f8b221cf62a159fe4c34dec04b267119d78f41134365546369585",
+        "operation_index": 0,
+        "request_id": "00000000-0000-0000-0000-000000002710",
+        "schema_version": "attempt-event-v1",
+        "sequence": 2,
+        "surface": "email",
+        "timestamp": "2026-11-17T00:00:00.000000Z"
+      },
+      {
+        "action_id": "inspect_sender",
+        "attempt_id": "00000000-0000-0000-0000-000000000002",
+        "component_id": null,
+        "event_id": "00000000-0000-0000-0000-000000000006",
+        "operation_digest": "a67621cd3c913ea0000facc2e2aa65fc16bcbce70eb1b33ba299591a841a0573",
+        "operation_index": 0,
+        "request_id": "00000000-0000-0000-0000-000000002711",
+        "schema_version": "attempt-event-v1",
+        "sequence": 3,
+        "surface": "email",
+        "timestamp": "2026-11-17T00:00:00.000000Z"
+      },
+      {
+        "action_id": "inspect_link",
+        "attempt_id": "00000000-0000-0000-0000-000000000002",
+        "component_id": null,
+        "event_id": "00000000-0000-0000-0000-000000000007",
+        "operation_digest": "54b1a505cdf657702678d2cbc2269f64510f943b0bcab0a549875a21bbd786a4",
+        "operation_index": 0,
+        "request_id": "00000000-0000-0000-0000-000000002712",
+        "schema_version": "attempt-event-v1",
+        "sequence": 4,
+        "surface": "email",
+        "timestamp": "2026-11-17T00:00:00.000000Z"
+      },
+      {
+        "action_id": "report",
+        "attempt_id": "00000000-0000-0000-0000-000000000002",
+        "component_id": null,
+        "event_id": "00000000-0000-0000-0000-000000000008",
+        "operation_digest": "86e1ea7b185a2faa58d233752a56704c0b9ef77c1eb9d0419bbd66a3c6e8ed6b",
+        "operation_index": 0,
+        "request_id": "00000000-0000-0000-0000-000000002713",
+        "schema_version": "attempt-event-v1",
+        "sequence": 5,
+        "surface": "email",
+        "timestamp": "2026-11-17T00:00:00.000000Z"
+      },
+      {
+        "action_id": "decline",
+        "attempt_id": "00000000-0000-0000-0000-000000000002",
+        "component_id": null,
+        "event_id": "00000000-0000-0000-0000-000000000009",
+        "operation_digest": "b135cdd71527c81426245188b2155805ea817ec020f139b3d36a08af0a600608",
+        "operation_index": 0,
+        "request_id": "00000000-0000-0000-0000-000000002714",
+        "schema_version": "attempt-event-v1",
+        "sequence": 6,
+        "surface": "transition",
+        "timestamp": "2026-11-17T00:00:00.000000Z"
+      },
+      {
+        "action_id": "completed",
+        "attempt_id": "00000000-0000-0000-0000-000000000002",
+        "component_id": null,
+        "event_id": "00000000-0000-0000-0000-00000000000a",
+        "operation_digest": "9007eda19c65e58b0bdf3faaf543e7ff2066511463a83100bf3d4c87421d3ec4",
+        "operation_index": 0,
+        "request_id": "00000000-0000-0000-0000-000000002715",
+        "schema_version": "attempt-event-v1",
+        "sequence": 7,
+        "surface": "system",
+        "timestamp": "2026-11-17T00:00:00.000000Z"
+      }
+    ],
+    "events_digest": "d1a4f799a8c73a89ecd99c7b0070fff0c2bf21df56092a65343a6055d8a5a71b",
+    "evidence_digest": "90867a69d718ef35751421cac959c573c52ae4709e6ef31fb48250a42f21df6b",
+    "path": {
+      "event_refs": [
+        {
+          "event_id": "00000000-0000-0000-0000-000000000009",
+          "sequence": 6
+        },
+        {
+          "event_id": "00000000-0000-0000-0000-00000000000a",
+          "sequence": 7
+        }
+      ],
+      "kind": "SAFE_DECLINE",
+      "schema_version": "completed-path-v1"
+    },
+    "schema_version": "evaluation-evidence-v1",
+    "scoring_strategy": "cyberforge-weighted-actions-v1",
+    "source": {
+      "manifest_digest": "66f277e91930114d42f6ec3233f8076747136aa551ee0ae946612e1d673dad90",
+      "manifest_schema_version": "scenario-publication-v1",
+      "publication_id": 1,
+      "registry_version": "criterion-registry-v1",
+      "rubric_id": "scenario_1_v1",
+      "rubric_schema_version": "rubric-definition-v1",
+      "rubric_semantics_version": "rubric-declarations-v1",
+      "schema_version": "evaluation-source-v1",
+      "snapshot": {
+        "archive_revision": 0,
+        "email_digest": "fa81b2efcfb05c5c482545dccabc31182e11822fb5eee6b37e373a51a8ccc6e9",
+        "email_revision": 1,
+        "link_digest": "d648d5e66cf447ebbc9160634540e72781e8bb947f6830b0bca46494ae416ee1",
+        "link_revision": 1,
+        "rubric_digest": "db2e2efa6a2449e7e319fe2140ef0cdecbb9dd165f1894f433d4114a44fe4ec9",
+        "rubric_revision": 1,
+        "scenario_digest": "80f27c52eb2e0aca074d64fa8364ea97571c781017c75c7b26e32a561c8ca65c",
+        "scenario_id": 1,
+        "scenario_revision": 1,
+        "scenario_version": 1,
+        "web_digest": "c5a6ddbb9613fde9922a6adb5e624881ec71eb6c0066f2c5ac3d6d5d51fdb4bc",
+        "web_revision": 2
+      },
+      "version_id": 1
+    },
+    "terminal_sequence": 7,
+    "transition": {
+      "event_refs": [
+        {
+          "event_id": "00000000-0000-0000-0000-000000000009",
+          "sequence": 6
+        }
+      ],
+      "final_action_id": "decline",
+      "schema_version": "transition-decision-v1"
+    }
+  },
+  "feedback": {
+    "created_at": "2026-11-17T00:00:00.000000Z",
+    "evaluation_status": "SCORED",
+    "evidence_digest": "90867a69d718ef35751421cac959c573c52ae4709e6ef31fb48250a42f21df6b",
+    "explanation": {
+      "aggregate": null,
+      "decision_maker": "instructor",
+      "difficulty_suggestion": "keep",
+      "limitations": [
+        "AI обирає лише надані пояснення; причинні та психологічні висновки не встановлюються.",
+        "Правильне завершення без переходу до Web не є автоматичною помилкою."
+      ],
+      "recommendations": [
+        "Перевіряйте адресу відправника через незалежний довірений канал.",
+        "Перевіряйте адресу посилання перед переходом; за сумніву відмовтеся від переходу.",
+        "Повідомляйте про підозрілі повідомлення за затвердженою процедурою.",
+        "Не вводьте справжні облікові дані в навчальні форми чи на підозрілих сторінках."
+      ],
+      "result": {
+        "rubric_version": "scenario_1_v1",
+        "score_percent": 100.0,
+        "status": "completed",
+        "web_status": "correctly_skipped"
+      },
+      "schema_version": "explanation-v1",
+      "selected_facts": [
+        {
+          "defensive_behavior": "Перевіряйте адресу відправника через незалежний довірений канал.",
+          "explanation": "Цей факт підтверджує записану дію, а не правильне розпізнавання загрози.",
+          "fact_id": "email_sender_met",
+          "observation": "Зафіксовано перевірку відправника листа.",
+          "topic": "sender_verification"
+        },
+        {
+          "defensive_behavior": "Перевіряйте адресу посилання перед переходом; за сумніву відмовтеся від переходу.",
+          "explanation": "Цей факт підтверджує записану дію, а не правильне розпізнавання загрози.",
+          "fact_id": "email_link_met",
+          "observation": "Зафіксовано перевірку навчального посилання.",
+          "topic": "link_inspection"
+        },
+        {
+          "defensive_behavior": "Повідомляйте про підозрілі повідомлення за затвердженою процедурою.",
+          "explanation": "Цей факт підтверджує записану дію, а не правильне розпізнавання загрози.",
+          "fact_id": "email_report_met",
+          "observation": "Зафіксовано повідомлення про лист.",
+          "topic": "reporting"
+        },
+        {
+          "defensive_behavior": "Перевіряйте адресу посилання перед переходом; за сумніву відмовтеся від переходу.",
+          "explanation": "Критерій підтверджується фінальною відмовою та завершенням без Web.",
+          "fact_id": "transition_safe_decline_met",
+          "observation": "Зафіксовано завершення з відмовою від переходу без відвідування Web.",
+          "topic": "link_inspection"
+        },
+        {
+          "defensive_behavior": "Перевіряйте адресу посилання перед переходом; за сумніву відмовтеся від переходу.",
+          "explanation": "Числове значення відсутнє; вагу критерію виключено з обох сум.",
+          "fact_id": "web_address_not_applicable",
+          "observation": "Критерій не застосовується до фактичного шляху цієї спроби.",
+          "topic": "link_inspection"
+        },
+        {
+          "defensive_behavior": "Перевіряйте адресу посилання перед переходом; за сумніву відмовтеся від переходу.",
+          "explanation": "Числове значення відсутнє; вагу критерію виключено з обох сум.",
+          "fact_id": "web_leave_not_applicable",
+          "observation": "Критерій не застосовується до фактичного шляху цієї спроби.",
+          "topic": "link_inspection"
+        },
+        {
+          "defensive_behavior": "Повідомляйте про підозрілі повідомлення за затвердженою процедурою.",
+          "explanation": "Числове значення відсутнє; вагу критерію виключено з обох сум.",
+          "fact_id": "web_report_not_applicable",
+          "observation": "Критерій не застосовується до фактичного шляху цієї спроби.",
+          "topic": "reporting"
+        },
+        {
+          "defensive_behavior": "Перевіряйте адресу посилання перед переходом; за сумніву відмовтеся від переходу.",
+          "explanation": "Це опис рішення без окремої числової оцінки.",
+          "fact_id": "transition_decision_decline",
+          "observation": "Фінальне рішення про перехід — відмова.",
+          "topic": "link_inspection"
+        },
+        {
+          "defensive_behavior": "Не вводьте справжні облікові дані в навчальні форми чи на підозрілих сторінках.",
+          "explanation": "Це не доводить відсутності порушень; штрафи не застосовуються.",
+          "fact_id": "critical_policy_not_configured",
+          "observation": "Правила критичних порушень для цієї публікації не налаштовано.",
+          "topic": "data_protection"
+        },
+        {
+          "defensive_behavior": "Не вводьте справжні облікові дані в навчальні форми чи на підозрілих сторінках.",
+          "explanation": "Ці дані не встановлюють психологічних причин або правильності інтерпретації загрози.",
+          "fact_id": "evidence_interpretation_limit",
+          "observation": "Запис спроби містить факти дозволених дій.",
+          "topic": "data_protection"
+        }
+      ]
+    },
+    "fact_catalog_version": "educational-facts-v1",
+    "facts": [
+      {
+        "defensive_behavior": "Перевіряйте адресу відправника через незалежний довірений канал.",
+        "explanation": "Цей факт підтверджує записану дію, а не правильне розпізнавання загрози.",
+        "fact_id": "email_sender_met",
+        "observation": "Зафіксовано перевірку відправника листа.",
+        "topic": "sender_verification"
+      },
+      {
+        "defensive_behavior": "Перевіряйте адресу посилання перед переходом; за сумніву відмовтеся від переходу.",
+        "explanation": "Цей факт підтверджує записану дію, а не правильне розпізнавання загрози.",
+        "fact_id": "email_link_met",
+        "observation": "Зафіксовано перевірку навчального посилання.",
+        "topic": "link_inspection"
+      },
+      {
+        "defensive_behavior": "Повідомляйте про підозрілі повідомлення за затвердженою процедурою.",
+        "explanation": "Цей факт підтверджує записану дію, а не правильне розпізнавання загрози.",
+        "fact_id": "email_report_met",
+        "observation": "Зафіксовано повідомлення про лист.",
+        "topic": "reporting"
+      },
+      {
+        "defensive_behavior": "Перевіряйте адресу посилання перед переходом; за сумніву відмовтеся від переходу.",
+        "explanation": "Критерій підтверджується фінальною відмовою та завершенням без Web.",
+        "fact_id": "transition_safe_decline_met",
+        "observation": "Зафіксовано завершення з відмовою від переходу без відвідування Web.",
+        "topic": "link_inspection"
+      },
+      {
+        "defensive_behavior": "Перевіряйте адресу посилання перед переходом; за сумніву відмовтеся від переходу.",
+        "explanation": "Числове значення відсутнє; вагу критерію виключено з обох сум.",
+        "fact_id": "web_address_not_applicable",
+        "observation": "Критерій не застосовується до фактичного шляху цієї спроби.",
+        "topic": "link_inspection"
+      },
+      {
+        "defensive_behavior": "Перевіряйте адресу посилання перед переходом; за сумніву відмовтеся від переходу.",
+        "explanation": "Числове значення відсутнє; вагу критерію виключено з обох сум.",
+        "fact_id": "web_leave_not_applicable",
+        "observation": "Критерій не застосовується до фактичного шляху цієї спроби.",
+        "topic": "link_inspection"
+      },
+      {
+        "defensive_behavior": "Повідомляйте про підозрілі повідомлення за затвердженою процедурою.",
+        "explanation": "Числове значення відсутнє; вагу критерію виключено з обох сум.",
+        "fact_id": "web_report_not_applicable",
+        "observation": "Критерій не застосовується до фактичного шляху цієї спроби.",
+        "topic": "reporting"
+      },
+      {
+        "defensive_behavior": "Перевіряйте адресу посилання перед переходом; за сумніву відмовтеся від переходу.",
+        "explanation": "Це опис рішення без окремої числової оцінки.",
+        "fact_id": "transition_decision_decline",
+        "observation": "Фінальне рішення про перехід — відмова.",
+        "topic": "link_inspection"
+      },
+      {
+        "defensive_behavior": "Не вводьте справжні облікові дані в навчальні форми чи на підозрілих сторінках.",
+        "explanation": "Це не доводить відсутності порушень; штрафи не застосовуються.",
+        "fact_id": "critical_policy_not_configured",
+        "observation": "Правила критичних порушень для цієї публікації не налаштовано.",
+        "topic": "data_protection"
+      },
+      {
+        "defensive_behavior": "Не вводьте справжні облікові дані в навчальні форми чи на підозрілих сторінках.",
+        "explanation": "Ці дані не встановлюють психологічних причин або правильності інтерпретації загрози.",
+        "fact_id": "evidence_interpretation_limit",
+        "observation": "Запис спроби містить факти дозволених дій.",
+        "topic": "data_protection"
+      }
+    ],
+    "fallback_reason": "CLOUD_DISABLED",
+    "feedback_digest": "542571b7c15eba07ecc3131d40774dcb7e7d99c9ceed1a7527dbd256ac8b88f6",
+    "feedback_id": "00000000-0000-0000-0000-000000004e21",
+    "locale": "uk-UA",
+    "mode": "DETERMINISTIC",
+    "model": null,
+    "objective": "Пояснити зафіксовані навчальні дії та безпечні способи перевірки.",
+    "permitted_topics": [
+      "sender_verification",
+      "link_inspection",
+      "reporting",
+      "data_protection"
+    ],
+    "provider": null,
+    "result_digest": "948614e51dd9d29ada62e393607ce03f7605bcc67134e051e09228042214c0a7",
+    "result_id": "00000000-0000-0000-0000-000000004e20",
+    "schema_version": "local-mentor-feedback-v1",
+    "synthetic": true
+  },
+  "result": {
+    "attempt": {
+      "abandoned_at": null,
+      "attempt_id": "00000000-0000-0000-0000-000000000002",
+      "authorization_group_id": 1,
+      "completed_at": "2026-11-17T00:00:00.000000Z",
+      "current_stage": "EMAIL",
+      "decision": "DECLINED",
+      "email_opened": true,
+      "last_event_sequence": 7,
+      "learner_id": 4,
+      "manifest_digest": "66f277e91930114d42f6ec3233f8076747136aa551ee0ae946612e1d673dad90",
+      "publication_id": 1,
+      "revision": 8,
+      "scenario_id": 1,
+      "scenario_name": "Сценарій 1",
+      "scenario_version": 1,
+      "schema_version": "scenario-attempt-v1",
+      "started_at": "2026-11-17T00:00:00.000000Z",
+      "status": "COMPLETED",
+      "web_visited": false
+    },
+    "criteria": [
+      {
+        "applicable": true,
+        "criterion": {
+          "applicability": "all_attempts",
+          "criterion_id": "email.sender",
+          "critical_action": null,
+          "description": "Огляд відправника листа.",
+          "evidence_actions": [
+            "inspect_sender"
+          ],
+          "label": "Перевірка відправника",
+          "phase": "email",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "descriptive_transition": null,
+        "outcome": "MET",
+        "position": 0,
+        "schema_version": "criterion-evaluation-v1",
+        "score": 1,
+        "supporting_event_refs": [
+          {
+            "event_id": "00000000-0000-0000-0000-000000000006",
+            "sequence": 3
+          }
+        ],
+        "weighted_contribution": "1"
+      },
+      {
+        "applicable": true,
+        "criterion": {
+          "applicability": "all_attempts",
+          "criterion_id": "email.link",
+          "critical_action": null,
+          "description": "Огляд навчального посилання.",
+          "evidence_actions": [
+            "inspect_link"
+          ],
+          "label": "Перевірка посилання",
+          "phase": "email",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "descriptive_transition": null,
+        "outcome": "MET",
+        "position": 1,
+        "schema_version": "criterion-evaluation-v1",
+        "score": 1,
+        "supporting_event_refs": [
+          {
+            "event_id": "00000000-0000-0000-0000-000000000007",
+            "sequence": 4
+          }
+        ],
+        "weighted_contribution": "1"
+      },
+      {
+        "applicable": true,
+        "criterion": {
+          "applicability": "all_attempts",
+          "criterion_id": "email.report",
+          "critical_action": null,
+          "description": "Повідомлення про підозрілий лист.",
+          "evidence_actions": [
+            "report"
+          ],
+          "label": "Повідомлення про лист",
+          "phase": "email",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "descriptive_transition": null,
+        "outcome": "MET",
+        "position": 2,
+        "schema_version": "criterion-evaluation-v1",
+        "score": 1,
+        "supporting_event_refs": [
+          {
+            "event_id": "00000000-0000-0000-0000-000000000008",
+            "sequence": 5
+          }
+        ],
+        "weighted_contribution": "1"
+      },
+      {
+        "applicable": true,
+        "criterion": {
+          "applicability": "all_attempts",
+          "criterion_id": "transition.safe_decline",
+          "critical_action": null,
+          "description": "Відмова від підозрілого переходу є успішним шляхом.",
+          "evidence_actions": [
+            "decline"
+          ],
+          "label": "Безпечна відмова",
+          "phase": "transition",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "descriptive_transition": null,
+        "outcome": "MET",
+        "position": 3,
+        "schema_version": "criterion-evaluation-v1",
+        "score": 1,
+        "supporting_event_refs": [
+          {
+            "event_id": "00000000-0000-0000-0000-000000000009",
+            "sequence": 6
+          },
+          {
+            "event_id": "00000000-0000-0000-0000-00000000000a",
+            "sequence": 7
+          }
+        ],
+        "weighted_contribution": "1"
+      },
+      {
+        "applicable": true,
+        "criterion": {
+          "applicability": "all_attempts",
+          "criterion_id": "transition.decision",
+          "critical_action": null,
+          "description": "Перевірка рішення за навчальною метою викладача; без числового результату.",
+          "evidence_actions": [
+            "decline",
+            "open_internal"
+          ],
+          "label": "Рішення про перехід",
+          "phase": "transition",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "descriptive_transition": {
+          "event_refs": [
+            {
+              "event_id": "00000000-0000-0000-0000-000000000009",
+              "sequence": 6
+            }
+          ],
+          "final_action_id": "decline",
+          "schema_version": "transition-decision-v1"
+        },
+        "outcome": "DESCRIPTIVE",
+        "position": 4,
+        "schema_version": "criterion-evaluation-v1",
+        "score": null,
+        "supporting_event_refs": [
+          {
+            "event_id": "00000000-0000-0000-0000-000000000009",
+            "sequence": 6
+          }
+        ],
+        "weighted_contribution": null
+      },
+      {
+        "applicable": false,
+        "criterion": {
+          "applicability": "web_visited",
+          "criterion_id": "web.address",
+          "critical_action": null,
+          "description": "Огляд відображуваної адреси.",
+          "evidence_actions": [
+            "inspect_address"
+          ],
+          "label": "Перевірка адреси сайту",
+          "phase": "web",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "descriptive_transition": null,
+        "outcome": "NOT_APPLICABLE",
+        "position": 5,
+        "schema_version": "criterion-evaluation-v1",
+        "score": null,
+        "supporting_event_refs": [],
+        "weighted_contribution": null
+      },
+      {
+        "applicable": false,
+        "criterion": {
+          "applicability": "web_visited",
+          "criterion_id": "web.leave",
+          "critical_action": null,
+          "description": "Вихід із підозрілої сторінки.",
+          "evidence_actions": [
+            "leave"
+          ],
+          "label": "Безпечний вихід",
+          "phase": "web",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "descriptive_transition": null,
+        "outcome": "NOT_APPLICABLE",
+        "position": 6,
+        "schema_version": "criterion-evaluation-v1",
+        "score": null,
+        "supporting_event_refs": [],
+        "weighted_contribution": null
+      },
+      {
+        "applicable": false,
+        "criterion": {
+          "applicability": "web_visited",
+          "criterion_id": "web.report",
+          "critical_action": null,
+          "description": "Повідомлення про підозрілий сайт.",
+          "evidence_actions": [
+            "report"
+          ],
+          "label": "Повідомлення про сайт",
+          "phase": "web",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "descriptive_transition": null,
+        "outcome": "NOT_APPLICABLE",
+        "position": 7,
+        "schema_version": "criterion-evaluation-v1",
+        "score": null,
+        "supporting_event_refs": [],
+        "weighted_contribution": null
+      }
+    ],
+    "critical_observations": [],
+    "critical_policy_status": "NOT_CONFIGURED",
+    "evaluated_at": "2026-11-17T00:00:00.000000Z",
+    "event_count": 7,
+    "events_digest": "d1a4f799a8c73a89ecd99c7b0070fff0c2bf21df56092a65343a6055d8a5a71b",
+    "evidence_digest": "90867a69d718ef35751421cac959c573c52ae4709e6ef31fb48250a42f21df6b",
+    "path": {
+      "event_refs": [
+        {
+          "event_id": "00000000-0000-0000-0000-000000000009",
+          "sequence": 6
+        },
+        {
+          "event_id": "00000000-0000-0000-0000-00000000000a",
+          "sequence": 7
+        }
+      ],
+      "kind": "SAFE_DECLINE",
+      "schema_version": "completed-path-v1"
+    },
+    "reason_code": null,
+    "result_digest": "948614e51dd9d29ada62e393607ce03f7605bcc67134e051e09228042214c0a7",
+    "result_id": "00000000-0000-0000-0000-000000004e20",
+    "schema_version": "evaluation-result-v1",
+    "score_percent": "100.00",
+    "scoring_strategy": "cyberforge-weighted-actions-v1",
+    "source": {
+      "manifest_digest": "66f277e91930114d42f6ec3233f8076747136aa551ee0ae946612e1d673dad90",
+      "manifest_schema_version": "scenario-publication-v1",
+      "publication_id": 1,
+      "registry_version": "criterion-registry-v1",
+      "rubric_id": "scenario_1_v1",
+      "rubric_schema_version": "rubric-definition-v1",
+      "rubric_semantics_version": "rubric-declarations-v1",
+      "schema_version": "evaluation-source-v1",
+      "snapshot": {
+        "archive_revision": 0,
+        "email_digest": "fa81b2efcfb05c5c482545dccabc31182e11822fb5eee6b37e373a51a8ccc6e9",
+        "email_revision": 1,
+        "link_digest": "d648d5e66cf447ebbc9160634540e72781e8bb947f6830b0bca46494ae416ee1",
+        "link_revision": 1,
+        "rubric_digest": "db2e2efa6a2449e7e319fe2140ef0cdecbb9dd165f1894f433d4114a44fe4ec9",
+        "rubric_revision": 1,
+        "scenario_digest": "80f27c52eb2e0aca074d64fa8364ea97571c781017c75c7b26e32a561c8ca65c",
+        "scenario_id": 1,
+        "scenario_revision": 1,
+        "scenario_version": 1,
+        "web_digest": "c5a6ddbb9613fde9922a6adb5e624881ec71eb6c0066f2c5ac3d6d5d51fdb4bc",
+        "web_revision": 2
+      },
+      "version_id": 1
+    },
+    "status": "SCORED",
+    "terminal_sequence": 7,
+    "transition": {
+      "event_refs": [
+        {
+          "event_id": "00000000-0000-0000-0000-000000000009",
+          "sequence": 6
+        }
+      ],
+      "final_action_id": "decline",
+      "schema_version": "transition-decision-v1"
+    },
+    "weighted_denominator": "4",
+    "weighted_numerator": "4"
+  },
+  "sources": {
+    "attempt": {
+      "abandoned_at": null,
+      "attempt_id": "00000000-0000-0000-0000-000000000002",
+      "authorization_group_id": 1,
+      "completed_at": "2026-11-17T00:00:00.000000Z",
+      "current_stage": "EMAIL",
+      "decision": "DECLINED",
+      "email_opened": true,
+      "last_event_sequence": 7,
+      "learner_id": 4,
+      "manifest_digest": "66f277e91930114d42f6ec3233f8076747136aa551ee0ae946612e1d673dad90",
+      "publication_id": 1,
+      "revision": 8,
+      "scenario_id": 1,
+      "scenario_name": "Сценарій 1",
+      "scenario_version": 1,
+      "schema_version": "scenario-attempt-v1",
+      "started_at": "2026-11-17T00:00:00.000000Z",
+      "status": "COMPLETED",
+      "web_visited": false
+    },
+    "email": {
+      "artifact": {
+        "body_text": "Вітаємо!\n\nНавчальна організація 1 запрошує перевірити навчальне повідомлення. Перевірте відправника та внутрішнє призначення посилання.\n\nЦе синтетичний приклад. Справжні облікові дані не потрібні.",
+        "context": {
+          "internal_resource_id": "scenario_1_v1",
+          "organization": "Навчальна організація 1",
+          "premise": "Синтетичне навчальне повідомлення",
+          "schema_version": "scenario-context-v1",
+          "sender_name": "Навчальна служба"
+        },
+        "schema_version": "email-artifact-v1",
+        "subject": "Навчальна інтеграція"
+      },
+      "cue_validation": "requires_instructor_review",
+      "instructor_sender_name": null,
+      "parameters": {
+        "audience": "",
+        "description": "",
+        "difficulty": "beginner",
+        "generation_parameters": {},
+        "learning_objective": "",
+        "legacy_nist_cues": [],
+        "nist_cue_catalog": "nist-tn-2276:2023",
+        "nist_cues": [],
+        "tactics": [],
+        "topic": "Навчальна інтеграція"
+      },
+      "provenance": {
+        "kind": "email",
+        "language": "uk",
+        "schema_version": "draft-provenance-v1",
+        "source_digest": "1996efc3954507d78e4447144cfb31dbc067ff9dc2e2e80e8a2780d2f5d96042"
+      },
+      "scenario_id": 1,
+      "scenario_version": 1,
+      "schema_version": "email-draft-v2",
+      "selected_cues": [],
+      "slots": {
+        "background": [
+          {
+            "body_text": "Матеріали для самостійного навчання вже підготовлено.",
+            "sender_address": "library@training.invalid",
+            "sender_name": "Навчальна бібліотека",
+            "subject": "Нові навчальні матеріали"
+          },
+          {
+            "body_text": "Наступне синтетичне заняття присвячене безпечним рішенням.",
+            "sender_address": "course@training.invalid",
+            "sender_name": "Координатор навчання",
+            "subject": "Розклад занять"
+          }
+        ],
+        "claimed_cues": [],
+        "context_token": "ba90f40cfb1881acbd28b627a5292ff5084b2e1fa7fc21a35a1cb7539af52e99",
+        "expected_actions": [
+          "inspect_sender",
+          "inspect_link",
+          "report",
+          "decline",
+          "open_internal"
+        ],
+        "indicators": [
+          "Синтетичний приклад для огляду викладачем"
+        ],
+        "internal_resource_id": "scenario_1_v1",
+        "main": {
+          "body_text": "Вітаємо!\n\nНавчальна організація 1 запрошує перевірити навчальне повідомлення. Перевірте відправника та внутрішнє призначення посилання.\n\nЦе синтетичний приклад. Справжні облікові дані не потрібні.",
+          "sender_address": "notice@training.invalid",
+          "sender_name": "Навчальна служба",
+          "subject": "Навчальна інтеграція"
+        },
+        "schema_version": "email-slots-v1"
+      },
+      "verified_cues": []
+    },
+    "link": {
+      "allowed_action": "open_internal",
+      "display_url": "https://portal.osvita.example/learning",
+      "link_label": "Переглянути матеріал",
+      "linkage_provenance": "b79d8d90667cbb4511327e1b8fe773ae28724960f534b241366cb44d5bbba846",
+      "revision": 1,
+      "scenario_id": 1,
+      "scenario_version": 1,
+      "schema_version": "scenario-link-v1",
+      "source_email_digest": "fa81b2efcfb05c5c482545dccabc31182e11822fb5eee6b37e373a51a8ccc6e9",
+      "source_email_revision": 1,
+      "source_message_identifier": "main",
+      "target_resource_id": "scenario_1_v1",
+      "target_web_digest": "c5a6ddbb9613fde9922a6adb5e624881ec71eb6c0066f2c5ac3d6d5d51fdb4bc",
+      "target_web_revision": 2
+    },
+    "manifest": {
+      "confirmation_id": "00000000000000000000000000000001",
+      "email_renderer": "native-email-v1",
+      "email_schema": "email-draft-v2",
+      "link_schema": "scenario-link-v1",
+      "manifest_digest": "66f277e91930114d42f6ec3233f8076747136aa551ee0ae946612e1d673dad90",
+      "published_at": "2026-11-17T00:00:00.000000Z",
+      "publisher_id": 2,
+      "rubric_schema": "rubric-definition-v1",
+      "rubric_semantics": "rubric-declarations-v1",
+      "schema_version": "scenario-publication-v1",
+      "snapshot": {
+        "archive_revision": 0,
+        "email_digest": "fa81b2efcfb05c5c482545dccabc31182e11822fb5eee6b37e373a51a8ccc6e9",
+        "email_revision": 1,
+        "link_digest": "d648d5e66cf447ebbc9160634540e72781e8bb947f6830b0bca46494ae416ee1",
+        "link_revision": 1,
+        "rubric_digest": "db2e2efa6a2449e7e319fe2140ef0cdecbb9dd165f1894f433d4114a44fe4ec9",
+        "rubric_revision": 1,
+        "scenario_digest": "80f27c52eb2e0aca074d64fa8364ea97571c781017c75c7b26e32a561c8ca65c",
+        "scenario_id": 1,
+        "scenario_revision": 1,
+        "scenario_version": 1,
+        "web_digest": "c5a6ddbb9613fde9922a6adb5e624881ec71eb6c0066f2c5ac3d6d5d51fdb4bc",
+        "web_revision": 2
+      },
+      "web_renderer": "web-renderer-v1",
+      "web_schema": "web-draft-v3"
+    },
+    "parameters": {
+      "audience": "",
+      "description": "",
+      "difficulty": "beginner",
+      "generation_parameters": {},
+      "learning_objective": "",
+      "legacy_nist_cues": [],
+      "nist_cue_catalog": "nist-tn-2276:2023",
+      "nist_cues": [],
+      "tactics": [],
+      "topic": "Навчальна інтеграція"
+    },
+    "publication_id": 1,
+    "rubric": {
+      "author_id": 2,
+      "content_digest": "db2e2efa6a2449e7e319fe2140ef0cdecbb9dd165f1894f433d4114a44fe4ec9",
+      "criteria": [
+        {
+          "applicability": "all_attempts",
+          "criterion_id": "email.sender",
+          "critical_action": null,
+          "description": "Огляд відправника листа.",
+          "evidence_actions": [
+            "inspect_sender"
+          ],
+          "label": "Перевірка відправника",
+          "phase": "email",
+          "weight": 1.0
+        },
+        {
+          "applicability": "all_attempts",
+          "criterion_id": "email.link",
+          "critical_action": null,
+          "description": "Огляд навчального посилання.",
+          "evidence_actions": [
+            "inspect_link"
+          ],
+          "label": "Перевірка посилання",
+          "phase": "email",
+          "weight": 1.0
+        },
+        {
+          "applicability": "all_attempts",
+          "criterion_id": "email.report",
+          "critical_action": null,
+          "description": "Повідомлення про підозрілий лист.",
+          "evidence_actions": [
+            "report"
+          ],
+          "label": "Повідомлення про лист",
+          "phase": "email",
+          "weight": 1.0
+        },
+        {
+          "applicability": "all_attempts",
+          "criterion_id": "transition.safe_decline",
+          "critical_action": null,
+          "description": "Відмова від підозрілого переходу є успішним шляхом.",
+          "evidence_actions": [
+            "decline"
+          ],
+          "label": "Безпечна відмова",
+          "phase": "transition",
+          "weight": 1.0
+        },
+        {
+          "applicability": "all_attempts",
+          "criterion_id": "transition.decision",
+          "critical_action": null,
+          "description": "Перевірка рішення за навчальною метою викладача; без числового результату.",
+          "evidence_actions": [
+            "decline",
+            "open_internal"
+          ],
+          "label": "Рішення про перехід",
+          "phase": "transition",
+          "weight": 1.0
+        },
+        {
+          "applicability": "web_visited",
+          "criterion_id": "web.address",
+          "critical_action": null,
+          "description": "Огляд відображуваної адреси.",
+          "evidence_actions": [
+            "inspect_address"
+          ],
+          "label": "Перевірка адреси сайту",
+          "phase": "web",
+          "weight": 1.0
+        },
+        {
+          "applicability": "web_visited",
+          "criterion_id": "web.leave",
+          "critical_action": null,
+          "description": "Вихід із підозрілої сторінки.",
+          "evidence_actions": [
+            "leave"
+          ],
+          "label": "Безпечний вихід",
+          "phase": "web",
+          "weight": 1.0
+        },
+        {
+          "applicability": "web_visited",
+          "criterion_id": "web.report",
+          "critical_action": null,
+          "description": "Повідомлення про підозрілий сайт.",
+          "evidence_actions": [
+            "report"
+          ],
+          "label": "Повідомлення про сайт",
+          "phase": "web",
+          "weight": 1.0
+        }
+      ],
+      "registry_version": "criterion-registry-v1",
+      "rubric_id": "scenario_1_v1",
+      "rubric_revision": 1,
+      "rubric_schema_version": "rubric-definition-v1",
+      "saved_at": "2026-11-17T00:00:00.000000Z",
+      "scenario_id": 1,
+      "scenario_version": 1,
+      "semantics_version": "rubric-declarations-v1"
+    },
+    "version_id": 1,
+    "web": {
+      "context": {
+        "internal_resource_id": "scenario_1_v1",
+        "organization": "Навчальна організація 1",
+        "premise": "Синтетичне навчальне повідомлення",
+        "schema_version": "scenario-context-v1",
+        "sender_name": "Навчальна служба"
+      },
+      "email_binding": {
+        "digest": "fa81b2efcfb05c5c482545dccabc31182e11822fb5eee6b37e373a51a8ccc6e9",
+        "revision": 1
+      },
+      "page": {
+        "color_mode": "light",
+        "components": [
+          {
+            "id": "header_0",
+            "text": "Синтетичні матеріали для навчання.",
+            "title": "Навчальна організація 1",
+            "type": "header",
+            "variant": "standard"
+          },
+          {
+            "actions": [
+              {
+                "id": "confirm",
+                "label": "Підтвердити"
+              }
+            ],
+            "id": "hero_1",
+            "text": "Вітаємо!\n\nНавчальна організація 1 запрошує перевірити навчальне повідомлення. Перевірте відправника та внутрішнє призначення посилання.\n\nЦе синтетичний приклад. Справжні облікові дані не потрібні.",
+            "title": "Навчальна інтеграція",
+            "type": "hero",
+            "variant": "standard"
+          },
+          {
+            "id": "cards_2",
+            "items": [
+              {
+                "text": "Огляд синтетичного заняття.",
+                "title": "Матеріали курсу"
+              }
+            ],
+            "title": "Навчальний портал",
+            "type": "cards",
+            "variant": "standard"
+          },
+          {
+            "id": "notice_3",
+            "text": "Синтетичні матеріали для навчання.",
+            "title": "Навчальний портал",
+            "type": "notice",
+            "variant": "standard"
+          },
+          {
+            "actions": [
+              {
+                "id": "submit_synthetic",
+                "label": "Перевірити навчальну форму"
+              }
+            ],
+            "fields": [
+              {
+                "id": "synthetic_login",
+                "kind": "synthetic_text",
+                "label": "Навчальний ідентифікатор"
+              }
+            ],
+            "id": "demo_form",
+            "text": "Синтетичні матеріали для навчання.",
+            "title": "Навчальний портал",
+            "type": "form",
+            "variant": "standard"
+          },
+          {
+            "actions": [
+              {
+                "id": "inspect_address",
+                "label": "Перевірити адресу"
+              },
+              {
+                "id": "report",
+                "label": "Повідомити"
+              },
+              {
+                "id": "leave",
+                "label": "Залишити сторінку"
+              },
+              {
+                "id": "confirm",
+                "label": "Підтвердити"
+              }
+            ],
+            "id": "learner_actions",
+            "type": "actions",
+            "variant": "standard"
+          },
+          {
+            "id": "footer_5",
+            "text": "Синтетичні матеріали для навчання.",
+            "type": "footer",
+            "variant": "standard"
+          }
+        ],
+        "display_url": "https://portal.osvita.example/learning",
+        "internal_resource_id": "scenario_1_v1",
+        "layout": "standard",
+        "schema_version": "web-page-v2",
+        "tab_title": "Навчальний портал",
+        "theme": "academic"
+      },
+      "parameters": {
+        "audience": "",
+        "description": "",
+        "difficulty": "beginner",
+        "generation_parameters": {},
+        "learning_objective": "",
+        "legacy_nist_cues": [],
+        "nist_cue_catalog": "nist-tn-2276:2023",
+        "nist_cues": [],
+        "tactics": [],
+        "topic": "Навчальна інтеграція"
+      },
+      "preset": "auto",
+      "renderer_version": "web-renderer-v1",
+      "scenario_id": 1,
+      "scenario_version": 1,
+      "schema_version": "web-draft-v3",
+      "source_digest": "dd28efb1917c8c57dee6e67fcdb6509dc9417bf47d4ac9bc4678c7ef22b78599"
+    }
+  }
+}

@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–9 — ACCEPTED (Phase9 прийнято власником 2026-11-17); Phase10 — NOT STARTED / ARCHITECTURE APPROVED (17.11.2026; implementation authorization pending); Phases11–12 — NOT STARTED.
+**State:** Phases 0–9 — ACCEPTED (Phase9 прийнято власником 2026-11-17); Phase10 — IN PROGRESS / WP1 ONLY (17.11.2026; Contract Freeze Gate PENDING OWNER ACCEPTANCE); Phases11–12 — NOT STARTED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -27,7 +27,7 @@
 | 7 | Web Constructor | ACCEPTED | Hybrid components, isolated WebEngine, visual editor, scoped AI, saved Email binding, explicit SQLite Save; PHASE_7_ACCEPTANCE.md |
 | 8 | Scenario Integration | ACCEPTED | Typed Email→Web link, rubric definitions/editor, exact readiness/review, atomic immutable publication, audited grants/access; PHASE_8_ACCEPTANCE.md |
 | 9 | Learner Simulation | ACCEPTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
-| 10 | Scoring & Mentor | NOT STARTED / ARCHITECTURE APPROVED | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
+| 10 | Scoring & Mentor | IN PROGRESS / WP1 ONLY | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
 | 11 | Analytics Mode | NOT STARTED | Read-only scenario statistics, deduplicated learner table, missing-data rules, filters, CSV/JSON export, RBAC; analytics tests |
 | 12 | Finalization | NOT STARTED | Full regression/security checks, Windows 11 package, demonstration dataset, docs and release checklist |
 
@@ -1363,3 +1363,46 @@ scope перевірки, без runtime/migration/test changes. Це review-rea
 commit/push/PR baseline; merge та реалізація потребують окремого дозволу.
 Phase11 analytics/comparison/dashboards/exports читають stored results без
 recompute та потребують окремого phase approval.
+
+
+## Phase10 / WP1 — Contracts & Evidence Validation (17.11.2026)
+
+Окреме owner authorization дозволило лише WP1 contracts/canonical/pure validation/
+facts/source-valid golden fixtures/test-only protocol proof. WP1 engineering REVIEW;
+Contract Freeze Gate **PENDING OWNER ACCEPTANCE**. WP2–8 NOT STARTED; немає
+production ScoringService/EvaluationService, persistent results, migration0008,
+UI/cloud/Phase11. Commit/push/PR/merge не дозволені цим authorization.
+Попередні architecture-only NOT STARTED записи вище збережено як history.
+
+SRS §§12.2,12.8,14.7,23–24/ADR0010 §§D–E,J.1: evaluation package має exact
+closed immutable candidates, canonical bytes/digests, historical float conversion,
+context-independent verification arithmetic, pure source/lifecycle/evidence/result/
+feedback checks та educational-facts-v1. Accepted Phase5/8/9 files untouched.
+[WP1 Contract Freeze Review](PHASE_10_WP1_CONTRACT_FREEZE_REVIEW.md) містить exact
+field inventory/JSON Schema snapshot, static source-valid vectors, DB mapping,
+scratch proof й actual checks. WP3 не обходить mandatory owner-accepted gate.
+
+Focused104PASS, expanded129PASS; final registry-derived protocol47PASS та
+schema/Mock3PASS; Ruff143files PASS. Final stable full offline suite **1189PASS/656.89s**, exit0, 0skips:
+all1056accepted +133new; code/tests/fixture hashes unchanged during run. Offline sdist/wheel та
+isolated installed-wheel six-fixture roundtrip/source parity PASS. No live AI.
+Native Windows11 remains Phase12; Windows CI pending separately authorized Git
+publication. Next action — owner review WP1 delivery, не WP2/WP3.
+
+Final WP1 hardening verification: legacy ExplanationV1 mutable-instance injection
+closed by fresh accepted-JSON validation without Phase5 edits;16focused PASS.
+First full run stopped78%/exit143 before fix, не PASS; final stable full1189PASS
+supersedes it. Gate remains PENDING OWNER ACCEPTANCE, WP1 REVIEW only. Scope audit:
+exactly18authorized files,36relative links, accepted source/contract/migration/
+test/dependency/SRS bytes unchanged; no staging/commit/push/PR/merge.
+
+## Phase10 / WP1 — Draft PR publication authorized (17.11.2026)
+
+Owner explicitly дозволив commit/push existing feat/phase-10-wp1-contracts та
+Draft PR до main для independent review. Це supersedes earlier publication-pending
+notes, не є acceptance/merge authorization. WP1 NOT ACCEPTED; Contract Freeze Gate
+PENDING OWNER ACCEPTANCE; WP2/WP3/migration0008/UI/cloud/Phase11 не дозволені.
+Verified code/tests/fixtures unchanged за hashes; existing1189full/47protocol/
+16hardening та package evidence reused без unnecessary full rerun. New lightweight
+lint/format/link/scope/secret-pattern/diff checks; exact PR SHA/CI у delivery.
+Next action — independent review exact pushed commit через GitHub MCP.

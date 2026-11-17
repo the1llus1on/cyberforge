@@ -1,0 +1,272 @@
+{
+  "evidence": {
+    "attempt": {
+      "abandoned_at": null,
+      "attempt_id": "00000000-0000-0000-0000-000000000100",
+      "authorization_group_id": 1,
+      "completed_at": "2026-11-17T00:00:03.000000Z",
+      "current_stage": "EMAIL",
+      "decision": "DECLINED",
+      "email_opened": true,
+      "last_event_sequence": 4,
+      "learner_id": 1,
+      "manifest_digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "publication_id": 1,
+      "revision": 5,
+      "scenario_id": 1,
+      "scenario_name": "Навчання",
+      "scenario_version": 1,
+      "schema_version": "scenario-attempt-v1",
+      "started_at": "2026-11-17T00:00:00.000000Z",
+      "status": "COMPLETED",
+      "web_visited": false
+    },
+    "criteria": [
+      {
+        "applicable": true,
+        "condition_satisfied": false,
+        "criterion": {
+          "applicability": "all_attempts",
+          "criterion_id": "email.sender",
+          "critical_action": null,
+          "description": "Огляд відправника листа.",
+          "evidence_actions": [
+            "inspect_sender"
+          ],
+          "label": "Перевірка відправника",
+          "phase": "email",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "schema_version": "criterion-evidence-v1",
+        "supporting_event_refs": []
+      }
+    ],
+    "critical_observations": [],
+    "critical_policy_status": "NOT_CONFIGURED",
+    "event_count": 4,
+    "events": [
+      {
+        "action_id": "started",
+        "attempt_id": "00000000-0000-0000-0000-000000000100",
+        "component_id": null,
+        "event_id": "00000000-0000-0000-0000-000000000001",
+        "operation_digest": "799c173fb4f17336c373578afff17ed7ced37411376108fe60597efdcd062726",
+        "operation_index": 0,
+        "request_id": "00000000-0000-0000-0000-000000001001",
+        "schema_version": "attempt-event-v1",
+        "sequence": 1,
+        "surface": "system",
+        "timestamp": "2026-11-17T00:00:00.000000Z"
+      },
+      {
+        "action_id": "email_opened",
+        "attempt_id": "00000000-0000-0000-0000-000000000100",
+        "component_id": null,
+        "event_id": "00000000-0000-0000-0000-000000000002",
+        "operation_digest": "212ce81f953f8b221cf62a159fe4c34dec04b267119d78f41134365546369585",
+        "operation_index": 0,
+        "request_id": "00000000-0000-0000-0000-000000001002",
+        "schema_version": "attempt-event-v1",
+        "sequence": 2,
+        "surface": "email",
+        "timestamp": "2026-11-17T00:00:01.000000Z"
+      },
+      {
+        "action_id": "decline",
+        "attempt_id": "00000000-0000-0000-0000-000000000100",
+        "component_id": null,
+        "event_id": "00000000-0000-0000-0000-000000000003",
+        "operation_digest": "b135cdd71527c81426245188b2155805ea817ec020f139b3d36a08af0a600608",
+        "operation_index": 0,
+        "request_id": "00000000-0000-0000-0000-000000001003",
+        "schema_version": "attempt-event-v1",
+        "sequence": 3,
+        "surface": "transition",
+        "timestamp": "2026-11-17T00:00:02.000000Z"
+      },
+      {
+        "action_id": "completed",
+        "attempt_id": "00000000-0000-0000-0000-000000000100",
+        "component_id": null,
+        "event_id": "00000000-0000-0000-0000-000000000004",
+        "operation_digest": "9007eda19c65e58b0bdf3faaf543e7ff2066511463a83100bf3d4c87421d3ec4",
+        "operation_index": 0,
+        "request_id": "00000000-0000-0000-0000-000000001004",
+        "schema_version": "attempt-event-v1",
+        "sequence": 4,
+        "surface": "system",
+        "timestamp": "2026-11-17T00:00:03.000000Z"
+      }
+    ],
+    "events_digest": "1e13d0b69c7bf8789d564c8c23ebaeb3c91ee61640051ef2af4b3f68789056ec",
+    "evidence_digest": "6300955dbd5dd613369483cb416e821c3a4ab77b595489a8a85e5670dab1f9b1",
+    "path": {
+      "event_refs": [
+        {
+          "event_id": "00000000-0000-0000-0000-000000000003",
+          "sequence": 3
+        },
+        {
+          "event_id": "00000000-0000-0000-0000-000000000004",
+          "sequence": 4
+        }
+      ],
+      "kind": "SAFE_DECLINE",
+      "schema_version": "completed-path-v1"
+    },
+    "schema_version": "evaluation-evidence-v1",
+    "scoring_strategy": "cyberforge-weighted-actions-v1",
+    "source": {
+      "manifest_digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "manifest_schema_version": "scenario-publication-v1",
+      "publication_id": 1,
+      "registry_version": "criterion-registry-v1",
+      "rubric_id": "rubric_1",
+      "rubric_schema_version": "rubric-definition-v1",
+      "rubric_semantics_version": "rubric-declarations-v1",
+      "schema_version": "evaluation-source-v1",
+      "snapshot": {
+        "archive_revision": 0,
+        "email_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "email_revision": 1,
+        "link_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "link_revision": 1,
+        "rubric_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "rubric_revision": 1,
+        "scenario_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "scenario_id": 1,
+        "scenario_revision": 1,
+        "scenario_version": 1,
+        "web_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "web_revision": 1
+      },
+      "version_id": 1
+    },
+    "terminal_sequence": 4,
+    "transition": {
+      "event_refs": [
+        {
+          "event_id": "00000000-0000-0000-0000-000000000003",
+          "sequence": 3
+        }
+      ],
+      "final_action_id": "decline",
+      "schema_version": "transition-decision-v1"
+    }
+  },
+  "result": {
+    "attempt": {
+      "abandoned_at": null,
+      "attempt_id": "00000000-0000-0000-0000-000000000100",
+      "authorization_group_id": 1,
+      "completed_at": "2026-11-17T00:00:03.000000Z",
+      "current_stage": "EMAIL",
+      "decision": "DECLINED",
+      "email_opened": true,
+      "last_event_sequence": 4,
+      "learner_id": 1,
+      "manifest_digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "publication_id": 1,
+      "revision": 5,
+      "scenario_id": 1,
+      "scenario_name": "Навчання",
+      "scenario_version": 1,
+      "schema_version": "scenario-attempt-v1",
+      "started_at": "2026-11-17T00:00:00.000000Z",
+      "status": "COMPLETED",
+      "web_visited": false
+    },
+    "criteria": [
+      {
+        "applicable": true,
+        "criterion": {
+          "applicability": "all_attempts",
+          "criterion_id": "email.sender",
+          "critical_action": null,
+          "description": "Огляд відправника листа.",
+          "evidence_actions": [
+            "inspect_sender"
+          ],
+          "label": "Перевірка відправника",
+          "phase": "email",
+          "schema_version": "evaluation-criterion-snapshot-v1",
+          "weight": "1"
+        },
+        "descriptive_transition": null,
+        "outcome": "NOT_MET",
+        "position": 0,
+        "schema_version": "criterion-evaluation-v1",
+        "score": 0,
+        "supporting_event_refs": [],
+        "weighted_contribution": "0"
+      }
+    ],
+    "critical_observations": [],
+    "critical_policy_status": "NOT_CONFIGURED",
+    "evaluated_at": "2026-11-17T00:00:04.000000Z",
+    "event_count": 4,
+    "events_digest": "1e13d0b69c7bf8789d564c8c23ebaeb3c91ee61640051ef2af4b3f68789056ec",
+    "evidence_digest": "6300955dbd5dd613369483cb416e821c3a4ab77b595489a8a85e5670dab1f9b1",
+    "path": {
+      "event_refs": [
+        {
+          "event_id": "00000000-0000-0000-0000-000000000003",
+          "sequence": 3
+        },
+        {
+          "event_id": "00000000-0000-0000-0000-000000000004",
+          "sequence": 4
+        }
+      ],
+      "kind": "SAFE_DECLINE",
+      "schema_version": "completed-path-v1"
+    },
+    "reason_code": null,
+    "result_digest": "dbf253ea84221d9fe3890a7a7449967c13279676a791e043c82f6b3f28b20e2e",
+    "result_id": "00000000-0000-0000-0000-000000000200",
+    "schema_version": "evaluation-result-v1",
+    "score_percent": "0.00",
+    "scoring_strategy": "cyberforge-weighted-actions-v1",
+    "source": {
+      "manifest_digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "manifest_schema_version": "scenario-publication-v1",
+      "publication_id": 1,
+      "registry_version": "criterion-registry-v1",
+      "rubric_id": "rubric_1",
+      "rubric_schema_version": "rubric-definition-v1",
+      "rubric_semantics_version": "rubric-declarations-v1",
+      "schema_version": "evaluation-source-v1",
+      "snapshot": {
+        "archive_revision": 0,
+        "email_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "email_revision": 1,
+        "link_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "link_revision": 1,
+        "rubric_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "rubric_revision": 1,
+        "scenario_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "scenario_id": 1,
+        "scenario_revision": 1,
+        "scenario_version": 1,
+        "web_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "web_revision": 1
+      },
+      "version_id": 1
+    },
+    "status": "SCORED",
+    "terminal_sequence": 4,
+    "transition": {
+      "event_refs": [
+        {
+          "event_id": "00000000-0000-0000-0000-000000000003",
+          "sequence": 3
+        }
+      ],
+      "final_action_id": "decline",
+      "schema_version": "transition-decision-v1"
+    },
+    "weighted_denominator": "1",
+    "weighted_numerator": "0"
+  }
+}
