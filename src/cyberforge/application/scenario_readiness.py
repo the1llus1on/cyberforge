@@ -79,6 +79,19 @@ class ScenarioReadinessService:
             ),
             *state.checks,
         ]
+        from cyberforge.evaluation.scoring import numerical_paths_ready
+
+        checks.append(
+            check(
+                "numerical_completion_paths",
+                numerical_paths_ready(state.rubric),
+                "Обидва шляхи завершення мають числові критерії.",
+                (
+                    "Додайте застосовний числовий критерій для завершення без Web"
+                    " та з Web."
+                ),
+            )
+        )
         technical_ready = not any(c.status == "BLOCKED" for c in checks)
         warnings = tuple(c.check_id for c in checks if c.status == "WARNING")
         review_fingerprint = (

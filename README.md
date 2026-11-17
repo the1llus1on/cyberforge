@@ -19,7 +19,7 @@ Phase 0 та Phase 1 — ACCEPTED. Phase 2 — Users & Groups: **ACCEPTED вла
 постійні ID, SQLite persistence, чернеткові версії та зворотне архівування. Аналіз використовує
 ті самі ID та показує відсутність результатів. Email/Web Constructor підтримують
 явну AI-генерацію або позначене офлайн-демо; Web використовує ізольований Qt WebEngine.
-Phase 9 learner flow — ACCEPTED власником 2026-11-17; scoring належить Phase 10. Для офлайн-демо ключі та `.env` не потрібні.
+Phase 9 learner flow — ACCEPTED власником 2026-11-17; Phase 10 scoring/Mentor — REVIEW. Для офлайн-демо ключі та `.env` не потрібні.
 
 ## Встановлення й звичайний запуск
 
@@ -520,16 +520,16 @@ Implementation CI: Linux1014PASS, Windows Server2022 1011PASS/3POSIX skips;
 Ruff/GUI/security gates PASS. PR9 merged у main `dfba3fbaa1b2b8b94d279d3cef3f132c03cc9391`;
 release evidence — PHASE_8_ACCEPTANCE.md та PR9.
 Phases0–9 ACCEPTED; Phase9 прийнято власником 2026-11-17.
-Phase10 — NOT STARTED / ARCHITECTURE APPROVED (17.11.2026), Phase11–12 — NOT STARTED.
+Phase10 — REVIEW / PENDING OWNER ACCEPTANCE (17.11.2026), Phase11–12 — NOT STARTED.
 Physical Windows11, DPI, GPU-specific behavior та installer — Phase12 risks.
 
 ## Phase 9 — ізольоване офлайн-демо проходження
 
 Phases0–9 ACCEPTED; Phase9 прийнято власником 2026-11-17 після independent
-review/remediation та п’яти manual WSLg scenarios. Scoring/Mentor/analytics
-залишаються наступними фазами. Архітектуру Phase10 погоджено 17.11.2026:
-[ADR-0010](docs/adr/0010-deterministic-scoring-mentor.md); implementation/migration
-authorization не надано. Це documentation baseline, не реалізований scoring.
+review/remediation та п’яти manual WSLg scenarios. Phase10 scoring/Mentor
+реалізовано нижче для independent review; analytics залишається Phase11.
+Архітектура: [ADR-0010](docs/adr/0010-deterministic-scoring-mentor.md),
+accepted WP1 та окремий owner authorization WP2–WP8 від17.11.2026.
 Нова additive migration0007, durable attempts та immutable events.
 Demo setup потребує **нового** файлу БД; наявні demo/owner БД не перезаписуються.
 
@@ -543,6 +543,38 @@ uv run cyberforge --learner-demo --database "$demo_dir/demo.sqlite3"
 публікацію для Групи A; `learner_demo_1` має доступ. «Мої сценарії» → вступ →
 Start → main Email → inspection/report → decline/confirmation або internal CTA
 → isolated Web → actions → explicit completion. «Мої результати» містить реальну
-history та «Оцінка ще не обчислена». Restart із тією самою БД відновлює unfinished
+history та pending evaluation. Phase10 додає score/detail/Mentor. Restart із тією самою БД відновлює unfinished
 attempt. Повний checklist: [Phase 9 acceptance](docs/PHASE_9_ACCEPTANCE.md).
 `--learner-demo` явно використовує offline Mock/demo services без `.env`/cloud keys.
+
+
+## Phase 10 — особисті результати та навчальне пояснення
+
+**REVIEW / PENDING OWNER ACCEPTANCE**, без автоматичного merge чи Phase11.
+Existing `--learner-demo` вище запускає повністю offline workflow. Після завершення
+відкрийте «Мої результати», виберіть own attempt та «Обчислити оцінку».
+Система фіксує immutable deterministic result; feedback готується у background.
+«Отримати пояснення» повторює лише відсутній feedback; «Оновити результати»
+перевіряє persisted state. Restart із тією самою DB зберігає score та explanation.
+
+Справжній0.00%, pending, incomplete/abandoned, historical UNSCORABLE та integrity
+error відрізняються. Web без visit не отримує fabricated zero; non-applicable
+criterion не входить до arithmetic. Critical confirm/form actions — factual
+observations, policy NOT_CONFIGURED, без penalties/pass-fail claims.
+Нові publications потребують numerical criterion на кожному completion path.
+Історичні accepted rubrics/publications не переписуються.
+
+Additive migration `0008_evaluations` виконується normal startup в existing SQLite;
+backfill/rescoring немає. Оцінка й усі details commit атомарно, feedback окремо.
+При integrity error результат не повертається й не repair/rescore автоматично;
+збережіть DB для controlled investigation. Не видаляйте history для повторного
+оцінювання. Learner history доступна owner після revoke/archive, restricted
+scenario content — ні. Logout очищує results та stale worker responses.
+
+Normal startup cloud Mentor використовує лише explicit existing gateway config;
+без нього deterministic Ukrainian feedback. `--learner-demo` завжди offline.
+Provider бачить лише trusted synthetic educational facts та sanitized precomputed
+summary; score не визначається моделлю. Analytics/export не реалізовано.
+Traceability, exact verification та manual checklist:
+[Phase10 implementation review](docs/PHASE_10_IMPLEMENTATION_REVIEW.md).
+Native Windows11/DPI/GPU/installer acceptance — Phase12 deferral, не verified claim.
