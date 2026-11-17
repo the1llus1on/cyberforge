@@ -46,6 +46,8 @@ QRadioButton { spacing: 7px; padding: 5px; }
 QRadioButton:focus { background: #30283f; border: 1px solid #b8a1ff; }
 QListWidget#membershipPicker::item { padding: 5px; background: #14161a; }
 QListWidget#membershipPicker::item:hover { background: #30343e; }
+QListWidget#membershipPicker::item:selected {
+    background: #30343e; color: #eef0f5; }
 QListWidget#membershipPicker::item:focus { border: 1px solid #b8a1ff; }
 QListWidget#membershipPicker::indicator { width: 16px; height: 16px; }
 QListWidget#membershipPicker::indicator:unchecked {

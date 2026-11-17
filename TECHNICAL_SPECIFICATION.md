@@ -884,6 +884,19 @@ CyberForge повинен мати сучасний темний інтерфе�
 
 ## 4.8. Публікація
 
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+Публікація потребує валідних збережених EmailDraftV2/WebDraftV3, ScenarioLinkV1,
+RubricDefinitionV1, актуальних джерел та хоча б однієї дозволеної групи.
+Readiness є похідним звітом, не постійним READY у ScenarioVersion. BLOCKED не
+можна обійти; WARNING потребує явного підтвердження. Викладач підтверджує змістову
+узгодженість точних ревізій/дайджестів параметрів, Email, Web, Link, Rubric і груп.
+В одній write transaction повторно перевіряються RBAC, джерела, групи та review;
+незмінний manifest, початкові grants і статус PUBLISHED записуються атомарно.
+Це готує авторизоване читання; учнівські екрани та спроби належать Phase 9.
+
+
 Сценарій можна опублікувати лише після:
 
 - збереження листа;
@@ -898,6 +911,18 @@ CyberForge повинен мати сучасний темний інтерфе�
 Після публікації сценарій стає доступним відповідним учням.
 
 ## 4.9. Версіонування
+
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+Незмінність охоплює параметри, canonical Email/Web, Link, Rubric і manifest
+на рівні сервісів та БД. Публікація змінює лише статус, не content revision.
+«Створити нову версію» працює і без зміни параметрів: новий DRAFT без копіювання
+матеріалів/зв’язків/рубрик/grants; стара публікація залишається доступною окремо.
+Group grants керуються окремо від вмісту, явними grant/revoke з append-only audit.
+Архівування зберігає публікації/grants/audit, блокує публікацію та нові старти;
+restore не змінює історичний вміст. Чинні grants/membership перевіряються повторно.
+
 
 Опублікована версія незмінна.
 
@@ -1168,6 +1193,21 @@ Instructor-only preview дозволяє перевірені local action IDs �
 7. Блок сайту отримує зелену рамку.
 
 ## 6.10. Узгодженість Email → Web
+
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+Авторитетний зв’язок — один ScenarioLinkV1 від main Email до saved Web цієї
+самої версії: schema/revision, source Email revision/digest, main identifier,
+label, display-only HTTPS URL, exact internal resource, target revision/digest,
+open_internal і stable provenance. URL не витягується з довільного тексту листа.
+Email-visible URL та Web display_url можуть відрізнятися як навчальна ознака:
+безпечна відмінність дає WARNING; unsafe URL або неправильна ціль — BLOCKED.
+Sender domain не зобов’язаний збігатися з Web domain. Link editor не переписує
+прийнятий Email/Web; native preview показує явний інертний CTA лише у main.
+Structural/source validation не доводить педагогічну узгодженість: вона потребує
+викладацького review, прив’язаного до точного знімка. NIST claims не стають verified.
+
 
 **[ОБОВ'ЯЗКОВА ВИМОГА]**
 
@@ -1808,6 +1848,15 @@ Legacy контракти залишаються читабельними без
 
 ## 11.4. Зв'язок компонентів
 
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+ScenarioLinkV1 є окремим closed versioned contract. Доступ визначає сервіс
+за DB ownership та сесією; provenance/digests не є підписом або дозволом.
+InternalNavigationV1 готує authorized internal resource resolution для Phase 9;
+display_url ніколи не стає адресою реальної навігації.
+
+
 EmailArtifact і WebArtifact належать одній версії Scenario.
 
 Навчальне посилання Email має внутрішнє призначення у WebArtifact.
@@ -1815,6 +1864,14 @@ EmailArtifact і WebArtifact належать одній версії Scenario.
 Відображувану адресу та внутрішню адресу не змішувати.
 
 ## 11.5. Ознаки NIST
+
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+Phase 8 не реалізує semantic detector: selected/claimed/verified залишаються
+різними. Викладацьке підтвердження узгодженості не додає автоматично verified cues.
+NIST Phish Scale не визначає Web difficulty або learner score.
+
 
 Для Email зберігати:
 
@@ -1827,6 +1884,16 @@ EmailArtifact і WebArtifact належать одній версії Scenario.
 - Detection Difficulty.
 
 ## 11.6. Валідація
+
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+ScenarioIntegrationService повторно валідує persisted contracts, metadata, exact
+source revisions/digests, context organization/sender overrides, schema/renderer
+compatibility та internal destination. ScenarioReadinessService дає PASS/WARNING/
+BLOCKED, correction actions, checked sources і fingerprint. Технічна готовність
+до вибору груп відокремлена від final readiness з групами й confirmation.
+
 
 Перевіряти:
 
@@ -1842,6 +1909,15 @@ EmailArtifact і WebArtifact належать одній версії Scenario.
 10. Коректність навчальних дій.
 
 ## 11.7. Версіонування
+
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+Manifest містить immutable versioned references, source revisions/digests,
+schema/renderer/semantics versions, publisher/time та canonical manifest digest.
+Canonical JSON не дублюється: referenced rows захищено FK та DB triggers від
+update/delete/replacement. Grants та audit не входять у content digest.
+
 
 Опублікована версія є незмінною.
 
@@ -1870,6 +1946,15 @@ AI не виставляє оцінки самостійно.
 
 ## 12.2. Попередня формула
 
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+Phase 8 визначає лише RubricDefinitionV1; формула залишається попередньою,
+обчислення, результати та numerical penalties — Phase 10. Published rubric
+заморожує criterion-registry-v1 і rubric-declarations-v1. Phase 10 має явно
+перевіряти scoring-strategy compatibility та не переосмислювати історичні дані.
+
+
 **[ЗАТВЕРДЖЕНО ЯК ПОПЕРЕДНЯ]**
 
 \[
@@ -1895,6 +1980,17 @@ S_{\%}=100S
 
 ## 12.3. Email-критерії
 
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+Початковий bounded registry містить email.sender, email.link, email.report,
+transition.safe_decline, transition.decision, web.address, web.leave, web.report.
+Кожен ID має фіксовані label/description/phase/evidence actions. Викладач обирає
+критерії, додатні скінченні weights та підтримувану applicability; duplicate/
+unknown IDs/actions, порожні й непридатні рубрики відхиляються. Довільні формули
+та виконуваний код заборонені. Розширення/зміна meanings потребує нової registry version.
+
+
 Можливі:
 
 - перевірка відправника;
@@ -1906,6 +2002,14 @@ S_{\%}=100S
 
 ## 12.4. Web-критерії
 
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+У RubricDefinitionV1 Web criteria допускають лише web_visited. Критерій,
+який не застосовується, не є зафіксованою невдачею. Evidence/action IDs —
+декларації для майбутніх events, а не вже зібрані дані.
+
+
 Можливі:
 
 - перевірка відображуваної адреси;
@@ -1916,6 +2020,15 @@ S_{\%}=100S
 - повідомлення про підозрілий сайт.
 
 ## 12.5. Спільне оцінювання
+
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+Дозволені applicability: all_attempts, web_visited, web_not_visited. Безпечна
+відмова від підозрілого посилання може бути успішним завершенням; Web criteria
+тоді не застосовуються, а не дорівнюють нулю. Валідна рубрика повинна мати хоча б
+один non-Web критерій для такого шляху. Phase 8 не обчислює успішність чи оцінку.
+
 
 **[ЗАТВЕРДЖЕНО]**
 
@@ -1932,6 +2045,14 @@ S_{\%}=100S
 Критерії, які не застосовуються до фактичного шляху, не повинні автоматично отримувати нуль.
 
 ## 12.6. Критичні помилки
+
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+У rubric-declarations-v1 critical_action = null: критичні семантики та штрафи
+ще не погоджені. Phase 10 має окремо затвердити meanings/strategy і compatibility;
+Phase 8 не вигадує числових штрафів або результатів.
+
 
 **[ПРОПОЗИЦІЯ]**
 
@@ -2051,6 +2172,24 @@ AI не призначає сценарії самостійно.
 Одна база використовується для всіх користувачів.
 
 ## 14.2. Основні сутності
+
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+Phase 8 додає scenario_links, rubric_definitions, publication_reviews,
+scenario_publications, publication_groups та publication_grant_audit.
+Review receipts зберігають actor/time та точний fingerprint/групи/warnings.
+Publication references immutable sources; grants мають окремий revision,
+а кожна grant/revoke transition додає незмінний audit event. FK ON, unique
+version publication, BEGIN IMMEDIATE та optimistic revisions запобігають partial
+publication/TOCTOU. Additive migration після0005 не змінює accepted artifacts;
+downgrade із integration/publication/audit даними fail closed. Викладач додає
+лише призначені групи; власник може відкликати чинний grant після втрати assignment.
+Administrator зберігає адміністративну доступність груп та пише лише власні сценарії.
+Learner read model перевіряє active account/grant/current membership/archive,
+дедуплікує publication, для нового старту обирає найбільшу eligible version
+кожного Scenario. Історичні версії зберігаються; running attempts — рішення Phase 9.
+
 
 **[ТЕХНІЧНЕ РІШЕННЯ — ОНОВЛЕНО]**
 
@@ -3071,6 +3210,15 @@ Codex може уточнювати структуру залежно від ф�
 
 ## Phase 8. Scenario Integration
 
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+Обсяг: typed linking, deterministic validation/readiness, rubric definitions
+та editor, exact instructor confirmation, immutable atomic publication, audited
+group grants, explicit next draft і authorized discovery/internal read contract.
+Без AI calls, learner screens/attempts/events, scoring чи analytics.
+
+
 - Спільний контекст.
 - Email → Web.
 - Перевірка адрес.
@@ -3080,6 +3228,13 @@ Codex може уточнювати структуру залежно від ф�
 
 ## Phase 9. Learner Simulation
 
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+Використовує immutable publications, effective grants/membership, internal
+navigation contract; окремо визначає політику вже розпочатих спроб після revoke.
+
+
 - Email Simulator.
 - Web Simulator.
 - Внутрішня навігація.
@@ -3087,6 +3242,13 @@ Codex може уточнювати структуру залежно від ф�
 - Завершення проходження.
 
 ## Phase 10. Scoring & Mentor
+
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+Реалізує обчислення за опублікованими rubric declarations із явною version
+compatibility, safe-decline applicability та окремо погодженими critical semantics.
+
 
 - Детерміноване оцінювання.
 - Рубрики.
@@ -3117,6 +3279,18 @@ Codex може уточнювати структуру залежно від ф�
 ---
 
 # 24. КРИТЕРІЇ ГОТОВНОСТІ
+
+
+**[ЗАТВЕРДЖЕНО — вузька поправка Phase 8, 15.11.2026]**
+
+Phase 8 REVIEW gate: збережені accepted artifacts, видимий інертний main CTA,
+editable valid rubric, safe-decline path, reproducible readiness, stale/invalid
+publication denial, exact review, atomic immutable manifest/source rows, RBAC
+groups, append-only grants audit, historical versions та explicit next draft.
+Потрібні focused/full/security/migration/concurrency/GUI/package checks і Linux/
+Windows CI final HEAD. Owner WSLg instructions окремо; CI не означає ACCEPTED.
+Physical Windows11/DPI/installer залишаються Phase12 ризиком, не verified вимогою.
+
 
 CyberForge вважається завершеним MVP, якщо:
 

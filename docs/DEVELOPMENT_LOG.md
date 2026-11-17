@@ -2778,3 +2778,654 @@ Acceptance increment: документаційні зміни лише в README
 plan/log. SRS/runtime/tests/dependencies/migrations не змінено. Локальний full suite
 не повторюється для docs-only; required final-head CI виконує обидві платформи.
 Перед merge перевіряються base/main, scope, mergeability та expected_head_sha.
+
+## 15.11.2026 — Phase 8: дозволений початок
+
+Вкладений owner request явно затвердив ScenarioLinkV1, RubricDefinitionV1 та
+окремі audited group grants; дозволив narrow SRS amendment, branch/commit/push/PR.
+GitHub MCP main SHA b84e2fbd… підтверджено; tree clean. Перший sandbox fetch
+відхилено через read-only .git; elevated authorized fetch/ff/switch успішні.
+Існуючі owner .env/DB/credentials/environments не відкривалися й не змінювалися.
+Прочитано accepted Scenario/Email/Web/RBAC/contracts/migrations/UI та relevant
+SRS/Phase6–7/ADR5–7. Existing BEGIN IMMEDIATE та material/parameter revisions
+збережено. Context7 SQLAlchemy functional docs request успішний; dependencies без змін.
+Нормативні уточнення лише в SRSv3.0 з датою; ADR0008 і plan фіксують рішення/gates.
+Contracts: typed link, bounded rubric registry, reviewed snapshot, report/receipt,
+manifest/internal navigation; actual scoring/attempts/AI поза Phase8.
+
+### Phase8 — contracts/integration/persistence gate
+
+Додано closed ScenarioLinkV1, rubric registry/declarations, reviewed sources/report,
+review receipt та manifest/internal-navigation contracts. Additive0006 додає6tables,
+immutable-source/history triggers, REPLACE guards і automatic grant audit transitions.
+Existing published-version/archive/Email/Web triggers збережено. Explicit new draft
+копіює тільки parameters; publication status не збільшує content revision.
+
+Початковий focused run виявив collision назви audit trigger; усунуто до GUI gate.
+Наступний run:68passed до нового forged-rubric тесту, який виявив serializer warning
+перед revalidation. warnings=False лише для serialization, повна local validation
+збережена. Повторний rubric focused:12passed/16.36s. Детальні combined security/
+persistence/regression результати додаються після завершення. Dependency versions
+незмінні; uv cache перенаправлено в /tmp через read-only default cache.
+
+### Phase8 — completed focused persistence/UI increments
+
+`.venv/bin/pytest tests/test_scenario_integration.py tests/test_web_materials.py tests/test_email_materials.py tests/test_scenarios.py tests/test_groups_database.py -q --tb=short`
+— **172passed/234.24s**. Включено75new Phase8 cases: exact source/link, forbidden
+roles/groups, warning ack, stale receipts, atomic rollback/concurrent publication,
+direct UPDATE/DELETE/REPLACE denial, immutable historical references, grant/revoke/
+regrant audit, current membership/archive/restore/latest eligible та0005→0006.
+
+`.venv/bin/pytest tests/ui/test_scenario_integration.py tests/ui/test_scenarios_ui.py -x -q --tb=short`
+— **45passed/120.82s**. Додано integrated constructor workspace з read-only Email/
+Web review, link/rubric saves, detailed readiness, group picker, final confirmation,
+history/grants, explicit next draft. Save/Discard/Remain й session guards retained.
+Зелений saved матеріал не означає publication. Додатковий precision review замінив
+rubric spinbox на validated numeric text, щоб не округлювати довільні positive
+saved weights; focused precision/actual Web/WSLg gate виконується окремо.
+
+### Phase8 — WSLg та installed-wheel gates
+
+Real Wayland command:
+`QT_QPA_PLATFORM=wayland .venv/bin/pytest tests/ui/test_scenario_integration.py tests/ui/test_web_security.py tests/ui/test_email_constructor.py::test_mail_navigation_source_copy_explicit_save_reopen -q --tb=short`
+— **11passed/44.36s**, exit0; actual browser/isolated profile, network-isolation
+regressions, native main CTA/weight precision/disposal/session/compact covered.
+Synthetic compact screenshot probe1passed/2.77s; docs/screenshots/phase-8-*.png
+переглянуто, main/footer/modal controls reachable1100×720. Automation не є owner
+functional acceptance або physical Windows11. PASS corrections уточнено, щоб
+не показувати failure action для успішної перевірки; focused2passed/3.91s.
+
+Додаткові persisted corruption/attestation/exact groups/concurrent revoke/restart:
+8passed/13.14s. `uv build --offline --out-dir /tmp/cyberforge-phase8-package`
+PASS (UV_CACHE_DIR=/tmp/cyberforge-phase8-uv-cache). Перший isolated install із
+новим порожнім cache fail offline (alembic відсутній); повторено з наявним cache,
+без мережі,58hash-verified runtime packages installed у новий /tmp venv, wheel install
+PASS. `python -I` installed-package script0005→0006 з existing synthetic Email/Web,
+full integration/review/publish/grants/audit/access/new draft/FK PASS. Installed
+Qt `--web-demo --database /tmp/.../smoke.sqlite3 --smoke-test` exit0.
+Wheel/source parity85Python files, no private data PASS; source/dependency versions
+не змінено після wheel build. Final full suite виконується; CI додає ранній
+Phase8 native compact gate перед existing full suite.
+
+Офіційний NIST TN2276 перевірено через primary csrc.nist.gov: email detection
+difficulty, не learner score/Web metric. GitHub MCP remote .github listing
+підтвердив лише workflows; PR templates не знайдено локально або remote .github.
+
+### Phase8 — migration-chain rollback hardening
+
+Додатковий isolated probe підтвердив дефект sqlite3 legacy DDL: downgrade через
+empty0006 до0004 відхиляється existing0005 Web data guard, але без real BEGIN
+міг видалити0006tables/triggers, залишивши Alembic stamp0006. Owner DB не зачіпалася.
+0006тепер перед upgrade/downgrade перевіряє DBAPI in_transaction і починає реальний
+BEGIN IMMEDIATE, якщо його ще немає. Вже відкриту транзакцію не дублює; existing
+AccountService/Database semantics не змінює. Весь migration chain rollback
+відновлює tables/triggers/stamp, включно з відмовою попередньої фази.
+Новий regression порівнює complete tables/triggers/stamp і перевіряє usable link/Web
+після rollback. Focused migration gates5passed/8.50s. Потрібен повторний stable full
+suite і rebuild/installed-wheel, оскільки змінилася packaged migration; перший full
+run не використовується як остаточний evidence цього hardening.
+
+Pre-hardening full run завершився976passed/686.21s; це історичний evidence,
+не остаточний gate після DDL fix. Final screenshot refresh1passed/3.28s та
+overview/CTA screenshots оглянуто; PASS corrections не показують failure actions.
+Rebuilt wheel повторно встановлено офлайн; installed0005→0006/full publication/
+audit/access/new draft/FK і new explicit-database startup smoke PASS, source parity
+PASS. Context7 підтвердив public Connection.connection.driver_connection API та
+sqlite3 legacy DDL behavior. Нових dependencies немає; runtime phase boundaries незмінні.
+
+### Phase8 — stable final local gate / REVIEW
+
+`UV_CACHE_DIR=/tmp/cyberforge-phase8-uv-cache QT_QPA_PLATFORM=offscreen uv run --offline --locked pytest -q --tb=short`
+— **977passed/673.63s**, exit0. Усі886accepted Phase0–7 regressions збережено,
+91Phase8 cases added (84service/security/migration та7UI). Після початку цього
+final run application/test Python code не змінювався; тільки документація.
+`UV_CACHE_DIR=/tmp/cyberforge-phase8-uv-cache uv run --offline --locked ruff check .`
+та `... ruff format --check .` PASS,126Python files. Focused/package/WSLg evidence
+вище; final rebuilt wheel parity85files і new-database Qt smoke PASS.
+`git -c core.whitespace=cr-at-eol diff --check` PASS, SRS CRLF збережено;
+changed-file/private-key scan27files/zero findings, owner data поза scope.
+
+Статус Phase8 REVIEW. Owner manual checklist у PHASE_8_ACCEPTANCE; owner acceptance
+не приписується automation. No live Groq/Gemini, attempts/events/scoring/analytics,
+merge/force-push/branch deletion або Phase9. GitHub MCP повторно підтвердив main
+b84e2fbd… незмінним. Feature commits auditable; final push/PR/exact-head Linux та
+Windows CI фіксуються у PR і delivery report без circular evidence commits.
+
+## 16.11.2026 — Phase8 independent review F8-01/F8-02 remediation
+
+Owner дозволив targeted investigation/fix у PR9 від reviewed
+c8f95eb786b850e9171054aed72ea1a5a35271f7. GitHub MCP підтвердив exact head/base main,
+PR open/unmerged; local tree clean, fetch/ff-only current branch без змін. Жодних
+reset/rewrite/merge/ACCEPTED/Phase9. Relevant SRS §§4.8–4.9,11.6,14/ADR0008 та
+current service/UI/contracts/tests перевірено; owner .env/DB/keys не використовувалися.
+
+**Baseline reproduction**, до implementation edits:
+`.venv/bin/pytest tests/test_scenario_integration.py tests/ui/test_scenario_integration.py -k 'f8_01 or f8_02' -q --tb=short`
+— **4failed/4passed/91deselected/26.12s**. Три actual Qt clicks відкривали final
+confirmation при empty/unauthorized/stale groups. Historical v1 preview після
+load_history мав selector publication2. Тести фіксували це до змін.
+
+**F8-01 уточнення review:** заявлений uncaught Pydantic ValidationError не
+відтворено. На reviewed HEAD confirm() already rejects groups BLOCKED через
+existing any(BLOCKED except instructor_confirmation); усі4direct-service cases
+empty/unauthorized/reassigned/deleted давали controlled ApplicationError, zero
+review receipts/publications. Confirmed root cause — GUI enablement лише за
+technical_ready, без групового gate/pre-dialog recheck. Додано explicit empty та
+current group authorization в confirm() до InstructorConfirmationV1; contract
+min_length=1 незмінний. GUI enablement враховує groups/checks, click preflight
+оновлює authorization/source fingerprint до final dialog; service write transaction
+зберігає незалежну повторну валідацію, включно з reassignment під час modal.
+
+**F8-02 root cause:** load() clear/addItem автоматично обирав first/latest pub,
+а load_history() не відновлював selected ID. refresh_grants/change_grant читали
+currentData незалежно від displayed expected/preview. Тепер QSignalBlocker
+охоплює rebuild і відновлення publication, відповідної opened version; draft
+не має grant target до явного вибору historical publication. Selection synchronizes
+expected/read-only Email/Web preview/grants/audit. Перед grant read/write перевіряється
+publication identity/version; modal вказує exact scenario/version/publication/group,
+Cancel нічого не пише, після modal recheck не дає redirect write на іншу publication.
+Unsaved Remain відновлює попередній selector; no automatic grant target switch.
+Official Qt QSignalBlocker context-manager/currentIndexChanged behavior звірено через
+Context7. Нових API/dependencies/міграцій або SRS requirement changes немає.
+
+Initial post-fix reproduction gate8passed/26.56s; expanded actual Qt group/modal/
+history tests6passed/40.53s. Final focused/regression/full/WSLg/CI results follow.
+
+### F8-01/F8-02 — stable focused/WSLg gates
+
+Final focused command:
+`.venv/bin/pytest tests/test_scenario_integration.py tests/ui/test_scenario_integration.py -k 'f8_01 or f8_02' -q --tb=short`
+— **11passed/91deselected/63.64s**. Включено actual click path і receipt zero writes,
+після-dialog reassignment, two-publication grant targeting, real modal Cancel/Confirm,
+refresh/reload/reopen, selection change during modal, immutable sources/manifest,
+та unsaved draft Remain/Discard. Before-fix4failures збережено вище як reproduction.
+
+Real WSLg:
+`QT_QPA_PLATFORM=wayland .venv/bin/pytest tests/ui/test_scenario_integration.py -k 'f8_01 or f8_02' -q --tb=short`
+— **7passed/7deselected/59.55s**, exit0. Це Codex automation на isolated synthetic DB,
+не owner manual або native Windows11 acceptance. Ruff lint/format126Python files
+PASS. Ширші regressions і final full988case run виконуються; application/test code
+після початку full run стабільний. Packaging/dependencies/migrations/startup не
+змінено, повторний build/wheel не потрібен для цих service/UI corrections.
+
+Relevant regression command
+`.venv/bin/pytest tests/test_scenario_integration.py tests/ui/test_scenario_integration.py tests/ui/test_scenarios_ui.py -k 'not f8_01 and not f8_02' -q --tb=short`
+initial restricted execution завершився133 під час actual Chromium setup без
+assertion report (accepted environment behavior, documented in Phase7). Повторено
+ту саму команду через allowed host execution; Chromium sandbox не вимикався.
+Final full suite також запускається через host execution. Owner data не зачіпалася.
+
+Повторний relevant regression run через allowed host execution —
+**131passed/11deselected/287.78s**, exit0. Це всі existing integration/persistence/
+ScenarioPage UI cases у targeted modules;11new finding tests виконано окремо.
+
+### F8-01/F8-02 — final local gate / REVIEW
+
+`UV_CACHE_DIR=/tmp/cyberforge-phase8-uv-cache QT_QPA_PLATFORM=offscreen uv run --offline --locked pytest -q --tb=short`
+— **988passed/857.37s**, exit0;977previous cases retained та11new finding cases.
+Після початку final full run application/test code не змінювався.
+`UV_CACHE_DIR=/tmp/cyberforge-phase8-uv-cache uv run --offline --locked ruff check .`
+та `... ruff format --check .` — PASS,126Python files. `git -c core.whitespace=cr-at-eol diff --check`
+PASS. Changed-file scan7files: no private-key patterns, no owner DB/.env in scope.
+
+Виправлення: application/scenario_readiness.py та ui/scenario_integration.py;
+regressions: tests/test_scenario_integration.py і tests/ui/test_scenario_integration.py;
+docs: цей log, IMPLEMENTATION_PLAN і PHASE_8_ACCEPTANCE. No dependencies/schema/
+canonical artifact changes. No real Groq/Gemini requests; only synthetic isolated DB.
+Owner manual/physical Windows11 acceptance не заявляються. Phase8 REVIEW.
+Final commit/push та exact-head Linux/Windows CI evidence фіксуються в existing PR9
+і фінальному звіті без circular documentation commits. Merge/ACCEPTED/Phase9 заборонені.
+
+## 16.11.2026 — Phase8 owner-reported WSLg Web preview failure
+
+Scope: owner authorized targeted investigation/fix in existing PR9, baseline
+988bc421e3458678a9e4dca05a6ccdbd6b113e3c. GitHub MCP confirms exact head, main base,
+open/unmerged; clean tree and fetch/ff-only. Relevant SRS §§3.13,6.6,16.3–16.5,21,
+ADRs0007/0008, startup/custom scheme/renderer/browser/dialog cleanup and tests read.
+No owner .env/keys/DB/credentials inspected or modified; no live AI. All graphics
+experiments use one NEW synthetic published scenario/database under /tmp, seeded
+with explicit Mock demo services and private random demo credentials (never printed).
+Installed Python3.12/PySide6/Qt6.10.3, WSL Linux, Wayland; /dev/dxg absent in this
+runner. Only allowlisted graphics environment settings inspected; no full env dump.
+
+### Evidence and verified cause
+
+Restricted Wayland startup fails before QApplication: wl_display Operation not
+permitted, process134/SIGABRT. This is runner display isolation, not the owner's
+preview failure. Subsequent display tests run as the SAME UID1000 with host display
+access: no sudo, root privileges, package installs or system graphics changes.
+
+Production main --web-demo -> real demo-instructor login form -> saved published
+scenario -> actual ScenarioPage integration button -> Web tab reproduced failure.
+Default graphics logs contain the owner's EGL/Mesa/Zink messages. Qt/Chromium then
+report llvmpipe, GPU blocklisted/software compositor. The GUI timer remains alive;
+no renderer-termination signal and no whole-application native crash observed.
+Trace: page.setUrl causes a transient native dialog hide while Qt changes rendering
+surface; QDialog.exec returns0 WITHOUT finished/rejected. ScenarioPage's synchronous
+continuation schedules deleteLater on the loading dialog; no loadFinished arrives.
+The same failure occurs with only --disable-gpu. Mesa warnings therefore do not
+establish a fatal GPU failure; a verified application modal-lifetime defect causes
+loss of the preview. The owner's exact process-exit state remains unconfirmed.
+
+A diagnostic harness initially needed independent timer driving (same-timer callbacks
+cannot drive a nested exec while their own timeout slot remains active); corrected
+before extracting the regression. Actual production-path regression on unchanged
+code: **1failed/4.30s**, assertion 'Web initialization destroyed the integration dialog',
+with the same Mesa warnings. Existing tests only showed IntegrationDialog directly,
+so they did not exercise ScenarioPage.open_integration's nested exec continuation.
+A preload experiment rendered successfully before modal entry; the chosen smaller
+lifecycle fix follows Qt's recommended asynchronous open/finished API instead of
+forcing eager hidden WebEngine initialization or changing rendering defaults.
+
+Official version-matched Qt6.10.3 references, checked through Context7/official web:
+https://doc.qt.io/qt-6.10/qdialog.html#exec
+https://doc.qt.io/qt-6.10/qtwebengine-features.html#hardware-acceleration
+https://doc.qt.io/qt-6.10/qtwebengine-debugging.html
+https://doc.qt.io/qt-6.10/qtwebengine-platform-notes.html
+Unversioned Qt URLs redirect to newer docs; implementation decisions use6.10 docs.
+
+### Fix and controlled graphics comparisons
+
+ScenarioPage retains a single window-modal IntegrationDialog via open()/finished;
+transient hide no longer unwinds a nested loop or deletes a loading page. Finished
+clears ownership, refreshes the same authorized scenario, and schedules deletion;
+forced/session changes skip stale refresh. Window-manager close explicitly emits
+completion after the existing Save/Discard/Remain guard. Duplicate opens reuse
+the current dialog. WebBrowser retains accepted view->page->profile disposal order.
+loadFinished(false)/renderProcessTerminated show Ukrainian recovery instructions;
+logs contain only status/code, never URLs/content/credentials. Reload stays on the
+current approved internal resource; no fake automatic graphics fallback.
+
+Same isolated DB, actual production main/login/button path,3open/render/close cycles
+and4Email/Web switches per cycle; first default and --disable-gpu baseline failed
+as above, all following results are AFTER the lifecycle fix:
+
+| Single override | Exit | Rendered loads | Renderer terminations | EGL warnings | DB unchanged |
+| --- | --- | --- | --- | --- | --- |
+| none, Wayland default | 0 | 3 | 0 | 8 | yes |
+| QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu | 0 | 3 | 0 | 4 | yes |
+| QT_QUICK_BACKEND=software | 0 | 3 | 0 | 4 | yes |
+| LIBGL_ALWAYS_SOFTWARE=1 | 0 | 3 | 0 | 0 | yes |
+| GALLIUM_DRIVER=llvmpipe | 0 | 3 | 0 | 6 | yes |
+| QT_QPA_PLATFORM=xcb | -6/SIGABRT | 0 | 0 | 0 | yes |
+
+Each override used alone, established BEFORE QApplication by the child process
+environment. Screens had actual nonempty page text and19sampled pixel colors,
+GUI heartbeat continued;3view/page/profile sets invalidated after explicit close.
+Xcb cannot initialize without libxcb-cursor0 here; no packages installed and xcb
+not recommended as a verified workaround. Software flags do not repair the original
+exec defect; no app-wide rendering configuration/default was introduced. Qt's
+existing explicit environment overrides remain supported, with no Windows leakage.
+
+Initial new test errors (waitUntil predicate returning[]; synthetic enum-valued
+signal emit unsupported by PySide6.10) were test harness defects. Predicates fixed;
+portable diagnostic handler test plus real child-process termination cover the
+supported signal. Real renderer SIGTERM test passed: GUI alive, Ukrainian error,
+internal Reload succeeds with a new renderer, sources unchanged. Linux renderer
+status Seccomp2/NoNewPrivs1 and no --no-sandbox verified before terminating ONLY the
+PID returned by this page. Baseline process and renderer were never run as root.
+
+### Preview correction — stable focused gates
+
+Before-fix actual production-button WSLg regression1failed/4.30s; after lifecycle
+fix the same test1passed/6.21s,3cycles and explicit view/page/profile disposal.
+
+Default real WSLg command:
+`QT_QPA_PLATFORM=wayland .venv/bin/pytest tests/ui/test_scenario_integration.py tests/ui/test_web_security.py tests/ui/test_web_constructor.py -k 'not actual_signout and not closing_waits and not generation and not manual and not refinement' -q --tb=short`
+— **30passed/3deselected/173.37s**, exit0. Includes all18Phase8 UI cases, accepted
+actual browser/network isolation, real renderer termination/reload, F8-01/F8-02
+regressions, modal-close/session guards and compact layout. Four new cases added.
+
+Single software override, set before QApplication:
+`QT_QPA_PLATFORM=wayland QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu .venv/bin/pytest tests/ui/test_scenario_integration.py tests/ui/test_web_security.py tests/ui/test_web_constructor.py -k 'actual_constructor_button or renderer_ or production_dialog or actual_engine or actual_clicks or real_engine or compact or long_valid_tab_title' -q --tb=short`
+— **11passed/22deselected/35.28s**, exit0. Actual Chromium isolation remains enforced.
+No --no-sandbox, QTWEBENGINE_DISABLE_SANDBOX, disabled web security or remote access
+introduced. Default rendering and software override both preserve isolation.
+
+Ruff lint/format126Python files PASS; diff check PASS. Full offline992case suite
+running via unprivileged host execution. No Python source/test changes after its
+start; only documentation evidence. No entry point/config/dependency/migration
+changes, so repeated package/wheel checks not required for this UI lifecycle patch.
+CI's early Phase8 gate now includes the real Constructor-button lifecycle case,
+before full suite, to cover the path missed by show-only tests. No owner manual
+acceptance claimed; default native hardware GPU was unavailable in this runner.
+
+Final default-backend native-window trace independently confirms the surface
+transition: SELECT_WEB_TAB -> dialog hide inside page.setUrl -> old QWindow.destroyed
+-> loadFinished(true), on EACH of3cycles after the async fix. The IntegrationDialog
+itself survives until explicit close; zero renderProcessTerminated signals.
+One /tmp synthetic screenshot inspected: published version identity and actual
+rendered Web content visible, read-only display address, Close reachable. No extra
+repository screenshot/audit artifact. This confirms native-window recreation rather
+than inferring it solely from Mesa diagnostics or a dialog hide event.
+
+### Preview correction — final local gate / REVIEW
+
+`UV_CACHE_DIR=/tmp/cyberforge-phase8-uv-cache QT_QPA_PLATFORM=offscreen uv run --offline --locked pytest -q --tb=short`
+— **992passed/828.97s**, exit0. All988previous cases retained plus4new preview cases.
+No Python source/test changes after full-suite start. Ruff check and format --check
+PASS,126Python files. Diff/private-file scan PASS,9changed files; owner .env/DB/keys
+untouched. Actual Chromium sandbox/isolation retained; no root/sudo or new packages.
+
+Files: ui/scenario_page.py, scenario_integration.py, web_browser.py;
+tests/ui/test_scenario_integration.py; early CI lifecycle selector; existing
+IMPLEMENTATION_PLAN/DEVELOPMENT_LOG/PHASE_8_ACCEPTANCE/ADR0008. No source snapshots,
+new database schema/dependencies, startup config changes or new navigation modes.
+The verified premature-modal-deletion defect is fixed; a fatal exit on the owner's
+specific GPU/host was not established by the supplied warnings or reproduced here.
+Owner must repeat the documented real button/open/close/reopen workflow. Full app
+native failures outside supported Qt signals still require the safe diagnostic log.
+Phase8 remains REVIEW. Exact final commit and Linux/Windows CI run/results follow
+in existing PR9 description/final report, avoiding circular evidence-only commits.
+No merge, ACCEPTED, Phase9, force-push or history rewrite.
+
+
+## 16.11.2026 — Phase8 UX: три кроки підготовки (REVIEW)
+
+Owner-approved redesign у чинній feature branch/PR9, baseline34e3198; GitHub MCP
+підтвердив open/unmerged/main base. Єдину початкову локальну зміну AGENTS.md
+(власника) збережено й виключено з task commit. SRS §§3–4,6.10,11–12,14,16,21,
+plan/log/acceptance, ADR0007/0008, service contracts та UI/security tests прочитано.
+Немає live AI, роботи з owner .env/keys/DB, migrations/dependencies/startup changes.
+
+План: stable three-step modal structure → material cards/internal previews/link →
+compact registry rubric → service-derived readiness/attestation/result → separate
+history/access → focused/full/WSLg/final-head CI. Owner English session/PR language
+застосовано; Ukrainian application UI та existing documents збережено.
+
+Context7 functional read PASS (official Qt for Python). Qt документація рекомендує
+open()/finished замість nested exec; QStackedWidget володіє inserted widgets.
+https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/QDialog.html
+https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/QStackedWidget.html
+Existing safe WebBrowser/disposal/security та service/persistence implementations
+залишено без змін. Лише native UI presentation/interaction redesign.
+
+Інкременти1–5 реалізовано:3steps, responsive materials, inert exact previews,
+optional read-only technical details, grouped8criteria, lossless weights/preset,
+readiness checklist/corrections/groups/review, explicit publish/result, separate
+history доступний із newer draft. Save/Discard/Remain та session clearing збережено;
+baselines відновлюються при Discard, relevant edits скидають review. Історичний
+preview показує exact version; link/rubric read-only summary доступний окремо.
+
+Перший editor/precision probe:2passed/8.17s. Existing18Phase8 UI regressions adapted
+від obsolete tab indexes до behavioral navigation:18passed/161.52s, including
+F8-01/F8-02, source/manifest immutability, real browser/renderer recovery, production
+button3cycles, signout/Close/X та compact viewport checks. Жоден prior case не видалено.
+Додаткові redesign tests і backend regressions виконуються; stable gates нижче.
+Default uv cache був read-only в sandbox: використано task-specific
+UV_CACHE_DIR=/tmp/cyberforge-uv-cache з --no-sync та чинним .venv; dependency updates
+не виконуються. Host-access Qt tests працюють без root/sudo чи sandbox disablement,
+лише з synthetic pytest fixtures. Owner manual acceptance не стверджується.
+
+### UX redesign — focused / real WSLg gates
+
+- `UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_scenario_integration.py -q --tb=short`
+  (prior18adapted cases, before adding new coverage): **18passed/161.52s**.
+- Same module `-k redesign -q --tb=short`, initial new behavior set:
+  **16passed/18deselected/230.71s**. Additional final-confirmation, compact/keyboard
+  and group-reassignment cases retained in final complete suite.
+- `UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/test_scenario_integration.py -q --tb=short`:
+  **88passed/150.55s** (RBAC, publication, persistence, integrity, migration, races).
+- `QT_QPA_PLATFORM=wayland CYBERFORGE_UX_SCREENSHOTS=docs/screenshots UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_scenario_integration.py -k 'end_to_end_result or actual_final_confirmation or resizing_keyboard' -q --tb=short`:
+  **3passed/33deselected/19.08s**. Actual final modal Cancel/Publish,600×580 and
+  960×680, stacked/side-by-side cards, keyboard Space/focus, result/history.
+- After visual spacing correction, same prefix/module with
+  `-k 'rubric_groups or end_to_end_result' -q --tb=short`:
+  **2passed/34deselected/10.36s**. All8collapsed rows visible in viewport; both exact
+  persisted previews, explicit publication and seven screenshots visually inspected.
+- Final real WSLg command:
+  `QT_QPA_PLATFORM=wayland CYBERFORGE_UX_SCREENSHOTS=docs/screenshots UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_scenario_integration.py tests/ui/test_web_security.py tests/ui/test_web_constructor.py -k 'not actual_signout and not closing_waits and not generation and not manual and not refinement' -q --tb=short -o faulthandler_timeout=90`
+  — **48passed/3deselected/502.92s**. Includes all36Phase8 UI cases existing at
+  collection, F8-01/F8-02, real browser isolation, renderer termination/internal
+  Reload, production entry3cycles, compact/keyboard/Close/signout. The later extra
+  group-assignment-refresh case is included in the final full offline suite.
+- Supplemental existing production-path test with temporary observation plugin:
+  `QT_QPA_PLATFORM=wayland PYTHONPATH=/tmp UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -p cyberforge_ux_close_probe tests/ui/test_scenario_integration.py -k actual_constructor_button -q -s --tb=short`
+  — **1passed/36deselected/7.61s**. Plugin only routes existing final reject calls
+  through actual Close button (cycles1/3) and window-manager closeEvent (cycle2),
+  after return-to-materials; all3engines disposed and main GUI alive. Original
+  lifecycle test retains its exact source equality and view/page/profile validity
+  assertions. Temporary plugin is outside repository, not runtime code.
+- Real renderer test verifies off-record profile, own-renderer PID termination,
+  Seccomp2/NoNewPrivs1/no --no-sandbox, responsive application, Ukrainian diagnostic
+  and successful internal-only reload. Existing network/JS/file/navigation tests
+  retained. Default graphics; no unsafe flags or system/package changes.
+- `UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync ruff check .` PASS;
+  `UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync ruff format --check .` PASS
+  (**127Python files**); `git diff --check` PASS.
+
+No runtime/test changes after stable full-suite start. Documentation/evidence only.
+No repeat wheel/build gate: UI-only change; no dependencies/migrations/installation/
+entry point changes. Existing package evidence retained and CI startup smoke remains.
+
+### UX redesign — stable full local gate / REVIEW
+
+`UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short -o faulthandler_timeout=120`
+— **1011passed/1091.99s**, exit0. All992prior cases retained plus19new redesign
+cases (37Phase8 UI cases total). Includes final authorized-group refresh/ack reset,
+invalid weights, missing/stale sources, source/manifest integrity, RBAC/migrations/
+concurrency, real browser lifecycle/security, unrelated accepted regressions.
+Ruff lint/format127files PASS; staged diff check PASS. No runtime/test changes
+since this run started; only documentation evidence updated afterwards.
+
+15scoped files:3UI modules (including new progressive-disclosure/responsive helpers),
+existing UI test module,4documents,7synthetic screenshots. No SRS/backend/service/
+contract/schema/dependency/WebBrowser/startup changes. Owner AGENTS.md edit remains
+unstaged and excluded. GitHub MCP rechecked PR9 main base/open/unmerged/unchanged
+remote head34e3198 before publication. Local feature commit/push authorized; final
+exact-head Linux+Windows CI will be recorded in PR9/delivery after push, without a
+redundant documentation-only commit. Phase8 remains REVIEW; no owner acceptance,
+merge or Phase9. Native Windows11/GPU/DPI/installer acceptance remains Phase12 risk.
+
+## 16.11.2026 — UX Windows CI: responsive-card minimum-size correction
+
+First redesign commit95ebf362d3d6ac9076fce9c2e3833cae55617a55, workflow43856088261:
+GitHub App MCP confirms Linux **1011passed/633.37s**, all steps SUCCESS. Windows
+**1failed/1007passed/3POSIX-only skips/784.81s**; Ruff127files and early compact/
+production-lifecycle gates passed. Failure: new600×580 resize assertion found
+content856px inside viewport556px. Reported failure to owner before further push;
+no merge or acceptance. Data-integrity, RBAC, migration and WebEngine
+lifecycle/security cases passed; this was a real narrow-layout defect.
+
+Confirmed root cause: responsive cards chose horizontal/vertical layout from their
+own current width. Native card minima could keep the content wider than viewport,
+preventing a resize below the hardcoded threshold and therefore preventing stacking.
+Local deterministic reproduction adds420px minimum to each card (no font hacks):
+old code **1failed/1passed/36deselected/11.47s**, same material-step overflow864>556.
+Assertions retained; native-pressure case added as a second resize-test parameter.
+
+Correction: MaterialCards watches the scroll viewport's Resize events and chooses
+direction from available viewport width minus body margins, including actual card
+minimum widths and spacing. It no longer depends on its own potentially oversized
+width. Geometry is invalidated after direction changes; no WebEngine ownership or
+services/persistence changes. Early CI Phase8 gate now includes resizing_keyboard,
+so ordinary and forced-native-minimum cases run before the complete suite.
+
+After correction, same local resize test: **2passed/36deselected/9.90s**.
+`QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_scenario_integration.py -k 'compact_page or actual_constructor_button or resizing_keyboard or end_to_end_result' -q --tb=short`
+— **5passed/33deselected/35.64s**. Real viewport stacking, keyboard, actual3cycle
+WebEngine lifecycle and full publish/history flow retained. Existing wide-layout
+screenshots remain representative; only narrow-layout behavior changed.
+Ruff lint/format127files and diff check PASS. New full suite runs on stable corrected
+sources; final exact-head Linux/Windows evidence will follow in PR9/delivery.
+
+MCP capability limitation: direct GitHub PAT-backed check-runs read returned403.
+GitHub App MCP Actions run/job/log reads succeeded and supplied the actual failure
+and platform results; PR metadata/update via GitHub MCP also succeeded. Context7
+read succeeded. Credentials/configuration were not read or changed.
+
+Context7 official Qt check for the correction: QScrollArea.widgetResizable uses
+viewport geometry; QObject.eventFilter must preserve normal event delivery when
+observing Resize. The implementation delegates to the base filter and never deletes
+the watched widget. References:
+https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/QScrollArea.html
+https://doc.qt.io/qtforpython-6/PySide6/QtCore/QObject.html
+
+### Native-width correction — final stable local gate
+
+`UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short -o faulthandler_timeout=120`
+— **1012passed/1403.08s**, exit0. All992prior cases plus20new redesign cases retained;
+38Phase8 UI cases include both normal and forced-native-minimum resize variants.
+Ruff lint/format127files PASS, diff check PASS. Source/tests unchanged throughout
+this corrected complete run; only evidence docs appended. Focused resize2PASS and
+real WSLg compact/lifecycle/resize/publish-history5PASS precede this full gate.
+
+Corrective commit scope8files:2UI modules, existing UI tests, early CI gate and
+4documents. Combined redesign scope16files including the original7synthetic
+screenshots and3UI modules; owner AGENTS.md remains excluded. No backend/contracts/
+schema/dependencies/WebBrowser/security/startup changes. Commit/push the verified
+correction in existing branch/PR9; both platforms must pass on new exact HEAD.
+Final CI run/results will be recorded in PR9/delivery, preserving initial Windows
+failure history here. Phase8 REVIEW; owner acceptance pending; no merge/Phase9.
+
+## 16.11.2026 — UX Windows early gate: acknowledgement wrapping
+
+Correction commit2a223b89a11ae81c14045c420e3a3f59f4e05d9d, workflow43886284383:
+early Windows gate now reaches step2 at600px, confirming material stacking fixed.
+It reports2resize failures/2passes/34deselected/13.49s: publication content686px
+in556px viewport, in both ordinary and card-pressure variants. Full Windows suite
+is correctly skipped after early failure; Linux complete suite continues.
+
+Root: native QCheckBox multiline text minimum-size hint. Local regression models
+668px native multiline hint (plus18px content margins = actual686px), preserving
+all original widths and assertions. Before correction: **1failed/1passed/11.12s**,
+exact same step2 686>556. Native card420px pressure remains covered as well.
+
+Use native textless QCheckBox plus wrapping plain-text CheckLabel with buddy/full
+Ukrainian accessible name. Label click focuses/toggles the native checkbox; keyboard
+Space remains native. No review semantics/service checks changed. The regression
+also verifies label click, focus ownership and Space toggling, with an authorized
+group selected to keep the source/group acknowledgement stable during interaction.
+
+After correction, narrow tests: **2passed/36deselected/10.56s**.
+`QT_QPA_PLATFORM=wayland CYBERFORGE_UX_SCREENSHOTS=docs/screenshots UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_scenario_integration.py -k 'compact_page or actual_constructor_button or resizing_keyboard or end_to_end_result or actual_final_confirmation' -q --tb=short`
+— **6passed/32deselected/39.48s**, including actual final Cancel/Publish, full
+publish/history, native-pressure cases and3WebEngine cycles. Screenshots refreshed;
+new publication view visually inspected. Ruff127files/diff checks PASS. New stable
+full run follows; no further source/test edits during it. Backend/contracts/DB/
+WebBrowser/security/dependencies unchanged. Owner AGENTS.md still excluded.
+
+Second-head Linux CI completed SUCCESS: **1012passed/456.97s**, Ruff127files,
+Web compact3PASS, strengthened preparation early gate4PASS and startup smoke PASS.
+This is workflow43886284383 / head2a223b8; Windows early acknowledgement-width
+failures remain recorded above. The final correction requires a new exact-head
+CI run on both platforms after its fresh complete local gate.
+
+### Final verification harness isolation
+
+First full run of wrapped-checkbox candidate: **1011passed/1setup error/1418.65s**.
+The error occurs in the following integration fixture's apply_theme(qapp) at
+app.setStyle("Fusion"), with an old AdminPage.heightForWidth callback reporting
+missing layout. It is a Qt fixture/global-style cleanup error, not an assertion
+in the wrapped-checkbox interaction. Nothing was committed/pushed from this run.
+
+Keep AdminPage and application behavior unchanged. The integration fixture now
+reuses an already identical STYLE instead of repeatedly resetting global Qt style.
+Native multiline-size pressure uses a test-local QCheckBox subclass substituted
+only into the integration module, rather than monkeypatching Qt's global class.
+This retains the668px native-hint regression while isolating Qt virtual callbacks.
+
+Same resize variants plus the following group-assignment fixture:
+`UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_scenario_integration.py -k 'resizing_keyboard or group_assignment_changes' -q --tb=short`
+— **3passed/35deselected/13.02s**. With QT_QPA_PLATFORM=wayland, identical selector:
+**3passed/35deselected/15.00s**. No tests removed/deselected from the new complete
+run. Ruff127files/diff PASS; fresh stable full gate runs before commit/push.
+
+### Final wrapped-attestation / isolated-harness gate
+
+`UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short -o faulthandler_timeout=120`
+— **1012passed/1119.68s**, exit0, no errors. All992prior+20new/38Phase8 UI retained;
+both native-pressure variants and the next fixture pass in complete-suite order.
+Ruff lint/format127files and diff checks PASS. Application/test sources unchanged
+throughout this final complete run; only evidence documentation appended.
+
+Real WSLg application gate6PASS/39.48s and isolated fixture sequence3PASS/15.00s;
+local fixture sequence3PASS/13.02s. Refreshed publication/history/Web captures are
+synthetic; final publication view inspected with wrapping, clickable Ukrainian
+attestation and native keyboard control. Existing wide-layout material/rubric/
+Email/result images remain current. No backend/contracts/DB/WebBrowser/security/
+dependency/startup changes. Final increment10files (2UI, tests,4docs,3screenshots),
+combined redesign16files; owner AGENTS.md excluded. Push a focused third task
+commit, then require both CI platforms on its exact HEAD. Final run/results in
+PR9/delivery; retain both Windows findings and the local harness failure above.
+Phase8 stays REVIEW, owner acceptance pending; no merge or Phase9.
+
+## 17.11.2026 — F8-UX-01/02: видимість group checkbox (REVIEW)
+
+Owner reports manual satisfaction with redesigned preparation functionality; Phase8
+acceptance remains pending. Scope: SRS3.13 visual readability, existing4.8/RBAC
+unchanged. Existing AGENTS.md English policy explicitly authorized for commit;
+reviewed diff contains no secrets/personal paths. Two contradictory older language
+clauses aligned; Ukrainian end-user UI/dissertation documentation retained.
+
+Actual group-picker rendering reproduced selected checked indicator AND text
+becoming dark/invisible while check state/selected group IDs remain unchanged.
+Cause: membershipPicker's dark item background combines with generic selected-row
+dark foreground (#19151f); native checked indicator inherits selected foreground.
+No lost check state. Two-line membership-specific selected-item QSS sets existing
+dark #30343e background and light #eef0f5 foreground. Native Qt checkbox retained;
+no delegate, custom painting, glyph/image substitution or application logic change.
+
+Before: focused pixel regression1FAIL/1PASS/8.57s (selected check interior0bright
+pixels). After:2PASS/7.29s, enabled/disabled, selected/unselected, checked/unchecked,
+focus, Space, unchanged group IDs. Same-theme before/after captures inspected:
+phase-8-group-before.png / phase-8-group-after.png. Exact commands:
+`CYBERFORGE_GROUP_SCREENSHOTS=/tmp/group-after UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_scenario_integration.py -k group_indicator -q --tb=short`.
+Context7 official Qt stylesheet reference confirms item selection color/background
+styling: https://doc.qt.io/qtforpython-6/overviews/qtwidgets-stylesheet-reference.html
+Ruff lint/format127files PASS. No backend, persistence, RBAC, graphics settings,
+dependencies or owner secrets/databases changed. Full/WSLg evidence follows.
+
+WSLg focused command:
+`QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_scenario_integration.py -k 'group_indicator or actual_constructor_button or production_dialog or renderer_diagnostics' -q --tb=short`
+—5PASS/35deselected/22.84s, exit0. Unsuppressed actual_constructor_button run with
+-q -s --tb=short:1PASS/39deselected/8.90s, exit0. All four reported Mesa/Zink/EGL
+message patterns reproduced during real MainWindow/startup/preview/normal shutdown;
+three render/switch/close/reopen cycles passed, main GUI responsive, sources unchanged.
+No new crash reproduced. These messages are nonfatal initialization warnings here,
+consistent with previous accepted lifecycle investigation; owner's unknown exit
+status cannot be inferred from the shell prompt alone. No graphics flags, drivers,
+packages or sandbox settings changed. Current owner hardware exit remains unconfirmed.
+
+Full offline gate:
+`UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short`
+—1014PASS/885.92s, exit0, all40Scenario Integration UI cases including F8-01/F8-02.
+Ruff check . / format --check .: PASS127files; diff check PASS. Source/tests stable
+throughout full run. Only evidence docs added afterwards. AGENTS policy committed
+separately as a89e34f; owner text preserved, older language conflicts aligned.
+No live AI or owner database/credential/environment changes. Final-head CI evidence
+will be recorded in PR9/delivery without another docs-only commit. Phase8 REVIEW;
+no merge, ACCEPTED or Phase9. Physical Windows11 remains Phase12 risk.
+Actual WSLg CLI startup/shutdown smoke also exits0:
+`QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync cyberforge --database /tmp/cyberforge-group-cli-smoke-20261117.sqlite3 --web-demo --smoke-test`.
+Fresh synthetic temporary DB; offline demo ignores owner .env. CLI smoke emits no
+graphics warnings; real Web Preview probe above reproduces them with exit0.
+
+
+## 17.11.2026 — Phase8 explicit owner acceptance / authorized release
+
+**Phase 8 — ACCEPTED on 2026-11-17.** Власник підтвердив успішну ручну WSLg
+перевірку redesigned Scenario Preparation та прийняв весь Phase8 scope, включно
+з integration/rubric/readiness/immutable publication/grants/audit, three-step UX,
+history/access, WebEngine lifecycle, checkbox visibility та English AGENTS policy.
+За повідомленням власника independent review не має confirmed blocking defects.
+Це owner-attributed acceptance, не автоматизований чи physical Windows11 check.
+
+Перед release: clean feature tree, HEAD7ee62b5; GitHub MCP PR9 open/unmerged/clean,
+base main b84e2fbdfcf1d84f86a6d8c30a9b0b868e678212, remote main тотожний.
+Повторно підтверджено CI44020116085 SUCCESS: Linux1014PASS, Windows1011PASS/3POSIX
+skips; Ruff127files/GUI/security/lifecycle/startup PASS. Implementation unchanged.
+
+Docs-only increment: acceptance record, current plan state, README current entry
+and ADR0008 status. Prior findings/corrections/evidence retained, historical REVIEW
+labels explicitly superseded. No SRS/runtime/test/dependency changes. Local repeated
+full/GUI/build checks unnecessary for documentation; final-head CI still mandatory.
+Release sequence: commit/push existing feature branch; wait/recheck both platforms
+on exact docs HEAD; standard merge with expected_head_sha, no squash/rebase; fetch
+and ff-only local main; verify merge SHA, remote equality, clean tree. Stop for any
+unexpected failure/conflict/integrity issue. Final SHA/CI/merge evidence recorded
+in PR9/delivery to avoid another docs-only commit changing the verified HEAD.
+
+Physical Windows11/DPI/GPU-specific/installer acceptance remains Phase12 risk;
+owner databases/credentials/.env/API keys/Phase2 snapshot untouched, no live AI.
+Phase0–8 ACCEPTED; Phase9 NOT STARTED / PLANNING; Phases10–12 unchanged.

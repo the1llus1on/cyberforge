@@ -23,6 +23,9 @@ from PySide6.QtWidgets import (
 )
 
 from cyberforge.application.email_materials import EmailMaterialService, MaterialState
+from cyberforge.application.scenario_integration import ScenarioIntegrationService
+from cyberforge.application.scenario_publication import ScenarioPublicationService
+from cyberforge.application.scenario_readiness import ScenarioReadinessService
 from cyberforge.application.scenarios import ScenarioService
 from cyberforge.application.web_materials import WebMaterialService
 from cyberforge.domain.accounts import ApplicationError
@@ -30,6 +33,7 @@ from cyberforge.domain.scenarios import Difficulty, Scenario
 from cyberforge.ui.cue_picker import CuePicker
 from cyberforge.ui.email_page import EmailPage
 from cyberforge.ui.pages import card, label
+from cyberforge.ui.scenario_integration import IntegrationDialog
 from cyberforge.ui.web_page import WebPage
 
 
@@ -65,6 +69,10 @@ class ScenarioPage(QWidget):
         self.token = token
         self.emails = emails
         self.webs = webs or WebMaterialService(emails)
+        self.integration = ScenarioIntegrationService(self.webs)
+        self.readiness = ScenarioReadinessService(self.integration)
+        self.publications = ScenarioPublicationService(self.readiness)
+        self.integration_dialog: IntegrationDialog | None = None
         self.scenario: Scenario | None = None
         self.observed: Scenario | None = None
         self.owned = False
@@ -205,6 +213,25 @@ class ScenarioPage(QWidget):
         web_layout.addWidget(self.web_button)
         material_layout.addWidget(self.web_material, 1)
         layout.addWidget(self.materials)
+        self.integration_panel = QWidget()
+        integration_layout = QVBoxLayout(self.integration_panel)
+        integration_layout.setContentsMargins(0, 0, 0, 0)
+        integration_layout.setSpacing(3)
+        self.integration_status = label("")
+        integration_layout.addWidget(self.integration_status)
+        integration_actions = QHBoxLayout()
+        self.integration_button = QPushButton("Підготовка сценарію")
+        self.integration_button.clicked.connect(self.open_integration)
+        self.publications_button = QPushButton("Опубліковані версії")
+        self.publications_button.clicked.connect(self.open_publications)
+        self.publications_button.hide()
+        self.new_version_button = QPushButton("Створити нову версію")
+        self.new_version_button.clicked.connect(self.create_next_version)
+        integration_actions.addWidget(self.integration_button)
+        integration_actions.addWidget(self.publications_button)
+        integration_actions.addWidget(self.new_version_button)
+        integration_layout.addLayout(integration_actions)
+        layout.addWidget(self.integration_panel)
         self.message = label("")
         layout.addWidget(self.message)
         actions = QHBoxLayout()
@@ -282,11 +309,120 @@ class ScenarioPage(QWidget):
                 web_state = self.webs.load(self.token(), self.scenario).state
             except ApplicationError:
                 web_state = MaterialState.REVIEW
+        self.refresh_integration()
         self._web_state(web_state)
         self.web_button.setEnabled(self.scenario is not None)
         self.web_button.setText(
             "Створити сайт" if web_state == MaterialState.EMPTY else "Відкрити сайт"
         )
+
+    def refresh_integration(self) -> None:
+        self.integration_panel.setVisible(self.scenario is not None)
+        self.publications_button.hide()
+        self.new_version_button.setVisible(
+            bool(
+                self.scenario
+                and self.owned
+                and self.scenario.status == "published"
+                and not self.scenario.archived
+            )
+        )
+        self.integration_status.clear()
+        if self.scenario is None:
+            return
+        try:
+            self.publications_button.setVisible(
+                bool(self.publications.history(self.token(), self.scenario.id))
+            )
+            state = self.integration.inspect(self.token(), self.scenario)
+            if self.scenario.status == "published":
+                text = "Опубліковано · вміст незмінний · доступ груп керується окремо"
+            else:
+                report = self.readiness.evaluate(self.token(), self.scenario)
+                text = (
+                    "Технічно готово · потрібні групи й підтвердження"
+                    if report.technical_ready
+                    else "Ще не готово до публікації"
+                )
+            self.integration_status.setText(
+                f"Зв’язок: {'збережено' if state.link else 'потребує налаштування'} · "
+                f"Рубрика: {'збережено' if state.rubric else 'не збережено'}\n" + text
+            )
+        except ApplicationError as error:
+            self.integration_status.setText(str(error))
+
+    def open_integration(self) -> None:
+        self._open_preparation(history_only=False)
+
+    def open_publications(self) -> None:
+        self._open_preparation(history_only=True)
+
+    def _open_preparation(self, *, history_only: bool) -> None:
+        if self.integration_dialog is not None:
+            if history_only:
+                self.integration_dialog.show_history()
+            self.integration_dialog.raise_()
+            self.integration_dialog.activateWindow()
+            return
+        if self.scenario is None or not self.can_leave():
+            return
+        try:
+            dialog = IntegrationDialog(
+                self.integration,
+                self.token,
+                self.scenario,
+                owned=self.owned,
+                parent=self,
+                history_only=history_only,
+            )
+            self.integration_dialog = dialog
+            dialog.requested_constructor = None
+            dialog.constructor_requested.connect(
+                lambda kind: setattr(dialog, "requested_constructor", kind)
+            )
+            dialog.finished.connect(lambda _: self._integration_finished(dialog))
+            # WebEngine may recreate the native surface on its first load. A
+            # transient hide must not unwind exec() and delete a loading page.
+            dialog.open()
+        except ApplicationError as error:
+            self.message.setText(str(error))
+
+    def _integration_finished(self, dialog: IntegrationDialog) -> None:
+        if self.integration_dialog is dialog:
+            self.integration_dialog = None
+        dialog.deleteLater()
+        if (
+            dialog.forced
+            or dialog.session_token != self.token()
+            or self.scenario is None
+            or self.scenario.id != dialog.expected.id
+        ):
+            return
+        try:
+            current = self.service.get(self.token(), self.scenario.id)
+            self.load(current, editable=self.owned)
+            if dialog.changed:
+                self.saved.emit(current)
+            if dialog.requested_constructor == "email":
+                self.open_email()
+            elif dialog.requested_constructor == "web":
+                self.open_web()
+        except ApplicationError as error:
+            self.message.setText(str(error))
+
+    def create_next_version(self) -> None:
+        if self.scenario is None or not self.can_leave():
+            return
+        try:
+            current = self.service.create_next_draft(self.token(), self.scenario)
+            self.load(current, editable=self.owned)
+            self.message.setText(
+                "Створено нову чернетку без матеріалів і доступів. Попередня "
+                "публікація збережена."
+            )
+            self.saved.emit(current)
+        except ApplicationError as error:
+            self.message.setText(str(error))
 
     def _web_state(self, state: MaterialState) -> None:
         self.web_status.setText(state)
@@ -330,6 +466,9 @@ class ScenarioPage(QWidget):
             return
         try:
             self.email_page.open(self.scenario, editable=self.editable)
+            self.email_page.preview.set_link(
+                self.integration.inspect(self.token(), self.scenario).link
+            )
         except ApplicationError as error:
             self.message.setText(str(error))
             return
@@ -392,6 +531,9 @@ class ScenarioPage(QWidget):
         )
 
     def clear(self) -> None:
+        for dialog in self.findChildren(IntegrationDialog):
+            dialog.force_close()
+        self.integration_panel.hide()
         self.email_page.clear()
         self.web_page.clear()
         self.content_stack.setCurrentWidget(self.empty_state)
@@ -553,6 +695,8 @@ class ScenarioPage(QWidget):
         return QMessageBox.StandardButton(box.exec())
 
     def can_leave(self) -> bool:
+        if self.integration_dialog and not self.integration_dialog.discard_or_save():
+            return False
         if not self.web_page.can_leave():
             return False
         if not self.email_page.can_leave():

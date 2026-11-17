@@ -487,7 +487,7 @@ Web працює з тим самим збереженим Scenario/Email: од�
 AI refinement у трьох межах, read-only HTML/CSS/JSON та explicit SQLite Save.
 WebEngine ізольований: display-only HTTPS адреса не завантажується, JS/зовнішня
 мережа/довільні файли/popups/downloads заборонені. Зміна saved Email робить Web stale
-без видалення матеріалу. Публікація й learner simulation залишаються наступними фазами.
+без видалення матеріалу. Публікація реалізована в Phase8 нижче; learner simulation — Phase9.
 
 Явне offline demo: `uv run --offline --locked cyberforge --database /path/to/demo.sqlite3 --web-demo`.
 Прапорець потребує явно обраної БД, ігнорує .env/keys, не викликає cloud API та не
@@ -499,4 +499,25 @@ explicit positive limits без hard application maximum. Phase7 **ACCEPTED вл
 generation/regeneration, ручне редагування шапки, light/dark та preview/rendering.
 Save/reopen і всі presets мають automated evidence, не окреме owner confirmation.
 Physical Windows11/DPI/installer та інші Phase12 checks залишаються ризиками.
-Phase8 — **NOT STARTED / PLANNING**, потребує окремого погодження.
+Історичний Phase7 acceptance завершено; Phase8 реалізується за окремим дозволом нижче.
+
+
+## Phase 8 — інтеграція та публікація
+
+Сценарій має явний main Email→Web link, версійовану рубрику, детерміновану
+перевірку готовності та підтвердження точних ревізій викладачем. Публікація атомарно
+заморожує canonical content і manifest; доступ груп керується окремими grants
+з append-only audit. Нова версія копіює лише parameters, зберігаючи стару публікацію.
+У Конструкторі відкрийте «Підготовка сценарію»: матеріали → оцінювання →
+публікація. «Опубліковані версії» окремо відкриває history/access навіть із нової чернетки.
+
+Підтримується safe-decline applicability; оцінки/спроби/learner simulation ще
+не реалізовано. Phase8 не потребує AI calls; `--web-demo` дозволяє всю synthetic
+демонстрацію офлайн в окремій БД. Owner checklist, міграція, security evidence та
+limitations: [PHASE_8_ACCEPTANCE.md](docs/PHASE_8_ACCEPTANCE.md).
+Phase8 — **ACCEPTED власником 2026-11-17** після ручної WSLg перевірки.
+Implementation CI: Linux1014PASS, Windows Server2022 1011PASS/3POSIX skips;
+Ruff/GUI/security gates PASS. Остаточний documentation HEAD перевіряється перед
+дозволеним standard merge PR9; release evidence — PHASE_8_ACCEPTANCE.md та PR9.
+Phase0–8 ACCEPTED; Phase9 — **NOT STARTED / PLANNING**, окремий дозвіл потрібний.
+Physical Windows11, DPI, GPU-specific behavior та installer — Phase12 risks.

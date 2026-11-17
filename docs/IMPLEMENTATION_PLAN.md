@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–6 — ACCEPTED (Phase6 прийнято власником2026-11-15); Phase7 — ACCEPTED власником2026-11-15; Phase8 — NOT STARTED / PLANNING; Phases9–12 — NOT STARTED.
+**State:** Phases 0–8 — ACCEPTED (Phase8 прийнято власником 2026-11-17); Phase9 — NOT STARTED / PLANNING; Phases10–12 — NOT STARTED (без змін).
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -24,9 +24,9 @@
 | 5 | Specialized Agents | ACCEPTED | Прийнято власником 13.11.2026: four agents, typed contracts, bounded LangGraph, provenance/F-01, offline/provider-neutral integration; PHASE_5_ACCEPTANCE.md |
 | 6 | Email Constructor | ACCEPTED | Прийнято власником15.11.2026: Email preview/editor, async generation, explicit SQLite Save; PHASE_6_ACCEPTANCE.md |
 | 7 | Web Constructor | ACCEPTED | Hybrid components, isolated WebEngine, visual editor, scoped AI, saved Email binding, explicit SQLite Save; PHASE_7_ACCEPTANCE.md |
-| 8 | Scenario Integration | NOT STARTED / PLANNING | Shared Email→Web context, internal link validation, readiness gate, immutable publishing; integration tests |
+| 8 | Scenario Integration | REVIEW | Typed Email→Web link, rubric definitions/editor, exact readiness/review, atomic immutable publication, audited grants/access; PHASE_8_ACCEPTANCE.md |
 | 9 | Learner Simulation | NOT STARTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
-| 10 | Scoring & Mentor | NOT STARTED | Versioned deterministic rubrics, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
+| 10 | Scoring & Mentor | NOT STARTED | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
 | 11 | Analytics Mode | NOT STARTED | Read-only scenario statistics, deduplicated learner table, missing-data rules, filters, CSV/JSON export, RBAC; analytics tests |
 | 12 | Finalization | NOT STARTED | Full regression/security checks, Windows 11 package, demonstration dataset, docs and release checklist |
 
@@ -1049,3 +1049,158 @@ polish залишаються Phase12 ризиками; Windows CI їх не з�
 точні SHA/CI/merge evidence фіксуються в PR8 та фінальному звіті без циклічних
 документаційних commits. Phase8 — **NOT STARTED / PLANNING**: architecture та
 implementation requirements потребують окремого review/дозволу. Phases9–12 без змін.
+
+## Phase 8 — Scenario Integration (15.11.2026)
+
+**REVIEW**, реалізацію та local gates завершено; feature PR дозволено, без merge/ACCEPTED/Phase9.
+База main b84e2fbdfcf1d84f86a6d8c30a9b0b868e678212, clean tree, GitHub MCP,
+fetch/ff-only; feat/phase-8-scenario-integration.
+
+| Інкремент | SRS | Gate / evidence |
+| --- | --- | --- |
+| Поправка/ADR/contracts | §§4,6.10,11–12,14,23–24 | Closed schemas, registry positive/negative serialization |
+| Integration/link | §§6.10,11.4–11.6,16 | exact persisted Email/Web/provenance/target, stale and forged rejection, inert visible CTA |
+| Rubric | §§12.2–12.6 | bounded criteria/actions/applicability, weights/editor, safe decline |
+| Readiness/review | §§4.8,11.6 | deterministic reason codes, exact receipts, warning ack, nonoverrideable blockers |
+| Persistence/publication | §§4.9,14 | additive0006, rollback/races/direct-write protection, explicit new version |
+| Grants/access | §§2.3–2.5,14,16 | RBAC, audit regrant, current membership, dedup/latest, archive/restore |
+| GUI/delivery | §§3–4,21,24 | guards/modals/compact WSLg, full Ruff/pytest/package, final-head Linux/Windows CI |
+
+Деталі — ADR-0008 та PHASE_8_ACCEPTANCE. No AI calls/learner attempts/scoring.
+
+
+Phase8 final local gate: full offline pytest **977passed/673.63s**, Ruff lint/format
+126Python files PASS. Focused persistence172passed +8additional, migration rollback
+5passed, GUI45passed; real WSLg11passed plus final compact screenshot1passed.
+Built/installed wheel,0005→0006 preservation, full publication/grants/access,
+Qt startup and85file source parity PASS. First full976passed/686.21s preceded
+DDL hardening; final977run includes the rollback regression. CI includes early
+native compact check, final-head Linux/Windows evidence follows in PR/final report.
+Owner manual acceptance pending; physical Windows11/DPI/installer Phase12 risk.
+Phase8 REVIEW, no merge/ACCEPTED/Phase9. ADR0008 and PHASE_8_ACCEPTANCE contain details.
+
+## Phase8 — independent review F8-01/F8-02 (16.11.2026)
+
+**REVIEW**, продовження PR9 від reviewed c8f95eb; без merge/ACCEPTED/Phase9.
+План точкової remediation:
+
+1. SRS §§4.8,11.6,16.6: reproduce no/unauthorized/stale groups через actual Qt
+   click та direct service. Зберегти technical readiness окремо; explicit group
+   validation перед strict receipt, GUI preflight до confirmation, write revalidation.
+2. §§2.5,4.9,14: two published versions/separate grants; selection/reload/reopen
+   має зберігати exact publication, preview та audit target. Grant/revoke dialog
+   вказує scenario/version/publication/group; recheck target після modal.
+3. Focused failure evidence → targeted fixes → integration/persistence/UI regressions,
+   relevant real WSLg, Ruff/full pytest та final-head Linux/Windows CI; push у PR9.
+
+Нових contracts/dependencies/migrations немає; accepted content immutability та
+SRS scope не змінюються. Actual evidence — DEVELOPMENT_LOG/PHASE_8_ACCEPTANCE.
+
+F8 remediation final local gate:988passed/857.37s, Ruff126files PASS;
+focused11passed, relevant regressions131passed, actual WSLg7passed. F8-01 confirmed
+GUI preflight defect fixed; claimed uncaught ValidationError not reproduced because
+existing server BLOCKED gate already denied invalid groups. F8-02 exact historical
+target/reset reproduced and fixed with synchronized selection and explicit grant
+confirmation. Final-head CI evidence in PR9/delivery report; Phase8 remains REVIEW.
+
+## Phase8 — WSLg Web preview lifecycle correction (16.11.2026)
+
+**REVIEW**, existing PR9, baseline988bc421. Owner authorized investigation/fix/push,
+not merge/ACCEPTED/Phase9. Targeted plan, mapped to SRS:
+
+1. §§3.13,6.2–6.6,21: reproduce through real sign-in, saved scenario and ScenarioPage
+   button/QDialog lifecycle; distinguish native process exit, renderer exit, GUI
+   heartbeat, page load and native-window hide. Use one isolated published fixture.
+2. §§6.6,16.3–16.5: compare default and documented graphics overrides individually;
+   preserve sandbox/network isolation and existing runtime configuration.
+3. §§3.13,4.8,21: replace verified nested-modal lifetime defect with Qt open/finished,
+   explicit ownership/cleanup and retained guards; safe renderer/load diagnostics.
+4. §§14,16,21: repeated default/software WSLg rendering/close/reopen, actual renderer
+   termination/reload, source immutability, security/compact regressions, Ruff/full
+   offline suite and exact-head Linux/Windows CI in PR9. No startup/schema changes.
+
+Preview correction final local gate:992passed/828.97s, Ruff126files PASS;
+default WSLg30passed, single --disable-gpu11passed, five separate backend variants
+with3cycles each PASS. Actual native-window recreation verified; open/finished fixes
+premature exec return/deletion, renderer-only failure/reload covered independently.
+No startup/default graphics/security/schema changes. Owner hardware recheck pending;
+exact-head CI evidence follows in PR9. Phase8 REVIEW; no merge/ACCEPTED/Phase9.
+
+
+## Phase8 — UX redesign: підготовка й публікація (16.11.2026)
+
+**REVIEW**, owner acceptance pending. Власник дозволив реалізацію, commit/push та
+оновлення PR9; без merge/ACCEPTED/Phase9. База redesign — `34e3198`.
+
+| Інкремент | SRS | Поведінка / gate |
+| --- | --- | --- |
+| Структура | §§3.13,4,21 | Три вільно доступні кроки; stable modal open/finished; один central stack |
+| Матеріали | §§6.10,11.4–11.6 | Responsive картки, exact persisted previews, read-only technical target, explicit link Save, URL warning |
+| Оцінювання | §§12.2–12.6 | Registry8 у3групах, expandable rows, lossless numeric text, unsaved editable preset, explicit Save |
+| Публікація | §§4.8–4.9,14 | Service-derived checklist, correction navigation, groups, exact-source attestation, final confirmation/result |
+| Історія | §§4.9,14,16 | Окремий ScenarioPage action навіть із newer draft; exact version, grants та collapsible audit |
+| Перевірки | §§16,21,24 | Existing regressions retained; focused new UI, real WSLg lifecycle/security/compact, full suite/Ruff, final-head Linux/Windows CI |
+
+Save/Discard/Remain охоплює кроки, previews, history, Close/X, constructor handoff,
+workspace/account navigation. Session invalidation примусово очищує buffers.
+Редагування й зміна груп скидають attestation; відкритий огляд періодично повторює
+read-only service checks для external changes без втрати незбережених правок.
+Accepted contracts/services/DB triggers/atomic publication не змінено. Нових
+залежностей, migrations, startup flags або runtime security exceptions немає.
+Деталі дизайну — dated addendum ADR0008; результати — log/PHASE_8_ACCEPTANCE.
+
+UX stable local gate: **1011passed/1091.99s** (992prior+19new cases), Ruff127files
+PASS; real default WSLg48PASS, extra production Close/WM-X3cycles PASS. Seven
+synthetic screenshots inspected.15scoped files, owner AGENTS.md excluded. Source/
+tests stable throughout full run; only evidence docs updated afterwards. Exact
+final-head Linux/Windows CI follows in PR9/delivery. Phase8 REVIEW; owner acceptance
+pending, no merge or Phase9.
+
+### UX Windows CI correction (16.11.2026)
+
+First-head Linux1011PASS; Windows1007PASS/3skip/1new narrow-resize failure. Native
+card minima prevented self-width-driven stacking. Forced420px/card reproduces the
+same failure locally; viewport-driven geometry fixes it, with assertions retained.
+Resize test now covers normal+native-pressure cases; early CI includes both.
+Focused2PASS and real WSLg5PASS, Ruff127files PASS. Final suite now1012cases
+(992prior+20new;38Phase8 UI); engineering gate requires new full run and both
+platforms on final HEAD. Phase8 REVIEW, no merge/ACCEPTED/Phase9.
+
+Corrected final local gate: **1012passed/1403.08s**, Ruff127files PASS, native-width
+focused2PASS, real WSLg5PASS. New stable run retains992prior+20new/38Phase8 UI.
+Combined redesign16files; corrective increment8files; owner AGENTS.md excluded.
+New final-head Linux/Windows CI follows in PR9/delivery. Phase8 stays REVIEW.
+
+### UX acknowledgement native-width correction
+
+Second Windows early gate confirms cards fixed, exposes step2 native multiline
+QCheckBox minimum686>556. Native668px hint regression reproduces1FAIL/1PASS.
+Wrapping buddy label plus native checkbox fixes2PASS; label click/focus/Space
+assertions retained. Real WSLg compact/resize/lifecycle/full flow/final modal6PASS,
+Ruff127files PASS. New stable full run required; final CI must pass both platforms.
+Scope remains UI/tests/docs/CI, Phase8 REVIEW, no merge/Phase9.
+
+Final wrapped-attestation/harness gate: **1012passed/1119.68s**, zero errors;
+Ruff127files PASS, real WSLg6PASS plus isolated fixture3PASS. All992prior+20new/
+38Phase8 UI retained. Final increment10files, combined16; owner AGENTS.md excluded.
+Final-head Linux/Windows CI follows in PR9/delivery. Phase8 REVIEW; no merge/Phase9.
+
+## 17.11.2026 — F8-UX-01/02 targeted visual correction
+
+REVIEW. Native checkmark/text hidden by selected dark foreground on membership
+row dark background; logical state intact. Two-line selected-row QSS correction,
+rendered-pixel/state/keyboard regression, before/after captures. Full1014PASS,
+Ruff127files PASS, WSLg5PASS + unsuppressed3cycle probe1PASS/exit0 reproduces
+nonfatal Mesa/Zink/EGL warnings. Approved AGENTS.md committed separately. Final
+exact-head CI follows in PR9; no merge/ACCEPTED/Phase9. Owner process exit unknown.
+
+## Phase8 — остаточне прийняття та release gate (17.11.2026)
+
+**Phase 8 — ACCEPTED on 2026-11-17.** Owner manual WSLg acceptance та рішення
+власника записано в PHASE_8_ACCEPTANCE.md; попередню review/test history збережено.
+План release: docs-only commit у чинній branch → push PR9 → exact-final-head
+Linux+Windows CI → recheck scope/base/conflicts → standard merge commit з expected
+head SHA → fetch/local main fast-forward-only → verify remote/local merge SHA та
+clean tree. За unexpected CI failure/conflict/integrity issue зупинитися.
+Без runtime/test/dependency changes або live AI. Physical Windows11/DPI/GPU/
+installer залишаються Phase12 risks. Phase9 NOT STARTED / PLANNING; не починати.

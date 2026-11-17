@@ -153,3 +153,86 @@ class WebMaterial(Base):
     created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime())
     updated_at: Mapped[datetime] = mapped_column(DateTime())
+
+
+class ScenarioLinkRecord(Base):
+    __tablename__ = "scenario_links"
+    __table_args__ = (CheckConstraint("revision > 0", name="link_revision"),)
+    version_id: Mapped[int] = mapped_column(
+        ForeignKey("scenario_versions.id"), primary_key=True
+    )
+    revision: Mapped[int] = mapped_column(Integer)
+    payload: Mapped[dict] = mapped_column(JSON)
+
+
+class RubricDefinitionRecord(Base):
+    __tablename__ = "rubric_definitions"
+    __table_args__ = (CheckConstraint("revision > 0", name="rubric_revision"),)
+    version_id: Mapped[int] = mapped_column(
+        ForeignKey("scenario_versions.id"), primary_key=True
+    )
+    revision: Mapped[int] = mapped_column(Integer)
+    payload: Mapped[dict] = mapped_column(JSON)
+
+
+class PublicationReview(Base):
+    __tablename__ = "publication_reviews"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    version_id: Mapped[int] = mapped_column(ForeignKey("scenario_versions.id"))
+    actor_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    payload: Mapped[dict] = mapped_column(JSON)
+
+
+class ScenarioPublication(Base):
+    __tablename__ = "scenario_publications"
+    __table_args__ = {"sqlite_autoincrement": True}
+    id: Mapped[int] = mapped_column(primary_key=True)
+    version_id: Mapped[int] = mapped_column(
+        ForeignKey("scenario_versions.id"), unique=True
+    )
+    confirmation_id: Mapped[str] = mapped_column(
+        ForeignKey("publication_reviews.id"), unique=True
+    )
+    publisher_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    published_at: Mapped[datetime] = mapped_column(DateTime())
+    manifest_digest: Mapped[str] = mapped_column(String(64))
+    manifest: Mapped[dict] = mapped_column(JSON)
+
+
+class PublicationGroup(Base):
+    __tablename__ = "publication_groups"
+    __table_args__ = (CheckConstraint("revision > 0", name="grant_revision"),)
+    publication_id: Mapped[int] = mapped_column(
+        ForeignKey("scenario_publications.id"), primary_key=True
+    )
+    group_id: Mapped[int] = mapped_column(
+        ForeignKey("learning_groups.id"), primary_key=True
+    )
+    active: Mapped[bool] = mapped_column(Boolean)
+    revision: Mapped[int] = mapped_column(Integer)
+    changed_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    changed_at: Mapped[datetime] = mapped_column(DateTime())
+
+
+class PublicationGrantAuditEvent(Base):
+    __tablename__ = "publication_grant_audit"
+    __table_args__ = (
+        UniqueConstraint(
+            "publication_id", "group_id", "grant_revision", name="grant_audit_revision"
+        ),
+        CheckConstraint("operation IN ('grant','revoke')", name="grant_operation"),
+        CheckConstraint(
+            "previous_active != new_active AND grant_revision > 0",
+            name="grant_transition",
+        ),
+        {"sqlite_autoincrement": True},
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    publication_id: Mapped[int] = mapped_column(ForeignKey("scenario_publications.id"))
+    group_id: Mapped[int] = mapped_column(ForeignKey("learning_groups.id"))
+    actor_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    operation: Mapped[str] = mapped_column(String(10))
+    occurred_at: Mapped[datetime] = mapped_column(DateTime())
+    previous_active: Mapped[bool] = mapped_column(Boolean)
+    new_active: Mapped[bool] = mapped_column(Boolean)
+    grant_revision: Mapped[int] = mapped_column(Integer)

@@ -11,6 +11,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import QSizePolicy, QTextEdit
 
 from cyberforge.agents.contracts import MessageV1
+from cyberforge.scenario_integration.contracts import ScenarioLinkV1
 
 
 class MessageBody(QTextEdit):
@@ -61,7 +62,12 @@ class MessageBody(QTextEdit):
         style.setForeground(QColor(color))
         return style
 
-    def set_message(self, message: MessageV1, resource_id: str | None) -> None:
+    def set_message(
+        self,
+        message: MessageV1,
+        resource_id: str | None,
+        link: ScenarioLinkV1 | None = None,
+    ) -> None:
         self.clear()
         self._main_message = resource_id is not None
         cursor = QTextCursor(self.document())
@@ -99,7 +105,10 @@ class MessageBody(QTextEdit):
                 "Навчальний ресурс", self._style(12, "#5f6368", bold=True)
             )
             cursor.insertBlock(paragraph)
-            cursor.insertText(resource_id, self._style(13, "#3c4043"))
+            cursor.insertText(
+                (link.display_url + "\n" if link else "") + resource_id,
+                self._style(13, "#3c4043"),
+            )
             action = QTextFrameFormat()
             action.setTopMargin(8)
             action.setPadding(8)
@@ -108,7 +117,8 @@ class MessageBody(QTextEdit):
             cursor.insertFrame(action)
             cursor.setBlockFormat(paragraph)
             cursor.insertText(
-                "Переглянути навчальний матеріал · перехід вимкнено",
+                (link.link_label if link else "Переглянути навчальний матеріал")
+                + " · перехід вимкнено",
                 self._style(13, "#0b57d0", bold=True),
             )
         self.setTextCursor(QTextCursor(self.document()))

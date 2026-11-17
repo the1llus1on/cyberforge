@@ -1,3 +1,5 @@
+Use English for all internal planning, technical analysis, code-related communication, progress updates, and final responses to the project owner. Keep CyberForge's end-user UI, labels, validation messages, and notifications in Ukrainian, and preserve the established language of existing project documents. Do not expose private chain-of-thought reasoning.
+
 # CyberForge — instructions for OpenAI Codex
 
 ## Mission and source of truth
@@ -27,7 +29,7 @@ If documents conflict, follow the SRS for approved product requirements. Do not 
 
 ## Engineering conventions
 
-- Application code, API names, symbols, classes and variables: English. User-facing UI, progress reports, explanations and documentation intended for the dissertation: Ukrainian.
+- Application code, API names, symbols, classes and variables: English. End-user UI and documentation intended for the dissertation: Ukrainian. Communication with the project owner, progress reports and technical explanations: English.
 - Python 3.12; prefer typed code; small cohesive modules; src layout. Keep domain, application services, UI, persistence, analytics and AI integrations separate.
 - Use the agreed stack where relevant: PySide6, Qt WebEngine, Pydantic v2, SQLite, SQLAlchemy 2.x, Alembic, LangChain, LangGraph, Gemini behind `LLMGateway`, `uv`, `pytest`, `pytest-qt` and Ruff.
 - Add only necessary dependencies; verify their current official documentation and compatible versions. Do not invent APIs or quietly replace the SRS technology decisions.
@@ -84,7 +86,7 @@ For each relevant change:
 
 ## Completion report
 
-At the end of a task, respond in Ukrainian with:
+At the end of a task, respond in English with:
 - phase / task and SRS requirements covered;
 - implemented behavior;
 - files added or modified;
