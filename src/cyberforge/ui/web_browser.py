@@ -156,6 +156,7 @@ class BrowserTab(QLabel):
 class WebBrowser(QFrame):
     interaction_requested = Signal(str, str)
     load_succeeded = Signal()
+    browser_control_requested = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -192,6 +193,24 @@ class WebBrowser(QFrame):
         self.address.setAccessibleName("Навчальна адреса, лише відображення")
         controls.addWidget(self.address, 1)
         layout.addLayout(controls)
+        self.learner_controls = QFrame()
+        native = QHBoxLayout(self.learner_controls)
+        self.control_buttons = {}
+        for action, title in (
+            ("inspect_address", "Перевірити адресу"),
+            ("report", "Повідомити про сайт"),
+            ("leave", "Залишити сторінку"),
+        ):
+            control = QPushButton(title)
+            control.setAccessibleName(title)
+            control.clicked.connect(
+                lambda checked=False,
+                action=action: self.browser_control_requested.emit(action)
+            )
+            native.addWidget(control)
+            self.control_buttons[action] = control
+        self.learner_controls.hide()
+        layout.addWidget(self.learner_controls)
         self.view = QWebEngineView(self)
         self.store = ResourceStore(self)
         # Dedicated profile, independent of application authentication state.
@@ -303,6 +322,7 @@ class WebBrowser(QFrame):
         super().closeEvent(event)
 
     def set_draft(self, draft: WebDraftV3 | None) -> None:
+        self.learner_controls.setVisible(self.learner_mode)
         self.draft = draft
         self.render_failed = False
         self.feedback.clear()

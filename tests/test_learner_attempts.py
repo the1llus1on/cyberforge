@@ -43,6 +43,11 @@ def start(e):
 
 
 def act(e, attempt, surface, action, **kwargs):
+    if surface == "system" and action == "web_entered":
+        return e.events._display_acknowledger(e.learner, attempt.attempt_id)(
+            request_id=kwargs.pop("request_id", uuid4()),
+            expected_revision=attempt.revision,
+        )
     return e.events.record(
         e.learner,
         attempt.attempt_id,
@@ -500,3 +505,85 @@ def test_new_database_connection_and_reauthentication_resume(learning_env, web):
         assert attempts.content(token, a.attempt_id)[0] == a
     finally:
         other_db.close()
+
+
+def test_generic_visit_and_reserved_browser_forgery_denied(learning_env):
+    e = learning_env
+    a = enter_web(e, start(e))
+    for forged in (
+        dict(surface="system", action_id="web_entered"),
+        dict(surface="web", action_id="report", component_id="browser:report"),
+        dict(
+            surface="web",
+            action_id="report",
+            component_id="browser:report",
+            _browser=True,
+        ),
+    ):
+        with pytest.raises(ApplicationError):
+            e.events.record(
+                e.learner,
+                a.attempt_id,
+                request_id=uuid4(),
+                expected_revision=a.revision,
+                **forged,
+            )
+    assert not e.attempts.get(e.learner, a.attempt_id).web_visited
+
+
+def test_browser_controls_closed_idempotent_and_authorized(learning_env):
+    e = learning_env
+    a = enter_web(e, start(e))
+    with pytest.raises(ApplicationError):
+        e.events.browser_control(
+            e.learner,
+            a.attempt_id,
+            control="report",
+            request_id=uuid4(),
+            expected_revision=a.revision,
+        )
+    a = act(e, a, "system", "web_entered")
+    request = uuid4()
+    first = e.events.browser_control(
+        e.learner,
+        a.attempt_id,
+        control="inspect_address",
+        request_id=request,
+        expected_revision=a.revision,
+    )
+    assert (
+        e.events.browser_control(
+            e.learner,
+            a.attempt_id,
+            control="inspect_address",
+            request_id=request,
+            expected_revision=a.revision,
+        )
+        == first
+    )
+    assert (
+        e.attempts.events(e.learner, a.attempt_id)[-1].provenance == "browser_control"
+    )
+    with pytest.raises(ApplicationError):
+        e.events.browser_control(
+            e.learner,
+            a.attempt_id,
+            control="confirm",
+            request_id=uuid4(),
+            expected_revision=first.revision,
+        )
+    e.publications.change_grant(
+        e.token, a.publication_id, e.group.id, active=False, expected_revision=1
+    )
+    with pytest.raises(ApplicationError):
+        e.events.browser_control(
+            e.learner,
+            a.attempt_id,
+            control="report",
+            request_id=uuid4(),
+            expected_revision=first.revision,
+        )
+    with pytest.raises(ApplicationError):
+        e.events._display_acknowledger(e.learner, a.attempt_id)(
+            request_id=uuid4(), expected_revision=first.revision
+        )

@@ -10,7 +10,10 @@ from cyberforge.application.scenario_publication import PublicationAccessService
 from cyberforge.domain.accounts import AccessDenied, ApplicationError, Role
 from cyberforge.learning.contracts import (
     ACTIONS,
+    BROWSER_CONTROLS,
+    BROWSER_PREFIX,
     AttemptEventV1,
+    BrowserControl,
     ScenarioAttemptV1,
     utc,
 )
@@ -289,7 +292,53 @@ class AttemptEventService:
         db.flush()
         row.last_event_sequence = sequence
 
-    def record(
+    def record(self, token, attempt_id, **command) -> ScenarioAttemptV1:
+        if "_browser" in command or command.get("action_id") == "web_entered":
+            raise ApplicationError(INVALID)
+        return self._record(token, attempt_id, **command)
+
+    def browser_control(
+        self,
+        token,
+        attempt_id,
+        *,
+        control: BrowserControl,
+        request_id,
+        expected_revision: int,
+    ) -> ScenarioAttemptV1:
+        if not isinstance(control, str) or control not in BROWSER_CONTROLS:
+            raise ApplicationError(INVALID)
+        return self._record(
+            token,
+            attempt_id,
+            request_id=request_id,
+            expected_revision=expected_revision,
+            surface="web",
+            action_id=control,
+            component_id=BROWSER_PREFIX + control,
+            _browser=True,
+        )
+
+    def _display_acknowledger(self, token, attempt_id):
+        """Trusted composition hook; never exposed as a learner command.
+
+        Local Python/DB owners can alter the process. This is API separation,
+        not tamper resistance against code execution on the desktop.
+        """
+
+        def acknowledge(*, request_id, expected_revision):
+            return self._record(
+                token,
+                attempt_id,
+                request_id=request_id,
+                expected_revision=expected_revision,
+                surface="system",
+                action_id="web_entered",
+            )
+
+        return acknowledge
+
+    def _record(
         self,
         token,
         attempt_id,
@@ -301,6 +350,7 @@ class AttemptEventService:
         component_id: str | None = None,
         navigation: InternalNavigationV1 | None = None,
         source_message_identifier: str | None = None,
+        _browser: bool = False,
     ) -> ScenarioAttemptV1:
         request_id = identifier(request_id)
         if (
@@ -355,6 +405,12 @@ class AttemptEventService:
                 navigation is not None or source_message_identifier is not None
             ):
                 raise ApplicationError(INVALID)
+            if (
+                component_id
+                and component_id.startswith(BROWSER_PREFIX)
+                and not _browser
+            ):
+                raise ApplicationError(INVALID)
             actions = [(surface, action_id, component_id)]
             # Compute changes separately; event inserts must precede row updates.
             changes = {}
@@ -395,7 +451,7 @@ class AttemptEventService:
                 if (
                     row.current_stage != "WEB"
                     or not row.web_visited
-                    or (component_id, action_id) not in pairs
+                    or (not _browser and (component_id, action_id) not in pairs)
                 ):
                     raise ApplicationError(INVALID)
                 if action_id == "leave":

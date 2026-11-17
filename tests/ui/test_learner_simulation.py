@@ -254,3 +254,39 @@ def test_compact_keyboard_layout_and_repeated_lifecycle(
         assert sim.browser is None
         assert w.isVisible()
     assert len(w.test_env.attempts.history(w._token)) == 1
+
+
+def test_regular_preset_native_controls(qtbot, qapp, publication_env):  # noqa: F811
+    from cyberforge.application.learner_attempts import LearnerAttemptService
+    from tests.test_scenario_integration import publish
+
+    e = publication_env
+    publication = publish(e)  # ordinary preset, no demo_web_actions helper
+    e.learner = e.tokens["learner"]
+    e.attempts = LearnerAttemptService(e.access)
+    window = MainWindow(e.accounts, e.emails, e.webs)
+    qtbot.addWidget(window)
+    window._authenticated(e.learner)
+    window.navigate(View.MY_SCENARIOS)
+    window.show()
+    sim = begin(window, qtbot)
+    open_main(sim, qtbot)
+    click(qtbot, sim.mail.learner_link)
+    qtbot.waitUntil(lambda: sim._display_recorded, timeout=20000)
+    before = e.access.content(e.learner, publication.id)[1].web.model_dump_json()
+    assert not any(
+        a.id == "inspect_address"
+        for c in sim.state.web.page.components
+        for a in getattr(c, "actions", ())
+    )
+    for action in ("inspect_address", "report", "leave"):
+        sequence = sim.controller.attempt.last_event_sequence
+        click(qtbot, sim.browser.control_buttons[action])
+        assert sim.controller.attempt.last_event_sequence == sequence + 1
+        event = e.attempts.events(e.learner, sim.controller.attempt.attempt_id)[-1]
+        assert event.action_id == action and event.provenance == "browser_control"
+    confirm(sim, qtbot)
+    assert sim.controller.attempt.status == "COMPLETED"
+    assert (
+        e.access.content(e.learner, publication.id)[1].web.model_dump_json() == before
+    )

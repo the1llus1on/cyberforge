@@ -116,3 +116,26 @@ visit acknowledgement now consume loadingChanged URL/status only for the exact
 owned document. Rejected action/external navigation never becomes a renderer
 failure or successful visit. Real native cancellation→second action and actual
 owned-resource failure are distinct regression checks. No security relaxation.
+
+## Independent review F9-01/F9-02 — 17.11.2026
+
+Обидва root causes підтверджено. Optional authored actions не гарантують evidence
+для valid web.address/report/leave rubric. Native Ukrainian browser controls
+завжди доступні в learner Web mode; explicit click створює inspect_address/report/
+leave. Reserved component namespace browser:<action> не допускається resource_id
+авторського компонента. BrowserControl є closed Literal; окремий service endpoint
+сам визначає identity, generic endpoint відхиляє reserved IDs. AttemptEventV1
+надає typed provenance browser_control/authored_component/application, derived
+losslessly з existing persisted identity. No migration/rewrite historical events;
+старі authored identities зберігають значення. Publication/rubric незмінні.
+
+Generic record більше не приймає system/web_entered. Private composition hook
+створює callback, bound до token+attempt; trusted controller використовує його
+лише після exact owned-document loadingChanged success. Request UUID/revision,
+current authorization/binding/stage, transactional append і retries збережено.
+Failed/stopped load, delegated cancellation, external URLs і renderer termination
+не створюють acknowledgement. Restart створює новий callback, зберігає attempt.
+Це separation API у довіреному локальному процесі, не cryptographic attestation:
+власник Python process/DB може змінити код або storage; private hook не security
+boundary проти довільного local code execution. Ordinary learner command не має
+доступу до lifecycle dispatch. No JS/network/sandbox exceptions.

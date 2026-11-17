@@ -37,6 +37,11 @@ ACTIONS = {
 }
 
 
+BrowserControl = Literal["inspect_address", "report", "leave"]
+BROWSER_CONTROLS = frozenset({"inspect_address", "report", "leave"})
+BROWSER_PREFIX = "browser:"
+
+
 class ScenarioAttemptV1(Definition):
     schema_version: Literal["scenario-attempt-v1"] = "scenario-attempt-v1"
     attempt_id: UUID
@@ -85,12 +90,31 @@ class AttemptEventV1(Definition):
     operation_digest: Digest
     operation_index: Annotated[int, Field(strict=True, ge=0, le=2)]
 
+    @property
+    def provenance(
+        self,
+    ) -> Literal["browser_control", "authored_component", "application"]:
+        if self.surface != "web":
+            return "application"
+        return (
+            "browser_control"
+            if self.component_id.startswith(BROWSER_PREFIX)
+            else "authored_component"
+        )
+
     @model_validator(mode="after")
     def vocabulary(self) -> Self:
         if self.action_id not in ACTIONS[self.surface]:
             raise ValueError("action surface")
         if (self.surface == "web") != (self.component_id is not None):
             raise ValueError("component surface")
+        if self.component_id and self.component_id.startswith(BROWSER_PREFIX):
+            if (
+                self.surface != "web"
+                or self.component_id != BROWSER_PREFIX + self.action_id
+                or self.action_id not in BROWSER_CONTROLS
+            ):
+                raise ValueError("browser control")
         return self
 
 

@@ -3549,3 +3549,25 @@ dependencies reused); actual installed-wheel WSLg startup/shutdown exits0.
 Append-only corrective commit/push in PR10; new exact-head Linux+Windows CI
 mandatory. Final SHA/CI evidence recorded in PR/delivery without another commit.
 Phase9 REVIEW, owner acceptance pending; no merge/Phase10.
+
+## Phase9 independent review remediation — 17.11.2026
+
+REVIEW; F9-01/F9-02 confirmed at3c44281. Plan mapped to SRS §§8,11.4,14,16:
+native application-owned Web actions independent of authored components; closed
+service provenance; separate bound owned-display acknowledgement; regular-preset
+regressions without all-action demo helper; existing security/migration/lifecycle
+checks, full offline suite, real WSLg and exact-final-head Linux/Windows CI.
+No Phase8 publication/rubric contract changes, scoring or later phases.
+ADR0009 records event identity compatibility and realistic local trust limits.
+Evidence follows; owner data/credentials/env untouched.
+
+Remediation final local evidence: full offline **1056PASS/683.61s**, source/tests
+frozen throughout. `QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short` includes all prior regression/security/
+migration/integrity tests. Focused learner backend/UI/security42PASS/54.10s
+preceded the extra closed-control authorization regression (included in full).
+Actual WSLg11PASS/31.05s:
+`QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_learner_simulation.py tests/ui/test_web_security.py tests/ui/test_scenario_integration.py -k 'learner or actual_engine or real_engine or actual_constructor_button or renderer_diagnostics or production_dialog' -q --tb=short`.
+Ruff check . and format --check .136files PASS; CRLF-aware diff check PASS.
+No dependencies/startup/schema changes; no repeated package gate necessary.
+Final-head Linux/Windows CI recorded in PR10/delivery after push to preserve
+verified HEAD. Phase9 REVIEW; independent owner acceptance still pending.

@@ -52,6 +52,7 @@ class LearnerActionController:
         self.service, self.token, self.attempt = service, token, attempt
         self.pending = {}
         self.active = True
+        self._acknowledge = service._display_acknowledger(token, attempt.attempt_id)
 
     def record(self, surface, action, **kwargs):
         if not self.active:
@@ -60,6 +61,8 @@ class LearnerActionController:
         request, revision = self.pending.setdefault(
             key, (uuid4(), self.attempt.revision)
         )
+        if surface == "system" and action == "web_entered":
+            raise ApplicationError("Недозволена навчальна дія.")
         self.attempt = self.service.record(
             self.token,
             self.attempt.attempt_id,
@@ -71,6 +74,30 @@ class LearnerActionController:
         )
         self.pending.pop(key, None)
         return self.attempt
+
+    def acknowledge_display(self):
+        if not self.active:
+            raise ApplicationError("Сесію проходження закрито.")
+        request, revision = self.pending.setdefault(
+            "display", (uuid4(), self.attempt.revision)
+        )
+        self.attempt = self._acknowledge(request_id=request, expected_revision=revision)
+        self.pending.pop("display", None)
+
+    def browser_control(self, control):
+        if not self.active:
+            raise ApplicationError("Сесію проходження закрито.")
+        request, revision = self.pending.setdefault(
+            ("browser", control), (uuid4(), self.attempt.revision)
+        )
+        self.attempt = self.service.browser_control(
+            self.token,
+            self.attempt.attempt_id,
+            control=control,
+            request_id=request,
+            expected_revision=revision,
+        )
+        self.pending.pop(("browser", control), None)
 
 
 class LearnerSimulationPage(QWidget):
@@ -197,7 +224,12 @@ class LearnerSimulationPage(QWidget):
         if not self._valid():
             return False
         try:
-            self.controller.record(surface, action, **kwargs)
+            if surface == "display":
+                self.controller.acknowledge_display()
+            elif surface == "browser":
+                self.controller.browser_control(action)
+            else:
+                self.controller.record(surface, action, **kwargs)
         except ApplicationError as error:
             self.feedback.setText(str(error))
             # Hide restricted content as well as refusing writes. Keep history.
@@ -358,13 +390,31 @@ class LearnerSimulationPage(QWidget):
 
         self.browser.interaction_requested.connect(interacted)
         self.browser.load_succeeded.connect(loaded)
+        self.browser.browser_control_requested.connect(
+            lambda action: self._native_web_action(action)
+            if self.controller is controller and self.browser is browser
+            else None
+        )
         self.surfaces.addWidget(self.browser)
         self.surfaces.setCurrentWidget(self.browser)
         self.browser.set_draft(self.state.web)
 
     def _web_loaded(self):
-        if not self._display_recorded and self._perform("system", "web_entered"):
+        if not self._display_recorded and self._perform("display", "acknowledge"):
             self._display_recorded = True
+
+    def _native_web_action(self, action):
+        if not self.browser or not self._display_recorded or self.browser.render_failed:
+            return
+        if self._perform("browser", action):
+            self.browser.feedback.setText(
+                "Навчальна адреса: " + self.state.web.page.display_url
+                if action == "inspect_address"
+                else "Навчальну дію збережено."
+            )
+            if action == "leave":
+                self.browser.view.hide()
+                self._complete()
 
     def _web_action(self, action, component):
         if not self.browser or not self._display_recorded or self.browser.render_failed:
