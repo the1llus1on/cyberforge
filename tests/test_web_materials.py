@@ -234,7 +234,7 @@ def test_migration_preserves_email_and_safe_downgrade(web_env):
     env.database.upgrade()
     with env.database.engine.connect() as db:
         context = MigrationContext.configure(db)
-        assert context.get_current_revision() == "0007_learner_attempts"
+        assert context.get_current_revision() == "0008_evaluations"
         assert compare_metadata(context, Base.metadata) == []
         assert db.exec_driver_sql("PRAGMA foreign_key_check").all() == []
     draft = env.web.generate(env.token, env.workspace)

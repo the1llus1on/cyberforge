@@ -21,7 +21,9 @@ from PySide6.QtWidgets import (
 
 from cyberforge.application.accounts import AccountService
 from cyberforge.application.email_materials import EmailMaterialService
+from cyberforge.application.evaluations import EvaluationService
 from cyberforge.application.learner_attempts import LearnerAttemptService
+from cyberforge.application.mentor_feedback import MentorFeedbackService
 from cyberforge.application.scenario_integration import ScenarioIntegrationService
 from cyberforge.application.scenario_publication import (
     PublicationAccessService,
@@ -43,7 +45,8 @@ from cyberforge.ui.account_pages import AccountPage
 from cyberforge.ui.admin_page import AdminPage
 from cyberforge.ui.clipboard_shortcuts import ClipboardShortcuts
 from cyberforge.ui.icons import icon
-from cyberforge.ui.learner_pages import LearnerCatalogPage, LearnerHistoryPage
+from cyberforge.ui.learner_pages import LearnerCatalogPage
+from cyberforge.ui.learner_results import LearnerResultsPage
 from cyberforge.ui.navigation import AuthenticationState, NavigationState, View
 from cyberforge.ui.pages import WorkspacePage, label
 from cyberforge.ui.scenario_page import ScenarioPage
@@ -96,6 +99,10 @@ class MainWindow(QMainWindow):
         )
         self.learner_attempts = LearnerAttemptService(
             PublicationAccessService(publication_service)
+        )
+        self.evaluations = EvaluationService(self.learner_attempts)
+        self.mentor_feedback = MentorFeedbackService(
+            self.evaluations, self.emails.gateway
         )
         self._closing_pending = False
         self.selected_scenario_id: int | None = None
@@ -238,7 +245,9 @@ class MainWindow(QMainWindow):
                 page = LearnerCatalogPage(self.learner_attempts, lambda: self._token)
                 self.learner_catalog = page
             elif view == View.MY_RESULTS:
-                page = LearnerHistoryPage(self.learner_attempts, lambda: self._token)
+                page = LearnerResultsPage(
+                    self.evaluations, self.mentor_feedback, lambda: self._token
+                )
                 self.learner_history = page
             elif view == View.PROFILE:
                 page = AccountPage(self.accounts)
@@ -371,7 +380,9 @@ class MainWindow(QMainWindow):
 
     def _generation_running(self) -> bool:
         return (
-            self.scenario_page.email_page.running or self.scenario_page.web_page.running
+            self.scenario_page.email_page.running
+            or self.scenario_page.web_page.running
+            or self.learner_history.running
         )
 
     def navigate(self, view: View) -> None:

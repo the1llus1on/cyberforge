@@ -589,7 +589,7 @@ def test_migration_metadata_preservation_and_safe_downgrade(publication_env):
     )
     with e.database.engine.connect() as db:
         context = MigrationContext.configure(db)
-        assert context.get_current_revision() == "0007_learner_attempts"
+        assert context.get_current_revision() == "0008_evaluations"
         assert compare_metadata(context, Base.metadata) == []
         assert db.exec_driver_sql("PRAGMA foreign_key_check").all() == []
         assert db.exec_driver_sql("PRAGMA foreign_keys").scalar_one() == 1
@@ -798,7 +798,7 @@ def test_refused_lower_phase_downgrade_rolls_back_entire_schema(publication_env)
             == before_triggers
         )
         assert MigrationContext.configure(db).get_current_revision() == (
-            "0007_learner_attempts"
+            "0008_evaluations"
         )
     # The current schema remains usable without a repair/reinitialization.
     link(e)

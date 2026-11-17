@@ -131,7 +131,7 @@ def seal(model, fields, field):
 @pytest.fixture(
     params=("safe", "web", "reversed", "repeated", "unscorable", "observations")
 )
-def bundle(request, publication_env):  # noqa: F811
+def bundle(request, publication_env, monkeypatch):  # noqa: F811
     e = publication_env
     name = request.param
     materials(e)
@@ -145,10 +145,17 @@ def bundle(request, publication_env):  # noqa: F811
         else tuple(criterion(c.id) for c in CRITERIA)
     )
     e.integration.save_rubric(e.token, e.scenario, selected, expected_revision=0)
-    receipt = confirm(e)
-    publication = e.publications.publish(
-        e.token, e.scenario, confirmation_id=receipt.confirmation_id
-    )
+    # Reproduce an accepted pre-Phase10 publication for the historical golden.
+    # Production publication now requires a positive denominator on both paths.
+    with monkeypatch.context() as historical:
+        if name == "unscorable":
+            historical.setattr(
+                "cyberforge.evaluation.scoring.numerical_paths_ready", lambda _: True
+            )
+        receipt = confirm(e)
+        publication = e.publications.publish(
+            e.token, e.scenario, confirmation_id=receipt.confirmation_id
+        )
     _, state = e.access.content(e.tokens["learner"], publication.id)
     attempts = LearnerAttemptService(e.access)
     actions = AttemptEventService(attempts)

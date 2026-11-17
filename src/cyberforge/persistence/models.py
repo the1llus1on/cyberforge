@@ -10,6 +10,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -335,3 +336,75 @@ Index(
 )
 Index("ix_attempt_scenario", ScenarioAttemptRecord.scenario_id)
 Index("ix_attempt_publication", ScenarioAttemptRecord.publication_id)
+
+
+class EvaluationResultRecord(Base):
+    __tablename__ = "evaluation_results"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    attempt_id: Mapped[str] = mapped_column(
+        ForeignKey("scenario_attempts.id"), unique=True
+    )
+    learner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    scenario_id: Mapped[int] = mapped_column(ForeignKey("scenarios.id"))
+    publication_id: Mapped[int] = mapped_column(ForeignKey("scenario_publications.id"))
+    version_id: Mapped[int] = mapped_column(ForeignKey("scenario_versions.id"))
+    rubric_version_id: Mapped[int] = mapped_column(
+        ForeignKey("rubric_definitions.version_id")
+    )
+    scenario_version: Mapped[int] = mapped_column(Integer)
+    rubric_id: Mapped[str] = mapped_column(String(80))
+    rubric_revision: Mapped[int] = mapped_column(Integer)
+    manifest_digest: Mapped[str] = mapped_column(String(64))
+    rubric_digest: Mapped[str] = mapped_column(String(64))
+    scoring_strategy: Mapped[str] = mapped_column(String(50))
+    status: Mapped[str] = mapped_column(String(16))
+    reason_code: Mapped[str | None] = mapped_column(String(50))
+    weighted_numerator: Mapped[str] = mapped_column(Text)
+    weighted_denominator: Mapped[str] = mapped_column(Text)
+    score_percent: Mapped[str | None] = mapped_column(Text)
+    event_count: Mapped[int] = mapped_column(Integer)
+    terminal_sequence: Mapped[int] = mapped_column(Integer)
+    attempt_revision: Mapped[int] = mapped_column(Integer)
+    events_digest: Mapped[str] = mapped_column(String(64))
+    evidence_digest: Mapped[str] = mapped_column(String(64))
+    result_digest: Mapped[str] = mapped_column(String(64))
+    evaluated_at: Mapped[str] = mapped_column(String(27))
+    result_json: Mapped[str] = mapped_column(Text)
+    evidence_json: Mapped[str] = mapped_column(Text)
+
+
+class EvaluationCriterionRecord(Base):
+    __tablename__ = "evaluation_criteria"
+    __table_args__ = (
+        UniqueConstraint("result_id", "position", name="evaluation_position"),
+    )
+    result_id: Mapped[str] = mapped_column(
+        ForeignKey("evaluation_results.id", deferrable=True, initially="DEFERRED"),
+        primary_key=True,
+    )
+    criterion_id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    position: Mapped[int] = mapped_column(Integer)
+    applicable: Mapped[bool] = mapped_column(Boolean)
+    outcome: Mapped[str] = mapped_column(String(20))
+    score: Mapped[int | None] = mapped_column(Integer)
+    weight: Mapped[str] = mapped_column(Text)
+    weighted_contribution: Mapped[str | None] = mapped_column(Text)
+    criterion_json: Mapped[str] = mapped_column(Text)
+
+
+class MentorFeedbackRecord(Base):
+    __tablename__ = "mentor_feedback"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    result_id: Mapped[str] = mapped_column(
+        ForeignKey("evaluation_results.id"), unique=True
+    )
+    result_digest: Mapped[str] = mapped_column(String(64))
+    evidence_digest: Mapped[str] = mapped_column(String(64))
+    evaluation_status: Mapped[str] = mapped_column(String(16))
+    mode: Mapped[str] = mapped_column(String(20))
+    fallback_reason: Mapped[str | None] = mapped_column(String(24))
+    provider: Mapped[str | None] = mapped_column(String(10))
+    model: Mapped[str | None] = mapped_column(String(128))
+    created_at: Mapped[str] = mapped_column(String(27))
+    feedback_digest: Mapped[str] = mapped_column(String(64))
+    feedback_json: Mapped[str] = mapped_column(Text)

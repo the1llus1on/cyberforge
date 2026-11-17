@@ -82,7 +82,7 @@ def test_real_qt_safe_decline_history_and_repeat(learner_window, qtbot):
     assert "завершили" in sim.feedback.text()
     w.navigate(View.MY_RESULTS)
     assert w.learner_history.list.count() == 1
-    assert "Оцінка ще не обчислена" in w.learner_history.list.item(0).text()
+    assert "Очікує оцінювання" in w.learner_history.list.item(0).text()
     w.navigate(View.MY_SCENARIOS)
     other = begin(w, qtbot)
     assert other.controller.attempt.attempt_id != a.attempt_id
