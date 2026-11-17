@@ -6,8 +6,10 @@ from typing import Annotated, Literal, Self
 from uuid import UUID
 
 from pydantic import (
+    AfterValidator,
     AwareDatetime,
     BaseModel,
+    BeforeValidator,
     ConfigDict,
     Field,
     field_validator,
@@ -31,7 +33,14 @@ from cyberforge.scenario_integration.contracts import (
     ReviewedSourcesV1,
 )
 
-from .canonical import canonical_bytes, digest, historical_weight, reference_arithmetic
+from .canonical import (
+    bounded_decimal,
+    bounded_decimal_input,
+    canonical_bytes,
+    digest,
+    historical_weight,
+    reference_arithmetic,
+)
 
 CriterionId = Literal[
     "email.sender",
@@ -43,9 +52,24 @@ CriterionId = Literal[
     "web.leave",
     "web.report",
 ]
-Exact = Annotated[Decimal, Field(allow_inf_nan=False, ge=0)]
-Weight = Annotated[Decimal, Field(allow_inf_nan=False, gt=0, le=10000)]
-Percentage = Annotated[Decimal, Field(allow_inf_nan=False, ge=0, le=100)]
+Exact = Annotated[
+    Decimal,
+    Field(allow_inf_nan=False, ge=0, le=70000),
+    BeforeValidator(bounded_decimal_input),
+    AfterValidator(bounded_decimal),
+]
+Weight = Annotated[
+    Decimal,
+    Field(allow_inf_nan=False, gt=0, le=10000),
+    BeforeValidator(bounded_decimal_input),
+    AfterValidator(bounded_decimal),
+]
+Percentage = Annotated[
+    Decimal,
+    Field(allow_inf_nan=False, ge=0, le=100),
+    BeforeValidator(bounded_decimal_input),
+    AfterValidator(bounded_decimal),
+]
 Criteria = Annotated[tuple, Field(min_length=1, max_length=8)]
 
 

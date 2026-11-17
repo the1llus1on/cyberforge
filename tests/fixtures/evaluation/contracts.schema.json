@@ -251,6 +251,7 @@
         "weighted_contribution": {
           "anyOf": [
             {
+              "maximum": 70000.0,
               "minimum": 0.0,
               "type": "number"
             },
@@ -806,6 +807,7 @@
         "weighted_denominator": {
           "anyOf": [
             {
+              "maximum": 70000.0,
               "minimum": 0.0,
               "type": "number"
             },
@@ -818,6 +820,7 @@
         "weighted_numerator": {
           "anyOf": [
             {
+              "maximum": 70000.0,
               "minimum": 0.0,
               "type": "number"
             },

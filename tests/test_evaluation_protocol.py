@@ -162,6 +162,8 @@ def insert(e, result_id):
             text("SELECT id FROM evaluation_results WHERE attempt_id=1")
         ).scalar_one_or_none()
         if existing:
+            # Identity-only scratch proof. No stored canonical envelope is read
+            # here; production retries must call validate_stored_projection.
             return existing
         details(db, result_id)
         parent(db, result_id)

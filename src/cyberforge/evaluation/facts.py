@@ -215,7 +215,12 @@ def deterministic_explanation(result):
         summary = ResultFactsV1(
             status="completed",
             score_percent=float(result.score_percent),
-            rubric_version=result.source.rubric_id,
+            # Snapshot revision is a strict positive integer, never an ID/title.
+            # Bound the presentation label to Phase5's existing 64-char field.
+            rubric_version="rubric-revision-"
+            + str(result.source.snapshot.rubric_revision)
+            if result.source.snapshot.rubric_revision < 10**48
+            else "rubric-revision-large",
             web_status="correctly_skipped"
             if result.path.kind == "SAFE_DECLINE"
             else "visited",

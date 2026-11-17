@@ -1406,3 +1406,19 @@ Verified code/tests/fixtures unchanged за hashes; existing1189full/47protocol/
 16hardening та package evidence reused без unnecessary full rerun. New lightweight
 lint/format/link/scope/secret-pattern/diff checks; exact PR SHA/CI у delivery.
 Next action — independent review exact pushed commit через GitHub MCP.
+
+
+## Phase10 / WP1 — independent review remediation (17.11.2026)
+
+Owner дозволив F10-WP1-01–03 corrections/tests/evidence та corrective commit/push
+до existing Draft PR#12; acceptance/merge/WP2/WP3 не дозволені. SRS §12.2/ADR0010
+P10-06: bounded Decimal до serialization/scaling, exact historical5e-324–10000
+і seven-criterion sums збережено. P10-13: cloud-facing rubric revision label
+без internal scenario ID; local immutable source identity незмінна. P10-09/16:
+scratch retry proof лише identity, integrity окремим pure validation pipeline.
+Focused147PASS (включно47protocol), final Decimal/Mentor/schema24PASS;
+18independent OpenSSL envelope hashes/Fraction arithmetic PASS. Offline build
+та isolated installed-wheel six-source pipeline/97package-file parity PASS.
+Final full offline regression1203PASS/649.98s, no failures/skips; frozen11hashes
+unchanged. Linux/Windows CI для corrective HEAD перевіряється після push.
+WP1 REVIEW; Contract Freeze Gate PENDING OWNER ACCEPTANCE, next independent review.

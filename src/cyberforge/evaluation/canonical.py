@@ -7,12 +7,52 @@ from decimal import Decimal
 from hashlib import sha256
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationInfo
+
+# Binary64 shortest round-trip weights (0 < w <= 10000) need at most 324
+# fractional places, including 5e-324. Seven exact contributions need at most
+# five integral + 324 fractional digits. These bounds never round a value.
+MAX_DECIMAL_PLACES = 324
+MAX_DECIMAL_DIGITS = 329
+MAX_DECIMAL_TEXT = MAX_DECIMAL_DIGITS + 16  # sign/point/exponent syntax allowance
+MAX_TOTAL = 70000
+
+
+def bounded_decimal(value: Decimal) -> Decimal:
+    """Guard compact hostile exponents before formatting/scaling/hashing."""
+    if not value.is_finite():
+        raise ValueError("nonfinite_decimal")
+    _, digits, exponent = value.as_tuple()
+    if (
+        not -MAX_DECIMAL_PLACES <= exponent <= 4
+        or len(digits) > MAX_DECIMAL_DIGITS
+        or value.copy_abs() > MAX_TOTAL
+    ):
+        raise ValueError("decimal_resource_bound")
+    return value
+
+
+def bounded_decimal_input(value, info: ValidationInfo):
+    """Preserve Pydantic strict Python/JSON parsing while guarding raw strings."""
+    if isinstance(value, str):
+        if len(value) > MAX_DECIMAL_TEXT:
+            raise ValueError("decimal_resource_bound")
+        from decimal import InvalidOperation
+
+        try:
+            parsed = Decimal(value)
+        except InvalidOperation as exc:
+            raise ValueError("invalid_decimal") from exc
+        bounded_decimal(parsed)
+        if info.mode == "json":
+            return parsed
+    elif isinstance(value, Decimal):
+        bounded_decimal(value)
+    return value
 
 
 def decimal_text(value: Decimal) -> str:
-    if not value.is_finite():
-        raise ValueError("nonfinite_decimal")
+    bounded_decimal(value)
     if value.is_zero():
         return "0"
     return (
@@ -107,7 +147,10 @@ def historical_weight(value: float) -> Decimal:
 
 def reference_arithmetic(items: tuple[tuple[Decimal, int], ...]):
     """Contract-verification oracle only: exact sums and half-even hundredths."""
+    if len(items) > 7:
+        raise ValueError("arithmetic_criterion_count")
     for weight, score in items:
+        bounded_decimal(weight)
         if (
             not weight.is_finite()
             or not 0 < weight <= 10000

@@ -108,6 +108,17 @@ ambient context rounding. Half-even hundredths визначає divmod(10000*N,D
 scoring operation. Вектори 1/32→3.12,3/32→9.38,1/3→33.33,0/1→0.00;
 tiny 5e-324 та weight10000 перевірено при низькому ambient precision.
 
+F10-WP1-01 remediation: нові evaluation Decimal scalars мають resource bounds
+до fixed-point expansion, integer scaling і hashing: exponent від -324 до 4,
+coefficient до 329 digits, magnitude до 70000; raw Decimal text до 345 characters.
+Це envelope для shortest-roundtrip historical binary64 weights до10000 та
+exact sum максимум семи numerical criteria: 5 integral +324 fractional digits.
+Bounds не округлюють значень; historical rubric validator незмінний, event count
+не обмежено. Guard діє для JSON strings, Python Decimal і serialization/arithmetic
+helpers, включно з zero з hostile exponent. Field bounds weight≤10000 та
+percentage≤100 збережено; numerator/denominator≤70000 explicit у schema snapshot.
+ROUND_HALF_EVEN divmod oracle та no-intermediate-rounding semantics незмінні.
+
 References: ordinary criteria усі qualifying events; safe decline лише final
 effective decline+completion без Web; transition усі decisions/final action;
 path окремо (decline/completion або open/first trusted display/completion).
@@ -171,6 +182,17 @@ Facts не містять raw events, learner IDs/names/attempt IDs, field value
 не перетворюється на failed fact. Versioned feedback зберігає source result digest;
 UNSCORABLE не примушує completed MentorInputV1 з null чи fabricated zero.
 
+F10-WP1-02 remediation: Mentor ResultFactsV1.rubric_version тепер
+`rubric-revision-<snapshot.rubric_revision>`, а не internal rubric_id.
+Strict positive revision береться з validated immutable snapshot; до48 digits,
+інакше bounded `rubric-revision-large` (без integer-to-string expansion).
+Це non-identifying presentation label, не authoritative identity або digest.
+Exact rubric ID/source digests залишаються лише local evaluation records;
+precomputed score і accepted Phase5 schemas незмінні. Privacy regression перевіряє
+actual MentorInputV1, scenario rubric ID, result/attempt IDs та identity fields.
+П'ять SCORED feedback labels/digests оновлено; evidence/result/source objects і
+UNSCORABLE fixture byte-identical. Новий label не є fingerprint revision content.
+
 ## Contract-to-database mapping — лише специфікація для майбутнього WP3
 
 | Future table | Contract mapping / required constraints |
@@ -208,6 +230,15 @@ one authoritative winner. Post-seal INSERT/UPDATE/DELETE/REPLACE/UPSERT rejected
 з recursive_triggers=0 і1; foreign_key_check clean. Scratch WAL лише для concurrent
 read/write snapshot proof, не runtime setting change. Alternative protocol не
 вводився; actual production consumer authorization залишається майбутнім WP3.
+
+F10-WP1-03 scope clarification: scratch existing-result branch повертає лише
+winner ID і доводить idempotent identity, не stored-result integrity. Scratch
+payload не містить complete EvaluationResultV1 envelope. Integrity окремо
+перевіряють source-valid `test_stored_pipeline_and_feedback_consumption` та
+corruption/detail-projection tests через pure validation. Майбутній WP3 retry
+зобов'язаний викликати `validate_stored_projection` після transactional authority
+та authoritative reads перед поверненням existing result. Scratch proof не
+вважається end-to-end verified production retry і не замінює P10-16.
 
 Intermediate scaffold corrections (не final evidence): accepted Web save/control
 API test calls виправлено; missing static fixture files заповнено лише після
@@ -291,3 +322,28 @@ evidence, не повторені лише для publication. New lightweight c
 format143files, relative links/hash/scope та CRLF-aware staged diff checks.
 Exact pushed SHA/PR/CI status записуються у delivery report, без moving-HEAD
 documentation commits. WP1 ready for independent review, NOT ACCEPTED.
+
+
+## Independent review remediation — golden feedback evidence
+
+F10-WP1-01/02/03 corrections описано вище. Original reviewed HEAD:
+`90ff3976fcaefd2371d6ec31b71c61a17f246e87`. Five updated SCORED feedback digests:
+
+| Fixture | Expected feedback SHA-256 |
+| --- | --- |
+| safe | `03d23c9e8fc00d6f0b8da5142e30359787a6b06f120f1d794cfab638a1c509c7` |
+| web | `cc21fe27db48511ad4fe0e00fb963b00e4709e33f40725e43837be1b691188f7` |
+| reversed | `7529ccf00af505f02f6f1eeb14c3c610f81ec0924233fb96937c02cffe7858b4` |
+| repeated | `fb01edbe8b9151a4755119753216880fed2e56ccc7bd48e05620952a239662c5` |
+| observations | `11ba42b3d7b83cd3a2deef6128000022981a4bfc18ca0a9a5bf6f315bff9e037` |
+
+Усі18evidence/result/feedback hashes перевірено незалежним OpenSSL serialization
+probe; Fraction oracle підтвердив arithmetic. Source/evidence/result objects
+unchanged; UNSCORABLE feedback і synthetic hashing vectors unchanged. Additional
+3263binary64 boundary/neighbor conversions PASS. Focused147PASS (47protocol),
+final Decimal/Mentor/schema24PASS;14new parametrized regression cases. Offline
+sdist/wheel/isolated installed-wheel six-source pipeline/97source-file parity PASS.
+Final full offline regression1203PASS/649.98s, exit0, no failures/skips;
+11code/test/fixture hashes unchanged. Final-HEAD Linux/Windows CI після push.
+WP1/Contract Freeze Gate remain PENDING OWNER ACCEPTANCE; повторний independent
+review обов'язковий, це не approval gate і не authorization для WP2/WP3.

@@ -3868,3 +3868,59 @@ relative links/hash/scope/secret-pattern audit та
 Publication updates лише current authorization notes у three WP1 docs; code/tests
 unchanged. Exact commit/Draft PR/CI evidence у delivery report без circular commits.
 WP1 NOT ACCEPTED; gate PENDING OWNER ACCEPTANCE; no merge or implementation advance.
+
+
+## 17.11.2026 — WP1 independent review F10-WP1-01–03 remediation
+
+Reviewed HEAD90ff3976fcaefd2371d6ec31b71c61a17f246e87, clean feature branch;
+GitHub MCP confirmed PR#12 OPEN/Draft/base main. Owner дозволив corrective
+implementation/tests/docs/commit/push лише до цього PR, без merge/next WP.
+
+F10-WP1-01: fixed-point formatting/scaling раніше не обмежували compact Decimal
+exponent. Новий bound -324..4,329coefficient digits,345raw chars,abs≤70000
+перевіряється до expansion; strict JSON/Python guards та direct helper guards.
+Seven numerical criteria максимум, event-count cap не додано. No intermediate
+rounding; accepted Phase8 float loader unchanged. Binade/subnormal/neighbor probe
+3263historical float conversions PASS. Strict JSON before-validator interaction
+виправлено перед final24focused PASS; schema зберігає standard maximum/minimum.
+
+F10-WP1-02: rubric_id містив scenario identity у Mentor summary. Замінено на
+validated snapshot revision label з bounded large-revision fallback; score/schema
+Phase5 незмінні. Five SCORED feedback labels/digests оновлено; source/evidence/
+result objects та UNSCORABLE/synthetic fixtures unchanged. Privacy regression
+перевіряє actual MentorInputV1 та Mock path без provider network calls.
+
+F10-WP1-03: explicit narrowing scratch retry claim/comment: winner identity only,
+не stored-integrity proof. Separate source-valid stored pipeline/corruption/detail
+checks retained; future WP3 must invoke pure integrity validation before returning
+existing result. No production EvaluationService/migration0008.
+
+Executed: `uv run --no-sync pytest -q tests/test_evaluation.py
+tests/test_evaluation_protocol.py --tb=short`147PASS/95.68s (QT_QPA_PLATFORM=offscreen,
+UV_CACHE_DIR=/tmp/cyberforge-uv-cache). Final focused `-k 'decimal or rounding or tiny
+or mentor or schema'`24PASS/0.62s. Ruff lint/format143files PASS; diff --check PASS.
+18golden envelope hashes independently recomputed using openssl dgst -sha256;
+Fraction arithmetic і unchanged source/evidence/result comparisons PASS.
+`uv build --offline --out-dir /tmp/cyberforge-wp1-remediation-dist` sdist/wheel PASS;
+`uv pip install --offline --no-deps --python .venv/bin/python
+--target /tmp/cyberforge-wp1-remediation-installed
+/tmp/cyberforge-wp1-remediation-dist/cyberforge-0.1.0-py3-none-any.whl` PASS.
+`.venv/bin/python -I /tmp/cf-wp1-remediation-wheel-probe.py` PASS: all six
+source-valid fixture roundtrips/full stored-source integrity/feedback,97source files
+identical installed wheel, imports only installed package; socket.connect forbidden.
+Full suite in progress on frozen11code/test/fixture hashes; final evidence follows.
+WP1 NOT ACCEPTED, Contract Freeze Gate PENDING OWNER ACCEPTANCE. No live AI.
+
+
+Final remediation verification: **1203PASS/649.98s**, exit0, no failures/skips.
+Command: `QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache
+uv run --no-sync pytest -q --tb=short --junitxml=/tmp/cf-wp1-remediation-pytest.xml`.
+Normal Chromium sandbox retained; all1056accepted baseline +147WP1 tests, including
+14new remediation cases. Frozen11code/test/fixture hashes unchanged throughout.
+Final Ruff lint/format143files, whitespace/link/scope audit PASS; exactly14corrective
+files within original18file PR scope, accepted SRS/ADR/Phase5/8/9/production DB/
+migrations/dependencies untouched. F10-WP1-01/02 RESOLVED by guards/privacy adapter;
+F10-WP1-03 RESOLVED by explicit proof-scope correction (not a production retry proof).
+Corrective commit/push to Draft PR#12 authorized; exact SHA/CI evidence у delivery
+і PR description to avoid circular commits. No merge. Gate pending owner acceptance
+and independent re-review; physical native Windows11 remains Phase12 risk.

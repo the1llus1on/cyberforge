@@ -19,9 +19,11 @@ from cyberforge.application.learner_attempts import (
 from cyberforge.application.learner_demo import demo_web_actions
 from cyberforge.evaluation.canonical import (
     canonical_bytes,
+    decimal_text,
     digest,
     historical_weight,
     parse_contract,
+    percentage_text,
     reference_arithmetic,
 )
 from cyberforge.evaluation.contracts import (
@@ -496,6 +498,100 @@ def test_tiny_weights_and_registry_catalogue():
     )
 
 
+@pytest.mark.parametrize(
+    "text",
+    [
+        "1e-1000000",
+        "0e-1000000",
+        "1e1000000",
+        "0e1000000",
+        "1e-325",
+        "0." + "1" * 330,
+        "0" * 1000000 + "1",
+    ],
+    ids=["tiny", "tiny-zero", "large", "large-zero", "scale", "digits", "text"],
+)
+def test_decimal_resource_bounds_on_json_and_python(text):
+    from pydantic import TypeAdapter
+
+    from cyberforge.evaluation.contracts import Exact, Percentage, Weight
+
+    for scalar in (Exact, Percentage, Weight):
+        adapter = TypeAdapter(scalar)
+        with pytest.raises(ValidationError, match="decimal_resource_bound"):
+            adapter.validate_json(json.dumps(text))
+        if len(text) < 1000:  # already allocated Python Decimal boundary
+            with pytest.raises(ValidationError, match="decimal_resource_bound"):
+                adapter.validate_python(Decimal(text), strict=True)
+
+
+@pytest.mark.parametrize(
+    "helper", [decimal_text, percentage_text, canonical_bytes, digest]
+)
+def test_decimal_helpers_guard_before_fixed_point_expansion(monkeypatch, helper):
+    from cyberforge.evaluation import canonical
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("fixed-point expansion reached")
+
+    monkeypatch.setattr(canonical, "format", forbidden, raising=False)
+    for text in ("1e-1000000", "0e-1000000", "1e1000000", "0e1000000"):
+        with pytest.raises(ValueError, match="decimal_resource_bound"):
+            helper(Decimal(text))
+
+
+def test_contract_decimal_rejected_before_canonical_hashing(monkeypatch):
+    from cyberforge.evaluation import contracts
+
+    data = json.loads((GOLD / "safe.json").read_text())["result"]
+    valid = EvaluationResultV1.model_validate_json(canonical_bytes(data))
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("canonical serialization reached")
+
+    monkeypatch.setattr(contracts, "canonical_bytes", forbidden)
+    for key in ("weighted_numerator", "weighted_denominator", "score_percent"):
+        bad = dict(data, **{key: "1e-1000000"})
+        with pytest.raises(ValueError, match="decimal_resource_bound"):
+            EvaluationResultV1.model_validate_json(json.dumps(bad))
+        bad = valid.model_dump() | {key: Decimal("1e-1000000")}
+        with pytest.raises(ValueError, match="decimal_resource_bound"):
+            EvaluationResultV1.model_validate(bad)
+
+
+def test_decimal_arithmetic_bounds_and_exact_extremes():
+    from pydantic import TypeAdapter
+
+    from cyberforge.evaluation.contracts import Exact, Weight
+
+    for bad in ("1e-1000000", "0e-1000000", "1e1000000"):
+        with pytest.raises(ValueError, match="decimal_resource_bound"):
+            reference_arithmetic(((Decimal(bad), 1),))
+    with pytest.raises(ValueError, match="arithmetic_criterion_count"):
+        reference_arithmetic(((Decimal(1), 1),) * 8)
+    # Shortest round-trip binary64 inputs at subnormal/normal and upper bounds.
+    for weight in (5e-324, 2.2250738585072014e-308, 9999.999999999998, 10000.0):
+        value = historical_weight(weight)
+        assert TypeAdapter(Weight).validate_python(value, strict=True) == value
+        assert (
+            TypeAdapter(Weight).validate_json(json.dumps(decimal_text(value))) == value
+        )
+    items = ((historical_weight(10000.0), 1),) * 6 + ((historical_weight(5e-324), 1),)
+    expected = sum((Fraction(w) for w, _ in items), Fraction())
+    with localcontext() as context:
+        context.prec = 1
+        n, d, p = reference_arithmetic(items)
+        assert Fraction(n) == Fraction(d) == expected
+        assert p == Decimal("100.00")
+        assert TypeAdapter(Exact).validate_python(d, strict=True) == d
+        assert TypeAdapter(Exact).validate_json(json.dumps(decimal_text(d))) == d
+        assert reference_arithmetic(((Decimal(10000), 1),) * 7) == (
+            Decimal(70000),
+            Decimal(70000),
+            Decimal("100.00"),
+        )
+
+
 def test_reference_hash_and_immutability():
     from cyberforge.evaluation.contracts import EvaluationEventReferenceV1
 
@@ -720,6 +816,21 @@ def test_existing_mentor_mock_compatibility_and_fallback(monkeypatch, valid_sele
         permitted_topics=f.permitted_topics,
         result=f.explanation.result,
     )
+    # Cloud-facing Phase5 adapter has a revision label, never a source identity.
+    facing = canonical_bytes(source).decode()
+    assert source.result.rubric_version == "rubric-revision-1"
+    assert source.result.score_percent == float(r.score_percent)
+    assert r.source.rubric_id == "scenario_1_v1"
+    for identity in (
+        r.source.rubric_id,
+        str(r.attempt.attempt_id),
+        str(r.result_id),
+        "scenario_id",
+        "publication_id",
+        "learner_id",
+        "attempt_id",
+    ):
+        assert identity not in facing
     payload = dict(
         schema_version="explanation-selection-v1",
         fact_ids=[x.fact_id for x in f.facts]
@@ -751,6 +862,24 @@ def test_existing_mentor_mock_compatibility_and_fallback(monkeypatch, valid_sele
         offline = seal(LocalMentorFeedbackV1, fields, "feedback_digest")
         validate_feedback_against_result(offline, r)
         assert offline.explanation == f.explanation
+
+
+def test_mentor_revision_label_is_bounded_and_snapshot_derived():
+    data = json.loads((GOLD / "web.json").read_text())["result"]
+    original = data["source"]["rubric_id"]
+    for revision, expected in (
+        (2, "rubric-revision-2"),
+        (10**48 - 1, "rubric-revision-" + "9" * 48),
+        (10**48, "rubric-revision-large"),
+    ):
+        data["source"]["snapshot"]["rubric_revision"] = revision
+        data["result_digest"] = oracle_digest(data, "result_digest")
+        result = EvaluationResultV1.model_validate_json(canonical_bytes(data))
+        summary = deterministic_explanation(result).result
+        assert summary.rubric_version == expected
+        assert len(summary.rubric_version) <= 64
+        assert summary.score_percent == float(result.score_percent)
+        assert result.source.rubric_id == original
 
 
 def test_legacy_instance_cannot_smuggle_mutable_nested_data():

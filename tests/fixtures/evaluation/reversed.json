@@ -458,7 +458,7 @@
         "Не вводьте справжні облікові дані в навчальні форми чи на підозрілих сторінках."
       ],
       "result": {
-        "rubric_version": "scenario_1_v1",
+        "rubric_version": "rubric-revision-1",
         "score_percent": 85.71,
         "status": "completed",
         "web_status": "visited"
@@ -625,7 +625,7 @@
       }
     ],
     "fallback_reason": "CLOUD_DISABLED",
-    "feedback_digest": "3d285b95aa788d2d99deb53de779f80340cbb18b1f2d6b82cfa6a16037fb5f1c",
+    "feedback_digest": "7529ccf00af505f02f6f1eeb14c3c610f81ec0924233fb96937c02cffe7858b4",
     "feedback_id": "00000000-0000-0000-0000-000000004e21",
     "locale": "uk-UA",
     "mode": "DETERMINISTIC",
