@@ -4104,3 +4104,43 @@ implementation BLOCKER/MAJOR/MINOR after self-audit; independent review pending.
 Exact final docs HEAD, Draft PR та Linux/Windows CI URLs/conclusions recorded
 in PR/delivery after publication, avoiding circular commits. Native Windows11/
 DPI/GPU/executable/installer remains Phase12 deferral. No merge/Phase11/12 start.
+
+## 17.11.2026 — PR13 independent review remediation F10-R01/R02
+
+Owner authorized only these findings/tests/docs/corrective commit/push to existing
+Draft PR13; reviewed HEAD f4e6c04a13adf70cc5d7dbd6b1ad50b5713c5130, clean local
+branch and matching GitHub MCP head/base main/Draft verified. No merge/acceptance.
+SRS §12, ADR0010 P10-11/14; frozen contracts/migrations/scoring unchanged.
+
+F10-R01 root cause: heartbeat _sync_session→_render unconditionally refreshed
+complete results history. Shell now detects actual entry into MY_RESULTS before
+switching workspace widgets; initial entry/return refresh, unchanged active view
+renders do not. Periodic current-session authorization and invalid-session cleanup
+remain intact. Explicit refresh/evaluation/feedback callbacks retain their existing
+update paths. No global session-policy change or new database writes.
+
+F10-R02 root cause: one try/except covered both verified score and optional Mentor
+read, so feedback-only operational errors replaced the score. Retrieval now has
+separate exception boundaries. Feedback-only failures stay in feedback; evaluation
+failure stays fail closed; denied/revoked session clears all protected content.
+
+New regression probes count history calls and trace absence of evaluation reads
+and writes on repeated heartbeat/render; keyboard/selection stability, explicit
+changed-history refresh, return, logout/deactivation; storage-busy/unavailable
+feedback preserves score and recovers; ACCESS_DENIED clears. Existing corruption,
+post-evaluation/worker and Phase9 tests retained. Actual verification follows.
+
+Remediation final verification: `QT_QPA_PLATFORM=offscreen
+UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short`:
+**1354PASS/825.06s**,0failures/0skips; all1349previous tests +5new regressions.
+`QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync
+pytest -q tests/ui/test_learner_results.py tests/ui/test_learner_simulation.py
+--tb=short`: **27PASS/57.25s**, actual automated WSLg, not owner acceptance.
+Initial offscreen focused run26PASS/51.83s preceded added deactivation coverage.
+`UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync ruff check .` and
+`uv run --no-sync ruff format --check .`: PASS,154files. diff --check PASS.
+No cloud credentials, migration/frozen fixture changes or packaging changes;
+UI-only remediation does not require repeating build/wheel checks under approved
+workflow. Existing CI package/startup smoke remains enabled. F10-R01/R02 RESOLVED
+by implementation and local verification; final exact-head CI in PR/delivery.
+Phase10 REVIEW / PENDING OWNER ACCEPTANCE, independent re-review pending.

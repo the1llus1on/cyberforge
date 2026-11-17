@@ -226,3 +226,110 @@ def test_malformed_history_source_clears_cached_ui(runtime, qtbot, qapp):  # noq
     p.refresh()
     assert p.list.count() == 0 and not p.detail.text() and not p.feedback.text()
     assert "цілісність" in p.notice.text()
+
+
+@pytest.mark.parametrize("revoke", ["logout", "deactivate"])
+def test_heartbeat_preserves_results_selection_and_read_count(
+    learner_window,  # noqa: F811
+    qtbot,
+    monkeypatch,
+    revoke,  # noqa: F811
+):  # noqa: F811
+    from sqlalchemy import event
+
+    from cyberforge.ui.navigation import View
+
+    w = learner_window
+    calls = []
+    original = w.evaluations.history
+    monkeypatch.setattr(
+        w.evaluations,
+        "history",
+        lambda token: (calls.append(token), original(token))[1],
+    )
+    a = start(w.test_env)
+    act(w.test_env, a, "system", "abandoned")
+    start(w.test_env)
+    w.navigate(View.MY_RESULTS)
+    assert len(calls) == 1 and w.learner_history.list.count() == 2
+    p = w.learner_history
+    p.list.setCurrentRow(1)
+    selected = p._selected_id()
+    item = p.list.item(1)
+    statements = []
+
+    def trace(conn, cursor, sql, params, context, many):
+        statements.append(sql)
+
+    event.listen(w.accounts.database.engine, "before_cursor_execute", trace)
+    try:
+        for _ in range(3):
+            w._sync_session()
+            w._render()
+    finally:
+        event.remove(w.accounts.database.engine, "before_cursor_execute", trace)
+    assert len(calls) == 1 and p.list.item(1) is item and p._selected_id() == selected
+    assert not any(
+        "FROM evaluation_results" in sql
+        or sql.startswith(("INSERT", "UPDATE", "DELETE"))
+        for sql in statements
+    )
+    p.list.setFocus()
+    qtbot.keyClick(p.list, Qt.Key.Key_Up)
+    assert p.list.currentRow() == 0
+    # Locate the active attempt regardless of UUID ordering at equal timestamps.
+    current = next(
+        a
+        for a in w.test_env.attempts.history(w.test_env.learner)
+        if a.status == "IN_PROGRESS"
+    )
+    act(w.test_env, current, "system", "abandoned")
+    start(w.test_env)
+    p.refresh_button.click()
+    assert p.list.count() == 3
+    assert len(calls) == 2
+    w.navigate(View.HOME)
+    w.navigate(View.MY_RESULTS)
+    assert len(calls) == 3
+    if revoke == "logout":
+        w.accounts.logout(w._token)
+    else:
+        from sqlalchemy import text
+
+        with w.accounts.transaction(write=True) as db:
+            db.execute(text("UPDATE users SET active=0 WHERE username='learner'"))
+    w._sync_session()
+    assert p.list.count() == 0 and not p.detail.text()
+
+
+@pytest.mark.parametrize(
+    "code", ["STORAGE_BUSY", "STORAGE_UNAVAILABLE", "ACCESS_DENIED"]
+)
+def test_feedback_operational_error_preserves_verified_score(
+    runtime,  # noqa: F811
+    qtbot,
+    qapp,
+    monkeypatch,
+    code,  # noqa: F811
+):  # noqa: F811
+    from cyberforge.application.evaluations import EvaluationFailure
+
+    e = runtime
+    e.ev.evaluate(e.learner, e.aid)
+    p = page_for(e, qtbot, qapp)
+    original = p.mentor.read
+
+    def failed(*args):
+        raise EvaluationFailure(code, operation="feedback")
+
+    monkeypatch.setattr(p.mentor, "read", failed)
+    p.details(0)
+    if code == "ACCESS_DENIED":
+        assert p.list.count() == 0 and not p.detail.text() and not p.feedback.text()
+        return
+    assert "100.00%" in p.detail.text()
+    assert "База даних" in p.feedback.text()
+    monkeypatch.setattr(p.mentor, "read", original)
+    e.mentor.generate(e.learner, e.aid)
+    p.refresh_button.click()
+    assert "100.00%" in p.detail.text() and "Навчальне пояснення" in p.feedback.text()

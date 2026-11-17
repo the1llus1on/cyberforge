@@ -636,6 +636,10 @@ class MainWindow(QMainWindow):
         )
         for view in (View.HOME, View.ANALYTICS):
             self.pages[view].login_button.setVisible(user is None)
+        entering_results = (
+            current == View.MY_RESULTS
+            and self.workspace.currentWidget() is not self.containers[current]
+        )
         self.workspace.setCurrentWidget(self.containers[current])
         self.nav_buttons[current].setChecked(True)
         self.back_button.setEnabled(self.navigation.can_go_back)
@@ -643,7 +647,7 @@ class MainWindow(QMainWindow):
         self.scenario_panel.setVisible(current in (View.CONSTRUCTOR, View.ANALYTICS))
         if learner:
             self.learner_catalog.refresh()
-            if current == View.MY_RESULTS:
+            if entering_results:
                 self.learner_history.refresh()
             if (
                 current != View.MY_SCENARIOS

@@ -258,6 +258,10 @@ class LearnerResultsPage(QWidget):
                 + (result_text(result) if result else summary(self.rows[index]))
             )
             self.evaluate_button.setEnabled(a.status == "COMPLETED" and result is None)
+        except ApplicationError as exc:
+            self._details_error(exc)
+            return
+        try:
             value = self.mentor.read(self.token_provider(), aid) if result else None
             self.feedback.setText(
                 feedback_text(value)
@@ -268,14 +272,17 @@ class LearnerResultsPage(QWidget):
                 result is not None and value is None and aid not in self.pending
             )
         except ApplicationError as exc:
-            if isinstance(exc, EvaluationFailure) and exc.error.code != "ACCESS_DENIED":
-                # Keep a verified score visible when only feedback is corrupt.
+            self._details_error(exc, feedback_only=True)
+
+    def _details_error(self, exc, *, feedback_only=False):
+        if isinstance(exc, EvaluationFailure) and exc.error.code != "ACCESS_DENIED":
+            if feedback_only:
                 self.feedback.setText(str(exc))
-                if exc.error.code != "STORED_FEEDBACK_INTEGRITY_ERROR":
-                    self.detail.setText(str(exc))
             else:
-                self.invalidate()
-                self.notice.setText(str(exc))
+                self.detail.setText(str(exc))
+        else:
+            self.invalidate()
+            self.notice.setText(str(exc))
 
     def evaluate(self):
         aid = self._selected_id()

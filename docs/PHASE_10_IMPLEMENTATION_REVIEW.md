@@ -229,3 +229,27 @@ WP2–WP6 IMPLEMENTED / LOCAL ENGINEERING VERIFIED; WP7 local gates PASSED,
 final-head CI recorded separately; WP8 READY FOR OWNER REVIEW. Overall REVIEW /
 PENDING OWNER ACCEPTANCE. Independent review, manual owner confirmation та
 separately authorized merge лишаються відкритими gates; Phases11–12 NOT STARTED.
+
+## Independent review remediation — F10-R01 (MAJOR), F10-R02 (MINOR)
+
+Reviewed f4e6c04a13adf70cc5d7dbd6b1ad50b5713c5130; owner authorized narrow
+corrections in existing Draft PR13. Original evidence/history above retained.
+F10-R01: _render refreshes results only on actual view entry, not unchanged
+one-second heartbeat. Auth checks/cleanup still run; explicit refresh and successful
+evaluation/feedback updates remain available. F10-R02: result and optional feedback
+reads have separate error boundaries; feedback operational/corruption errors cannot
+hide an already verified score. Access denial clears protected content, evaluation
+corruption remains fail closed. Five new regression cases cover read/write counts,
+selection/keyboard/refresh/return/revocation and feedback failure/recovery.
+Only shell.py, learner_results.py, tests/ui/test_learner_results.py and review/log
+are changed; no migration, scoring, source semantics or frozen fixture changes.
+Final checks and exact corrective SHA/CI recorded below/in PR after publication.
+Phase10 remains REVIEW / PENDING OWNER ACCEPTANCE; no merge or next phase.
+
+Remediation local gates: full offline1354PASS/825.06s,0failures/0skips;
+Ruff lint/format154files PASS; real automated WSLg27PASS/57.25s, including five new
+cases and existing learner paths. Exact commands/root causes in DEVELOPMENT_LOG.
+F10-R01 MAJOR and F10-R02 MINOR: **RESOLVED / PENDING INDEPENDENT RE-REVIEW**.
+No known unresolved BLOCKER/MAJOR/MINOR implementation findings. Native Windows11
+and owner manual acceptance limitations unchanged. New final HEAD/CI evidence is
+recorded in existing Draft PR13/delivery without circular documentation commits.
