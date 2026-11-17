@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–8 — ACCEPTED (Phase8 прийнято власником 2026-11-17); Phase9 — NOT STARTED / PLANNING; Phases10–12 — NOT STARTED (без змін).
+**State:** Phases 0–8 — ACCEPTED (Phase8 прийнято власником 2026-11-17); Phase9 — REVIEW (implementation authorized 2026-11-17; owner acceptance pending); Phases10–12 — NOT STARTED (без змін).
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -24,8 +24,8 @@
 | 5 | Specialized Agents | ACCEPTED | Прийнято власником 13.11.2026: four agents, typed contracts, bounded LangGraph, provenance/F-01, offline/provider-neutral integration; PHASE_5_ACCEPTANCE.md |
 | 6 | Email Constructor | ACCEPTED | Прийнято власником15.11.2026: Email preview/editor, async generation, explicit SQLite Save; PHASE_6_ACCEPTANCE.md |
 | 7 | Web Constructor | ACCEPTED | Hybrid components, isolated WebEngine, visual editor, scoped AI, saved Email binding, explicit SQLite Save; PHASE_7_ACCEPTANCE.md |
-| 8 | Scenario Integration | REVIEW | Typed Email→Web link, rubric definitions/editor, exact readiness/review, atomic immutable publication, audited grants/access; PHASE_8_ACCEPTANCE.md |
-| 9 | Learner Simulation | NOT STARTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
+| 8 | Scenario Integration | ACCEPTED | Typed Email→Web link, rubric definitions/editor, exact readiness/review, atomic immutable publication, audited grants/access; PHASE_8_ACCEPTANCE.md |
+| 9 | Learner Simulation | REVIEW | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
 | 10 | Scoring & Mentor | NOT STARTED | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
 | 11 | Analytics Mode | NOT STARTED | Read-only scenario statistics, deduplicated learner table, missing-data rules, filters, CSV/JSON export, RBAC; analytics tests |
 | 12 | Finalization | NOT STARTED | Full regression/security checks, Windows 11 package, demonstration dataset, docs and release checklist |
@@ -1204,3 +1204,29 @@ head SHA → fetch/local main fast-forward-only → verify remote/local merge SH
 clean tree. За unexpected CI failure/conflict/integrity issue зупинитися.
 Без runtime/test/dependency changes або live AI. Physical Windows11/DPI/GPU/
 installer залишаються Phase12 risks. Phase9 NOT STARTED / PLANNING; не починати.
+
+## Phase 9 — Learner Simulation (17.11.2026)
+
+**REVIEW**, implementation/local engineering gates complete; commit/push/PR owner-approved.
+Phase 0–8 ACCEPTED; Phase 8 merged PR9 at dfba3fbaa1b2b8b94d279d3cef3f132c03cc9391.
+This supersedes earlier Phase 9 NOT STARTED entries; prior history is retained.
+
+| Increment | SRS | Gate |
+| --- | --- | --- |
+| Contracts / ADR0009 / amendment | §§3.9,8,11.4,12.8,14,16,23–24 | closed state/event vocabulary |
+| Persistence / services | §§8,14,16 | migration, exact binding, races, RBAC, immutable events |
+| Catalog / Email / Web | §§3.9,8,11.4,16 | existing renderers, no external navigation, actual actions |
+| Completion / recovery / history | §§8.5–8.6,12.8,14 | decline, resume, revoke/restore, repeats, no scores |
+| Demo / verification / PR | §§21,24 | offline, Qt/WSLg, full Ruff/pytest/package, final-head CI |
+
+No merge/ACCEPTED/Phase10 authorization. Details: ADR0009/PHASE_9_ACCEPTANCE.
+
+Phase9 final stable local gate: **1053PASS/670.67s**, including all1014accepted
+regressions +39learner/demo/UI cases; Ruff136files PASS, actual default WSLg
+learner/security8PASS/18.71s, native Chromium keyboard interaction PASS.
+Offline sdist/wheel, packaged migration/publication/learner lifecycle and
+installed-wheel Qt startup PASS with dependency-reuse limit documented.
+Intermediate full1053PASS/655.75s and1053PASS/728.93s retained; final source/test
+unchanged throughout670.67s run. Owner manual acceptance pending. Final-head
+Linux/Windows CI will be recorded in PR/delivery without changing verified HEAD.
+No merge/ACCEPTED/Phase10. PHASE_9_ACCEPTANCE contains exact manual steps.

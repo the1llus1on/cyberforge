@@ -13,7 +13,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-2022]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
       QT_QPA_PLATFORM: offscreen
       PYTHONUTF8: '1'
@@ -31,6 +31,8 @@ jobs:
         run: uv run --locked pytest tests/ui/test_web_constructor.py -k "compact or long_valid_tab_title" -q --tb=long
       - name: Scenario integration layout and browser lifecycle gate
         run: uv run --locked pytest tests/ui/test_scenario_integration.py -k "compact_page or actual_constructor_button or resizing_keyboard" -q --tb=long
+      - name: Learner simulation native layout and lifecycle gate
+        run: uv run --locked pytest tests/ui/test_learner_simulation.py -q --tb=long
       - run: uv run --locked pytest
       - name: Package import and Qt event-loop smoke
         run: |

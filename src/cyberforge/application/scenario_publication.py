@@ -247,7 +247,7 @@ class ScenarioPublicationService:
 
 
 class PublicationAccessService:
-    """Read-only authorization for future NEW starts, with no attempts/events."""
+    """Current effective publication access, shared by discovery and learner writes."""
 
     def __init__(self, publications: ScenarioPublicationService):
         self.publications = publications
@@ -286,26 +286,27 @@ class PublicationAccessService:
 
     def content(self, token, publication_id: int):
         with self.accounts.transaction() as db:
-            row = next(
-                (r for r in self._eligible(db, token) if r.id == publication_id), None
+            return self._content(db, token, publication_id)
+
+    def _content(self, db, token, publication_id: int):
+        row = next(
+            (r for r in self._eligible(db, token) if r.id == publication_id), None
+        )
+        if row is None:
+            raise AccessDenied()
+        value = self.publications._value(row)
+        version = db.get(ScenarioVersion, row.version_id)
+        record = db.get(ScenarioRecord, version.scenario_id)
+        expected = self.publications.scenarios._value(record, version)
+        state = self.publications.integration._state(db, expected, version)
+        if state.snapshot != value.manifest.snapshot:
+            # Archive revision is availability state, not immutable content.
+            original = value.manifest.snapshot.model_copy(
+                update={"archive_revision": record.archive_revision}
             )
-            if row is None:
-                raise AccessDenied()
-            value = self.publications._value(row)
-            version = db.get(ScenarioVersion, row.version_id)
-            record = db.get(ScenarioRecord, version.scenario_id)
-            expected = self.publications.scenarios._value(record, version)
-            state = self.publications.integration._state(db, expected, version)
-            if state.snapshot != value.manifest.snapshot:
-                # Archive revision is availability state, not immutable content.
-                original = value.manifest.snapshot.model_copy(
-                    update={"archive_revision": record.archive_revision}
-                )
-                if state.snapshot != original:
-                    raise ApplicationError(
-                        "Джерела публікації не відповідають manifest."
-                    )
-            return value, state
+            if state.snapshot != original:
+                raise ApplicationError("Джерела публікації не відповідають manifest.")
+        return value, state
 
     def resolve_internal(self, token, publication_id: int) -> InternalNavigationV1:
         value, state = self.content(token, publication_id)

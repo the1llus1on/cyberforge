@@ -3429,3 +3429,78 @@ in PR9/delivery to avoid another docs-only commit changing the verified HEAD.
 Physical Windows11/DPI/GPU-specific/installer acceptance remains Phase12 risk;
 owner databases/credentials/.env/API keys/Phase2 snapshot untouched, no live AI.
 Phase0–8 ACCEPTED; Phase9 NOT STARTED / PLANNING; Phases10–12 unchanged.
+
+## 17.11.2026 — Phase 9 authorized implementation
+
+Phase0–8 ACCEPTED; verified clean main matches dfba3fb Phase8 merge PR9.
+GitHub MCP functional branch read and Context7 SQLAlchemy partial-index docs PASS.
+Safe fetch/ff-only and feat/phase-9-learner-simulation created. Sandbox read-only
+.git required authorized escalation; no owner data/credentials touched.
+Plan: contracts/SRS/ADR → database/services → catalog/Email/Web → completion/history
+→ offline demo/security/concurrency/migration/Qt/WSLg/full/package/final-head CI.
+Current increment IN PROGRESS. Scoring/Mentor/analytics excluded.
+
+### Phase9 increments 1–6 — contracts, persistence, learner workspace
+
+SRS dated narrow amendment та ADR0009; migration0007, attempt/event contracts,
+transactional services, effective-access/history separation, exact publication
+binding, cross-version one-active constraint, immutable event/terminal guards.
+Learner catalog/intro, reused MailPreview/WebBrowser with explicit interactions,
+safe decline/confirmed completion, explicit abandonment, persistent recovery,
+repeats та real personal history без numerical scores. Demo --learner-demo creates
+validated immutable publication only with explicit fresh --init-demo, ignores
+cloud configuration та не торкається owner databases/credentials.
+
+Focused backend19PASS; expanded30PASS/2test path failures corrected; focused11PASS;
+demo2PASS. Final real WSLg learner/security8PASS/16.83s, three resume cycles,
+settled1100×720 captures inspected. Initial deprecated Qt method and compact
+reading/footer space corrected; existing constructor defaults preserved.
+Long sandbox backend batches signal143 без summary не зараховано як PASS;
+Chromium outer sandbox initialization refused, so actual GUI/full checks run
+outside outer sandbox with Chromium sandbox retained. No insecure flags.
+Ruff136files PASS; CRLF-aware diff check PASS. Offline wheel/sdist PASS;
+installed-wheel source isolation/migration/publication/learner lifecycle PASS
+using read-only existing dependencies (empty cache prevented fresh offline
+resolution). Full offline suite currently running; final evidence below.
+See PHASE_9_ACCEPTANCE for exact commands, limitations and owner checklist.
+
+Expanded demonstration uses app-owned Form/Actions via existing strict contracts
+and accepted save/publication services. All five canonical Web actions exposed;
+no metadata/values stored. Initial Python-list/strict-tuple validation failure
+fixed using existing JSON validation convention. Learner backend32PASS/46.39s;
+demo+real WSLg/security10PASS/22.80s; actual offline WSLg CLI smoke exits0.
+Initial full run started before this refinement is not the final stable gate;
+new final suite follows after focused checks. No scope beyond Phase9.
+
+Pre-refinement full run1053PASS/655.75s, exit0. Because the all-action demo/native
+keyboard test changed after that run began, it is not the stable final gate.
+Final source/test suite rerun is in progress with output in temporary local log;
+no additional source changes planned. Final installed-wheel probe repeated with
+updated demo: imports/migrations/publication/learner lifecycle PASS.
+
+### Leave cancellation regression — final correction
+
+Actual WSLg regression reproduced1FAIL/3.97s: Web leave recorded correctly,
+but cancelling completion left the Web view hidden. Guarded asynchronous
+confirmation cancellation now restores the current browser surface; persisted
+leave evidence stays immutable and status remains IN_PROGRESS. Test asserts
+visible recovery, deliberate repeat leave, then confirmed completion.
+Final focused learner/WebEngine security8PASS/18.71s; Ruff136files PASS.
+One new stable full suite is running after this correction; preceding full
+runs are retained as intermediate evidence and not used as final-head proof.
+
+### Phase9 final stable local engineering gate
+
+`QT_QPA_PLATFORM=offscreen UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short`
+— **1053PASS/670.67s**, exit0. All1014prior regressions plus39new learner/demo/UI
+cases. Source/tests frozen throughout; only evidence/status docs changed after.
+Ruff check . / format --check .136files PASS; CRLF-aware diff check PASS.
+Actual WSLg learner/security8PASS/18.71s, native Chromium Tab/Enter1PASS; final
+wheel/sdist rebuilt, installed-wheel isolated import/migration/publication/attempt
+lifecycle and Qt WSLg startup/shutdown PASS. Existing dependency reuse limit
+explicit; no claim of fresh offline dependency resolution or physical Windows11.
+Intermediate full1053PASS/728.93s also retained, superseded by stable final run.
+Phase9 REVIEW. Next: verified commit/push, PRmain, exact-head Linux/Windows CI;
+no merge/owner ACCEPTED/Phase10. Final SHA/CI/PR evidence in PR and delivery report
+to avoid another docs-only commit changing final verified HEAD. Owner data,
+credentials, .env, keys and native Phase2 environment untouched; no live AI.

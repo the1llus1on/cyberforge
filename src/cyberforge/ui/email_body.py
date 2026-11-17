@@ -67,6 +67,8 @@ class MessageBody(QTextEdit):
         message: MessageV1,
         resource_id: str | None,
         link: ScenarioLinkV1 | None = None,
+        *,
+        learner_mode: bool = False,
     ) -> None:
         self.clear()
         self._main_message = resource_id is not None
@@ -75,7 +77,7 @@ class MessageBody(QTextEdit):
         paragraph.setLineHeight(
             145, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value
         )
-        if resource_id is not None:
+        if resource_id is not None and not learner_mode:
             header = QTextFrameFormat()
             header.setBackground(QColor("#edf3fd"))
             header.setPadding(12)
@@ -106,7 +108,11 @@ class MessageBody(QTextEdit):
             )
             cursor.insertBlock(paragraph)
             cursor.insertText(
-                (link.display_url + "\n" if link else "") + resource_id,
+                (
+                    link.display_url
+                    if learner_mode and link
+                    else (link.display_url + "\n" if link else "") + resource_id
+                ),
                 self._style(13, "#3c4043"),
             )
             action = QTextFrameFormat()
@@ -118,7 +124,7 @@ class MessageBody(QTextEdit):
             cursor.setBlockFormat(paragraph)
             cursor.insertText(
                 (link.link_label if link else "Переглянути навчальний матеріал")
-                + " · перехід вимкнено",
+                + ("" if learner_mode else " · перехід вимкнено"),
                 self._style(13, "#0b57d0", bold=True),
             )
         self.setTextCursor(QTextCursor(self.document()))
