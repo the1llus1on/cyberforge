@@ -1,6 +1,6 @@
 # ADR-0008 — Інтеграція, готовність і незмінна публікація
 
-Дата: 15.11.2026. Архітектура дозволена власником; реалізація **REVIEW**, local gates PASS; owner acceptance pending.
+Дата: 15.11.2026. Архітектура дозволена власником; реалізація **ACCEPTED власником 2026-11-17** після ручної WSLg перевірки.
 Нормативна основа — датована вузька поправка SRSv3.0 §§4.8–4.9,6.10,11–12,14,23–24.
 
 Зберігаємо ScenarioService/AccountService та єдину SQLite. IntegrationService
@@ -122,3 +122,11 @@ with full Ukrainian accessible name, click/focus/Space behavior preserved. The
 same narrow-layout regression models both card and multiline-checkbox native
 minimum pressure. This changes geometry only; attestation binding remains in the
 existing readiness/publication services.
+
+
+## Owner acceptance — 17.11.2026
+
+Phase8 ACCEPTED; поточне рішення замінює історичні REVIEW/pending позначки вище,
+не видаляючи review findings чи limitations. Контракти/архітектуру не змінено.
+Остаточний запис — PHASE_8_ACCEPTANCE.md. Physical Windows11/DPI/GPU/installer
+залишаються Phase12 risks; Phase9 NOT STARTED / PLANNING, окремий дозвіл потрібний.

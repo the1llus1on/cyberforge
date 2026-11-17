@@ -508,11 +508,16 @@ Physical Windows11/DPI/installer та інші Phase12 checks залишають
 перевірку готовності та підтвердження точних ревізій викладачем. Публікація атомарно
 заморожує canonical content і manifest; доступ груп керується окремими grants
 з append-only audit. Нова версія копіює лише parameters, зберігаючи стару публікацію.
-У Конструкторі під картками відкрийте «Зв’язок · Рубрика · Публікація».
+У Конструкторі відкрийте «Підготовка сценарію»: матеріали → оцінювання →
+публікація. «Опубліковані версії» окремо відкриває history/access навіть із нової чернетки.
 
 Підтримується safe-decline applicability; оцінки/спроби/learner simulation ще
 не реалізовано. Phase8 не потребує AI calls; `--web-demo` дозволяє всю synthetic
 демонстрацію офлайн в окремій БД. Owner checklist, міграція, security evidence та
 limitations: [PHASE_8_ACCEPTANCE.md](docs/PHASE_8_ACCEPTANCE.md).
-Phase8 — **REVIEW**; local977tests/Ruff/package/WSLg gates PASS, final-head CI
-перевіряється в PR. ACCEPTED потребує окремого рішення власника; merge/Phase9 не виконуються.
+Phase8 — **ACCEPTED власником 2026-11-17** після ручної WSLg перевірки.
+Implementation CI: Linux1014PASS, Windows Server2022 1011PASS/3POSIX skips;
+Ruff/GUI/security gates PASS. Остаточний documentation HEAD перевіряється перед
+дозволеним standard merge PR9; release evidence — PHASE_8_ACCEPTANCE.md та PR9.
+Phase0–8 ACCEPTED; Phase9 — **NOT STARTED / PLANNING**, окремий дозвіл потрібний.
+Physical Windows11, DPI, GPU-specific behavior та installer — Phase12 risks.

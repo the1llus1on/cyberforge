@@ -1,7 +1,12 @@
 # Phase 8 — Scenario Integration
 
-**REVIEW — реалізацію й локальні gates завершено; final-head CI перевіряється в PR.** Реалізацію та feature PR
-дозволено власником15.11.2026. ACCEPTED/merge/Phase9 не дозволені.
+**Phase 8 — ACCEPTED on 2026-11-17.** Власник проєкту явно прийняв фазу
+17.11.2026 після успішної ручної WSLg перевірки redesigned Scenario Preparation.
+Merge PR9 дозволено стандартним merge commit лише після Linux/Windows CI на
+точному остаточному documentation HEAD. Phase9 — **NOT STARTED / PLANNING**.
+
+Поточне рішення замінює попередні REVIEW/acceptance-pending обмеження нижче;
+датовані review findings, corrections та перевірки збережено як історію.
 Основа: main `b84e2fbdfcf1d84f86a6d8c30a9b0b868e678212`, accepted Phases0–7.
 
 ## Вимоги, реалізація та межі
@@ -455,3 +460,28 @@ policy committed separately (a89e34f), including consistency corrections. Final
 exact-head Linux/Windows CI will be recorded in PR9/delivery. Phase8 remains REVIEW;
 no merge or Phase9. Owner recheck: selected checked row must show tick and readable
 text; deselect/reselect, Space and read-only view must preserve correct group IDs.
+
+
+## Остаточне прийняття власником — 17.11.2026
+
+**Phase 8 — ACCEPTED on 2026-11-17.** Власник підтвердив успішну ручну WSLg
+перевірку redesigned підготовки сценарію та коректну роботу функціональності.
+Прийнято typed Email→Web integration, versioned RubricDefinitionV1, deterministic
+readiness, immutable publication, authorized grants/audit, three-step preparation,
+separate history/access, WebEngine preview lifecycle, selected/unselected group
+checkbox visibility та committed English Codex policy AGENTS.md.
+За повідомленням власника independent review не має підтверджених blocking defects.
+Це owner acceptance, окреме від автоматизованих перевірок; не твердження про
+індивідуальну ручну перевірку кожного preset або фізичної Windows11 матриці.
+
+Implementation HEAD7ee62b5fd9a37999aaebe8e3d772a21c84825354 перевірено повторно:
+CI44020116085 SUCCESS, Linux1014PASS/524.38s, Windows Server2022 1011PASS/3POSIX
+skips/698.63s, Ruff127files, GUI/security/layout/lifecycle/startup gates PASS.
+Final documentation HEAD має пройти обидві CI платформи перед merge; його SHA,
+run/results, merge SHA та local/remote main consistency фіксуються в PR9/delivery.
+
+Physical Windows11, DPI, GPU-specific behavior, executable/installer acceptance
+залишаються невиконаними Phase12 risks; SRS Windows11 MVP criterion чинний.
+Owner DB/.env/credentials/keys та Phase2 native snapshot збережено. Live AI calls
+не виконуються. Phase0–8 ACCEPTED; Phase9 NOT STARTED / PLANNING; Phases10–12
+без змін. Merge не дозволяє реалізацію Phase9; потрібен окремий дозвіл.

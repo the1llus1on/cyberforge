@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–6 — ACCEPTED (Phase6 прийнято власником2026-11-15); Phase7 — ACCEPTED власником2026-11-15; Phase8 — REVIEW (UX redesign authorized 16.11.2026); Phases9–12 — NOT STARTED.
+**State:** Phases 0–8 — ACCEPTED (Phase8 прийнято власником 2026-11-17); Phase9 — NOT STARTED / PLANNING; Phases10–12 — NOT STARTED (без змін).
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -1193,3 +1193,14 @@ rendered-pixel/state/keyboard regression, before/after captures. Full1014PASS,
 Ruff127files PASS, WSLg5PASS + unsuppressed3cycle probe1PASS/exit0 reproduces
 nonfatal Mesa/Zink/EGL warnings. Approved AGENTS.md committed separately. Final
 exact-head CI follows in PR9; no merge/ACCEPTED/Phase9. Owner process exit unknown.
+
+## Phase8 — остаточне прийняття та release gate (17.11.2026)
+
+**Phase 8 — ACCEPTED on 2026-11-17.** Owner manual WSLg acceptance та рішення
+власника записано в PHASE_8_ACCEPTANCE.md; попередню review/test history збережено.
+План release: docs-only commit у чинній branch → push PR9 → exact-final-head
+Linux+Windows CI → recheck scope/base/conflicts → standard merge commit з expected
+head SHA → fetch/local main fast-forward-only → verify remote/local merge SHA та
+clean tree. За unexpected CI failure/conflict/integrity issue зупинитися.
+Без runtime/test/dependency changes або live AI. Physical Windows11/DPI/GPU/
+installer залишаються Phase12 risks. Phase9 NOT STARTED / PLANNING; не починати.

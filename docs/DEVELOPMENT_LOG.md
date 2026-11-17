@@ -3400,3 +3400,32 @@ Actual WSLg CLI startup/shutdown smoke also exits0:
 `QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync cyberforge --database /tmp/cyberforge-group-cli-smoke-20261117.sqlite3 --web-demo --smoke-test`.
 Fresh synthetic temporary DB; offline demo ignores owner .env. CLI smoke emits no
 graphics warnings; real Web Preview probe above reproduces them with exit0.
+
+
+## 17.11.2026 — Phase8 explicit owner acceptance / authorized release
+
+**Phase 8 — ACCEPTED on 2026-11-17.** Власник підтвердив успішну ручну WSLg
+перевірку redesigned Scenario Preparation та прийняв весь Phase8 scope, включно
+з integration/rubric/readiness/immutable publication/grants/audit, three-step UX,
+history/access, WebEngine lifecycle, checkbox visibility та English AGENTS policy.
+За повідомленням власника independent review не має confirmed blocking defects.
+Це owner-attributed acceptance, не автоматизований чи physical Windows11 check.
+
+Перед release: clean feature tree, HEAD7ee62b5; GitHub MCP PR9 open/unmerged/clean,
+base main b84e2fbdfcf1d84f86a6d8c30a9b0b868e678212, remote main тотожний.
+Повторно підтверджено CI44020116085 SUCCESS: Linux1014PASS, Windows1011PASS/3POSIX
+skips; Ruff127files/GUI/security/lifecycle/startup PASS. Implementation unchanged.
+
+Docs-only increment: acceptance record, current plan state, README current entry
+and ADR0008 status. Prior findings/corrections/evidence retained, historical REVIEW
+labels explicitly superseded. No SRS/runtime/test/dependency changes. Local repeated
+full/GUI/build checks unnecessary for documentation; final-head CI still mandatory.
+Release sequence: commit/push existing feature branch; wait/recheck both platforms
+on exact docs HEAD; standard merge with expected_head_sha, no squash/rebase; fetch
+and ff-only local main; verify merge SHA, remote equality, clean tree. Stop for any
+unexpected failure/conflict/integrity issue. Final SHA/CI/merge evidence recorded
+in PR9/delivery to avoid another docs-only commit changing the verified HEAD.
+
+Physical Windows11/DPI/GPU-specific/installer acceptance remains Phase12 risk;
+owner databases/credentials/.env/API keys/Phase2 snapshot untouched, no live AI.
+Phase0–8 ACCEPTED; Phase9 NOT STARTED / PLANNING; Phases10–12 unchanged.
