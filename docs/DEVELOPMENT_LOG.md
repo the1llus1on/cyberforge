@@ -3349,3 +3349,54 @@ combined redesign16files; owner AGENTS.md excluded. Push a focused third task
 commit, then require both CI platforms on its exact HEAD. Final run/results in
 PR9/delivery; retain both Windows findings and the local harness failure above.
 Phase8 stays REVIEW, owner acceptance pending; no merge or Phase9.
+
+## 17.11.2026 — F8-UX-01/02: видимість group checkbox (REVIEW)
+
+Owner reports manual satisfaction with redesigned preparation functionality; Phase8
+acceptance remains pending. Scope: SRS3.13 visual readability, existing4.8/RBAC
+unchanged. Existing AGENTS.md English policy explicitly authorized for commit;
+reviewed diff contains no secrets/personal paths. Two contradictory older language
+clauses aligned; Ukrainian end-user UI/dissertation documentation retained.
+
+Actual group-picker rendering reproduced selected checked indicator AND text
+becoming dark/invisible while check state/selected group IDs remain unchanged.
+Cause: membershipPicker's dark item background combines with generic selected-row
+dark foreground (#19151f); native checked indicator inherits selected foreground.
+No lost check state. Two-line membership-specific selected-item QSS sets existing
+dark #30343e background and light #eef0f5 foreground. Native Qt checkbox retained;
+no delegate, custom painting, glyph/image substitution or application logic change.
+
+Before: focused pixel regression1FAIL/1PASS/8.57s (selected check interior0bright
+pixels). After:2PASS/7.29s, enabled/disabled, selected/unselected, checked/unchecked,
+focus, Space, unchanged group IDs. Same-theme before/after captures inspected:
+phase-8-group-before.png / phase-8-group-after.png. Exact commands:
+`CYBERFORGE_GROUP_SCREENSHOTS=/tmp/group-after UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_scenario_integration.py -k group_indicator -q --tb=short`.
+Context7 official Qt stylesheet reference confirms item selection color/background
+styling: https://doc.qt.io/qtforpython-6/overviews/qtwidgets-stylesheet-reference.html
+Ruff lint/format127files PASS. No backend, persistence, RBAC, graphics settings,
+dependencies or owner secrets/databases changed. Full/WSLg evidence follows.
+
+WSLg focused command:
+`QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest tests/ui/test_scenario_integration.py -k 'group_indicator or actual_constructor_button or production_dialog or renderer_diagnostics' -q --tb=short`
+—5PASS/35deselected/22.84s, exit0. Unsuppressed actual_constructor_button run with
+-q -s --tb=short:1PASS/39deselected/8.90s, exit0. All four reported Mesa/Zink/EGL
+message patterns reproduced during real MainWindow/startup/preview/normal shutdown;
+three render/switch/close/reopen cycles passed, main GUI responsive, sources unchanged.
+No new crash reproduced. These messages are nonfatal initialization warnings here,
+consistent with previous accepted lifecycle investigation; owner's unknown exit
+status cannot be inferred from the shell prompt alone. No graphics flags, drivers,
+packages or sandbox settings changed. Current owner hardware exit remains unconfirmed.
+
+Full offline gate:
+`UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync pytest -q --tb=short`
+—1014PASS/885.92s, exit0, all40Scenario Integration UI cases including F8-01/F8-02.
+Ruff check . / format --check .: PASS127files; diff check PASS. Source/tests stable
+throughout full run. Only evidence docs added afterwards. AGENTS policy committed
+separately as a89e34f; owner text preserved, older language conflicts aligned.
+No live AI or owner database/credential/environment changes. Final-head CI evidence
+will be recorded in PR9/delivery without another docs-only commit. Phase8 REVIEW;
+no merge, ACCEPTED or Phase9. Physical Windows11 remains Phase12 risk.
+Actual WSLg CLI startup/shutdown smoke also exits0:
+`QT_QPA_PLATFORM=wayland UV_CACHE_DIR=/tmp/cyberforge-uv-cache uv run --no-sync cyberforge --database /tmp/cyberforge-group-cli-smoke-20261117.sqlite3 --web-demo --smoke-test`.
+Fresh synthetic temporary DB; offline demo ignores owner .env. CLI smoke emits no
+graphics warnings; real Web Preview probe above reproduces them with exit0.

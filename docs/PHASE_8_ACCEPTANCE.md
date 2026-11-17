@@ -431,3 +431,27 @@ sequence3PASS. All992prior+20new/38Phase8 UI retained. Final sources stable thro
 full run; screenshots reflect final wrapping behavior. Exact final commit/platform
 CI results follow in PR9/delivery. Combined16task files; owner AGENTS.md excluded.
 Engineering local gate PASS; Phase8 REVIEW and owner acceptance pending.
+
+## 17.11.2026 — Group indicator readability (REVIEW)
+
+Owner manually tested and is satisfied with redesigned preparation functionality;
+identified selected-row checkbox visibility defect. This is not Phase8 acceptance.
+Check state remains unchanged: dark selected foreground rendered native tick/text
+against membership picker dark background. Explicit selected-row light foreground
+and existing dark background fix readability without selection/permission changes.
+Focused rendered-pixel/state/keyboard regression: before1FAIL/1PASS; after2PASS.
+[Before](screenshots/phase-8-group-before.png) /
+[After](screenshots/phase-8-group-after.png). Recheck checked/unchecked selected rows,
+Space/focus and disabled state on owner WSLg. Native Windows11 remains Phase12 risk.
+
+WSLg5PASS/22.84s; unsuppressed production-entry3cycle probe1PASS/8.90s, process exit0.
+All reported Mesa/Zink/EGL patterns reproduced with successful rendering and normal
+shutdown. No crash reproduced; owner process exit is unconfirmed. No warning
+suppression, graphics changes or sandbox weakening. Full/final-head CI follows in PR9.
+
+Full offline1014PASS/885.92s, all40Phase8 UI cases/F8-01/F8-02 retained; Ruff127files
+and diff checks PASS. Source/tests stable during complete run. Approved AGENTS.md
+policy committed separately (a89e34f), including consistency corrections. Final
+exact-head Linux/Windows CI will be recorded in PR9/delivery. Phase8 remains REVIEW;
+no merge or Phase9. Owner recheck: selected checked row must show tick and readable
+text; deselect/reselect, Space and read-only view must preserve correct group IDs.

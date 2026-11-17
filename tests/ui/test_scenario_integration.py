@@ -1164,3 +1164,69 @@ def test_redesign_group_assignment_changes_clear_picker_and_acknowledgement(
     assert not d.ack.isChecked() and not d.publish_button.isEnabled()
     assert "Виберіть хоча б одну" in d.group_hint.text()
     assert not d.publish()
+
+
+@pytest.mark.parametrize("enabled", [True, False])
+def test_group_indicator_remains_visible_when_selected(
+    integration_window, qtbot, enabled
+):
+    from PySide6.QtWidgets import QStyle, QStyleOptionViewItem
+
+    d = dialog(integration_window, qtbot)
+    configure(d)
+    d.navigate(2)
+    picker = d.groups
+    picker.setEnabled(enabled)
+    d.publication_step.ensureWidgetVisible(picker)
+    item = picker.item(0)
+    index = picker.model().index(0, 0)
+    captures = {}
+    for selected in (False, True):
+        picker.setCurrentRow(0)
+        picker.setFocus()
+        if not selected:
+            picker.clearSelection()
+        for checked in (False, True):
+            item.setCheckState(
+                Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+            )
+            qtbot.wait(30)
+            option = QStyleOptionViewItem()
+            option.initFrom(picker)
+            picker.itemDelegate().initStyleOption(option, index)
+            option.rect = picker.visualItemRect(item)
+            rect = picker.style().subElementRect(
+                QStyle.SubElement.SE_ItemViewItemCheckIndicator, option, picker
+            )
+            captures[selected, checked] = picker.viewport().grab(rect).toImage()
+            if os.environ.get("CYBERFORGE_GROUP_SCREENSHOTS"):
+                from pathlib import Path
+
+                folder = Path(os.environ["CYBERFORGE_GROUP_SCREENSHOTS"])
+                folder.mkdir(parents=True, exist_ok=True)
+                picker.grab().save(
+                    str(folder / f"group-{enabled}-{selected}-{checked}.png")
+                )
+            assert d.selected_groups() == (
+                (item.data(Qt.ItemDataRole.UserRole),) if checked else ()
+            )
+        picker.clearSelection()
+        assert item.checkState() == Qt.CheckState.Checked
+    for selected in (False, True):
+
+        def bright(image):
+            return sum(
+                image.pixelColor(x, y).lightness() > 150
+                for x in range(3, image.width() - 3)
+                for y in range(3, image.height() - 3)
+            )
+
+        assert bright(captures[selected, True]) >= bright(captures[selected, False]) + 4
+    picker.setEnabled(True)
+    picker.setCurrentRow(0)
+    picker.setFocus()
+    qtbot.keyClick(picker, Qt.Key.Key_Space)
+    assert item.checkState() == Qt.CheckState.Unchecked
+    assert d.selected_groups() == ()
+    qtbot.keyClick(picker, Qt.Key.Key_Space)
+    assert item.checkState() == Qt.CheckState.Checked

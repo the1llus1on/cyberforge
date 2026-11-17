@@ -1184,3 +1184,12 @@ Final wrapped-attestation/harness gate: **1012passed/1119.68s**, zero errors;
 Ruff127files PASS, real WSLg6PASS plus isolated fixture3PASS. All992prior+20new/
 38Phase8 UI retained. Final increment10files, combined16; owner AGENTS.md excluded.
 Final-head Linux/Windows CI follows in PR9/delivery. Phase8 REVIEW; no merge/Phase9.
+
+## 17.11.2026 — F8-UX-01/02 targeted visual correction
+
+REVIEW. Native checkmark/text hidden by selected dark foreground on membership
+row dark background; logical state intact. Two-line selected-row QSS correction,
+rendered-pixel/state/keyboard regression, before/after captures. Full1014PASS,
+Ruff127files PASS, WSLg5PASS + unsuppressed3cycle probe1PASS/exit0 reproduces
+nonfatal Mesa/Zink/EGL warnings. Approved AGENTS.md committed separately. Final
+exact-head CI follows in PR9; no merge/ACCEPTED/Phase9. Owner process exit unknown.
