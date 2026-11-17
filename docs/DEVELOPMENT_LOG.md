@@ -3924,3 +3924,46 @@ F10-WP1-03 RESOLVED by explicit proof-scope correction (not a production retry p
 Corrective commit/push to Draft PR#12 authorized; exact SHA/CI evidence у delivery
 і PR description to avoid circular commits. No merge. Gate pending owner acceptance
 and independent re-review; physical native Windows11 remains Phase12 risk.
+
+
+## Owner decision — November 17, 2026 — WP1 acceptance / Contract Freeze
+
+Власник формально прийняв Phase10 / WP1 — Contracts & Evidence Validation
+і затвердив Contract Freeze Gate після незалежного review та remediation.
+Це актуальне рішення замінює попередні REVIEW/PENDING записи лише як поточний
+статус; усі попередні review records збережено як історичні докази.
+
+- Phase10 / WP1: **ACCEPTED**.
+- Contract Freeze Gate: **PASSED / OWNER APPROVED**.
+- Phase10: **IN PROGRESS / WP1 ACCEPTED / CONTRACT FREEZE PASSED**; не whole-phase ACCEPTED.
+- Approved implementation commit: `5d91716544b8a7764f3e2735783e0289b3803c82`.
+- [PR #12](https://github.com/the1llus1on/cyberforge/pull/12): owner-authorized
+  standard merge-commit лише після final documentation HEAD Linux/Windows CI.
+- F10-WP1-01 (Decimal bounds), F10-WP1-02 (sanitized Mentor revision) та
+  F10-WP1-03 (scratch retry-proof boundary): **RESOLVED**, прийнято власником.
+- У прийнятому WP1 scope немає outstanding BLOCKER, MAJOR або MINOR findings.
+
+Verified evidence: local full offline regression **1203 passed**, focused WP1
+**147 passed**, isolated SQLite protocol **47 passed**, final Decimal/Mentor/schema
+**24 passed**. Golden vectors/independent digest checks, Ruff lint/format, offline
+sdist/wheel та isolated installed-wheel verification — **PASS**.
+Original final implementation [CI run44131758053](https://github.com/the1llus1on/cyberforge/actions/runs/44131758053):
+Linux `checks (ubuntu-latest)` **SUCCESS**; Windows Server2022
+`checks (windows-2022)` **SUCCESS**, verified через GitHub MCP.
+Ці CI results стосуються approved implementation SHA, не нового acceptance commit.
+Для нового exact PR HEAD обидва CI jobs мають завершитися SUCCESS до merge;
+final SHA/run/merge evidence фіксуються у PR description і delivery без circular commits.
+
+Frozen v1 contracts, canonical serialization/golden vectors та documented mapping
+тепер normative inputs для майбутньої окремо approved роботи. Incompatible changes
+до frozen v1 потребують explicit versioning і documented review. Це не створює
+production storage schema: deferred-FK SQLite proof ізольований і test-only;
+production migration та actual persisted-result lifecycle ще не реалізовано.
+Physical Windows11 release acceptance залишається відповідальністю Phase12.
+
+Phases0–9 та Phase10 architecture — ACCEPTED. WP2 deterministic scoring і WP3
+persistence — **NOT STARTED / NOT AUTHORIZED**; migration0008 — **NOT CREATED /
+NOT AUTHORIZED**. Production ScoringService/EvaluationService, result UI, cloud
+Mentor integration та analytics не дозволені. Phases11–12 — **NOT STARTED**.
+Після acceptance recording/merge/ff-only synchronization роботу зупинити;
+цей дозвіл не починає наступний work package. SRS v3.0/ADR-0010 незмінні.

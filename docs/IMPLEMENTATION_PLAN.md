@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–9 — ACCEPTED (Phase9 прийнято власником 2026-11-17); Phase10 — IN PROGRESS / WP1 ONLY (17.11.2026; Contract Freeze Gate PENDING OWNER ACCEPTANCE); Phases11–12 — NOT STARTED.
+**State:** Phases 0–9 — ACCEPTED (Phase9 прийнято власником 2026-11-17); Phase10 — IN PROGRESS / WP1 ACCEPTED / CONTRACT FREEZE PASSED (owner decision 17.11.2026); Phases11–12 — NOT STARTED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -27,7 +27,7 @@
 | 7 | Web Constructor | ACCEPTED | Hybrid components, isolated WebEngine, visual editor, scoped AI, saved Email binding, explicit SQLite Save; PHASE_7_ACCEPTANCE.md |
 | 8 | Scenario Integration | ACCEPTED | Typed Email→Web link, rubric definitions/editor, exact readiness/review, atomic immutable publication, audited grants/access; PHASE_8_ACCEPTANCE.md |
 | 9 | Learner Simulation | ACCEPTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
-| 10 | Scoring & Mentor | IN PROGRESS / WP1 ONLY | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
+| 10 | Scoring & Mentor | IN PROGRESS / WP1 ACCEPTED / CONTRACT FREEZE PASSED | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
 | 11 | Analytics Mode | NOT STARTED | Read-only scenario statistics, deduplicated learner table, missing-data rules, filters, CSV/JSON export, RBAC; analytics tests |
 | 12 | Finalization | NOT STARTED | Full regression/security checks, Windows 11 package, demonstration dataset, docs and release checklist |
 
@@ -1422,3 +1422,46 @@ Focused147PASS (включно47protocol), final Decimal/Mentor/schema24PASS;
 Final full offline regression1203PASS/649.98s, no failures/skips; frozen11hashes
 unchanged. Linux/Windows CI для corrective HEAD перевіряється після push.
 WP1 REVIEW; Contract Freeze Gate PENDING OWNER ACCEPTANCE, next independent review.
+
+
+## Owner decision — November 17, 2026 — WP1 acceptance / Contract Freeze
+
+Власник формально прийняв Phase10 / WP1 — Contracts & Evidence Validation
+і затвердив Contract Freeze Gate після незалежного review та remediation.
+Це актуальне рішення замінює попередні REVIEW/PENDING записи лише як поточний
+статус; усі попередні review records збережено як історичні докази.
+
+- Phase10 / WP1: **ACCEPTED**.
+- Contract Freeze Gate: **PASSED / OWNER APPROVED**.
+- Phase10: **IN PROGRESS / WP1 ACCEPTED / CONTRACT FREEZE PASSED**; не whole-phase ACCEPTED.
+- Approved implementation commit: `5d91716544b8a7764f3e2735783e0289b3803c82`.
+- [PR #12](https://github.com/the1llus1on/cyberforge/pull/12): owner-authorized
+  standard merge-commit лише після final documentation HEAD Linux/Windows CI.
+- F10-WP1-01 (Decimal bounds), F10-WP1-02 (sanitized Mentor revision) та
+  F10-WP1-03 (scratch retry-proof boundary): **RESOLVED**, прийнято власником.
+- У прийнятому WP1 scope немає outstanding BLOCKER, MAJOR або MINOR findings.
+
+Verified evidence: local full offline regression **1203 passed**, focused WP1
+**147 passed**, isolated SQLite protocol **47 passed**, final Decimal/Mentor/schema
+**24 passed**. Golden vectors/independent digest checks, Ruff lint/format, offline
+sdist/wheel та isolated installed-wheel verification — **PASS**.
+Original final implementation [CI run44131758053](https://github.com/the1llus1on/cyberforge/actions/runs/44131758053):
+Linux `checks (ubuntu-latest)` **SUCCESS**; Windows Server2022
+`checks (windows-2022)` **SUCCESS**, verified через GitHub MCP.
+Ці CI results стосуються approved implementation SHA, не нового acceptance commit.
+Для нового exact PR HEAD обидва CI jobs мають завершитися SUCCESS до merge;
+final SHA/run/merge evidence фіксуються у PR description і delivery без circular commits.
+
+Frozen v1 contracts, canonical serialization/golden vectors та documented mapping
+тепер normative inputs для майбутньої окремо approved роботи. Incompatible changes
+до frozen v1 потребують explicit versioning і documented review. Це не створює
+production storage schema: deferred-FK SQLite proof ізольований і test-only;
+production migration та actual persisted-result lifecycle ще не реалізовано.
+Physical Windows11 release acceptance залишається відповідальністю Phase12.
+
+Phases0–9 та Phase10 architecture — ACCEPTED. WP2 deterministic scoring і WP3
+persistence — **NOT STARTED / NOT AUTHORIZED**; migration0008 — **NOT CREATED /
+NOT AUTHORIZED**. Production ScoringService/EvaluationService, result UI, cloud
+Mentor integration та analytics не дозволені. Phases11–12 — **NOT STARTED**.
+Після acceptance recording/merge/ff-only synchronization роботу зупинити;
+цей дозвіл не починає наступний work package. SRS v3.0/ADR-0010 незмінні.
