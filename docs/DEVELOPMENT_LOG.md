@@ -4244,3 +4244,7 @@ P11-01–P11-16 визначено як майбутні умови прийма
 історії, агрегації, цілісності, UI, експорту, порад, регресій, CI та
 ручного приймання власником. Phases 0–10 — **ACCEPTED**,
 Phases 11–12 — **NOT STARTED**. Документація — **PENDING REVIEW**.
+
+## 18.11.2026 — Phase 11 Documentation Review Gate PASSED
+
+Незалежний огляд [PR #15](https://github.com/the1llus1on/cyberforge/pull/15) підтвердив п'ять owner-approved рішень D11-01–D11-05, узгодженість ADR-0011 і SRS Amendment A11 з Phases 8–10 та документаційний-only обсяг. Власник явно схвалив ADR-0011 і Amendment A11 та дозволив SHA-guarded merge документаційного PR. **Architecture documentation: APPROVED; Documentation Review Gate: PASSED.** F11-ADR-01 (запропонований поріг п'яти учнів для хмарного advisory) не затверджено окремо: до рішення хмарний шлях недоступний, локальні детерміновані рекомендації дозволені. **Phases 0–10: ACCEPTED; Phases 11–12: NOT STARTED.** Це не дозвіл на реалізацію Phase 11.

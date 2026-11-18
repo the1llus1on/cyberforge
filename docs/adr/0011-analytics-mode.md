@@ -2,7 +2,7 @@
 
 **Дата:** 18.11.2026
 
-**Phase 11 architecture:** OWNER-APPROVED CORE / DOCUMENTATION REVIEW
+**Phase 11 architecture:** APPROVED — DOCUMENTATION REVIEW GATE PASSED (18.11.2026)
 
 **Phase 11 implementation:** NOT STARTED
 
@@ -407,3 +407,9 @@ attempt/event, критерії, оцінки чи feedback.
 сторінок і вимірювання продуктивності уточнюють у
 майбутній реалізації. Пороговий хмарний контроль у M залишається
 пропозицією для огляду.
+
+## S. Результат незалежного огляду та рішення власника — 18.11.2026
+
+Незалежний огляд [Draft PR #15](https://github.com/the1llus1on/cyberforge/pull/15) завершено без блокувальних архітектурних зауважень. Власник явно **APPROVED** ADR-0011 і SRS Amendment A11 та закрив **Documentation Review Gate — PASSED**. Це схвалення стосується лише архітектурної документації. **Phase 11 implementation: NOT STARTED / NOT AUTHORIZED**; Phase 12 — NOT STARTED. Заморожені контракти Phases 8–10 не змінюються.
+
+**F11-ADR-01:** мінімальний поріг із п'яти унікальних учнів для хмарного AssistantAgent лишається окремою пропозицією для погодження. Доки немає окремого рішення, хмарний advisory над аналітичними агрегатами **вимкнений**; детерміновані локальні поради залишаються дозволеними. Архітектурний documentation gate закрито без затвердження цього порога.

@@ -1564,7 +1564,7 @@ Linux — 1 357 пройдено. Windows Server 2022 — 1 354 пройдено
 
 **Architecture core:** OWNER APPROVED
 
-**Documentation:** PENDING REVIEW
+**Documentation:** APPROVED — Documentation Review Gate PASSED (18.11.2026)
 
 **Implementation:** NOT AUTHORIZED
 
@@ -1590,5 +1590,4 @@ implementation PRs are optional.
 | Security and regression verification | Access denial, history integrity and immutability, UI consistency, Ruff, full suite and final-head Linux/Windows CI. | P11-01–P11-15 |
 | Owner review and acceptance | Independent review, owner manual WSLg acceptance and separate merge authorization. | P11-16 |
 
-This documentation increment prepares independent architecture review.
-Phase 11 implementation requires separate owner authorization.
+Independent architecture review passed and the owner approved ADR-0011 and SRS Amendment A11 on 18.11.2026. Documentation Review Gate: PASSED. The proposed five-learner cloud advisory threshold remains open; cloud analytics advisory is disabled until separately approved. Phase 11 implementation requires separate owner authorization.
