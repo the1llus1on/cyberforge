@@ -101,6 +101,7 @@ class AdminPage(QWidget):
         self.message = label("")
         layout.addWidget(self.message)
         tabs = QTabWidget()
+        self.tabs = tabs
         layout.addWidget(tabs)
         users_page, groups_page = QWidget(), QWidget()
         tabs.addTab(users_page, "Користувачі")

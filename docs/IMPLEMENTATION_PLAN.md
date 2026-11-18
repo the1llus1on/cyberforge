@@ -1696,3 +1696,20 @@ WP не потрібен. Phase 12 — **IN PROGRESS**.
 Freeze Gate — **PENDING INDEPENDENT REVIEW**. WP2–WP5 очікують проходження
 передумов. Приймання власником, фізичний Windows 11 і перевірка точного
 HEAD релізного кандидата очікують доказів.
+
+### 18.11.2026 — Phase 12: WP1 Contract Freeze
+
+WP1 — **IMPLEMENTED / INDEPENDENT ARCHITECTURE REVIEW PASSED**.
+P12-01 — **CONTRACT REVIEW PASSED**. WP1 Contract Freeze Gate — **PASSED**.
+Огляд стосується `a2cfdac6b16352c5e8e506faf010ef2fa280b051`; незалежний
+оглядач перевірив код і тести, а виконання тестів підтверджено окремо
+інженерними результатами Codex. Phase 12 — **IN PROGRESS**, WP2 дозволено.
+
+### 18.11.2026 — Phase 12: WP2 приватний профіль і відновлення
+
+WP2 реалізує FR-A12-03–06 і NFR-A12-02. Стандартний Windows-профіль
+перевіряє SID, DACL, успадкування, reparse points і файлові цілі до роботи
+з SQLite. GUI bootstrap використовує чинний AccountService. Backup,
+restore та staged upgrade працюють під спільним блокуванням профілю.
+P12-05–08 мають цільові WSL і часткові нативні докази. Перевірки окремим
+Windows SID та життєвого циклу готових артефактів належать WP5.

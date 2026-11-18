@@ -3,6 +3,7 @@
 import argparse
 import sys
 from collections.abc import Sequence
+from contextlib import ExitStack
 from getpass import getpass
 from pathlib import Path
 
@@ -50,6 +51,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="Ініціалізувати окрему демонстраційну БД",
     )
+    setup.add_argument(
+        "--recovery", action="store_true", help="Аварійне відновлення приватної бази"
+    )
     parser.add_argument(
         "--credentials-file",
         type=Path,
@@ -68,14 +72,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("Для demo вкажіть --database та --credentials-file.")
     if args.credentials_file and not args.init_demo:
         parser.error("--credentials-file використовується лише з --init-demo.")
+    if args.recovery and (sys.platform != "win32" or args.database or args.smoke_test):
+        parser.error("Аварійне відновлення доступне для стандартного профілю Windows.")
+    if getattr(sys, "frozen", False) and args.database:
+        parser.error("Цей випуск використовує приватний профіль CyberForge.")
 
     from alembic.util.exc import CommandError
     from PySide6.QtCore import QCoreApplication, QStandardPaths, QTimer
     from sqlalchemy.exc import SQLAlchemyError
 
     from cyberforge.application.accounts import AccountService
+    from cyberforge.application.data_recovery import DataRecoveryService
     from cyberforge.domain.accounts import ApplicationError
     from cyberforge.persistence.database import Database
+    from cyberforge.persistence.profile import PROFILE_ERROR, PrivateProfile
+    from cyberforge.persistence.recovery import ProfileRecovery
 
     setup_only = args.init_admin or args.init_demo
     if not setup_only:
@@ -90,19 +101,38 @@ def main(argv: Sequence[str] | None = None) -> int:
         app = QApplication([sys.argv[0]])
     app.setApplicationName("CyberForge")
     app.setOrganizationName("CyberForge")
-    path = (
-        args.database
-        or Path(
-            QStandardPaths.writableLocation(
-                QStandardPaths.StandardLocation.AppLocalDataLocation
-            )
-        )
-        / "cyberforge.sqlite3"
+    data_location = QStandardPaths.writableLocation(
+        QStandardPaths.StandardLocation.AppLocalDataLocation
     )
+    protected = args.database is None and sys.platform == "win32"
+    path = args.database or Path(data_location) / "cyberforge.sqlite3"
+    lifetime = ExitStack()
     database = None
     try:
-        database = Database(path)
-        database.upgrade()
+        storage = None
+        if protected:
+            if not data_location:
+                raise ApplicationError(PROFILE_ERROR)
+            try:
+                profile = PrivateProfile(path.parent)
+                lifetime.enter_context(profile.acquire())
+            except OSError:
+                raise ApplicationError(PROFILE_ERROR) from None
+            storage = ProfileRecovery(profile)
+            if args.recovery:
+                from cyberforge.ui.data_recovery import choose_backup
+
+                identifier = choose_backup(
+                    None, storage.available_backups(), emergency=True
+                )
+                if identifier is not None:
+                    storage.restore(identifier, emergency=True)
+                    _show_restored()
+                return 0
+            database = storage.startup()
+        else:
+            database = Database(path)
+            database.upgrade()
         accounts = AccountService(database)
         if args.init_demo:
             from cyberforge.application.demo import initialize_demo
@@ -142,14 +172,24 @@ def main(argv: Sequence[str] | None = None) -> int:
         from cyberforge.llm.config import GatewayConfig, load_config
         from cyberforge.llm.contracts import GenerationError
         from cyberforge.llm.factory import create_gateway
+        from cyberforge.ui.data_recovery import BootstrapDialog
         from cyberforge.ui.shell import MainWindow
         from cyberforge.ui.theme import apply_theme
 
         apply_theme(app)
+        demo = args.email_demo or args.web_demo or args.learner_demo
+        if (
+            protected
+            and not args.smoke_test
+            and not demo
+            and accounts.needs_bootstrap()
+        ):
+            if not BootstrapDialog(accounts).exec():
+                return 0
         try:
             config = (
                 GatewayConfig()
-                if args.email_demo or args.web_demo or args.learner_demo
+                if demo or getattr(sys, "frozen", False)
                 else load_config()
             )
         except GenerationError:
@@ -159,19 +199,30 @@ def main(argv: Sequence[str] | None = None) -> int:
         emails = EmailMaterialService(
             ScenarioService(accounts),
             create_gateway(config),
-            demo=args.email_demo or args.web_demo or args.learner_demo,
+            demo=demo,
         )
+        recovery = DataRecoveryService(accounts, storage) if storage else None
         window = MainWindow(
             accounts,
             emails,
             WebMaterialService(emails, demo=args.web_demo or args.learner_demo),
+            recovery=recovery,
         )
         window.show()
         if args.smoke_test:
             QTimer.singleShot(500, window.close)
-        return app.exec()
+        result = app.exec()
+        database.close()
+        database = None
+        if recovery is not None and recovery.restore_after_shutdown():
+            _show_restored()
+        return result
     except ApplicationError as error:
         print(str(error), file=sys.stderr)
+        if protected and not setup_only and not args.smoke_test:
+            from PySide6.QtWidgets import QMessageBox
+
+            QMessageBox.critical(None, "CyberForge", str(error))
         return 1
     except (OSError, SQLAlchemyError, CommandError):
         print("Не вдалося відкрити або оновити локальну базу даних.", file=sys.stderr)
@@ -179,3 +230,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     finally:
         if database is not None:
             database.close()
+        lifetime.close()
+
+
+def _show_restored() -> None:
+    from PySide6.QtWidgets import QMessageBox
+
+    QMessageBox.information(
+        None, "Відновлення", "Базу відновлено. Запустіть CyberForge та увійдіть."
+    )

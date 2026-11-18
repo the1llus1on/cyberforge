@@ -173,6 +173,10 @@ class AccountService:
                 self._create(db, username, display_name, Role.ADMINISTRATOR, password)
             )
 
+    def needs_bootstrap(self) -> bool:
+        with self.transaction() as db:
+            return not bool(db.scalar(select(func.count()).select_from(User)))
+
     def update_user(
         self,
         token: str | None,

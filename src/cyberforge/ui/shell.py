@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 
 from cyberforge.application.accounts import AccountService
 from cyberforge.application.analytics import ScenarioAnalyticsService
+from cyberforge.application.data_recovery import DataRecoveryService
 from cyberforge.application.email_materials import EmailMaterialService
 from cyberforge.application.evaluations import EvaluationService
 from cyberforge.application.learner_attempts import LearnerAttemptService
@@ -46,6 +47,7 @@ from cyberforge.ui.account_pages import AccountPage
 from cyberforge.ui.admin_page import AdminPage
 from cyberforge.ui.analytics_page import AnalyticsPage
 from cyberforge.ui.clipboard_shortcuts import ClipboardShortcuts
+from cyberforge.ui.data_recovery import RecoveryPage
 from cyberforge.ui.icons import icon
 from cyberforge.ui.learner_pages import LearnerCatalogPage
 from cyberforge.ui.learner_results import LearnerResultsPage
@@ -88,6 +90,7 @@ class MainWindow(QMainWindow):
         accounts: AccountService,
         emails: EmailMaterialService | None = None,
         webs: WebMaterialService | None = None,
+        recovery: DataRecoveryService | None = None,
     ) -> None:
         super().__init__()
         self.accounts = accounts
@@ -107,6 +110,8 @@ class MainWindow(QMainWindow):
             self.evaluations, self.emails.gateway
         )
         self._closing_pending = False
+        self._recovery = recovery
+        self._restore_request: str | None = None
         self.selected_scenario_id: int | None = None
         self._catalog: tuple[Scenario, ...] = ()
         self._token: str | None = None
@@ -263,6 +268,13 @@ class MainWindow(QMainWindow):
                 page = AdminPage(
                     self.accounts, self.groups, lambda: self._token, self._sync_session
                 )
+                if self._recovery is not None:
+                    page.tabs.addTab(
+                        RecoveryPage(
+                            self._recovery, lambda: self._token, self._request_restore
+                        ),
+                        "Резервні копії",
+                    )
                 self.admin_page = page
             else:
                 page = WorkspacePage(view)
@@ -359,6 +371,10 @@ class MainWindow(QMainWindow):
                 return False
         return True
 
+    def _request_restore(self, identifier: str) -> None:
+        self._restore_request = identifier
+        self.close()
+
     def closeEvent(self, event) -> None:
         if self._closing_pending:
             if self._generation_running():
@@ -369,8 +385,17 @@ class MainWindow(QMainWindow):
             super().closeEvent(event)
             return
         if not self.scenario_page.can_leave():
+            self._restore_request = None
             event.ignore()
             return
+        identifier, self._restore_request = self._restore_request, None
+        if identifier is not None and self._recovery is not None:
+            try:
+                self._recovery.plan_restore(self._token, identifier)
+            except ApplicationError as error:
+                self.statusBar().showMessage(str(error), 5000)
+                event.ignore()
+                return
         self.session_timer.stop()
         self._signed_out()
         if self._generation_running():
