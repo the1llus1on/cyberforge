@@ -153,10 +153,20 @@ class WindowsProfileSecurity:
             attrs = _SecurityAttributes(
                 ctypes.sizeof(_SecurityAttributes), descriptor, False
             )
+            created = False
             if not create(str(path), ctypes.byref(attrs)):
                 error = ctypes.get_last_error()
                 if error != _ERROR_ALREADY_EXISTS:
                     raise ctypes.WinError(error)
+            else:
+                created = True
+            if created:
+                set_security = _function(
+                    self.security, "SetFileSecurityW", _BOOL, _WSTR, _DWORD, _PTR
+                )
+                # OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION.
+                if not set_security(str(path), _READ_OWNER_DACL, descriptor):
+                    raise ctypes.WinError(ctypes.get_last_error())
         finally:
             self.free(descriptor)
 
