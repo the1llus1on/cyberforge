@@ -107,7 +107,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     from cyberforge.application.data_recovery import DataRecoveryService
     from cyberforge.domain.accounts import ApplicationError
     from cyberforge.persistence.database import Database
-    from cyberforge.persistence.profile import PROFILE_ERROR, PrivateProfile
+    from cyberforge.persistence.profile import (
+        PROFILE_ERROR,
+        PrivateProfile,
+        private_profile_root,
+    )
     from cyberforge.persistence.recovery import ProfileRecovery
 
     setup_only = args.init_admin or args.init_demo
@@ -130,7 +134,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         QStandardPaths.StandardLocation.AppLocalDataLocation
     )
     protected = args.database is None and sys.platform == "win32"
-    path = args.database or Path(data_location) / "cyberforge.sqlite3"
+    private_root = private_profile_root(Path(data_location))
+    path = args.database or private_root / "cyberforge.sqlite3"
     lifetime = ExitStack()
     database = None
     try:
@@ -149,7 +154,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         prepare_demo_profile,
                     )
 
-                    container = PrivateProfile(path.parent.with_name(DEMO_DIRECTORY))
+                    container = PrivateProfile(private_root.with_name(DEMO_DIRECTORY))
                     lifetime.enter_context(container.acquire())
                     profile = prepare_demo_profile(container, initialize=args.init_demo)
                     if args.init_demo:

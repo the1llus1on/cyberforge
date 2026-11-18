@@ -10,7 +10,13 @@ from cyberforge.domain.accounts import ApplicationError
 from cyberforge.persistence.windows_profile import WindowsProfileSecurity
 
 DATABASE_NAME = "cyberforge.sqlite3"
+PRIVATE_DIRECTORY = "private"
 PROFILE_ERROR = "Приватне сховище недоступне або має небезпечний шлях чи дозволи."
+
+
+def private_profile_root(app_data_location: Path) -> Path:
+    """Return CyberForge's DACL-controlled directory under Qt application data."""
+    return app_data_location / PRIVATE_DIRECTORY
 
 
 def _file_info(path: Path) -> os.stat_result | None:

@@ -193,7 +193,7 @@ def _hosted_profile_check(python, source, env):
     code = """
 from pathlib import Path
 from PySide6.QtCore import QCoreApplication, QStandardPaths
-from cyberforge.persistence.profile import PrivateProfile
+from cyberforge.persistence.profile import PrivateProfile, private_profile_root
 from cyberforge.persistence.recovery import ProfileRecovery
 from cyberforge.persistence.windows_profile import (
     WindowsProfileSecurity,
@@ -208,10 +208,11 @@ location = QStandardPaths.writableLocation(
     QStandardPaths.StandardLocation.AppLocalDataLocation
 )
 try:
-    profile = PrivateProfile(Path(location))
+    profile = PrivateProfile(private_profile_root(Path(location)))
 except PermissionError:
     security = WindowsProfileSecurity()
-    descriptor = security._descriptor(Path(location))
+    profile_path = private_profile_root(Path(location))
+    descriptor = security._descriptor(profile_path)
     reason = descriptor_rejection_reason(descriptor, security.sid, directory=True)
     owner = descriptor.partition("D:")[0].removeprefix("O:")
     owner_kind = {

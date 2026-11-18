@@ -81,7 +81,7 @@ def _test_database():
     test_only = QStandardPaths.writableLocation(location)
     if not test_only or test_only == normal:
         raise RuntimeError("Qt test data path is not isolated")
-    return Path(test_only) / "cyberforge.sqlite3"
+    return Path(test_only) / "private" / "cyberforge.sqlite3"
 
 
 def _install(setup, folder, *, check=True):
