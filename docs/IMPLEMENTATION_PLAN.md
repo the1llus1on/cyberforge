@@ -1722,3 +1722,10 @@ Manager. Перевірені внутрішні A11 джерела, машин�
 preview та одноразовий dispatch обмежують новий маршрут. Застосовано
 локальний каталог і перевірку актуальності відповіді.
 [Налаштування й політика](PHASE_12_PROVIDER_POLICY.md).
+
+### 18.11.2026 — Phase 12: WP4 Windows packaging
+
+Додано відтворюваний [рецепт випуску](WINDOWS_RELEASE.md), PyInstaller
+onedir, Inno Setup, pinned toolchain, перевірку ресурсів, ZIP/WebEngine
+smoke, manifest, SHA-256 і сторонні notices. P12-02–04 та P12-14
+потребують результатів готової нативної збірки й перевірки артефактів.

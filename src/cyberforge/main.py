@@ -101,6 +101,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         app = QApplication([sys.argv[0]])
     app.setApplicationName("CyberForge")
     app.setOrganizationName("CyberForge")
+    packaged = getattr(sys, "frozen", False)
+    if packaged and args.smoke_test:
+        QStandardPaths.setTestModeEnabled(True)
     data_location = QStandardPaths.writableLocation(
         QStandardPaths.StandardLocation.AppLocalDataLocation
     )
@@ -114,6 +117,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             if not data_location:
                 raise ApplicationError(PROFILE_ERROR)
             try:
+                if packaged:
+                    from cyberforge.persistence.windows_profile import release_instance
+
+                    lifetime.enter_context(release_instance())
                 profile = PrivateProfile(path.parent)
                 lifetime.enter_context(profile.acquire())
             except OSError:
@@ -224,9 +231,25 @@ def main(argv: Sequence[str] | None = None) -> int:
             provider_settings=provider_settings,
         )
         window.show()
+        smoke_browser = None
         if args.smoke_test:
-            QTimer.singleShot(500, window.close)
+            if packaged:
+                from cyberforge.ui.web_browser import WebBrowser
+
+                smoke_browser = WebBrowser(window)
+                smoke_browser.load_succeeded.connect(
+                    lambda: QTimer.singleShot(0, window.close)
+                )
+                smoke_browser.resize(500, 320)
+                smoke_browser.show()
+                smoke_browser.set_draft(None)
+                smoke_browser.view.show()
+                QTimer.singleShot(20000, lambda: app.exit(2))
+            else:
+                QTimer.singleShot(500, window.close)
         result = app.exec()
+        if smoke_browser is not None:
+            smoke_browser.dispose()
         database.close()
         database = None
         if recovery is not None and recovery.restore_after_shutdown():

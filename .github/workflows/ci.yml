@@ -19,6 +19,8 @@ jobs:
       PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: astral-sh/setup-uv@v6
         with:
           version: '0.13.7'
@@ -38,3 +40,36 @@ jobs:
         run: |
           uv run --locked python -I -c "import cyberforge"
           uv run --locked cyberforge --database "${{ runner.temp }}/cyberforge-ci-smoke.sqlite3" --smoke-test
+  windows-artifacts:
+    name: Windows package and portable smoke
+    runs-on: windows-2022
+    timeout-minutes: 40
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.13.7'
+      - name: Install signed portable Inno Setup compiler
+        shell: pwsh
+        run: ./release/windows/install_compiler.ps1 -Destination "${{ runner.temp }}/cyberforge-inno"
+      - name: Build and smoke-test exact source archive
+        shell: pwsh
+        run: |
+          $sha = (git rev-parse HEAD).Trim()
+          if (git status --porcelain) { throw "Dirty source checkout" }
+          $archive = "${{ runner.temp }}/cyberforge-source.tar"
+          git archive --format=tar "--output=$archive" $sha
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $uv = (Get-Command uv).Source
+          uv run --no-project --python 3.12.16 python release/windows/build_release.py --archive $archive --sha $sha --output "${{ runner.temp }}/cyberforge-artifacts" --uv $uv --iscc "${{ runner.temp }}/cyberforge-inno/ISCC.exe" --hosted-ci
+          exit $LASTEXITCODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cyberforge-windows-ci-artifacts
+          path: ${{ runner.temp }}/cyberforge-artifacts
+          if-no-files-found: error
+          compression-level: 0

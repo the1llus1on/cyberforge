@@ -22,6 +22,7 @@ _PD = ctypes.POINTER(_DWORD)
 _BOOL = wintypes.BOOL
 _HANDLE = wintypes.HANDLE
 _WSTR = wintypes.LPCWSTR
+RELEASE_MUTEX = r"Local\CyberForge-Release-v1"
 
 
 class _SecurityAttributes(ctypes.Structure):
@@ -46,6 +47,25 @@ def _function(library, name, result, *arguments):
     call.restype = result
     call.argtypes = arguments
     return call
+
+
+@contextmanager
+def release_instance() -> Iterator[None]:
+    from cyberforge.domain.accounts import ApplicationError
+
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    create = _function(kernel, "CreateMutexW", _HANDLE, _PTR, _BOOL, _WSTR)
+    close = _function(kernel, "CloseHandle", _BOOL, _HANDLE)
+    handle = create(None, False, RELEASE_MUTEX)
+    error = ctypes.get_last_error()
+    if not handle:
+        raise ctypes.WinError(error)
+    try:
+        if error == _ERROR_ALREADY_EXISTS:
+            raise ApplicationError("CyberForge уже запущено.")
+        yield
+    finally:
+        close(handle)
 
 
 class WindowsProfileSecurity:
