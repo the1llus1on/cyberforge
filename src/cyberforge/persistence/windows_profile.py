@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import BinaryIO
 
 _READ_OWNER_DACL = 0x05
+_PROTECTED_DACL = 0x80000000
 _SE_FILE_OBJECT = 1
 _TOKEN_QUERY = 8
 _TOKEN_USER = 1
@@ -161,12 +162,51 @@ class WindowsProfileSecurity:
             else:
                 created = True
             if created:
-                set_security = _function(
-                    self.security, "SetFileSecurityW", _BOOL, _WSTR, _DWORD, _PTR
+                get_dacl = _function(
+                    self.security,
+                    "GetSecurityDescriptorDacl",
+                    _BOOL,
+                    _PTR,
+                    ctypes.POINTER(_BOOL),
+                    _PPTR,
+                    ctypes.POINTER(_BOOL),
                 )
-                # OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION.
-                if not set_security(str(path), _READ_OWNER_DACL, descriptor):
+                present = _BOOL()
+                dacl = _PTR()
+                defaulted = _BOOL()
+                if (
+                    not get_dacl(
+                        descriptor,
+                        ctypes.byref(present),
+                        ctypes.byref(dacl),
+                        ctypes.byref(defaulted),
+                    )
+                    or not present.value
+                ):
                     raise ctypes.WinError(ctypes.get_last_error())
+                set_dacl = _function(
+                    self.security,
+                    "SetNamedSecurityInfoW",
+                    _DWORD,
+                    _WSTR,
+                    _DWORD,
+                    _DWORD,
+                    _PTR,
+                    _PTR,
+                    _PTR,
+                    _PTR,
+                )
+                status = set_dacl(
+                    str(path),
+                    _SE_FILE_OBJECT,
+                    0x04 | _PROTECTED_DACL,
+                    None,
+                    None,
+                    dacl,
+                    None,
+                )
+                if status:
+                    raise ctypes.WinError(status)
         finally:
             self.free(descriptor)
 
