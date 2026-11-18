@@ -316,7 +316,7 @@ def descriptor_rejection_reason(
         if kind != "A":
             return "unexpected_ace_type"
         if principal not in principals:
-            return "unexpected_ace_principal"
+            return _principal_reason(principal)
         if (
             object_type
             or inherited_type
@@ -340,3 +340,15 @@ def descriptor_rejection_reason(
     if directory and inherited != principals:
         return "missing_inheritable_access"
     return None
+
+
+def _principal_reason(principal: str) -> str:
+    """Describe a rejected well-known principal without disclosing its SID."""
+    known = {
+        "AU": "authenticated_users",
+        "BU": "builtin_users",
+        "CO": "creator_owner",
+        "OW": "owner_rights",
+        "WD": "everyone",
+    }
+    return f"unexpected_ace_{known.get(principal, 'other')}"
