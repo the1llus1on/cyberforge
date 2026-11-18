@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–9 — ACCEPTED; Phase10 — REVIEW / PENDING OWNER ACCEPTANCE (17.11.2026), architecture/WP1 ACCEPTED, Contract Freeze PASSED; Phases11–12 — NOT STARTED.
+**State:** Phases 0–9 — ACCEPTED; Phase10 — ACCEPTED (18.11.2026), architecture/WP1 ACCEPTED, Contract Freeze PASSED; Phases11–12 — NOT STARTED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -27,7 +27,7 @@
 | 7 | Web Constructor | ACCEPTED | Hybrid components, isolated WebEngine, visual editor, scoped AI, saved Email binding, explicit SQLite Save; PHASE_7_ACCEPTANCE.md |
 | 8 | Scenario Integration | ACCEPTED | Typed Email→Web link, rubric definitions/editor, exact readiness/review, atomic immutable publication, audited grants/access; PHASE_8_ACCEPTANCE.md |
 | 9 | Learner Simulation | ACCEPTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
-| 10 | Scoring & Mentor | REVIEW / PENDING OWNER ACCEPTANCE | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
+| 10 | Scoring & Mentor | ACCEPTED | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
 | 11 | Analytics Mode | NOT STARTED | Read-only scenario statistics, deduplicated learner table, missing-data rules, filters, CSV/JSON export, RBAC; analytics tests |
 | 12 | Finalization | NOT STARTED | Full regression/security checks, Windows 11 package, demonstration dataset, docs and release checklist |
 
@@ -1523,3 +1523,37 @@ One feature branch, implementation checkpoint27e99f482766dfac50caa794ab313f97951
 final documentation HEAD/PR/CI evidence у delivery/PR для exact published revision,
 без circular commits. No merge; Phase11/12 NOT STARTED. Next: independent review
 та owner manual WSLg checklist у PHASE_10_IMPLEMENTATION_REVIEW.md.
+
+
+## 18.11.2026 — Остаточне прийняття Phase 10
+
+Власник прийняв Phase 10 після незалежного огляду, автоматизованих перевірок
+і повідомленої ним ручної функціональної перевірки у WSLg. Статус ручного
+приймання — **ACCEPTED**. Зауваження F10-R01, F10-R02 і F10-R03 — **RESOLVED**.
+
+| Обсяг | Остаточний статус |
+| --- | --- |
+| WP1 — Contracts & Evidence Validation | ACCEPTED |
+| Contract Freeze Gate | PASSED / OWNER APPROVED |
+| WP2 — Deterministic Scoring | ACCEPTED |
+| WP3 — Persistence & Integrity | ACCEPTED |
+| WP4 — Critical Observations | ACCEPTED |
+| WP5 — Mentor Feedback | ACCEPTED |
+| WP6 — Learner Results UI | ACCEPTED |
+| WP7 — Verification | ACCEPTED |
+| WP8 — Review & Owner Acceptance | COMPLETED |
+| Phases 0–10 | ACCEPTED |
+| Phase 11 | NOT STARTED |
+| Phase 12 | NOT STARTED |
+
+[PR #13](https://github.com/the1llus1on/cyberforge/pull/13) — **MERGED**.
+Прийнятий HEAD реалізації: `0c2d36c72bafed0d32f5f84ac0bd928b5c405fb0`.
+Коміт злиття: `3011e966eb6d6f0bfa95ba56ed9ea11c4e67e4fc`.
+
+[GitHub Actions 44198755132](https://github.com/the1llus1on/cyberforge/actions/runs/44198755132):
+Linux — 1 357 пройдено. Windows Server 2022 — 1 354 пройдено, 3 очікувані
+пропуски перевірок лише для POSIX. Ruff lint і format, автоматизовані WSLg
+та відповідні GUI перевірки — **PASS**.
+
+Перевірки native Windows 11, DPI, апаратного GPU, фінального виконуваного файла
+та інсталятора залишаються завданнями Phase 12.

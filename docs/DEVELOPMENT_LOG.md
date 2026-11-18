@@ -4175,3 +4175,37 @@ F10-R03 RESOLVED locally, pending independent re-review. Exact new HEAD and
 final-head Linux/Windows CI recorded in existing Draft PR13 and delivery.
 Automated WSLg evidence is not owner manual acceptance; native Windows11 remains
 Phase12 deferral. No merge/acceptance/Phase11/12 work.
+
+
+## 18.11.2026 — Остаточне прийняття Phase 10
+
+Власник прийняв Phase 10 після незалежного огляду, автоматизованих перевірок
+і повідомленої ним ручної функціональної перевірки у WSLg. Статус ручного
+приймання — **ACCEPTED**. Зауваження F10-R01, F10-R02 і F10-R03 — **RESOLVED**.
+
+| Обсяг | Остаточний статус |
+| --- | --- |
+| WP1 — Contracts & Evidence Validation | ACCEPTED |
+| Contract Freeze Gate | PASSED / OWNER APPROVED |
+| WP2 — Deterministic Scoring | ACCEPTED |
+| WP3 — Persistence & Integrity | ACCEPTED |
+| WP4 — Critical Observations | ACCEPTED |
+| WP5 — Mentor Feedback | ACCEPTED |
+| WP6 — Learner Results UI | ACCEPTED |
+| WP7 — Verification | ACCEPTED |
+| WP8 — Review & Owner Acceptance | COMPLETED |
+| Phases 0–10 | ACCEPTED |
+| Phase 11 | NOT STARTED |
+| Phase 12 | NOT STARTED |
+
+[PR #13](https://github.com/the1llus1on/cyberforge/pull/13) — **MERGED**.
+Прийнятий HEAD реалізації: `0c2d36c72bafed0d32f5f84ac0bd928b5c405fb0`.
+Коміт злиття: `3011e966eb6d6f0bfa95ba56ed9ea11c4e67e4fc`.
+
+[GitHub Actions 44198755132](https://github.com/the1llus1on/cyberforge/actions/runs/44198755132):
+Linux — 1 357 пройдено. Windows Server 2022 — 1 354 пройдено, 3 очікувані
+пропуски перевірок лише для POSIX. Ruff lint і format, автоматизовані WSLg
+та відповідні GUI перевірки — **PASS**.
+
+Перевірки native Windows 11, DPI, апаратного GPU, фінального виконуваного файла
+та інсталятора залишаються завданнями Phase 12.
