@@ -132,3 +132,45 @@ Heartbeat перевіряє актор/доступ і поточну ауди�
 
 Незалежний огляд і ручні кроки залишаються відкритими. Фізичний Windows 11,
 DPI, GPU та інсталятор відкладено до Phase 12.
+
+## F11-R01 · виправлення після незалежного огляду PR #16
+
+На HEAD `c87c4bad9fd949d3e643f6df50fb75d62dfdd543` пошкодження
+`scenario_id`, `learner_id` або `publication_id` у проєкції
+`evaluation_results` могло вилучити коректно атрибутовану спробу зі
+статистики. У режимі останньої завершеної спроби це створювало можливість
+підстановки попереднього перевіреного бала.
+
+Історичний добір зберігає перевірку відповідності ідентичностей спроби в
+канонічних `result_json` та `evidence_json`. Суперечність у цій атрибуції
+блокує видачу запису. Денормалізовані поля рядка оцінки перевіряє чинний
+`StoredEvaluationIntegrityValidation`. При їх невідповідності коректно
+атрибутована спроба залишається в лічильниках і покритті зі станом
+`STORED_EVALUATION_INTEGRITY_ERROR`. Історія зберігає ідентичність
+спроби та її групи. Бал і дані пошкодженої оцінки недоступні.
+Якщо обидві канонічні ідентичності не читаються і денормалізовані поля
+суперечать ідентичності спроби, запис залишається недоступним. Цю межу
+перевіряє `test_ambiguous_evaluation_identity_remains_hidden`.
+
+`test_corrupt_evaluation_projection_retains_attempt` відтворює три окремі
+пошкодження в ізольованій SQLite із чинними зовнішніми ключами. До
+виправлення всі три випадки втрачали завершену спробу. Тест очікує два
+завершення, одну помилку цілісності та порожній бал у latest-режимі.
+Режим all-completed враховує лише раніший валідний бал. Instructor і
+Administrator отримують однакову класифікацію. Тест порівнює стан таблиць
+до й після читань. `test_invalid_historical_group_is_never_disclosed`
+також перевіряє відмову для власника сценарію, який після втрати групи A
+має доступ до групи B, записаної у пошкодженій спробі.
+
+П’ять сфокусованих перевірок F11-R01 пройшли командою
+`uv run --locked pytest -q tests/test_analytics.py -k 'corrupt_evaluation_projection or ambiguous_evaluation_identity or invalid_historical_group' --tb=short`.
+`uv run --locked ruff check .` і `uv run --locked ruff format --check .`
+пройшли. На реальному WSLg Wayland пройшли 9 тестів за 40,82 с.
+Команда `QT_QPA_PLATFORM=wayland uv run --locked pytest -q tests/ui/test_analytics.py --tb=short`.
+
+Повний набір для остаточного виправлення пройшов з **1391 тестом**,
+без помилок і пропусків, за 1846,10 с. Команда
+`QT_QPA_PLATFORM=offscreen uv run --locked pytest -q --tb=short -o faulthandler_timeout=90 --junitxml=/tmp/cyberforge-f11-r01-final.xml`.
+Локальні запуски використовували `UV_CACHE_DIR=/tmp/cyberforge-phase11-uv`.
+Результати Linux і Windows Server 2022 для HEAD виправлення фіксуються у
+[Draft PR #16](https://github.com/the1llus1on/cyberforge/pull/16).

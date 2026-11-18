@@ -68,17 +68,13 @@ def attempt_with_times(row, started, completed, abandoned):
     )
 
 
-def _agrees_on_identity(row, stored):
+def _agrees_on_historical_attribution(row, stored):
     if stored is None:
         return True
-    if (stored.scenario_id, stored.learner_id, stored.publication_id) != (
-        row.scenario_id,
-        row.learner_id,
-        row.publication_id,
-    ):
-        return False
-    # Phase 10 freezes the group in both canonical projections independently
-    # of the attempt row. Contradictory attribution cannot be shown safely.
+    # Canonical attempt identities can corroborate attribution despite a
+    # damaged evaluation projection. The stored-result validator checks that
+    # projection separately.
+    corroborated = False
     for document in (stored.result_json, stored.evidence_json):
         try:
             persisted = json.loads(document)["attempt"]
@@ -102,7 +98,18 @@ def _agrees_on_identity(row, stored):
             row.authorization_group_id,
         ):
             return False
-    return True
+        corroborated = True
+    # When both copies of the identity are unreadable, preserve the existing
+    # fail-closed behavior for conflicting attribution.
+    return corroborated or (
+        stored.scenario_id,
+        stored.learner_id,
+        stored.publication_id,
+    ) == (
+        row.scenario_id,
+        row.learner_id,
+        row.publication_id,
+    )
 
 
 class _HistoricalReader:
@@ -152,7 +159,7 @@ class _HistoricalReader:
             )
         for row in rows:
             stored = results.get(row.id)
-            if not _agrees_on_identity(row, stored):
+            if not _agrees_on_historical_attribution(row, stored):
                 continue
             result_id = stored.id if stored is not None else None
             value = self._project(

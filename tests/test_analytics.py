@@ -2,7 +2,7 @@
 
 import csv
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
@@ -382,6 +382,115 @@ def test_corruption_excluded(publication_env, trigger, statement, expected):  # 
     assert detail.result_id is None and detail.score is None and not detail.criteria
 
 
+@pytest.mark.parametrize("column", ("scenario_id", "learner_id", "publication_id"))
+def test_corrupt_evaluation_projection_retains_attempt(
+    publication_env,  # noqa: F811
+    monkeypatch,
+    column,
+):
+    from cyberforge.application import learner_attempts
+
+    e = publication_env
+    publication = publish(e)
+    scenario = e.scenario
+    ev, service, query = setup_services(e)
+    earlier = complete(ev, e.tokens["learner"], scenario.id)
+    earlier_result = ev.evaluate(e.tokens["learner"], earlier.attempt_id)
+    assert earlier_result.score_percent == 50
+
+    class LaterClock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            stamp = BASE + timedelta(seconds=1)
+            return stamp.astimezone(tz) if tz else stamp.replace(tzinfo=None)
+
+    monkeypatch.setattr(learner_attempts, "datetime", LaterClock)
+    latest = complete(ev, e.tokens["learner"], scenario.id, inspect=True)
+    corrupt_result = ev.evaluate(e.tokens["learner"], latest.attempt_id)
+    assert latest.completed_at > earlier.completed_at
+    assert corrupt_result.score_percent == 100
+
+    if column == "learner_id":
+        other, _ = add_learner(e, "other_learner", "Інший учень")
+        replacement = other.id
+    else:
+        e.scenario = e.service.create(
+            e.token, {"topic": "Інший сценарій", "difficulty": "beginner"}
+        )
+        replacement = e.scenario.id if column == "scenario_id" else publish(e).id
+    with e.database.engine.begin() as connection:
+        connection.exec_driver_sql("DROP TRIGGER evaluation_results_no_update")
+        connection.exec_driver_sql(
+            f"UPDATE evaluation_results SET {column} = ? WHERE id = ?",
+            (replacement, str(corrupt_result.result_id)),
+        )
+        assert not connection.exec_driver_sql("PRAGMA foreign_key_check").all()
+    before = table_state(e)
+    state = "STORED_EVALUATION_INTEGRITY_ERROR"
+    all_query = query.model_copy(update={"aggregation": "ALL_COMPLETED_ATTEMPTS"})
+    exact = HistoryQueryV1(learner_id=e.learner_id, attempt_id=latest.attempt_id)
+    for token in (e.token, e.tokens["admin"]):
+        snapshot = service.summary(token, query)
+        assert (
+            snapshot.metrics.lifecycle.total
+            == snapshot.metrics.lifecycle.completed
+            == 2
+        )
+        assert snapshot.metrics.completing_learners == snapshot.total_learners == 1
+        assert snapshot.metrics.mean_score is None
+        assert snapshot.metrics.scored_coverage == Ratio(numerator=0, denominator=1)
+        assert snapshot.quality.filtered.total == 2
+        assert snapshot.quality.filtered.stored_integrity_error == 1
+        assert snapshot.quality.filtered.scored_nonzero == 1
+        assert snapshot.quality.selected.stored_integrity_error == 1
+        assert snapshot.rows[0].result_status == state
+        assert snapshot.rows[0].score is None
+
+        all_results = service.summary(token, all_query)
+        assert all_results.metrics.mean_score == 50
+        assert all_results.metrics.scored_coverage == Ratio(numerator=1, denominator=2)
+        assert all_results.quality.selected.stored_integrity_error == 1
+
+        detail = service.history(token, query, exact).attempts[0]
+        assert detail.result_status == state
+        assert (detail.scenario_id, detail.learner_id, detail.publication.id) == (
+            scenario.id,
+            e.learner_id,
+            publication.id,
+        )
+        assert detail.group.id == e.group.id
+        assert detail.result_id is None and detail.score is None
+        assert not (detail.criteria or detail.facts or detail.feedback)
+        with pytest.raises(AccessDenied):
+            service.history(
+                token,
+                query,
+                exact.model_copy(update={"result_id": corrupt_result.result_id}),
+            )
+    assert before == table_state(e)
+
+
+def test_ambiguous_evaluation_identity_remains_hidden(publication_env):  # noqa: F811
+    e = publication_env
+    publish(e)
+    ev, service, query = setup_services(e)
+    attempt = complete(ev, e.tokens["learner"], e.scenario.id)
+    result = ev.evaluate(e.tokens["learner"], attempt.attempt_id)
+    other, _ = add_learner(e, "other_learner", "Інший учень")
+    with e.database.engine.begin() as connection:
+        connection.exec_driver_sql("DROP TRIGGER evaluation_results_no_update")
+        connection.exec_driver_sql(
+            "UPDATE evaluation_results "
+            "SET learner_id = ?, result_json = '{}', evidence_json = '{}' WHERE id = ?",
+            (other.id, str(result.result_id)),
+        )
+    exact = HistoryQueryV1(learner_id=e.learner_id, attempt_id=attempt.attempt_id)
+    for token in (e.token, e.tokens["admin"]):
+        assert service.summary(token, query).metrics.lifecycle.total == 0
+        with pytest.raises(AccessDenied):
+            service.history(token, query, exact)
+
+
 def test_export_complete_private_and_revocable(publication_env, tmp_path, monkeypatch):  # noqa: F811
     from cyberforge.analytics import export
 
@@ -642,6 +751,17 @@ def test_invalid_historical_group_is_never_disclosed(publication_env):  # noqa: 
         service.history(
             e.tokens["admin"],
             query,
+            HistoryQueryV1(learner_id=e.learner_id, attempt_id=attempt.attempt_id),
+        )
+    # The instructor can access Group B, but cannot acquire Group A history
+    # through the altered attempt row after losing the Group A assignment.
+    change_groups(e, e.group, learners=(e.learner_id,))
+    group_b = query.model_copy(update={"group_id": e.other_group.id})
+    assert service.summary(e.token, group_b).metrics.lifecycle.total == 0
+    with pytest.raises(AccessDenied):
+        service.history(
+            e.token,
+            group_b,
             HistoryQueryV1(learner_id=e.learner_id, attempt_id=attempt.attempt_id),
         )
 
