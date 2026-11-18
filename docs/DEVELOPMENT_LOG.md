@@ -4209,3 +4209,42 @@ Linux — 1 357 пройдено. Windows Server 2022 — 1 354 пройдено
 
 Перевірки native Windows 11, DPI, апаратного GPU, фінального виконуваного файла
 та інсталятора залишаються завданнями Phase 12.
+
+## 18.11.2026 — Архітектура Phase 11 «Аналіз»
+
+Власник погодив ядро архітектури D11-01–D11-05. Записано
+[ADR-0011](adr/0011-analytics-mode.md) та
+[поправку A11](../TECHNICAL_SPECIFICATION.md#srs-v30--amendment-a11-analytics-mode).
+Обсяг цього завдання обмежено документацією. Реалізацію Phase 11, додавання
+моделей, міграцій, UI чи тестів за цим завданням заборонено.
+
+- **D11-01.** Читати одну SQLite, перевіряти збережені авторитетні оцінки
+  без повторного оцінювання. Міграція 0009 не є передумовою.
+- **D11-02.** Типовий режим `LATEST_COMPLETED_PER_LEARNER`, альтернатива
+  `ALL_COMPLETED_ATTEMPTS`. Зберігати вибір останньої завершеної спроби,
+  якщо її оцінка відсутня, UNSCORABLE чи недійсна.
+- **D11-03.** Instructor читає власний сценарій тільки для поточних груп
+  викладання, використовуючи історичний `authorization_group_id`.
+  Вибуття учня зберігає історію, вибуття викладача відкликає доступ.
+  Administrator має глобальні права.
+- **D11-04.** За `NOT_CONFIGURED` показувати «Не налаштовано», окремо
+  рахувати спостереження `confirm` і `submit_synthetic`.
+- **D11-05.** Необов'язковий AssistantAgent пояснює перевірені агрегати й
+  радить. Хмара вмикається явно, офлайн-поради детерміновані.
+
+Запроєктовано `AnalyticsQueryV1`, `ScenarioAnalyticsSnapshotV1`,
+`ScenarioMetricsV1`, `LearnerAnalyticsRowV1`, `AttemptAnalyticsDetailV1`,
+`CriterionStatisticsV1`, `AnalyticsDataQualityV1` і `AnalyticsExportManifestV1`.
+Власна межа авторизації Аналітики використовуватиме
+`StoredEvaluationIntegrityValidation` у тому самому знімку SQLite.
+Збережена оцінка, learner-only API, контракти Phase 10 та Mentor зберігають
+прийняту поведінку. Запропонований хмарний поріг із п'ятьох учнів очікує огляду.
+
+P11-01–P11-16 визначено як майбутні умови приймання для прав доступу,
+історії, агрегації, цілісності, UI, експорту, порад, регресій, CI та
+ручного приймання власником. Phases 0–10 — **ACCEPTED**,
+Phases 11–12 — **NOT STARTED**. Документація — **PENDING REVIEW**.
+
+## 18.11.2026 — Phase 11 Documentation Review Gate PASSED
+
+Незалежний огляд [PR #15](https://github.com/the1llus1on/cyberforge/pull/15) підтвердив п'ять owner-approved рішень D11-01–D11-05, узгодженість ADR-0011 і SRS Amendment A11 з Phases 8–10 та документаційний-only обсяг. Власник явно схвалив ADR-0011 і Amendment A11 та дозволив SHA-guarded merge документаційного PR. **Architecture documentation: APPROVED; Documentation Review Gate: PASSED.** F11-ADR-01 (запропонований поріг п'яти учнів для хмарного advisory) не затверджено окремо: до рішення хмарний шлях недоступний, локальні детерміновані рекомендації дозволені. **Phases 0–10: ACCEPTED; Phases 11–12: NOT STARTED.** Це не дозвіл на реалізацію Phase 11.

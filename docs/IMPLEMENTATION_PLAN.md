@@ -1557,3 +1557,37 @@ Linux — 1 357 пройдено. Windows Server 2022 — 1 354 пройдено
 
 Перевірки native Windows 11, DPI, апаратного GPU, фінального виконуваного файла
 та інсталятора залишаються завданнями Phase 12.
+
+## Phase 11 — Analytics Mode architecture (18.11.2026)
+
+**Roadmap:** NOT STARTED
+
+**Architecture core:** OWNER APPROVED
+
+**Documentation:** APPROVED — Documentation Review Gate PASSED (18.11.2026)
+
+**Implementation:** NOT AUTHORIZED
+
+[ADR-0011](adr/0011-analytics-mode.md) records D11-01–D11-05 and the
+future P11-01–P11-16 acceptance matrix. [SRS v3.0 Amendment A11](../TECHNICAL_SPECIFICATION.md#srs-v30--amendment-a11-analytics-mode)
+adds FR-A11-01–18, NFR-A11-01–08 and traceability to SRS §§7, 12–14,
+16, 20–24. The accepted Phase 8–10 persistence, history and scoring
+contracts are prerequisites. Phase 12 retains native Windows 11
+acceptance and packaging.
+
+The following work packages belong to one future Phase 11
+implementation task after explicit authorization. Separate
+implementation PRs are optional.
+
+| Work package | Scope | Future acceptance |
+| --- | --- | --- |
+| Analytics DTOs and authorization | Bounded V1 queries and projections, roles, ownership, active sessions, current groups and historical scope. | P11-01, P11-02, P11-04, P11-05 |
+| Query and aggregation | One SQLite snapshot, exact publication binding, compatible criterion series, latest/all completed selection and stored-result validation. | P11-04–P11-07, P11-09, P11-10 |
+| KPI and data quality | Decimal metrics, explicit denominators, incomplete/zero/UNSCORABLE/integrity states and chart series from the same snapshot. | P11-07–P11-11 |
+| PySide6 Analytics UI | Shared Scenario catalog and selection, filtered dashboard, keyboard-accessible learner table and details, async session cleanup. | P11-03, P11-11, P11-12 |
+| AssistantAgent advisory | Sanitized single-version facts, explicit cloud activation and deterministic offline behavior. Review the proposed minimum cohort control. | P11-14 |
+| CSV/JSON export | Fresh authorization, full filtered cohort, versioned manifest, nulls and formula-injection protection. | P11-02, P11-13 |
+| Security and regression verification | Access denial, history integrity and immutability, UI consistency, Ruff, full suite and final-head Linux/Windows CI. | P11-01–P11-15 |
+| Owner review and acceptance | Independent review, owner manual WSLg acceptance and separate merge authorization. | P11-16 |
+
+Independent architecture review passed and the owner approved ADR-0011 and SRS Amendment A11 on 18.11.2026. Documentation Review Gate: PASSED. The proposed five-learner cloud advisory threshold remains open; cloud analytics advisory is disabled until separately approved. Phase 11 implementation requires separate owner authorization.
