@@ -373,7 +373,13 @@ def descriptor_rejection_reason(
     # (Administrators) when creating a directory, even when the DACL grants
     # the exact account SID explicitly. Both possible group owners are already
     # trusted principals in the strict allow-list below.
-    if not separator or owner not in {f"O:{sid}", "O:SY", "O:BA"}:
+    if not separator or owner not in {
+        f"O:{sid}",
+        "O:SY",
+        "O:BA",
+        "O:S-1-5-18",
+        "O:S-1-5-32-544",
+    }:
         return "owner"
     flags, _, entries = dacl.partition("(")
     if not re.fullmatch(r"(?:P|AI|AR)*", flags) or not entries:
