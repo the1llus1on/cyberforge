@@ -195,6 +195,10 @@ from pathlib import Path
 from PySide6.QtCore import QCoreApplication, QStandardPaths
 from cyberforge.persistence.profile import PrivateProfile
 from cyberforge.persistence.recovery import ProfileRecovery
+from cyberforge.persistence.windows_profile import (
+    WindowsProfileSecurity,
+    descriptor_rejection_reason,
+)
 
 app = QCoreApplication(["CyberForge"])
 app.setOrganizationName("CyberForge")
@@ -203,7 +207,15 @@ QStandardPaths.setTestModeEnabled(True)
 location = QStandardPaths.writableLocation(
     QStandardPaths.StandardLocation.AppLocalDataLocation
 )
-profile = PrivateProfile(Path(location))
+try:
+    profile = PrivateProfile(Path(location))
+except PermissionError:
+    security = WindowsProfileSecurity()
+    reason = descriptor_rejection_reason(
+        security._descriptor(Path(location)), security.sid, directory=True
+    )
+    print(f"Protected-profile ACL rejection: {reason}")
+    raise
 with profile.acquire():
     ProfileRecovery(profile).startup().close()
 """

@@ -209,7 +209,8 @@ class WindowsProfileSecurity:
             self.free(security)
 
     def validate(self, path: Path, *, directory: bool) -> None:
-        if not valid_descriptor(self._descriptor(path), self.sid, directory=directory):
+        descriptor = self._descriptor(path)
+        if not valid_descriptor(descriptor, self.sid, directory=directory):
             raise PermissionError("Небезпечні дозволи приватного профілю Windows.")
 
     @contextmanager
@@ -265,20 +266,27 @@ class WindowsProfileSecurity:
 
 def valid_descriptor(descriptor: str, sid: str, *, directory: bool) -> bool:
     """Check owner, effective access and inheritable directory access."""
+    return descriptor_rejection_reason(descriptor, sid, directory=directory) is None
+
+
+def descriptor_rejection_reason(
+    descriptor: str, sid: str, *, directory: bool
+) -> str | None:
+    """Return a redacted reason code when a Windows ACL is not acceptable."""
     owner, separator, dacl = descriptor.partition("D:")
     # Windows can assign the primary owner of an elevated process token
     # (Administrators) when creating a directory, even when the DACL grants
     # the exact account SID explicitly. Both possible group owners are already
     # trusted principals in the strict allow-list below.
     if not separator or owner not in {f"O:{sid}", "O:SY", "O:BA"}:
-        return False
+        return "owner"
     flags, _, entries = dacl.partition("(")
     if not re.fullmatch(r"(?:P|AI|AR)*", flags) or not entries:
-        return False
+        return "dacl_flags_or_empty"
     all_entries = "(" + entries
     entries = re.findall(r"\(([^()]*)\)", all_entries)
     if "".join(f"({entry})" for entry in entries) != all_entries:
-        return False
+        return "malformed_aces"
     aliases = {"S-1-5-18": "SY", "S-1-5-32-544": "BA"}
     principals = {sid, "SY", "BA"}
     effective = set()
@@ -286,7 +294,7 @@ def valid_descriptor(descriptor: str, sid: str, *, directory: bool) -> bool:
     for entry in entries:
         parts = entry.split(";")
         if len(parts) != 6:
-            return False
+            return "malformed_ace"
         kind, ace_flags, rights, object_type, inherited_type, principal = parts
         principal = aliases.get(principal, principal)
         if (
@@ -296,7 +304,7 @@ def valid_descriptor(descriptor: str, sid: str, *, directory: bool) -> bool:
             or inherited_type
             or not re.fullmatch(r"(?:OI|CI|IO|ID|NP)*", ace_flags)
         ):
-            return False
+            return "untrusted_ace"
         full_access = rights == "FA" or (
             rights.startswith("0x") and int(rights, 16) == _FULL_ACCESS
         )
@@ -309,4 +317,8 @@ def valid_descriptor(descriptor: str, sid: str, *, directory: bool) -> bool:
         ):
             if "NP" not in ace_flags:
                 inherited.add(principal)
-    return effective == principals and (not directory or inherited == principals)
+    if effective != principals:
+        return "missing_effective_access"
+    if directory and inherited != principals:
+        return "missing_inheritable_access"
+    return None
