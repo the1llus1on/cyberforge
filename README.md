@@ -6,6 +6,8 @@
 
 ## Поточний стан
 
+**Phases 0–11 — ACCEPTED. Phase 12 — NOT STARTED.**
+
 Phase 0 та Phase 1 — ACCEPTED. Phase 2 — Users & Groups: **ACCEPTED власником
 12.11.2026**. Phase 3 — Scenario Management: **ACCEPTED власником 12.11.2026**.
 Реалізовано вхід/вихід, Argon2id, три ролі, зміну/скидання паролів,
@@ -16,9 +18,9 @@ Phase 0 та Phase 1 — ACCEPTED. Phase 2 — Users & Groups: **ACCEPTED вла
 [ADR-0002](docs/adr/0002-identity-groups.md),
 [ADR-0003](docs/adr/0003-scenario-drafts.md).
 У Конструкторі доступні створення, пошук і редагування власних сценаріїв,
-постійні ID, SQLite persistence, чернеткові версії та зворотне архівування. Аналіз використовує
-ті самі ID та показує відсутність результатів. Email/Web Constructor підтримують
-явну AI-генерацію або позначене офлайн-демо; Web використовує ізольований Qt WebEngine.
+постійні ID, SQLite persistence, чернеткові версії та зворотне архівування.
+Аналіз використовує ті самі ID та показує дозволені історичні результати.
+Email/Web Constructor підтримують явну AI-генерацію або позначене офлайн-демо; Web використовує ізольований Qt WebEngine.
 Phase 9 learner flow — ACCEPTED власником 2026-11-17; Phase 10 scoring/Mentor — ACCEPTED власником 18.11.2026. Для офлайн-демо ключі та `.env` не потрібні.
 
 ## Встановлення й звичайний запуск
@@ -216,8 +218,9 @@ ID і назва `Сценарій {id}` виникають тільки піс�
 Instructor працює лише зі своїми сценаріями. Administrator бачить усі,
 редагує й архівує власні; чужі картки й архів доступні для читання. Learner не бачить чернеток.
 Конструктор і Аналіз мають один каталог та зберігають вибраний ID.
-Режим Аналізу показує відсутність результатів. Email Constructor додано у Phase 6
-(див. нижче); Web, публікація й обчислення аналітики залишаються наступними фазами.
+На етапі Phase 3 режим Аналізу показував стан відсутності результатів.
+Email Constructor додано у Phase 6. Web, публікацію й обчислення
+аналітики було заплановано на наступні фази.
 
 Повна демонстрація й manual Windows gate:
 [PHASE_3_ACCEPTANCE](docs/PHASE_3_ACCEPTANCE.md).
@@ -520,7 +523,7 @@ Implementation CI: Linux1014PASS, Windows Server2022 1011PASS/3POSIX skips;
 Ruff/GUI/security gates PASS. PR9 merged у main `dfba3fbaa1b2b8b94d279d3cef3f132c03cc9391`;
 release evidence — PHASE_8_ACCEPTANCE.md та PR9.
 Phases0–9 ACCEPTED; Phase9 прийнято власником 2026-11-17.
-Phase10 — ACCEPTED (18.11.2026), Phase11–12 — NOT STARTED.
+На момент прийняття Phase 10 (18.11.2026) Phases 11–12 мали стан NOT STARTED.
 Physical Windows11, DPI, GPU-specific behavior та installer — Phase12 risks.
 
 ## Phase 9 — ізольоване офлайн-демо проходження
@@ -550,7 +553,7 @@ attempt. Повний checklist: [Phase 9 acceptance](docs/PHASE_9_ACCEPTANCE.md
 
 ## Phase 10 — особисті результати та навчальне пояснення
 
-**ACCEPTED** 18.11.2026. Phase 11 і Phase 12 — NOT STARTED.
+**ACCEPTED** 18.11.2026.
 Existing `--learner-demo` вище запускає повністю offline workflow. Після завершення
 відкрийте «Мої результати», виберіть own attempt та «Обчислити оцінку».
 Система фіксує immutable deterministic result; feedback готується у background.
@@ -574,7 +577,25 @@ scenario content — ні. Logout очищує results та stale worker respons
 Normal startup cloud Mentor використовує лише explicit existing gateway config;
 без нього deterministic Ukrainian feedback. `--learner-demo` завжди offline.
 Provider бачить лише trusted synthetic educational facts та sanitized precomputed
-summary; score не визначається моделлю. Analytics/export не реалізовано.
+summary; score не визначається моделлю. Аналітика та експорт належать до Phase 11.
 Traceability, exact verification та manual checklist:
 [Phase10 implementation review](docs/PHASE_10_IMPLEMENTATION_REVIEW.md).
 Native Windows11/DPI/GPU/installer acceptance — Phase12 deferral, не verified claim.
+
+
+## Phase 11 — Аналіз
+
+Архітектура — **APPROVED**, реалізація — **ACCEPTED / MERGED**.
+Власник прийняв фазу 18.11.2026 після повідомлення про виконання ручної
+перевірки WSLg. [PR #16](https://github.com/the1llus1on/cyberforge/pull/16)
+було злито раніше за окремим дозволом для подання програми.
+
+«Аналіз» показує дозволені історичні результати викладачу й адміністратору.
+Доступні режими останньої та всіх завершених спроб, показники якості
+даних, три графіки, таблиця учнів, історія спроб, фільтри, пошук,
+сортування, пагінація, CSV/JSON та офлайн-рекомендації.
+[Запис прийняття і докази](docs/PHASE_11_IMPLEMENTATION_REVIEW.md).
+
+F11-ADR-01 залишається відкритим. Хмарні рекомендації вимкнено.
+Phase 12 — **NOT STARTED**. У цій фазі заплановані перевірки фізичного
+Windows 11, DPI, апаратного GPU, фінального виконуваного файла та інсталятора.
