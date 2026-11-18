@@ -152,7 +152,7 @@ def _smoke(path):
         "QTWEBENGINE_CHROMIUM_FLAGS",
     ):
         env.pop(name, None)
-    windows = Path(env["SystemRoot"])
+    windows = Path(os.environ["SystemRoot"])
     env["PATH"] = os.pathsep.join((str(windows / "System32"), str(windows)))
     run(str(path), "--smoke-test", cwd=path.parent, env=env, timeout=90)
 

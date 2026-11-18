@@ -4518,3 +4518,11 @@ CI, manifest і lifecycle smoke мають бути прив'язані до к�
 SAFE_DECLINE/WEB_VISITED, приватними різними паролями та Mock Mentor.
 Новий GUI preview test підтвердив точний текст запиту й окремі дії
 «Залишити локальну пораду» та «Підтвердити й надіслати» — **1 passed**.
+
+Нативний Qt Windows desktop на кандидатові `08db32339f6dc4bbb323b810bc9810b2fbb384ab`:
+повторний WebEngine preview, bootstrap та advisory preview — **4 passed**.
+Перший Windows source запуск із неявним offscreen backend завершився
+Qt abort у repeated preview. Коректний Windows desktop backend пройшов
+ті самі дії без зміни sandbox. Повний build першого кандидата зупинився
+до запуску packaged smoke через регістр ключа SystemRoot у копії
+оточення Python. Виправлено пошук у власному Windows environment mapping.
