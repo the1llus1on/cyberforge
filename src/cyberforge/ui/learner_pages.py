@@ -122,6 +122,7 @@ class LearnerSimulationPage(QWidget):
         self.surfaces = PreparationStack()
         self.mail = MailPreview()
         self.mail.learner_mode = True
+        self.mail.body.setMinimumHeight(106)
         self.mail.message_opened.connect(self._email_opened)
         self.mail.link_requested.connect(self._open_internal)
         self.surfaces.addWidget(self.mail)
