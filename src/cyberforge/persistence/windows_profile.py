@@ -236,13 +236,14 @@ class WindowsProfileSecurity:
         )
         security = _PTR()
         owner = _PTR()
+        acl = _PTR()
         status = read(
             str(path),
             _SE_FILE_OBJECT,
             _READ_OWNER_DACL,
             ctypes.byref(owner),
             None,
-            None,
+            ctypes.byref(acl),
             None,
             ctypes.byref(security),
         )
@@ -266,6 +267,34 @@ class WindowsProfileSecurity:
                 _, separator, dacl = ctypes.wstring_at(result).partition("D:")
                 if not separator:
                     return ctypes.wstring_at(result)
+                if not acl:
+                    return ""
+                get_ace = _function(self.security, "GetAce", _BOOL, _PTR, _DWORD, _PPTR)
+                ace_count = ctypes.c_ushort.from_address(acl.value + 4).value
+                entries = list(re.finditer(r"\(([^()]*)\)", dacl))
+                if len(entries) != ace_count:
+                    return ""
+                replacements = []
+                for index, entry in enumerate(entries):
+                    ace = _PTR()
+                    if not get_ace(acl, index, ctypes.byref(ace)):
+                        raise ctypes.WinError(ctypes.get_last_error())
+                    if ctypes.c_ubyte.from_address(ace.value).value != 0:
+                        return ""
+                    sid_text = _PTR()
+                    if not to_string(_PTR(ace.value + 8), ctypes.byref(sid_text)):
+                        raise ctypes.WinError(ctypes.get_last_error())
+                    try:
+                        actual_sid = ctypes.wstring_at(sid_text)
+                    finally:
+                        self.free(sid_text)
+                    fields = entry.group(1).split(";")
+                    if len(fields) != 6:
+                        return ""
+                    fields[-1] = actual_sid
+                    replacements.append((entry.span(), "(" + ";".join(fields) + ")"))
+                for (start, end), replacement in reversed(replacements):
+                    dacl = dacl[:start] + replacement + dacl[end:]
                 # SDDL renders some well-known owner SIDs as aliases. Keep the
                 # actual owner SID so validation compares identity, not spelling.
                 return f"O:{owner_sid}D:{dacl}"
