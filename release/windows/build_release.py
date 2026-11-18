@@ -138,7 +138,7 @@ def _sign(path, args):
         run(str(args.signtool), "verify", "/pa", str(path))
 
 
-def _smoke(path):
+def _smoke(path, *, report_failure=False):
     env = os.environ.copy()
     for name in (
         "PYTHONPATH",
@@ -154,7 +154,25 @@ def _smoke(path):
         env.pop(name, None)
     windows = Path(os.environ["SystemRoot"])
     env["PATH"] = os.pathsep.join((str(windows / "System32"), str(windows)))
-    run(str(path), "--smoke-test", cwd=path.parent, env=env, timeout=90)
+    if not report_failure:
+        run(str(path), "--smoke-test", cwd=path.parent, env=env, timeout=90)
+        return
+    with tempfile.TemporaryDirectory(prefix="cyberforge-smoke-") as directory:
+        report = Path(directory) / "startup-error.txt"
+        try:
+            run(
+                str(path),
+                "--smoke-test",
+                "--smoke-result",
+                str(report),
+                cwd=path.parent,
+                env=env,
+                timeout=90,
+            )
+        except subprocess.CalledProcessError as error:
+            if report.is_file():
+                raise RuntimeError(report.read_text(encoding="utf-8")) from error
+            raise
 
 
 def _zip_bundle(root, output):
@@ -169,6 +187,27 @@ def _tools(args):
     if not uv_version.startswith(f"uv {UV} "):
         raise ValueError("pinned uv version mismatch")
     return uv_version.strip()
+
+
+def _hosted_profile_check(python, source, env):
+    code = """
+from pathlib import Path
+from PySide6.QtCore import QCoreApplication, QStandardPaths
+from cyberforge.persistence.profile import PrivateProfile
+from cyberforge.persistence.recovery import ProfileRecovery
+
+app = QCoreApplication(["CyberForge"])
+app.setOrganizationName("CyberForge")
+app.setApplicationName("CyberForge")
+QStandardPaths.setTestModeEnabled(True)
+location = QStandardPaths.writableLocation(
+    QStandardPaths.StandardLocation.AppLocalDataLocation
+)
+profile = PrivateProfile(Path(location))
+with profile.acquire():
+    ProfileRecovery(profile).startup().close()
+"""
+    run(str(python), "-c", code, cwd=source, env=env, timeout=45)
 
 
 def build(args):
@@ -209,6 +248,8 @@ def build(args):
             cwd=source,
         )
         python = work / "venv/Scripts/python.exe"
+        if args.hosted_ci:
+            _hosted_profile_check(python, source, env)
         result = run(
             str(python),
             "-c",
@@ -250,7 +291,7 @@ def build(args):
         smoke_dir = work / "Перевірка повного ZIP"
         with zipfile.ZipFile(archive) as packed:
             packed.extractall(smoke_dir)
-        _smoke(smoke_dir / ROOT / "CyberForge.exe")
+        _smoke(smoke_dir / ROOT / "CyberForge.exe", report_failure=True)
         compiler = subprocess.run(
             [
                 str(args.iscc),

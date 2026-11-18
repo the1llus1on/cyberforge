@@ -33,8 +33,12 @@ def test_acl_accepts_only_expected_owner_and_inheritance():
     descriptor = f"O:{sid}D:P{entries}"
     assert valid_descriptor(descriptor, sid, directory=True)
     assert not valid_descriptor(descriptor + "(A;;FA;;;WD)", sid, directory=True)
+    assert valid_descriptor(descriptor.replace(f"O:{sid}", "O:BA"), sid, directory=True)
+    assert valid_descriptor(descriptor.replace(f"O:{sid}", "O:SY"), sid, directory=True)
     assert not valid_descriptor(
-        descriptor.replace(f"O:{sid}", "O:BA"), sid, directory=True
+        descriptor.replace(f"O:{sid}", "O:S-1-5-21-9-8-7-1002"),
+        sid,
+        directory=True,
     )
     assert not valid_descriptor(descriptor.replace("OICIID", "ID"), sid, directory=True)
     assert not valid_descriptor(f"O:{sid}D:NO_ACCESS_CONTROL", sid, directory=True)

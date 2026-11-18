@@ -266,7 +266,11 @@ class WindowsProfileSecurity:
 def valid_descriptor(descriptor: str, sid: str, *, directory: bool) -> bool:
     """Check owner, effective access and inheritable directory access."""
     owner, separator, dacl = descriptor.partition("D:")
-    if not separator or owner != f"O:{sid}":
+    # Windows can assign the primary owner of an elevated process token
+    # (Administrators) when creating a directory, even when the DACL grants
+    # the exact account SID explicitly. Both possible group owners are already
+    # trusted principals in the strict allow-list below.
+    if not separator or owner not in {f"O:{sid}", "O:SY", "O:BA"}:
         return False
     flags, _, entries = dacl.partition("(")
     if not re.fullmatch(r"(?:P|AI|AR)*", flags) or not entries:

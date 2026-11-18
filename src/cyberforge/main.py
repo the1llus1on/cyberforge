@@ -22,6 +22,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--smoke-test", action="store_true", help="Перевірити запуск і закрити вікно"
     )
+    parser.add_argument("--smoke-result", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--database", type=Path, help="Шлях до спільної локальної БД")
     parser.add_argument(
         "--email-demo",
@@ -63,6 +64,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--demo-profile", action="store_true", help="Окремий навчальний профіль Windows"
     )
     args = parser.parse_args(argv)
+    if args.smoke_result and not args.smoke_test:
+        parser.error("--smoke-result використовується лише з --smoke-test.")
     if args.learner_demo and (
         args.database is None or (args.init_demo and args.database.exists())
     ):
@@ -154,7 +157,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 else:
                     profile = PrivateProfile(path.parent)
                 lifetime.enter_context(profile.acquire())
-            except OSError:
+            except OSError as error:
+                _smoke_failure(
+                    args.smoke_result,
+                    "windows-profile",
+                    type(error).__name__,
+                    getattr(error, "winerror", None),
+                )
                 raise ApplicationError(PROFILE_ERROR) from None
             storage = ProfileRecovery(profile)
             if args.recovery:
@@ -291,19 +300,33 @@ def main(argv: Sequence[str] | None = None) -> int:
             _show_restored()
         return result
     except ApplicationError as error:
+        _smoke_failure(args.smoke_result, "application", str(error))
         print(str(error), file=sys.stderr)
         if protected and not setup_only and not args.smoke_test:
             from PySide6.QtWidgets import QMessageBox
 
             QMessageBox.critical(None, "CyberForge", str(error))
         return 1
-    except (OSError, SQLAlchemyError, CommandError):
+    except (OSError, SQLAlchemyError, CommandError) as error:
+        _smoke_failure(args.smoke_result, "startup", type(error).__name__)
         print("Не вдалося відкрити або оновити локальну базу даних.", file=sys.stderr)
         return 1
     finally:
         if database is not None:
             database.close()
         lifetime.close()
+
+
+def _smoke_failure(path: Path | None, stage: str, detail: str, number=None) -> None:
+    if path is None:
+        return
+    try:
+        with path.open("x", encoding="utf-8") as report:
+            report.write(f"{stage} ({detail})")
+            if number is not None:
+                report.write(f" [{number}]")
+    except OSError:
+        pass
 
 
 def _show_restored() -> None:
