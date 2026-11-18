@@ -209,6 +209,20 @@ class EvaluationService:
         pub = db.get(ScenarioPublication, row.publication_id)
         if pub is None:
             raise ValueError("missing_publication")
+        sources = self._publication_sources(db, pub)
+        sources["attempt"] = attempt_value(row)
+        events = tuple(
+            event_value(e)
+            for e in db.scalars(
+                select(AttemptEventRecord)
+                .where(AttemptEventRecord.attempt_id == row.id)
+                .order_by(AttemptEventRecord.sequence)
+            )
+        )
+        return sources, events
+
+    def _publication_sources(self, db, pub):
+        """Load immutable content shared by attempts of one publication."""
         publication = self.publications._value(pub)
         version = db.get(ScenarioVersion, pub.version_id)
         if version is None or version.status != "published":
@@ -225,7 +239,7 @@ class EvaluationService:
         )
         if state.snapshot != expected:
             raise ValueError("immutable_source_metadata")
-        sources = dict(
+        return dict(
             manifest=publication.manifest,
             rubric=state.rubric,
             email=state.email,
@@ -234,17 +248,7 @@ class EvaluationService:
             parameters=state.scenario.parameters,
             version_id=state.version_id,
             publication_id=publication.id,
-            attempt=attempt_value(row),
         )
-        events = tuple(
-            event_value(e)
-            for e in db.scalars(
-                select(AttemptEventRecord)
-                .where(AttemptEventRecord.attempt_id == row.id)
-                .order_by(AttemptEventRecord.sequence)
-            )
-        )
-        return sources, events
 
     def _read(self, db, row, *, operation="read"):
         stored = db.scalar(

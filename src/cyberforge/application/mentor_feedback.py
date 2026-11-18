@@ -43,6 +43,10 @@ class MentorFeedbackService:
                 MentorFeedbackRecord.result_id == str(result.result_id)
             )
         )
+        return self._validate_row(row, result)
+
+    @staticmethod
+    def _validate_row(row, result):
         if row is None:
             return None
         try:

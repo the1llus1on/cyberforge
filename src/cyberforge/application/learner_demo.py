@@ -64,45 +64,53 @@ def prepare_publication(accounts: AccountService, credentials_path):
                 topic="Навчальний портал: перевірка повідомлення", difficulty="beginner"
             ),
         )
-        ew = emails.load(token, scenario)
-        emails.save(token, ew, emails.generate(token, ew))
-        ww = webs.load(token, scenario)
-        webs.save(token, ww, demo_web_actions(webs.generate(token, ww, preset="login")))
-        state = integration.inspect(token, scenario)
-        integration.save_link(
-            token,
-            scenario,
-            link_label="Відкрити навчальний портал",
-            display_url=state.web.page.display_url,
-            target_resource_id=state.web.page.internal_resource_id,
-            expected_revision=0,
-            expected_email_revision=state.checked_sources["email_revision"],
-            expected_web_revision=state.checked_sources["web_revision"],
-        )
-        integration.save_rubric(
-            token,
-            scenario,
-            (
-                criterion("email.sender"),
-                criterion("transition.safe_decline"),
-                criterion("web.address"),
-            ),
-            expected_revision=0,
-        )
         group = next(
             g for g in GroupService(accounts).list_groups(token) if g.name == "Група A"
         )
-        report = readiness.evaluate(token, scenario, selected_group_ids=(group.id,))
-        receipt = readiness.confirm(
-            token,
-            scenario,
-            review_fingerprint=report.review_fingerprint,
-            selected_group_ids=report.selected_group_ids,
-            acknowledged_warnings=report.acknowledgement_requirements,
-            semantic_review=True,
-        )
-        return publications.publish(
-            token, scenario, confirmation_id=receipt.confirmation_id
-        )
+        return publish_demo_version(publications, token, scenario, (group.id,))
     finally:
         accounts.logout(token)
+
+
+def publish_demo_version(publications, token, scenario, group_ids):
+    """Build the synthetic offline learner exercise for an exact draft version."""
+    readiness = publications.readiness
+    integration = publications.integration
+    emails, webs = integration.emails, integration.webs
+    ew = emails.load(token, scenario)
+    emails.save(token, ew, emails.generate(token, ew))
+    ww = webs.load(token, scenario)
+    webs.save(token, ww, demo_web_actions(webs.generate(token, ww, preset="login")))
+    state = integration.inspect(token, scenario)
+    integration.save_link(
+        token,
+        scenario,
+        link_label="Відкрити навчальний портал",
+        display_url=state.web.page.display_url,
+        target_resource_id=state.web.page.internal_resource_id,
+        expected_revision=0,
+        expected_email_revision=state.checked_sources["email_revision"],
+        expected_web_revision=state.checked_sources["web_revision"],
+    )
+    integration.save_rubric(
+        token,
+        scenario,
+        (
+            criterion("email.sender"),
+            criterion("transition.safe_decline"),
+            criterion("web.address"),
+        ),
+        expected_revision=0,
+    )
+    report = readiness.evaluate(token, scenario, selected_group_ids=group_ids)
+    receipt = readiness.confirm(
+        token,
+        scenario,
+        review_fingerprint=report.review_fingerprint,
+        selected_group_ids=report.selected_group_ids,
+        acknowledged_warnings=report.acknowledgement_requirements,
+        semantic_review=True,
+    )
+    return publications.publish(
+        token, scenario, confirmation_id=receipt.confirmation_id
+    )
