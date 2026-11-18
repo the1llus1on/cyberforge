@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 )
 
 from cyberforge.application.accounts import AccountService
+from cyberforge.application.analytics import ScenarioAnalyticsService
 from cyberforge.application.email_materials import EmailMaterialService
 from cyberforge.application.evaluations import EvaluationService
 from cyberforge.application.learner_attempts import LearnerAttemptService
@@ -43,6 +44,7 @@ from cyberforge.groups.service import GroupService
 from cyberforge.llm.factory import create_gateway
 from cyberforge.ui.account_pages import AccountPage
 from cyberforge.ui.admin_page import AdminPage
+from cyberforge.ui.analytics_page import AnalyticsPage
 from cyberforge.ui.clipboard_shortcuts import ClipboardShortcuts
 from cyberforge.ui.icons import icon
 from cyberforge.ui.learner_pages import LearnerCatalogPage
@@ -229,9 +231,7 @@ class MainWindow(QMainWindow):
         catalog.addWidget(self.scenario_list, 1)
         body.addWidget(self.scenario_panel)
         self.workspace = QStackedWidget()
-        self.pages: dict[
-            View, WorkspacePage | AccountPage | AdminPage | ScenarioPage
-        ] = {}
+        self.pages: dict[View, QWidget] = {}
         self.containers: dict[View, QScrollArea] = {}
         for view in View:
             if view == View.CONSTRUCTOR:
@@ -249,6 +249,10 @@ class MainWindow(QMainWindow):
                     self.evaluations, self.mentor_feedback, lambda: self._token
                 )
                 self.learner_history = page
+            elif view == View.ANALYTICS:
+                page = AnalyticsPage(ScenarioAnalyticsService(self.evaluations))
+                self.analytics_page = page
+                page.login_button.clicked.connect(lambda: self.navigate(View.PROFILE))
             elif view == View.PROFILE:
                 page = AccountPage(self.accounts)
                 self.account_page = page
@@ -266,6 +270,8 @@ class MainWindow(QMainWindow):
             scroll = QScrollArea()
             scroll.setWidgetResizable(True)
             scroll.setWidget(page)
+            if isinstance(page, AnalyticsPage):
+                page.reveal_details.connect(scroll.ensureWidgetVisible)
             scroll.setSizePolicy(
                 QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
             )
@@ -280,6 +286,7 @@ class MainWindow(QMainWindow):
         self._render()
 
     def _authenticated(self, token: str) -> None:
+        self.analytics_page.invalidate()
         self.learner_catalog.invalidate()
         self.learner_history.invalidate()
         self.scenario_page.email_page.invalidate()
@@ -300,6 +307,7 @@ class MainWindow(QMainWindow):
         return True
 
     def _signed_out(self) -> None:
+        self.analytics_page.invalidate()
         self.learner_catalog.invalidate()
         self.learner_history.invalidate()
         self.accounts.logout(self._token)
@@ -328,6 +336,8 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage(str(error), 5000)
             else:
                 self._render()
+                if self.navigation.current == View.ANALYTICS:
+                    self.analytics_page.check_access()
 
     def _allowed(self, view: View) -> bool:
         if self._token is None:
@@ -383,6 +393,7 @@ class MainWindow(QMainWindow):
             self.scenario_page.email_page.running
             or self.scenario_page.web_page.running
             or self.learner_history.running
+            or self.analytics_page.running
         )
 
     def navigate(self, view: View) -> None:
@@ -552,12 +563,14 @@ class MainWindow(QMainWindow):
                     self.scenario_list.setCurrentRow(index)
 
     def _show_scenario(self) -> None:
-        analytics = self.pages[View.ANALYTICS]
-        analytics.title.setText("Аналіз сценарію")
-        analytics.scenario_info.setText("Сценарій не вибрано.")
+        if self.navigation.current == View.ANALYTICS:
+            self.analytics_page.set_context(self._token, self.selected_scenario_id)
+            return
+        self.analytics_page.set_context(None, None)
+        if self.navigation.current != View.CONSTRUCTOR:
+            return
         if self.selected_scenario_id is None:
-            if self.navigation.current == View.CONSTRUCTOR:
-                self.scenario_page.clear()
+            self.scenario_page.clear()
             return
         try:
             scenario = self.scenarios.get(self._token, self.selected_scenario_id)
@@ -567,15 +580,7 @@ class MainWindow(QMainWindow):
             self.scenario_page.clear()
             self.statusBar().showMessage(str(error), 5000)
             return
-        if self.navigation.current == View.CONSTRUCTOR:
-            self.scenario_page.load(scenario, editable=actor.id == scenario.owner_id)
-        analytics.title.setText(f"Аналіз · {scenario.name}")
-        analytics.scenario_info.setText(
-            f"{scenario.name} · ID {scenario.id} · Версія {scenario.version}\n"
-            f"{scenario.parameters.topic}\n{scenario.parameters.difficulty.label} · "
-            f"{scenario.status.label}\nДані для аналізу відсутні."
-            + ("\nАрхівовано" if scenario.archived else "")
-        )
+        self.scenario_page.load(scenario, editable=actor.id == scenario.owner_id)
 
     def _render(self) -> None:
         current = self.navigation.current
@@ -618,6 +623,8 @@ class MainWindow(QMainWindow):
             self._signed_out()
             self.statusBar().showMessage(str(error), 5000)
             return
+        if current == View.ANALYTICS and self.selected_scenario_id is None:
+            self.analytics_page.set_context(None, None)
         self.pages[View.HOME].session_hint.setText(
             (
                 "Відкрийте «Мої сценарії» або «Мої результати»."

@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–9 — ACCEPTED; Phase10 — ACCEPTED (18.11.2026), architecture/WP1 ACCEPTED, Contract Freeze PASSED; Phases11–12 — NOT STARTED.
+**State:** Phases 0–9 — ACCEPTED; Phase10 — ACCEPTED (18.11.2026), architecture/WP1 ACCEPTED, Contract Freeze PASSED; Phase11 — REVIEW / PENDING OWNER ACCEPTANCE; Phase12 — NOT STARTED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -28,7 +28,7 @@
 | 8 | Scenario Integration | ACCEPTED | Typed Email→Web link, rubric definitions/editor, exact readiness/review, atomic immutable publication, audited grants/access; PHASE_8_ACCEPTANCE.md |
 | 9 | Learner Simulation | ACCEPTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
 | 10 | Scoring & Mentor | ACCEPTED | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
-| 11 | Analytics Mode | NOT STARTED | Read-only scenario statistics, deduplicated learner table, missing-data rules, filters, CSV/JSON export, RBAC; analytics tests |
+| 11 | Analytics Mode | REVIEW / PENDING OWNER ACCEPTANCE | Read-only scenario statistics, deduplicated learner table, charts, CSV/JSON export and offline recommendations. Evidence in PHASE_11_IMPLEMENTATION_REVIEW.md. |
 | 12 | Finalization | NOT STARTED | Full regression/security checks, Windows 11 package, demonstration dataset, docs and release checklist |
 
 ## Implementation requirements for each phase
@@ -1560,13 +1560,13 @@ Linux — 1 357 пройдено. Windows Server 2022 — 1 354 пройдено
 
 ## Phase 11 — Analytics Mode architecture (18.11.2026)
 
-**Roadmap:** NOT STARTED
+**Roadmap at the documentation gate:** NOT STARTED
 
 **Architecture core:** OWNER APPROVED
 
 **Documentation:** APPROVED — Documentation Review Gate PASSED (18.11.2026)
 
-**Implementation:** NOT AUTHORIZED
+**Implementation at the documentation gate:** NOT AUTHORIZED
 
 [ADR-0011](adr/0011-analytics-mode.md) records D11-01–D11-05 and the
 future P11-01–P11-16 acceptance matrix. [SRS v3.0 Amendment A11](../TECHNICAL_SPECIFICATION.md#srs-v30--amendment-a11-analytics-mode)
@@ -1575,9 +1575,8 @@ adds FR-A11-01–18, NFR-A11-01–08 and traceability to SRS §§7, 12–14,
 contracts are prerequisites. Phase 12 retains native Windows 11
 acceptance and packaging.
 
-The following work packages belong to one future Phase 11
-implementation task after explicit authorization. Separate
-implementation PRs are optional.
+The following work packages belong to one Phase 11 implementation task. The owner’s implementation authorization
+and current status are recorded below.
 
 | Work package | Scope | Future acceptance |
 | --- | --- | --- |
@@ -1590,4 +1589,18 @@ implementation PRs are optional.
 | Security and regression verification | Access denial, history integrity and immutability, UI consistency, Ruff, full suite and final-head Linux/Windows CI. | P11-01–P11-15 |
 | Owner review and acceptance | Independent review, owner manual WSLg acceptance and separate merge authorization. | P11-16 |
 
-Independent architecture review passed and the owner approved ADR-0011 and SRS Amendment A11 on 18.11.2026. Documentation Review Gate: PASSED. The proposed five-learner cloud advisory threshold remains open; cloud analytics advisory is disabled until separately approved. Phase 11 implementation requires separate owner authorization.
+Independent architecture review passed and the owner approved ADR-0011 and SRS Amendment A11 on 18.11.2026. Documentation Review Gate: PASSED. The proposed five-learner cloud advisory threshold remains open; cloud analytics advisory is disabled until separately approved. The documentation gate required separate authorization for implementation.
+
+### Phase 11 — реалізація та перевірка
+
+Власник дозволив повну реалізацію Phase 11 на
+`bc1154e7a60dabc6c2ad42bb2ceb83332be3378f` в одній гілці
+`feat/phase-11-analytics-mode`. Погоджені ADR-0011 і поправку A11 збережено.
+Етапи A–H охоплюють контракти, авторизацію, перевірене читання, агрегацію,
+PySide6, офлайн-поради, експорт, перевірки й демонстрацію. Матриця
+P11-01–P11-16 і докази доступні у
+[переліку перевірок Phase 11](PHASE_11_IMPLEMENTATION_REVIEW.md).
+
+Phase 11 — **REVIEW / PENDING OWNER ACCEPTANCE**. Незалежний огляд,
+ручна перевірка WSLg і рішення власника щодо merge є частинами P11-16.
+Phase 12 — **NOT STARTED**.

@@ -64,8 +64,8 @@ def test_constructor_create_edit_search_and_modes(qtbot, scenario_window, scenar
     assert window.scenario_list is catalog
     assert not window.new_scenario_button.isVisible()
     assert str(saved.id) in window.pages[View.ANALYTICS].scenario_info.text()
-    assert (
-        "Дані для аналізу відсутні" in window.pages[View.ANALYTICS].scenario_info.text()
+    qtbot.waitUntil(
+        lambda: "Немає опублікованих версій" in window.analytics_page.message.text()
     )
     window._back()
     assert window.navigation.current == View.CONSTRUCTOR
@@ -299,7 +299,7 @@ def test_archive_restore_catalog_and_shared_identity(
     window.search.clear()
     window.navigate(View.ANALYTICS)
     assert window.selected_scenario_id == saved.id
-    assert "Архівовано" in window.pages[View.ANALYTICS].scenario_info.text()
+    qtbot.waitUntil(lambda: "Архівовано" in window.analytics_page.scenario_info.text())
     window.navigate(View.CONSTRUCTOR)
     qtbot.mouseClick(page.restore_button, Qt.MouseButton.LeftButton)
     assert page.editable and not page.scenario.archived
