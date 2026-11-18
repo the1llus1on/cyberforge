@@ -365,7 +365,7 @@ def test_source_valid_golden(bundle):
         "feedback": oracle_tree(feedback),
         "sources": {k: oracle_tree(v) for k, v in sources.items()},
     }
-    assert actual == json.loads((GOLD / (name + ".json")).read_text())
+    assert actual == json.loads((GOLD / (name + ".json")).read_text(encoding="utf-8"))
     for obj, own in (
         (ev, "evidence_digest"),
         (result, "result_digest"),
@@ -550,7 +550,7 @@ def test_decimal_helpers_guard_before_fixed_point_expansion(monkeypatch, helper)
 def test_contract_decimal_rejected_before_canonical_hashing(monkeypatch):
     from cyberforge.evaluation import contracts
 
-    data = json.loads((GOLD / "safe.json").read_text())["result"]
+    data = json.loads((GOLD / "safe.json").read_text(encoding="utf-8"))["result"]
     valid = EvaluationResultV1.model_validate_json(canonical_bytes(data))
 
     def forbidden(*args, **kwargs):
@@ -633,7 +633,7 @@ def test_error_semantics():
 
 
 def test_original_synthetic_hash_fixture():
-    data = json.loads((GOLD / "synthetic_hashing.json").read_text())
+    data = json.loads((GOLD / "synthetic_hashing.json").read_text(encoding="utf-8"))
     ev = EvaluationEvidenceV1.model_validate_json(canonical_bytes(data["evidence"]))
     result = EvaluationResultV1.model_validate_json(canonical_bytes(data["result"]))
     validate_result_against_evidence(result, ev)
@@ -670,7 +670,7 @@ def test_original_synthetic_hash_fixture():
     ],
 )
 def test_frozen_wire_rejects(case):
-    data = json.loads((GOLD / "safe.json").read_text())
+    data = json.loads((GOLD / "safe.json").read_text(encoding="utf-8"))
     model = EvaluationResultV1
     value = data["result"]
     if case == "unknown_strategy":
@@ -721,7 +721,7 @@ def test_stored_pipeline_and_feedback_consumption(bundle):
 def test_selection_order_arithmetic_vs_source_identity():
     from cyberforge.scenario_integration.contracts import RubricDefinitionV1
 
-    data = json.loads((GOLD / "safe.json").read_text())
+    data = json.loads((GOLD / "safe.json").read_text(encoding="utf-8"))
     rubric_data = data["sources"]["rubric"]
     rubric = RubricDefinitionV1.model_validate_json(json.dumps(rubric_data))
     reverse = dict(rubric_data, criteria=list(reversed(rubric_data["criteria"])))
@@ -794,7 +794,7 @@ def test_candidate_schema_snapshot():
     for name in names[1:]:
         union = union | getattr(c, name)
     assert TypeAdapter(union).json_schema() == json.loads(
-        (GOLD / "contracts.schema.json").read_text()
+        (GOLD / "contracts.schema.json").read_text(encoding="utf-8")
     )
     for name in names:
         assert all(f.is_required() for f in getattr(c, name).model_fields.values())
@@ -813,7 +813,7 @@ def test_existing_mentor_mock_compatibility_and_fallback(monkeypatch, valid_sele
         "connect",
         lambda *a, **kw: (_ for _ in ()).throw(AssertionError("network forbidden")),
     )
-    data = json.loads((GOLD / "web.json").read_text())
+    data = json.loads((GOLD / "web.json").read_text(encoding="utf-8"))
     r = EvaluationResultV1.model_validate_json(canonical_bytes(data["result"]))
     f = LocalMentorFeedbackV1.model_validate_json(canonical_bytes(data["feedback"]))
     source = MentorInputV1(
@@ -872,7 +872,7 @@ def test_existing_mentor_mock_compatibility_and_fallback(monkeypatch, valid_sele
 
 
 def test_mentor_revision_label_is_bounded_and_snapshot_derived():
-    data = json.loads((GOLD / "web.json").read_text())["result"]
+    data = json.loads((GOLD / "web.json").read_text(encoding="utf-8"))["result"]
     original = data["source"]["rubric_id"]
     for revision, expected in (
         (2, "rubric-revision-2"),
@@ -892,7 +892,7 @@ def test_mentor_revision_label_is_bounded_and_snapshot_derived():
 def test_legacy_instance_cannot_smuggle_mutable_nested_data():
     from cyberforge.agents.contracts import ExplanationV1
 
-    raw = json.loads((GOLD / "web.json").read_text())["feedback"]
+    raw = json.loads((GOLD / "web.json").read_text(encoding="utf-8"))["feedback"]
     original = LocalMentorFeedbackV1.model_validate_json(canonical_bytes(raw))
     fields = original.explanation.model_dump()
     mutable = list(original.explanation.selected_facts)

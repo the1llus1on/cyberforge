@@ -18,7 +18,7 @@ GOLD = Path(__file__).parent / "fixtures/evaluation"
     "name", ["safe", "web", "repeated", "reversed", "unscorable", "observations"]
 )
 def test_production_golden(name):
-    raw = json.loads((GOLD / (name + ".json")).read_text())
+    raw = json.loads((GOLD / (name + ".json")).read_text(encoding="utf-8"))
     evidence = EvaluationEvidenceV1.model_validate_json(
         canonical_bytes(raw["evidence"])
     )
@@ -52,7 +52,7 @@ def test_prospective_paths(ids, ready):
 
 
 def test_historical_loader_still_accepts_decision_only():
-    raw = json.loads((GOLD / "unscorable.json").read_text())
+    raw = json.loads((GOLD / "unscorable.json").read_text(encoding="utf-8"))
     assert RubricDefinitionV1.model_validate(raw["sources"]["rubric"]).criteria
 
 
@@ -68,7 +68,7 @@ def source_case(name="web", *, selected=None, suppress=None, reverse=False):
     )
     from cyberforge.web.contracts import WebDraftV3, fingerprint
 
-    data = json.loads((GOLD / (name + ".json")).read_text())
+    data = json.loads((GOLD / (name + ".json")).read_text(encoding="utf-8"))
     sources = data["sources"]
     rubric = RubricDefinitionV1.model_validate_json(json.dumps(sources["rubric"]))
     content = rubric.model_dump(mode="json", exclude={"content_digest"})

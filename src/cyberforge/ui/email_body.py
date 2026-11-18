@@ -28,7 +28,7 @@ class MessageBody(QTextEdit):
         self.setUndoRedoEnabled(False)
         self.setTabChangesFocus(True)
         self.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
-        self.setMinimumSize(0, 65)
+        self.setMinimumSize(0, 106)
         # Native text size hints vary by platform. Neither document width nor
         # its preferred height may enlarge the surrounding constructor page.
         self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
