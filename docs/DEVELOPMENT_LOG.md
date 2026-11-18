@@ -4385,3 +4385,31 @@ ADR-0012 / SRS Amendment A12 — **APPROVED**. Documentation Review Gate
 і P12-01–P12-18 — **PENDING IMPLEMENTATION VERIFICATION**. Погодження
 документації не закриває фізичне приймання Windows 11 або майбутні
 перевірки пакування, інсталяції та приватності.
+
+## 18.11.2026 — Phase 12 WP1: контракти та цільові перевірки
+
+Власник дозволив WP1–WP5. GitHub MCP підтвердив remote `main` на
+`6cced5766c98ba836aeea395a8fb1ea7743550d7`. Локальний checkout
+збігався з базою і був чистим до створення `feat/phase-12-finalization`.
+
+[Контракти WP1](PHASE_12_WP1_CONTRACTS.md) фіксують український
+каталог, topic-only проєкцію і grounding, локальний policy evidence,
+прив'язку preview та умови startup, vault, backup/restore/upgrade.
+Додано чисті моделі та проєкцію без зміни маршрутів A11, SQLite,
+scoring або Mentor. Вибір fallback детермінований. Наявність
+`NOT_MET` має пріоритет для всього зрізу, а справжній нуль
+лишається джерелом критеріїв.
+
+- Offline Ruff lint і format check — **PASS**.
+- Offline Qt offscreen pytest для WP1, Analytics, Analytics UI, Scoring,
+  Agents, Mentor, Accounts і міграцій evaluation — **245 passed**.
+- Після додавання перевірки повторної валідації payload цільовий
+  `tests/test_topic_advisory.py` — **28 passed**.
+- Незалежна серіалізація контрольного запиту через Perl JSON::PP і
+  OpenSSL SHA-256 дала
+  `a538acc8a598dceeea770d7dc550a04d51c40cba6595783559b22da3009333d8`.
+
+P12-01 та WP1 Contract Freeze Gate — **PENDING INDEPENDENT REVIEW**.
+Цільові тести і контрольний відбиток є інженерними доказами.
+Незалежний огляд контрактів WP1 потрібен до WP2. Підключення provider,
+фізичний Windows, артефакти та CI кандидата очікують відповідних WP.
