@@ -4317,3 +4317,71 @@ F11-ADR-01 залишається відкритим, хмарні рекоме�
 офлайн-рекомендації доступні. Phase 12 — **NOT STARTED**. Фізичний Windows 11,
 DPI, апаратний GPU, фінальний виконуваний файл та інсталятор перевіряються
 у Phase 12.
+
+## 18.11.2026 — Phase 12: документація архітектури випуску
+
+На базі `d45c750df5aa72817566bfacb5ca23bfb98ae126` підготовлено
+[ADR-0012](adr/0012-windows-release-finalization.md),
+[поправку A12](../TECHNICAL_SPECIFICATION.md#srs-v30--amendment-a12-windows-release-finalization)
+та оновлення плану. Рішення D12-01–D12-10 погоджені власником для
+підготовки документації. Описано Windows x64 onedir/ZIP/installer,
+GUI bootstrap, DACL і SQLite recovery, межу Windows Credential Manager,
+release manifest і майбутню матрицю P12-01–18.
+
+Зіставлено Phase 11 read snapshot, чинні `AssistantInputV1` та
+`AggregateV1`, Mentor feedback, `LLMGateway`, запуск Qt і SQLite
+upgrade. Новий topic-only контракт не потребує числового V1 для
+одного учня. F11-ADR-01 superseded тільки для D12-10, числовий Analytics
+cloud залишається вимкненим. Незалежний огляд D12-10 перевіряє мінімізацію,
+залишковий ризик зв'язування, provider privacy, авторизацію, preview,
+grounding і відкидання застарілих відповідей. Застосовні джерела
+виробників та стандарти наведено в ADR.
+
+Phases 0–11 — **ACCEPTED**. Рішення архітектури Phase 12 — **OWNER APPROVED**.
+ADR-0012 / A12 — **DOCUMENTATION REVIEW PENDING**. Architecture Freeze
+Gate — **PENDING DOCUMENTATION REVIEW**. Phase 12 implementation —
+**NOT STARTED**. Матриця P12-01–18 задає майбутні критерії. Нових
+результатів фізичних перевірок Windows 11 або артефактів випуску немає.
+
+## 18.11.2026 — Phase 12: виправлення F12-R01 і F12-R02 після огляду
+
+[Draft PR #18](https://github.com/the1llus1on/cyberforge/pull/18), оглянутий
+HEAD `ce75cea6f61870ab223ed1b13245606967d73d73`. F12-R01 (MAJOR)
+виправлено в ADR-0012 §6 і FR-A12-08. Перевірені застосовні `NOT_MET`
+мають пріоритет. Якщо їх немає, `MET` дають теми для закріплення,
+зокрема для одного учня. Обидві гілки передають лише версію контракту
+й канонічний набір topic IDs, без стану критерію. ADR-0012 §8.1
+додає дев'ять векторів для майбутніх P12-10 і P12-11.
+F12-R02 (MINOR) уточнено в ADR-0012 §6 і FR-A12-10. AI вибирає й
+упорядковує схвалені поради, UI відображає українські тексти локального
+каталогу.
+
+Phase 11 зберігає latest-completed, історичний RBAC і read-only Analytics.
+Числовий Analytics cloud V1 вимкнений. Застосовуються організаційна
+авторизація, перевірка провайдера, preview, одноразовий dispatch, grounding
+та детермінована офлайн-порада. Phases 0–11 — **ACCEPTED**, рішення
+D12-01–D12-10 — **OWNER APPROVED**. ADR-0012 / A12 і Architecture Freeze
+Gate — **PENDING OWNER APPROVAL** з підтвердженням виправлень незалежним
+оглядом. Phase 12 implementation — **NOT STARTED**, P12-01–18 залишаються
+майбутніми перевірками.
+
+## 18.11.2026 — Phase 12: погодження ADR-0012 і поправки A12
+
+Власник затвердив [ADR-0012](adr/0012-windows-release-finalization.md)
+і [поправку A12](../TECHNICAL_SPECIFICATION.md#srs-v30--amendment-a12-windows-release-finalization),
+включно з рішеннями D12-01–D12-10 та версійним topic-only advisory для
+одного учня. За результатом незалежного огляду
+[PR #18](https://github.com/the1llus1on/cyberforge/pull/18) на HEAD
+`cfc0f848c9e17570e615de9ab6971326e0a1743c` F12-R01 і F12-R02 —
+**RESOLVED**. Відкритих BLOCKER або MAJOR за висновком огляду не виявлено.
+[CI оглянутого HEAD](https://github.com/the1llus1on/cyberforge/actions/runs/44281316968):
+Linux — 1 391 пройдений тест, Windows Server 2022 — 1 388 пройдених
+тестів і три очікувані пропуски. Ruff lint і format пройшли на обох runner.
+
+Phases 0–11 — **ACCEPTED**. D12-01–D12-10 — **OWNER APPROVED**.
+ADR-0012 / SRS Amendment A12 — **APPROVED**. Documentation Review Gate
+і Phase 12 Architecture Freeze Gate — **PASSED**. Phase 12 implementation —
+**NOT STARTED / IMPLEMENTATION NOT AUTHORIZED**. WP1 Contract Freeze Gate
+і P12-01–P12-18 — **PENDING IMPLEMENTATION VERIFICATION**. Погодження
+документації не закриває фізичне приймання Windows 11 або майбутні
+перевірки пакування, інсталяції та приватності.

@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–11 — ACCEPTED. Phase 11 architecture — APPROVED. Phase 11 implementation — ACCEPTED / MERGED. Phase 12 — NOT STARTED.
+**State:** Phases 0–11 — ACCEPTED. Phase 11 architecture — APPROVED. Phase 11 implementation — ACCEPTED / MERGED. Phase 12 architecture decisions — OWNER APPROVED. ADR-0012 / A12 — APPROVED. Documentation Review Gate and Phase 12 Architecture Freeze Gate — PASSED. Phase 12 implementation — NOT STARTED / IMPLEMENTATION NOT AUTHORIZED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -1625,3 +1625,60 @@ F11-ADR-01 залишається відкритим. Хмарні рекоме�
 детерміновані офлайн-рекомендації доступні. Phase 12 — **NOT STARTED**.
 Перевірки фізичного Windows 11, DPI, апаратного GPU, фінального
 виконуваного файла й інсталятора залишаються в обсязі Phase 12.
+
+## 18.11.2026 — Phase 12: архітектура фіналізації
+
+База — `d45c750df5aa72817566bfacb5ca23bfb98ae126`. Phases 0–11 —
+**ACCEPTED**. Рішення D12-01–D12-10 — **OWNER APPROVED**.
+[ADR-0012](adr/0012-windows-release-finalization.md) і
+[поправка A12](../TECHNICAL_SPECIFICATION.md#srs-v30--amendment-a12-windows-release-finalization)
+— **PENDING OWNER APPROVAL**. Architecture Freeze Gate —
+**PENDING OWNER APPROVAL**. Phase 12 implementation — **NOT STARTED**.
+
+| Порядок | Майбутній пакет | Передумови та критерії |
+| --- | --- | --- |
+| WP1 | Контракти, privacy policy, recovery protocol і вектори сумісності | Огляд документації, включно з незалежним D12-10 review, і окремий дозвіл власника. P12-01, Contract Freeze Gate. |
+| WP2 | Приватне сховище Windows, startup, GUI bootstrap і SQLite lifecycle | Після WP1. P12-05–08. |
+| WP3 | Credential Manager, provider GUI, topic-only advisory та offline fallback | Після WP1–2. P12-09–13. |
+| WP4 | Windows x64 PyInstaller onedir, ZIP, Inno Setup, manifest та ліцензії | Після WP2–3. P12-02–04, P12-14. |
+| WP5 | Демо, регресії, фінальний CI та фізичне приймання | Після WP4. P12-15–18, Release Candidate Gate та явне прийняття власником. |
+
+D12-10 додає новий topic-only маршрут для перевірених навчальних тем,
+включно зі зрізом одного учня. У [Draft PR #18](https://github.com/the1llus1on/cyberforge/pull/18)
+F12-R01 уточнює пріоритет перевірених застосовних `NOT_MET` і закріплення
+за `MET` за їх відсутності. F12-R02 уточнює AI-добір і пріоритизацію
+схвалених порад з українського локального каталогу.
+[Вектори ADR-0012 §8.1](adr/0012-windows-release-finalization.md#81-вектори-проєкції-d12-10)
+покривають P12-10 і P12-11. F11-ADR-01 superseded лише для цього
+маршруту. Cloud з числовими агрегатами V1 залишається вимкненим.
+Локальна Phase 11 аналітика є чинною базою. Відправлення потребує
+організаційного дозволу, перевіреної provider privacy конфігурації,
+preview і явної дії Instructor для кожного запиту.
+
+Поточний крок — підтвердження виправлень незалежним оглядом і
+прийняття ADR/A12 власником. Фізичне приймання Windows 11, DPI,
+клавіатури, GPU, Qt WebEngine, безпеки й фінальних артефактів належить
+майбутньому WP5. Докази Phase 2 та hosted CI не закривають цю вимогу.
+
+### 18.11.2026 — Phase 12: остаточне погодження архітектури
+
+Власник затвердив [ADR-0012](adr/0012-windows-release-finalization.md)
+і [поправку A12](../TECHNICAL_SPECIFICATION.md#srs-v30--amendment-a12-windows-release-finalization)
+за незалежним оглядом [PR #18](https://github.com/the1llus1on/cyberforge/pull/18)
+на HEAD `cfc0f848c9e17570e615de9ab6971326e0a1743c`. F12-R01 і F12-R02 —
+**RESOLVED**. Відкритих BLOCKER або MAJOR за висновком огляду не виявлено.
+
+| Позиція | Поточний статус |
+| --- | --- |
+| Phases 0–11 | ACCEPTED |
+| D12-01–D12-10 | OWNER APPROVED |
+| ADR-0012 / SRS Amendment A12 | APPROVED |
+| Documentation Review Gate | PASSED |
+| Phase 12 Architecture Freeze Gate | PASSED |
+| Phase 12 implementation | NOT STARTED / IMPLEMENTATION NOT AUTHORIZED |
+| WP1 Contract Freeze Gate | PENDING IMPLEMENTATION VERIFICATION |
+| P12-01–P12-18 | PENDING IMPLEMENTATION VERIFICATION |
+
+Окремий дозвіл власника потрібен для початку реалізації. Фізичне приймання
+Windows 11, перевірки пакування, інсталяції та приватності залишаються
+майбутніми вимогами.
