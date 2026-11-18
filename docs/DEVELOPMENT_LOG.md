@@ -4317,3 +4317,28 @@ F11-ADR-01 залишається відкритим, хмарні рекоме�
 офлайн-рекомендації доступні. Phase 12 — **NOT STARTED**. Фізичний Windows 11,
 DPI, апаратний GPU, фінальний виконуваний файл та інсталятор перевіряються
 у Phase 12.
+
+## 18.11.2026 — Phase 12: документація архітектури випуску
+
+На базі `d45c750df5aa72817566bfacb5ca23bfb98ae126` підготовлено
+[ADR-0012](adr/0012-windows-release-finalization.md),
+[поправку A12](../TECHNICAL_SPECIFICATION.md#srs-v30--amendment-a12-windows-release-finalization)
+та оновлення плану. Рішення D12-01–D12-10 погоджені власником для
+підготовки документації. Описано Windows x64 onedir/ZIP/installer,
+GUI bootstrap, DACL і SQLite recovery, межу Windows Credential Manager,
+release manifest і майбутню матрицю P12-01–18.
+
+Зіставлено Phase 11 read snapshot, чинні `AssistantInputV1` та
+`AggregateV1`, Mentor feedback, `LLMGateway`, запуск Qt і SQLite
+upgrade. Новий topic-only контракт не потребує числового V1 для
+одного учня. F11-ADR-01 superseded тільки для D12-10, числовий Analytics
+cloud залишається вимкненим. Незалежний огляд D12-10 перевіряє мінімізацію,
+залишковий ризик зв'язування, provider privacy, авторизацію, preview,
+grounding і відкидання застарілих відповідей. Застосовні джерела
+виробників та стандарти наведено в ADR.
+
+Phases 0–11 — **ACCEPTED**. Рішення архітектури Phase 12 — **OWNER APPROVED**.
+ADR-0012 / A12 — **DOCUMENTATION REVIEW PENDING**. Architecture Freeze
+Gate — **PENDING DOCUMENTATION REVIEW**. Phase 12 implementation —
+**NOT STARTED**. Матриця P12-01–18 задає майбутні критерії. Нових
+результатів фізичних перевірок Windows 11 або артефактів випуску немає.
