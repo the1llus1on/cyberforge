@@ -4455,3 +4455,30 @@ sha не засвідчує походження резервної копії.
   профіль підтвердив ACL та успадкування, блокування профілю, відмову
   при відкритому сторонньому SQLite handle й атомарну заміну файла.
   Це цільова перевірка джерел, без перевірки артефактів або другого SID.
+
+## 18.11.2026 — Phase 12 WP3: vault, організаційна політика й advisory
+
+WP2 додатково перевірено під нативним Windows CPython 3.12.16.
+`test_profile_recovery.py` і `tests/ui/test_bootstrap.py` —
+**16 passed, 1 POSIX-only skipped**, включно зі сторонньою ACL та SQLite
+lifecycle у синтетичних профілях. Другий Windows SID і приймання
+фінальних артефактів очікують WP5.
+
+WP3 додає Windows Credential Manager, рольові сервісні межі й явну
+активацію provider/model. Машинна 64-bit HKLM policy гілка з перевіреним
+owner/DACL є довіреним джерелом організаційного дозволу. Значення
+перевіряється заново, а заміна ключа, відсутній або відкликаний доказ,
+прострочення та невідповідність зрізу блокують мережеву дію. Один
+атомарно спожитий preview надсилає точне показане тіло через вузький
+маршрут LLMGateway. Підтримано Groq і Gemini stateless Interactions,
+без SDK retry/failover на маршруті D12-10. Фоновий результат мусить
+пройти повторну авторизацію. Числовий V1 і Mentor-контракти збережено.
+
+- Ruff і git whitespace check — **PASS**.
+- WSL offscreen advisory, contracts, Analytics/GUI та Gemini regression —
+  **134 passed, 1 native Windows vault skip**.
+- WSL додаткові два випадки timeout/fallback — **2 passed**.
+- Нативний Windows CPython 3.12.16, advisory regression та disposable
+  vault entries — **40 passed**.
+- Обидва provider transports перевірено на контрольованих відповідях.
+  Реальних API викликів і реєстрації політики установи не виконувалось.

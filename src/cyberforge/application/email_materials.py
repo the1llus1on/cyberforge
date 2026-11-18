@@ -21,6 +21,7 @@ from cyberforge.agents.contracts import (
     source_provenance,
 )
 from cyberforge.agents.specialized import EmailScenarioAgent
+from cyberforge.application.provider_settings import ProviderSettings
 from cyberforge.application.scenarios import ScenarioService
 from cyberforge.domain.accounts import ApplicationError, Role
 from cyberforge.domain.scenarios import Scenario, ScenarioStatus
@@ -87,16 +88,37 @@ def email_source(
 
 class EmailMaterialService:
     def __init__(
-        self, scenarios: ScenarioService, gateway: LLMGateway, *, demo: bool = False
+        self,
+        scenarios: ScenarioService,
+        gateway: LLMGateway,
+        *,
+        demo: bool = False,
+        provider_settings: ProviderSettings | None = None,
     ) -> None:
         self.scenarios = scenarios
         self.accounts = scenarios.accounts
         self.gateway = gateway
         self.demo = demo
+        self.provider_settings = provider_settings
+
+    def selected_route(self) -> tuple[Provider, str]:
+        if self.provider_settings is not None:
+            route = self.provider_settings.active_route()
+            if route[0] != Provider.MOCK:
+                return route
+        return self.gateway.config.provider, self.gateway.config.model
+
+    def generation_gateway(self, token: str | None) -> LLMGateway:
+        if self.provider_settings is not None:
+            gateway = self.provider_settings.constructor_gateway(token)
+            if gateway.config.provider == Provider.MOCK:
+                raise ApplicationError(self.provider_label)
+            return gateway
+        return self.gateway
 
     @property
     def available(self) -> bool:
-        return self.demo or self.gateway.config.provider != Provider.MOCK
+        return self.demo or self.selected_route()[0] != Provider.MOCK
 
     @property
     def provider_label(self) -> str:
@@ -106,8 +128,8 @@ class EmailMaterialService:
             )
         if not self.available:
             return "Офлайн: генерацію не налаштовано. Для демонстрації: --email-demo."
-        config = self.gateway.config
-        return f"Хмарна генерація · {config.provider.value} / {config.model}"
+        provider, model = self.selected_route()
+        return f"Хмарна генерація · {provider.value} / {model}"
 
     @staticmethod
     def _validated(draft: EmailDraftV2, scenario: Scenario) -> EmailDraftV2:
@@ -232,7 +254,7 @@ class EmailMaterialService:
 
                 gateway = demo_gateway(source)
             else:
-                gateway = self.gateway
+                gateway = self.generation_gateway(token)
             result = EmailScenarioAgent(gateway).run(source)
             if result.draft is None or result.status != "pending_review":
                 raise GenerationError(result.error or ErrorCategory.VALIDATION)

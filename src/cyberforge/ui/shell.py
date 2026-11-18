@@ -26,6 +26,8 @@ from cyberforge.application.email_materials import EmailMaterialService
 from cyberforge.application.evaluations import EvaluationService
 from cyberforge.application.learner_attempts import LearnerAttemptService
 from cyberforge.application.mentor_feedback import MentorFeedbackService
+from cyberforge.application.policy_evidence import MachinePolicyEvidence
+from cyberforge.application.provider_settings import ProviderSettings
 from cyberforge.application.scenario_integration import ScenarioIntegrationService
 from cyberforge.application.scenario_publication import (
     PublicationAccessService,
@@ -33,6 +35,7 @@ from cyberforge.application.scenario_publication import (
 )
 from cyberforge.application.scenario_readiness import ScenarioReadinessService
 from cyberforge.application.scenarios import ScenarioService
+from cyberforge.application.topic_advisory import TopicAdvisory
 from cyberforge.application.web_materials import WebMaterialService
 from cyberforge.domain.accounts import (
     AccessDenied,
@@ -53,6 +56,7 @@ from cyberforge.ui.learner_pages import LearnerCatalogPage
 from cyberforge.ui.learner_results import LearnerResultsPage
 from cyberforge.ui.navigation import AuthenticationState, NavigationState, View
 from cyberforge.ui.pages import WorkspacePage, label
+from cyberforge.ui.provider_page import ProviderPage
 from cyberforge.ui.scenario_page import ScenarioPage
 from cyberforge.ui.window_geometry import window_geometry
 
@@ -91,6 +95,7 @@ class MainWindow(QMainWindow):
         emails: EmailMaterialService | None = None,
         webs: WebMaterialService | None = None,
         recovery: DataRecoveryService | None = None,
+        provider_settings: ProviderSettings | None = None,
     ) -> None:
         super().__init__()
         self.accounts = accounts
@@ -111,6 +116,7 @@ class MainWindow(QMainWindow):
         )
         self._closing_pending = False
         self._recovery = recovery
+        self.provider_page: ProviderPage | None = None
         self._restore_request: str | None = None
         self.selected_scenario_id: int | None = None
         self._catalog: tuple[Scenario, ...] = ()
@@ -255,7 +261,13 @@ class MainWindow(QMainWindow):
                 )
                 self.learner_history = page
             elif view == View.ANALYTICS:
-                page = AnalyticsPage(ScenarioAnalyticsService(self.evaluations))
+                analytics = ScenarioAnalyticsService(self.evaluations)
+                advisory = (
+                    TopicAdvisory(analytics, provider_settings, MachinePolicyEvidence())
+                    if provider_settings is not None
+                    else None
+                )
+                page = AnalyticsPage(analytics, advisory)
                 self.analytics_page = page
                 page.login_button.clicked.connect(lambda: self.navigate(View.PROFILE))
             elif view == View.PROFILE:
@@ -275,6 +287,11 @@ class MainWindow(QMainWindow):
                         ),
                         "Резервні копії",
                     )
+                if provider_settings is not None:
+                    self.provider_page = ProviderPage(
+                        provider_settings, lambda: self._token
+                    )
+                    page.tabs.addTab(self.provider_page, "Провайдери")
                 self.admin_page = page
             else:
                 page = WorkspacePage(view)
@@ -328,6 +345,8 @@ class MainWindow(QMainWindow):
         self.navigation.reset()
         self.account_page.refresh(None)
         self.admin_page.clear()
+        if self.provider_page is not None:
+            self.provider_page.clear()
         self.scenario_page.clear()
         self.selected_scenario_id = None
         self._show_scenario()
@@ -439,6 +458,8 @@ class MainWindow(QMainWindow):
         if view == View.ADMIN:
             try:
                 self.admin_page.refresh()
+                if self.provider_page is not None:
+                    self.provider_page.refresh()
             except ApplicationError as error:
                 self.statusBar().showMessage(str(error), 5000)
                 self._sync_session()

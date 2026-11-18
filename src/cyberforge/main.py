@@ -167,11 +167,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             print("Обліковий запис адміністратора створено.")
             return 0
         from cyberforge.application.email_materials import EmailMaterialService
+        from cyberforge.application.provider_settings import ProviderSettings
         from cyberforge.application.scenarios import ScenarioService
         from cyberforge.application.web_materials import WebMaterialService
         from cyberforge.llm.config import GatewayConfig, load_config
         from cyberforge.llm.contracts import GenerationError
         from cyberforge.llm.factory import create_gateway
+        from cyberforge.llm.windows_credentials import WindowsCredentialStore
         from cyberforge.ui.data_recovery import BootstrapDialog
         from cyberforge.ui.shell import MainWindow
         from cyberforge.ui.theme import apply_theme
@@ -196,10 +198,22 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise ApplicationError(
                 "Некоректна конфігурація LLM. Перевірте локальні налаштування."
             ) from None
+        provider_settings = (
+            ProviderSettings(
+                accounts,
+                storage.profile,
+                lambda profile_id: WindowsCredentialStore("stable", profile_id),
+            )
+            if storage is not None and not demo
+            else None
+        )
         emails = EmailMaterialService(
             ScenarioService(accounts),
             create_gateway(config),
             demo=demo,
+            provider_settings=provider_settings
+            if config.provider.value == "mock"
+            else None,
         )
         recovery = DataRecoveryService(accounts, storage) if storage else None
         window = MainWindow(
@@ -207,6 +221,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             emails,
             WebMaterialService(emails, demo=args.web_demo or args.learner_demo),
             recovery=recovery,
+            provider_settings=provider_settings,
         )
         window.show()
         if args.smoke_test:

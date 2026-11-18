@@ -70,6 +70,12 @@ class LLMGateway:
         self._limiter = RateLimiter(config.limits, clock)
         self._sink = sink
 
+    @staticmethod
+    def topic_advisory(request, prepared, key, admit):
+        from cyberforge.llm.topic_transport import send_topic_request
+
+        return send_topic_request(request, prepared, key, admit)
+
     def _backup_for(self, request: GenerationRequest) -> tuple[Provider, str] | None:
         if request.provider == Provider.MOCK:
             return None

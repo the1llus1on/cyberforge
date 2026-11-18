@@ -47,6 +47,7 @@ class HistoricalAttempt:
     detail: AttemptAnalyticsDetailV1
     ordering_error: bool
     activity_sequence: int
+    result_digest: str | None = None
 
 
 def _parse_time(value):
@@ -339,4 +340,5 @@ class _HistoricalReader:
             ),
             ordering_error,
             sequence,
+            result.result_digest if result is not None else None,
         )
