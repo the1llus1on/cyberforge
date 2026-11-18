@@ -4342,3 +4342,25 @@ ADR-0012 / A12 — **DOCUMENTATION REVIEW PENDING**. Architecture Freeze
 Gate — **PENDING DOCUMENTATION REVIEW**. Phase 12 implementation —
 **NOT STARTED**. Матриця P12-01–18 задає майбутні критерії. Нових
 результатів фізичних перевірок Windows 11 або артефактів випуску немає.
+
+## 18.11.2026 — Phase 12: виправлення F12-R01 і F12-R02 після огляду
+
+[Draft PR #18](https://github.com/the1llus1on/cyberforge/pull/18), оглянутий
+HEAD `ce75cea6f61870ab223ed1b13245606967d73d73`. F12-R01 (MAJOR)
+виправлено в ADR-0012 §6 і FR-A12-08. Перевірені застосовні `NOT_MET`
+мають пріоритет. Якщо їх немає, `MET` дають теми для закріплення,
+зокрема для одного учня. Обидві гілки передають лише версію контракту
+й канонічний набір topic IDs, без стану критерію. ADR-0012 §8.1
+додає дев'ять векторів для майбутніх P12-10 і P12-11.
+F12-R02 (MINOR) уточнено в ADR-0012 §6 і FR-A12-10. AI вибирає й
+упорядковує схвалені поради, UI відображає українські тексти локального
+каталогу.
+
+Phase 11 зберігає latest-completed, історичний RBAC і read-only Analytics.
+Числовий Analytics cloud V1 вимкнений. Застосовуються організаційна
+авторизація, перевірка провайдера, preview, одноразовий dispatch, grounding
+та детермінована офлайн-порада. Phases 0–11 — **ACCEPTED**, рішення
+D12-01–D12-10 — **OWNER APPROVED**. ADR-0012 / A12 і Architecture Freeze
+Gate — **PENDING OWNER APPROVAL** з підтвердженням виправлень незалежним
+оглядом. Phase 12 implementation — **NOT STARTED**, P12-01–18 залишаються
+майбутніми перевірками.

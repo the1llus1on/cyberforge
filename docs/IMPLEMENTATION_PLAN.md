@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–11 — ACCEPTED. Phase 11 architecture — APPROVED. Phase 11 implementation — ACCEPTED / MERGED. Phase 12 architecture decisions — OWNER APPROVED. ADR-0012 / A12 — DOCUMENTATION REVIEW PENDING. Phase 12 implementation — NOT STARTED.
+**State:** Phases 0–11 — ACCEPTED. Phase 11 architecture — APPROVED. Phase 11 implementation — ACCEPTED / MERGED. Phase 12 architecture decisions — OWNER APPROVED. ADR-0012 / A12 and Architecture Freeze Gate — PENDING OWNER APPROVAL. Phase 12 implementation — NOT STARTED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -1632,8 +1632,8 @@ F11-ADR-01 залишається відкритим. Хмарні рекоме�
 **ACCEPTED**. Рішення D12-01–D12-10 — **OWNER APPROVED**.
 [ADR-0012](adr/0012-windows-release-finalization.md) і
 [поправка A12](../TECHNICAL_SPECIFICATION.md#srs-v30--amendment-a12-windows-release-finalization)
-— **DOCUMENTATION REVIEW PENDING**. Architecture Freeze Gate —
-**PENDING DOCUMENTATION REVIEW**. Phase 12 implementation — **NOT STARTED**.
+— **PENDING OWNER APPROVAL**. Architecture Freeze Gate —
+**PENDING OWNER APPROVAL**. Phase 12 implementation — **NOT STARTED**.
 
 | Порядок | Майбутній пакет | Передумови та критерії |
 | --- | --- | --- |
@@ -1644,13 +1644,18 @@ F11-ADR-01 залишається відкритим. Хмарні рекоме�
 | WP5 | Демо, регресії, фінальний CI та фізичне приймання | Після WP4. P12-15–18, Release Candidate Gate та явне прийняття власником. |
 
 D12-10 додає новий topic-only маршрут для перевірених навчальних тем,
-включно зі зрізом одного учня. F11-ADR-01 superseded лише для цього
+включно зі зрізом одного учня. У [Draft PR #18](https://github.com/the1llus1on/cyberforge/pull/18)
+F12-R01 уточнює пріоритет перевірених застосовних `NOT_MET` і закріплення
+за `MET` за їх відсутності. F12-R02 уточнює AI-добір і пріоритизацію
+схвалених порад з українського локального каталогу.
+[Вектори ADR-0012 §8.1](adr/0012-windows-release-finalization.md#81-вектори-проєкції-d12-10)
+покривають P12-10 і P12-11. F11-ADR-01 superseded лише для цього
 маршруту. Cloud з числовими агрегатами V1 залишається вимкненим.
 Локальна Phase 11 аналітика є чинною базою. Відправлення потребує
 організаційного дозволу, перевіреної provider privacy конфігурації,
 preview і явної дії Instructor для кожного запиту.
 
-Поточний крок — документаційний Draft PR для незалежного огляду та
+Поточний крок — підтвердження виправлень незалежним оглядом і
 прийняття ADR/A12 власником. Фізичне приймання Windows 11, DPI,
 клавіатури, GPU, Qt WebEngine, безпеки й фінальних артефактів належить
 майбутньому WP5. Докази Phase 2 та hosted CI не закривають цю вимогу.
