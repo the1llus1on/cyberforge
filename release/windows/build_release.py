@@ -43,6 +43,8 @@ def _verify_bundle(root, source):
     files = {path.name.lower() for path in root.rglob("*") if path.is_file()}
     resources = {
         "cyberforge.exe",
+        "python312.dll",
+        "sqlite3.dll",
         "qtwebengineprocess.exe",
         "qwindows.dll",
         "qt6webenginecore.dll",
@@ -150,6 +152,8 @@ def _smoke(path):
         "QTWEBENGINE_CHROMIUM_FLAGS",
     ):
         env.pop(name, None)
+    windows = Path(env["SystemRoot"])
+    env["PATH"] = os.pathsep.join((str(windows / "System32"), str(windows)))
     run(str(path), "--smoke-test", cwd=path.parent, env=env, timeout=90)
 
 
@@ -183,7 +187,10 @@ def build(args):
         source.mkdir()
         _unpack(args.archive, source, args.sha)
         script = source / "release/windows"
-        env = os.environ | {"UV_PROJECT_ENVIRONMENT": str(work / "venv")}
+        env = os.environ | {
+            "UV_PROJECT_ENVIRONMENT": str(work / "venv"),
+            "PYINSTALLER_CONFIG_DIR": str(work / "pyinstaller-cache"),
+        }
         for name in ("PYTHONPATH", "PYTHONHOME", "VIRTUAL_ENV"):
             env.pop(name, None)
         run(

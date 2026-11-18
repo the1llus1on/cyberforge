@@ -59,6 +59,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=Path,
         help="Новий приватний JSON-файл випадкових demo-паролів",
     )
+    parser.add_argument(
+        "--demo-profile", action="store_true", help="Окремий навчальний профіль Windows"
+    )
     args = parser.parse_args(argv)
     if args.learner_demo and (
         args.database is None or (args.init_demo and args.database.exists())
@@ -68,7 +71,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.web_demo and args.database is None:
         parser.error("Для --web-demo вкажіть окрему або явно обрану --database.")
-    if args.init_demo and (args.database is None or args.credentials_file is None):
+    if args.demo_profile:
+        if sys.platform != "win32" or any(
+            (
+                args.database,
+                args.credentials_file,
+                args.recovery,
+                args.init_admin,
+                args.smoke_test,
+                args.email_demo,
+                args.web_demo,
+                args.learner_demo,
+            )
+        ):
+            parser.error(
+                "--demo-profile використовуйте окремо або з --init-demo у Windows."
+            )
+    elif args.init_demo and (args.database is None or args.credentials_file is None):
         parser.error("Для demo вкажіть --database та --credentials-file.")
     if args.credentials_file and not args.init_demo:
         parser.error("--credentials-file використовується лише з --init-demo.")
@@ -121,7 +140,19 @@ def main(argv: Sequence[str] | None = None) -> int:
                     from cyberforge.persistence.windows_profile import release_instance
 
                     lifetime.enter_context(release_instance())
-                profile = PrivateProfile(path.parent)
+                if args.demo_profile:
+                    from cyberforge.application.release_demo import (
+                        DEMO_DIRECTORY,
+                        prepare_demo_profile,
+                    )
+
+                    container = PrivateProfile(path.parent.with_name(DEMO_DIRECTORY))
+                    lifetime.enter_context(container.acquire())
+                    profile = prepare_demo_profile(container, initialize=args.init_demo)
+                    if args.init_demo:
+                        return 0
+                else:
+                    profile = PrivateProfile(path.parent)
                 lifetime.enter_context(profile.acquire())
             except OSError:
                 raise ApplicationError(PROFILE_ERROR) from None
@@ -186,7 +217,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         from cyberforge.ui.theme import apply_theme
 
         apply_theme(app)
-        demo = args.email_demo or args.web_demo or args.learner_demo
+        demo = (
+            args.email_demo or args.web_demo or args.learner_demo or args.demo_profile
+        )
         if (
             protected
             and not args.smoke_test
@@ -226,7 +259,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         window = MainWindow(
             accounts,
             emails,
-            WebMaterialService(emails, demo=args.web_demo or args.learner_demo),
+            WebMaterialService(
+                emails, demo=args.web_demo or args.learner_demo or args.demo_profile
+            ),
             recovery=recovery,
             provider_settings=provider_settings,
         )

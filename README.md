@@ -615,3 +615,9 @@ Native Windows11/DPI/GPU/installer acceptance — Phase12 deferral, не verifie
 F11-ADR-01 залишається відкритим. Хмарні рекомендації вимкнено.
 Phase 12 — **NOT STARTED**. У цій фазі заплановані перевірки фізичного
 Windows 11, DPI, апаратного GPU, фінального виконуваного файла та інсталятора.
+
+## Кандидат Windows 11 і перевірка власником
+
+[Пакування та перевірка SHA-256](docs/WINDOWS_RELEASE.md).
+[Налаштування Windows Credential Manager і політики порад](docs/PHASE_12_PROVIDER_POLICY.md).
+[Окремий demo-профіль і чекліст фізичного приймання](docs/PHASE_12_WINDOWS_ACCEPTANCE.md).

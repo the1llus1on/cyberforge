@@ -1729,3 +1729,11 @@ preview та одноразовий dispatch обмежують новий ма�
 onedir, Inno Setup, pinned toolchain, перевірку ресурсів, ZIP/WebEngine
 smoke, manifest, SHA-256 і сторонні notices. P12-02–04 та P12-14
 потребують результатів готової нативної збірки й перевірки артефактів.
+
+### 18.11.2026 — Phase 12: WP5 release candidate
+
+WP4 підтвердив первинний native Windows 11 x64 build і packaged smoke.
+WP5 додає окремий захищений синтетичний demo v1 та
+[чекліст приймання власником](PHASE_12_WINDOWS_ACCEPTANCE.md).
+P12-15–18 потребують точного HEAD, автоматизованих результатів,
+фізичних доказів із хешами й явного рішення власника.

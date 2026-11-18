@@ -4494,3 +4494,27 @@ PyInstaller onedir, pinned hooks і Inno Setup пакують Windows x64 із
 компілятора. Окремий Windows Server 2022 job збирає і перевіряє portable.
 SHA-256, підпис, склад і lifecycle мають підтвердитися готовими
 артефактами. [Рецепт випуску](WINDOWS_RELEASE.md).
+
+Нативний Windows 11 Pro build 26300 підтвердив рецепт WP4 на
+`8e74ce4b76593b8a891b09b11b9f696930c63008` під CPython 3.12.16 x64,
+uv 0.13.7, PySide6 6.10.3, PyInstaller 6.22.3 і Inno Setup 6.7.4.
+Перевірено склад onedir, Qt test profile, WebEngine/Alembic smoke з
+розпакованого Unicode-шляху та створення unsigned ZIP/installer.
+Це попередні артефакти для lifecycle comparison. SHA-256 ZIP
+`ea0a58807bb38e795dc8a4770c231ee87cd33d27a67707a0363929103da9b5ed`,
+installer
+`3a935fbc1445c74034ead582f9850bb750597ec2362a449a94780276e9c779a6`.
+
+## 18.11.2026 — Phase 12 WP5: демо й перевірка кандидата
+
+Додано явний `--demo-profile` для окремого захищеного Windows demo v1.
+Синтетичний контент і випадкові паролі створюються за явною командою та
+публікуються разом у приватному каталозі. [Чекліст Windows 11](PHASE_12_WINDOWS_ACCEPTANCE.md)
+фіксує очікувані результати обох шляхів та докази приймання. Exact-HEAD
+CI, manifest і lifecycle smoke мають бути прив'язані до кандидата.
+
+Перед фіксацією кандидата WSL offscreen demo/foundation — **7 passed**,
+включно з двома незалежно створеними v1 профілями, очікуваними
+SAFE_DECLINE/WEB_VISITED, приватними різними паролями та Mock Mentor.
+Новий GUI preview test підтвердив точний текст запиту й окремі дії
+«Залишити локальну пораду» та «Підтвердити й надіслати» — **1 passed**.
