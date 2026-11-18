@@ -313,14 +313,16 @@ def descriptor_rejection_reason(
             return "malformed_ace"
         kind, ace_flags, rights, object_type, inherited_type, principal = parts
         principal = aliases.get(principal, principal)
+        if kind != "A":
+            return "unexpected_ace_type"
+        if principal not in principals:
+            return "unexpected_ace_principal"
         if (
-            kind != "A"
-            or principal not in principals
-            or object_type
+            object_type
             or inherited_type
             or not re.fullmatch(r"(?:OI|CI|IO|ID|NP)*", ace_flags)
         ):
-            return "untrusted_ace"
+            return "unexpected_ace_attributes"
         full_access = rights == "FA" or (
             rights.startswith("0x") and int(rights, 16) == _FULL_ACCESS
         )
