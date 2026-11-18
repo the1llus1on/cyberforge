@@ -3912,9 +3912,12 @@ Email/Web у §7. [ADR-0011](docs/adr/0011-analytics-mode.md) описує ме�
 # SRS v3.0 — Amendment A12: Windows Release Finalization
 
 **Рішення D12-01–D12-10: OWNER APPROVED (18.11.2026).**
-**ADR-0012 / A12: PENDING OWNER APPROVAL.**
-**Architecture Freeze Gate: PENDING OWNER APPROVAL.**
-**Phase 12 implementation: NOT STARTED.**
+**ADR-0012 / SRS Amendment A12: APPROVED (18.11.2026).**
+**Documentation Review Gate: PASSED.**
+**Phase 12 Architecture Freeze Gate: PASSED.**
+**F12-R01 / F12-R02: RESOLVED.**
+**Phase 12 implementation: NOT STARTED / IMPLEMENTATION NOT AUTHORIZED.**
+**WP1 Contract Freeze Gate: PENDING IMPLEMENTATION VERIFICATION.**
 
 Поправка деталізує Phase 12 (§23) та критерії MVP (§24) для
 базового коміту `d45c750df5aa72817566bfacb5ca23bfb98ae126`.

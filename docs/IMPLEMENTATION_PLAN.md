@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–11 — ACCEPTED. Phase 11 architecture — APPROVED. Phase 11 implementation — ACCEPTED / MERGED. Phase 12 architecture decisions — OWNER APPROVED. ADR-0012 / A12 and Architecture Freeze Gate — PENDING OWNER APPROVAL. Phase 12 implementation — NOT STARTED.
+**State:** Phases 0–11 — ACCEPTED. Phase 11 architecture — APPROVED. Phase 11 implementation — ACCEPTED / MERGED. Phase 12 architecture decisions — OWNER APPROVED. ADR-0012 / A12 — APPROVED. Documentation Review Gate and Phase 12 Architecture Freeze Gate — PASSED. Phase 12 implementation — NOT STARTED / IMPLEMENTATION NOT AUTHORIZED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -1659,3 +1659,26 @@ preview і явної дії Instructor для кожного запиту.
 прийняття ADR/A12 власником. Фізичне приймання Windows 11, DPI,
 клавіатури, GPU, Qt WebEngine, безпеки й фінальних артефактів належить
 майбутньому WP5. Докази Phase 2 та hosted CI не закривають цю вимогу.
+
+### 18.11.2026 — Phase 12: остаточне погодження архітектури
+
+Власник затвердив [ADR-0012](adr/0012-windows-release-finalization.md)
+і [поправку A12](../TECHNICAL_SPECIFICATION.md#srs-v30--amendment-a12-windows-release-finalization)
+за незалежним оглядом [PR #18](https://github.com/the1llus1on/cyberforge/pull/18)
+на HEAD `cfc0f848c9e17570e615de9ab6971326e0a1743c`. F12-R01 і F12-R02 —
+**RESOLVED**. Відкритих BLOCKER або MAJOR за висновком огляду не виявлено.
+
+| Позиція | Поточний статус |
+| --- | --- |
+| Phases 0–11 | ACCEPTED |
+| D12-01–D12-10 | OWNER APPROVED |
+| ADR-0012 / SRS Amendment A12 | APPROVED |
+| Documentation Review Gate | PASSED |
+| Phase 12 Architecture Freeze Gate | PASSED |
+| Phase 12 implementation | NOT STARTED / IMPLEMENTATION NOT AUTHORIZED |
+| WP1 Contract Freeze Gate | PENDING IMPLEMENTATION VERIFICATION |
+| P12-01–P12-18 | PENDING IMPLEMENTATION VERIFICATION |
+
+Окремий дозвіл власника потрібен для початку реалізації. Фізичне приймання
+Windows 11, перевірки пакування, інсталяції та приватності залишаються
+майбутніми вимогами.

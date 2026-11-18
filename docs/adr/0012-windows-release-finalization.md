@@ -2,9 +2,11 @@
 
 **Базовий коміт:** `d45c750df5aa72817566bfacb5ca23bfb98ae126`
 **Рішення D12-01–D12-10:** OWNER APPROVED (18.11.2026)
-**ADR-0012 / A12:** PENDING OWNER APPROVAL
-**Architecture Freeze Gate:** PENDING OWNER APPROVAL
-**Phase 12 implementation:** NOT STARTED
+**ADR-0012 / SRS Amendment A12:** APPROVED (18.11.2026)
+**Documentation Review Gate:** PASSED
+**Phase 12 Architecture Freeze Gate:** PASSED
+**Phase 12 implementation:** NOT STARTED / IMPLEMENTATION NOT AUTHORIZED
+**WP1 Contract Freeze Gate:** PENDING IMPLEMENTATION VERIFICATION
 
 ## 1. Контекст
 
@@ -324,6 +326,14 @@ evidence, preview/dispatch, grounding, stale handling і відсутність
 числового шляху. Закрити MAJOR/BLOCKER, перевірити документаційний обсяг
 та застосовні CI checks. Після явного прийняття ADR/A12 власником
 документаційний gate може бути закритий. Дозвіл на реалізацію окремий.
+
+18.11.2026 власник затвердив ADR-0012 і поправку A12 за результатами
+незалежного архітектурного огляду [PR #18](https://github.com/the1llus1on/cyberforge/pull/18)
+на HEAD `cfc0f848c9e17570e615de9ab6971326e0a1743c`, включно з D12-10.
+F12-R01 і F12-R02 — **RESOLVED**. За висновком незалежного огляду
+відкритих BLOCKER або MAJOR не виявлено. Обидва документаційні gate
+пройдено. Phases 0–11 — **ACCEPTED**. Майбутні P12-01–P12-18 і WP1
+Contract Freeze Gate очікують перевірок реалізації.
 
 **Implementation gates.** WP1 Contract Freeze Gate перед інтеграцією,
 що залежить від контрактів. Release Candidate Gate після перевірок

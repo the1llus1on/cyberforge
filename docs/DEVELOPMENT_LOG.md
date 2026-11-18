@@ -4364,3 +4364,24 @@ D12-01–D12-10 — **OWNER APPROVED**. ADR-0012 / A12 і Architecture Freeze
 Gate — **PENDING OWNER APPROVAL** з підтвердженням виправлень незалежним
 оглядом. Phase 12 implementation — **NOT STARTED**, P12-01–18 залишаються
 майбутніми перевірками.
+
+## 18.11.2026 — Phase 12: погодження ADR-0012 і поправки A12
+
+Власник затвердив [ADR-0012](adr/0012-windows-release-finalization.md)
+і [поправку A12](../TECHNICAL_SPECIFICATION.md#srs-v30--amendment-a12-windows-release-finalization),
+включно з рішеннями D12-01–D12-10 та версійним topic-only advisory для
+одного учня. За результатом незалежного огляду
+[PR #18](https://github.com/the1llus1on/cyberforge/pull/18) на HEAD
+`cfc0f848c9e17570e615de9ab6971326e0a1743c` F12-R01 і F12-R02 —
+**RESOLVED**. Відкритих BLOCKER або MAJOR за висновком огляду не виявлено.
+[CI оглянутого HEAD](https://github.com/the1llus1on/cyberforge/actions/runs/44281316968):
+Linux — 1 391 пройдений тест, Windows Server 2022 — 1 388 пройдених
+тестів і три очікувані пропуски. Ruff lint і format пройшли на обох runner.
+
+Phases 0–11 — **ACCEPTED**. D12-01–D12-10 — **OWNER APPROVED**.
+ADR-0012 / SRS Amendment A12 — **APPROVED**. Documentation Review Gate
+і Phase 12 Architecture Freeze Gate — **PASSED**. Phase 12 implementation —
+**NOT STARTED / IMPLEMENTATION NOT AUTHORIZED**. WP1 Contract Freeze Gate
+і P12-01–P12-18 — **PENDING IMPLEMENTATION VERIFICATION**. Погодження
+документації не закриває фізичне приймання Windows 11 або майбутні
+перевірки пакування, інсталяції та приватності.
