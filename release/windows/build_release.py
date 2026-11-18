@@ -211,10 +211,15 @@ try:
     profile = PrivateProfile(Path(location))
 except PermissionError:
     security = WindowsProfileSecurity()
-    reason = descriptor_rejection_reason(
-        security._descriptor(Path(location)), security.sid, directory=True
-    )
-    print(f"Protected-profile ACL rejection: {reason}")
+    descriptor = security._descriptor(Path(location))
+    reason = descriptor_rejection_reason(descriptor, security.sid, directory=True)
+    owner = descriptor.partition("D:")[0].removeprefix("O:")
+    owner_kind = {
+        security.sid: "account",
+        "S-1-5-18": "system",
+        "S-1-5-32-544": "administrators",
+    }.get(owner, "other")
+    print(f"Protected-profile ACL rejection: {reason} (owner={owner_kind})")
     raise
 with profile.acquire():
     ProfileRecovery(profile).startup().close()

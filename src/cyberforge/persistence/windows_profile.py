@@ -185,11 +185,12 @@ class WindowsProfileSecurity:
             _PD,
         )
         security = _PTR()
+        owner = _PTR()
         status = read(
             str(path),
             _SE_FILE_OBJECT,
             _READ_OWNER_DACL,
-            None,
+            ctypes.byref(owner),
             None,
             None,
             None,
@@ -198,11 +199,26 @@ class WindowsProfileSecurity:
         if status:
             raise ctypes.WinError(status)
         try:
+            to_string = _function(
+                self.security, "ConvertSidToStringSidW", _BOOL, _PTR, _PPTR
+            )
+            owner_text = _PTR()
+            if not to_string(owner, ctypes.byref(owner_text)):
+                raise ctypes.WinError(ctypes.get_last_error())
+            try:
+                owner_sid = ctypes.wstring_at(owner_text)
+            finally:
+                self.free(owner_text)
             result = _PTR()
             if not convert(security, 1, _READ_OWNER_DACL, ctypes.byref(result), None):
                 raise ctypes.WinError(ctypes.get_last_error())
             try:
-                return ctypes.wstring_at(result)
+                _, separator, dacl = ctypes.wstring_at(result).partition("D:")
+                if not separator:
+                    return ctypes.wstring_at(result)
+                # SDDL renders some well-known owner SIDs as aliases. Keep the
+                # actual owner SID so validation compares identity, not spelling.
+                return f"O:{owner_sid}D:{dacl}"
             finally:
                 self.free(result)
         finally:
