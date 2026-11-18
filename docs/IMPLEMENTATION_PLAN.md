@@ -1,7 +1,7 @@
 # CyberForge — Implementation Plan
 
 **Normative source:** `TECHNICAL_SPECIFICATION.md` (SRS v3.0, 11.11.2026), especially §§0, 21–24, 26–27.
-**State:** Phases 0–9 — ACCEPTED; Phase10 — ACCEPTED (18.11.2026), architecture/WP1 ACCEPTED, Contract Freeze PASSED; Phase11 — REVIEW / PENDING OWNER ACCEPTANCE; Phase12 — NOT STARTED.
+**State:** Phases 0–11 — ACCEPTED. Phase 11 architecture — APPROVED. Phase 11 implementation — ACCEPTED / MERGED. Phase 12 — NOT STARTED.
 **Rule:** Execute only one user-approved phase at a time; never automatically move to the next phase.
 
 ## Definitions of status
@@ -28,7 +28,7 @@
 | 8 | Scenario Integration | ACCEPTED | Typed Email→Web link, rubric definitions/editor, exact readiness/review, atomic immutable publication, audited grants/access; PHASE_8_ACCEPTANCE.md |
 | 9 | Learner Simulation | ACCEPTED | Email/Web exercises, controlled navigation, persistent learner attempt history/events, safe completion without Web; end-to-end tests |
 | 10 | Scoring & Mentor | ACCEPTED | Deterministic scoring compatible with published versioned rubric declarations, evaluation, learner result history/detail, LLM explanations without score edits; reproducibility tests |
-| 11 | Analytics Mode | REVIEW / PENDING OWNER ACCEPTANCE | Read-only scenario statistics, deduplicated learner table, charts, CSV/JSON export and offline recommendations. Evidence in PHASE_11_IMPLEMENTATION_REVIEW.md. |
+| 11 | Analytics Mode | ACCEPTED / MERGED | Read-only scenario statistics, deduplicated learner table, charts, CSV/JSON export and offline recommendations. Evidence in PHASE_11_IMPLEMENTATION_REVIEW.md. |
 | 12 | Finalization | NOT STARTED | Full regression/security checks, Windows 11 package, demonstration dataset, docs and release checklist |
 
 ## Implementation requirements for each phase
@@ -1604,3 +1604,24 @@ P11-01–P11-16 і докази доступні у
 Phase 11 — **REVIEW / PENDING OWNER ACCEPTANCE**. Незалежний огляд,
 ручна перевірка WSLg і рішення власника щодо merge є частинами P11-16.
 Phase 12 — **NOT STARTED**.
+
+
+### 18.11.2026 — Остаточне прийняття Phase 11
+
+Власник повідомив, що виконав ручну перевірку у WSLg, і **ACCEPTED**
+Phase 11 18.11.2026. P11-16 — **OWNER ACCEPTANCE COMPLETED**. Інженерні
+критерії P11-01–P11-15 пройдено. F11-R01 — **RESOLVED**. ADR-0011 та
+поправка A11 залишаються **APPROVED**. Documentation Review Gate — **PASSED**.
+
+[PR #16](https://github.com/the1llus1on/cyberforge/pull/16) вже було злито
+для подання програми за окремим дозволом власника. Злиття передувало
+ручному прийняттю. HEAD реалізації — `229b9cee28cad6d71aee850a8e1027bf4bf97198`.
+Коміт злиття — `945b34af1e381da5f950e0be46c5274639a0ac83`.
+[CI реалізації](https://github.com/the1llus1on/cyberforge/actions/runs/44247178351)
+пройшов на цьому HEAD. Linux — 1 391 тест. Windows Server 2022 — 1 388 тестів
+і три очікувані пропуски. Деталі у [записі прийняття](PHASE_11_IMPLEMENTATION_REVIEW.md).
+
+F11-ADR-01 залишається відкритим. Хмарні рекомендації вимкнено,
+детерміновані офлайн-рекомендації доступні. Phase 12 — **NOT STARTED**.
+Перевірки фізичного Windows 11, DPI, апаратного GPU, фінального
+виконуваного файла й інсталятора залишаються в обсязі Phase 12.
