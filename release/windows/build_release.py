@@ -14,6 +14,7 @@ import tempfile
 import zipfile
 from pathlib import Path
 from shutil import copyfile
+from uuid import uuid4
 
 PYINSTALLER = "6.22.3"
 HOOKS = "2026.10"
@@ -138,7 +139,7 @@ def _sign(path, args):
         run(str(args.signtool), "verify", "/pa", str(path))
 
 
-def _smoke(path, *, report_failure=False):
+def _smoke(path, *, report_failure=False, scope=None):
     env = os.environ.copy()
     for name in (
         "PYTHONPATH",
@@ -154,15 +155,17 @@ def _smoke(path, *, report_failure=False):
         env.pop(name, None)
     windows = Path(os.environ["SystemRoot"])
     env["PATH"] = os.pathsep.join((str(windows / "System32"), str(windows)))
+    command = [str(path), "--smoke-test"]
+    if scope is not None:
+        command.extend(("--smoke-scope", scope))
     if not report_failure:
-        run(str(path), "--smoke-test", cwd=path.parent, env=env, timeout=90)
+        run(*command, cwd=path.parent, env=env, timeout=90)
         return
     with tempfile.TemporaryDirectory(prefix="cyberforge-smoke-") as directory:
         report = Path(directory) / "startup-error.txt"
         try:
             run(
-                str(path),
-                "--smoke-test",
+                *command,
                 "--smoke-result",
                 str(report),
                 cwd=path.parent,
@@ -309,7 +312,11 @@ def build(args):
         smoke_dir = work / "Перевірка повного ZIP"
         with zipfile.ZipFile(archive) as packed:
             packed.extractall(smoke_dir)
-        _smoke(smoke_dir / ROOT / "CyberForge.exe", report_failure=True)
+        _smoke(
+            smoke_dir / ROOT / "CyberForge.exe",
+            report_failure=True,
+            scope=uuid4().hex,
+        )
         compiler = subprocess.run(
             [
                 str(args.iscc),

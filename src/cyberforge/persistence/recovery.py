@@ -5,8 +5,10 @@ import os
 import re
 import shutil
 import sqlite3
-from collections.abc import Iterator
-from contextlib import closing, contextmanager
+import stat
+from collections.abc import Callable, Iterator
+from contextlib import ExitStack, closing, contextmanager
+from itertools import zip_longest
 from pathlib import Path
 from time import monotonic
 from uuid import uuid4
@@ -18,7 +20,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from cyberforge.domain.accounts import ApplicationError
 from cyberforge.persistence.database import Database
-from cyberforge.persistence.profile import DATABASE_NAME, PrivateProfile
+from cyberforge.persistence.profile import DATABASE_NAME, PrivateProfile, _file_info
 
 _INVALID_BACKUP = "Резервна копія пошкоджена або несумісна з цією версією CyberForge."
 _INVALID_DATABASE = "База даних пошкоджена або несумісна з цією версією CyberForge."
@@ -26,6 +28,24 @@ _BUSY = "База даних зайнята. Закрийте інші екзе�
 _METADATA = "manifest.json"
 _SIDECARS = ("-wal", "-shm", "-journal")
 _STORAGE_ERRORS = (OSError, ValueError, sqlite3.Error, CommandError, SQLAlchemyError)
+_LEGACY_PENDING = "legacy-import.pending"
+_LEGACY_DONE = "legacy-import.done"
+_LEGACY_CONFLICT = (
+    "Знайдено стару і приватну бази CyberForge. Жодну не змінено. "
+    "Зверніться до відповідального за відновлення даних."
+)
+_LEGACY_FAILED = (
+    "Не вдалося перенести стару базу CyberForge. Стару базу не змінено. "
+    "Закрийте старий випуск, перевірте доступ, стан бази та вільне місце."
+)
+
+
+def _import_receipt(path: Path) -> bytes:
+    with path.open("rb") as receipt:
+        digest = receipt.read(65)
+    if not re.fullmatch(rb"[0-9a-f]{64}", digest):
+        raise ValueError("invalid_legacy_receipt")
+    return digest
 
 
 class BackupManifest(BaseModel):
@@ -59,6 +79,35 @@ def _revision(db: sqlite3.Connection) -> str:
     if len(rows) != 1 or not isinstance(rows[0][0], str):
         raise ValueError("invalid_revision")
     return rows[0][0]
+
+
+def _identifier(name: str) -> str:
+    return '"' + name.replace('"', '""') + '"'
+
+
+def _verify_preserved(source: Path, target: Path) -> None:
+    """Compare all historical columns, including IDs, hashes and audit rows."""
+    with (
+        closing(_connect(source, readonly=True)) as before,
+        closing(_connect(target, readonly=True)) as after,
+    ):
+        tables = before.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND "
+            "name NOT IN ('alembic_version', 'sqlite_stat1', 'sqlite_stat4')"
+        )
+        for (name,) in tables:
+            table = _identifier(name)
+            fields = before.execute(f"PRAGMA table_info({table})").fetchall()
+            columns = [_identifier(row[1]) for row in fields]
+            primary_key = sorted(
+                (row[5], _identifier(row[1])) for row in fields if row[5]
+            )
+            select = f"SELECT {', '.join(columns)} FROM {table}"
+            order = ", ".join(column for _, column in primary_key) or "rowid"
+            query = f"{select} ORDER BY {order}"
+            for old, new in zip_longest(before.execute(query), after.execute(query)):
+                if old != new or tuple(map(type, old)) != tuple(map(type, new)):
+                    raise ValueError("legacy_data_changed")
 
 
 class ProfileRecovery:
@@ -208,6 +257,138 @@ class ProfileRecovery:
         ):
             raise ApplicationError(_BUSY)
         return _checksum(self.path)
+
+    def prepare_legacy(
+        self, confirm: Callable[[], bool] | None, *, emergency: bool = False
+    ) -> bool:
+        """Resolve the previous default location before startup or recovery."""
+        if self.profile.windows is None:
+            raise RuntimeError("legacy import requires Windows file share exclusion")
+        source = self.profile.root.parent / DATABASE_NAME
+        pending = self.profile.root / _LEGACY_PENDING
+        done = self.profile.root / _LEGACY_DONE
+        try:
+            self.profile.check_database_paths()
+            self.profile.validate(pending, missing=True)
+            self.profile.validate(done, missing=True)
+            if done.exists():
+                _import_receipt(done)
+                if pending.exists() or (not self.path.exists() and not emergency):
+                    raise ApplicationError(_LEGACY_CONFLICT)
+                return True
+            if pending.exists() and self.path.exists():
+                expected = _import_receipt(pending)
+                if (
+                    any(
+                        self.path.with_name(self.path.name + s).exists()
+                        for s in _SIDECARS
+                    )
+                    or _checksum(self.path).encode("ascii") != expected
+                ):
+                    raise ApplicationError(_LEGACY_CONFLICT)
+                self._inspect(self.path, revision=self.head)
+                pending.rename(done)
+                return True
+            found = _file_info(source) is not None
+            if not found:
+                if pending.exists() or any(
+                    _file_info(source.with_name(source.name + s)) is not None
+                    for s in _SIDECARS
+                ):
+                    raise ApplicationError(_LEGACY_CONFLICT)
+                return True
+            if self.path.exists() or emergency:
+                raise ApplicationError(_LEGACY_CONFLICT)
+            if any(self.path.with_name(self.path.name + s).exists() for s in _SIDECARS):
+                raise ApplicationError(_LEGACY_CONFLICT)
+            if confirm is None:
+                raise ApplicationError(
+                    "Потрібне підтвердження перенесення старої бази."
+                )
+            if not confirm():
+                return False
+            self._import_legacy(source, pending, done)
+            return True
+        except _STORAGE_ERRORS:
+            raise ApplicationError(_LEGACY_FAILED) from None
+
+    def _import_legacy(self, source: Path, pending: Path, done: Path) -> None:
+        windows = self.profile.windows
+        assert windows is not None
+        windows.validate(source.parent, directory=True)
+        self._staging_root()
+        with ExitStack() as locks:
+            files = {}
+            # Hold the main file throughout activation. An old instance
+            # cannot attach to it while the import is in progress.
+            for suffix in ("", *_SIDECARS):
+                path = source.with_name(source.name + suffix)
+                info = _file_info(path)
+                if info is None and suffix:
+                    continue
+                if info is None or not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+                    raise PermissionError(path)
+                stream = locks.enter_context(windows.lock_legacy_file(path))
+                if not os.path.samestat(info, os.fstat(stream.fileno())):
+                    raise PermissionError(path)
+                windows.validate(path, directory=False)
+                files[suffix] = stream
+            if "-journal" in files:
+                raise ApplicationError(
+                    "Стара база має журнал відновлення. Відкрийте й коректно "
+                    "закрийте її старим випуском CyberForge, потім повторіть спробу."
+                )
+            wal = files.get("-wal")
+            if "-shm" in files and wal is None:
+                raise ValueError("missing_legacy_wal")
+            if wal is not None:
+                header = wal.read(32)
+                wal.seek(0)
+                if header and (
+                    len(header) != 32
+                    or header[:4] not in (b"\x37\x7f\x06\x82", b"\x37\x7f\x06\x83")
+                ):
+                    raise ValueError("invalid_legacy_wal")
+                files[""].seek(18)
+                mode = files[""].read(2)
+                files[""].seek(0)
+                if header and mode != b"\x02\x02":
+                    raise ValueError("unexpected_legacy_wal")
+            with (
+                self._stage() as raw,
+                self._stage() as rollback,
+                self._stage() as stage,
+            ):
+                # Read SQLite only in staging. SHM is a transient WAL index
+                # and SQLite reconstructs it from the copied main file and WAL.
+                for suffix in ("", "-wal"):
+                    if suffix in files:
+                        target = raw / (DATABASE_NAME + suffix)
+                        fd = os.open(
+                            target, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600
+                        )
+                        with os.fdopen(fd, "wb") as output:
+                            shutil.copyfileobj(files[suffix], output)
+                raw_db = raw / DATABASE_NAME
+                revision = self._inspect(raw_db)
+                original = rollback / DATABASE_NAME
+                self._snapshot(raw_db, original)
+                self._inspect(original, revision=revision)
+                candidate = stage / DATABASE_NAME
+                self._snapshot(original, candidate)
+                self._upgrade(candidate, self.head)
+                self._inspect(candidate, revision=self.head)
+                _verify_preserved(original, candidate)
+                self._publish(rollback, revision)
+                receipt = stage / _LEGACY_PENDING
+                fd = os.open(receipt, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                with os.fdopen(fd, "wb") as output:
+                    output.write(_checksum(candidate).encode("ascii"))
+                    output.flush()
+                    os.fsync(output.fileno())
+                receipt.replace(pending)
+                self._activate(candidate, None)
+                pending.rename(done)
 
     def _activate(self, staged: Path, original: str | None) -> None:
         self.profile.check_database_paths()

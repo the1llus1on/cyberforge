@@ -1,9 +1,11 @@
-from PySide6.QtWidgets import QDialog
+import pytest
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QApplication, QDialog, QMessageBox
 
 from cyberforge.application.accounts import AccountService
 from cyberforge.domain.accounts import Role
 from cyberforge.persistence.database import Database
-from cyberforge.ui.data_recovery import BootstrapDialog
+from cyberforge.ui.data_recovery import BootstrapDialog, confirm_legacy_import
 
 
 def test_bootstrap_dialog_validates_confirmation_and_creates_once(qtbot, tmp_path):
@@ -58,3 +60,23 @@ def test_bootstrap_cancel_clears_passwords_and_leaves_database_empty(qtbot, tmp_
         assert not dialog.password.text() and not dialog.confirmation.text()
     finally:
         db.close()
+
+
+@pytest.mark.parametrize("approve", [False, True])
+def test_legacy_migration_dialog_requires_affirmative_choice(qapp, approve):
+    defaults = []
+
+    def respond():
+        box = QApplication.activeModalWidget()
+        if isinstance(box, QMessageBox):
+            defaults.append(box.standardButton(box.defaultButton()))
+            if approve:
+                box.button(QMessageBox.StandardButton.Yes).click()
+            else:
+                box.reject()
+        else:
+            QTimer.singleShot(5, respond)
+
+    QTimer.singleShot(0, respond)
+    assert confirm_legacy_import() is approve
+    assert defaults == [QMessageBox.StandardButton.No]

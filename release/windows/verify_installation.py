@@ -9,6 +9,7 @@ import tempfile
 from contextlib import contextmanager
 from ctypes import wintypes
 from pathlib import Path
+from uuid import uuid4
 
 from build_release import PACKAGE_ID, _smoke, digest
 
@@ -69,11 +70,11 @@ def _active_app_mutex():
         close(handle)
 
 
-def _test_database():
+def _test_database(scope):
     from PySide6.QtCore import QCoreApplication, QStandardPaths
 
     core = QCoreApplication(["CyberForge"])
-    core.setApplicationName("CyberForge")
+    core.setApplicationName(f"CyberForge-smoke-{scope}" if scope else "CyberForge")
     core.setOrganizationName("CyberForge")
     location = QStandardPaths.StandardLocation.AppLocalDataLocation
     normal = QStandardPaths.writableLocation(location)
@@ -106,11 +107,15 @@ def verify(previous, candidate):
         raise SystemExit("installer lifecycle smoke requires Windows 11 x64")
     if installed_location() is not None:
         raise RuntimeError("an existing user installation must be preserved")
-    old_installer, old_dir = _artifacts(previous)
     new_installer, new_dir = _artifacts(candidate)
-    if old_dir == new_dir:
-        raise ValueError("lifecycle upgrade requires two distinct source commits")
-    db = _test_database()
+    scope = uuid4().hex if previous is None else None
+    if previous is None:
+        old_installer, old_dir = new_installer, new_dir
+    else:
+        old_installer, old_dir = _artifacts(previous)
+        if old_dir == new_dir:
+            raise ValueError("lifecycle upgrade requires two distinct source commits")
+    db = _test_database(scope)
     with tempfile.TemporaryDirectory(prefix="cyberforge-install-smoke-") as temporary:
         folder = Path(temporary) / "Managed CyberForge"
         old_exe = folder / old_dir / "CyberForge.exe"
@@ -119,33 +124,35 @@ def verify(previous, candidate):
             _install(old_installer, folder)
             if installed_location() != folder:
                 raise RuntimeError("missing current-user install registration")
-            _smoke(old_exe)
-            original = digest(db)
             with _active_app_mutex():
                 attempt = _install(new_installer, folder, check=False)
-                if attempt.returncode == 0 or new_exe.exists():
+                if attempt.returncode == 0 or (previous and new_exe.exists()):
                     raise RuntimeError("installer accepted an active application")
-            _install(new_installer, folder)
-            _smoke(new_exe)
-            if digest(db) != original:
-                raise RuntimeError("upgrade changed the smoke database")
+            _smoke(old_exe, scope=scope)
+            original = digest(db)
+            if previous:
+                _install(new_installer, folder)
+                _smoke(new_exe)
+                if digest(db) != original:
+                    raise RuntimeError("upgrade changed the smoke database")
             _uninstall(folder)
             if digest(db) != original:
                 raise RuntimeError("uninstall changed the smoke database")
             _install(new_installer, folder)
-            _smoke(new_exe)
+            _smoke(new_exe, scope=scope)
             if digest(db) != original:
                 raise RuntimeError("reinstall changed the smoke database")
             _uninstall(folder)
         finally:
             if installed_location() == folder:
                 _uninstall(folder)
-    print("Per-user install, mutex refusal, upgrade, uninstall and reinstall passed.")
+    steps = "upgrade, " if previous else ""
+    print(f"Per-user install, mutex refusal, {steps}uninstall and reinstall passed.")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--previous", type=Path, required=True)
+    parser.add_argument("--previous", type=Path)
     parser.add_argument("--candidate", type=Path, required=True)
     args = parser.parse_args()
     verify(args.previous, args.candidate)

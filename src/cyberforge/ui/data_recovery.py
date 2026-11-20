@@ -73,6 +73,23 @@ class BootstrapDialog(QDialog):
             self.clear_passwords()
 
 
+def confirm_legacy_import() -> bool:
+    return (
+        QMessageBox.question(
+            None,
+            "Перенесення наявної бази CyberForge",
+            "Знайдено базу попереднього випуску. Закрийте старий CyberForge. "
+            "Перенести облікові записи, сценарії та результати до приватного профілю? "
+            "Стара база залишиться на місці. Перевірену копію буде збережено "
+            "у приватному сховищі. "
+            "Після перенесення працюйте в новому випуску.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        == QMessageBox.StandardButton.Yes
+    )
+
+
 def choose_backup(
     parent: QWidget | None, backups: tuple[str, ...], *, emergency: bool = False
 ) -> str | None:

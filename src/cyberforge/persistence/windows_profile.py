@@ -311,10 +311,21 @@ class WindowsProfileSecurity:
     @contextmanager
     def lock_for_replacement(self, path: Path) -> Iterator[BinaryIO]:
         """Allow replacement while keeping legacy SQLite readers and writers out."""
+        with self._read_with_share(path, share=4) as stream:  # FILE_SHARE_DELETE
+            yield stream
+
+    @contextmanager
+    def lock_legacy_file(self, path: Path) -> Iterator[BinaryIO]:
+        """Exclude all data handles and keep the original file at its name."""
+        with self._read_with_share(path, share=0) as stream:
+            yield stream
+
+    @contextmanager
+    def _read_with_share(self, path: Path, *, share: int) -> Iterator[BinaryIO]:
         import msvcrt
 
-        # GENERIC_READ, FILE_SHARE_DELETE, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT.
-        handle = self.open_file(str(path), 0x80000000, 4, None, 3, 0x00200000, None)
+        # GENERIC_READ, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT.
+        handle = self.open_file(str(path), 0x80000000, share, None, 3, 0x00200000, None)
         if handle == _PTR(-1).value:
             raise ctypes.WinError(ctypes.get_last_error())
         try:

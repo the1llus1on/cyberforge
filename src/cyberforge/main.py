@@ -1,6 +1,7 @@
 """Desktop entry point and explicit local account/demo setup."""
 
 import argparse
+import re
 import sys
 from collections.abc import Sequence
 from contextlib import ExitStack
@@ -23,6 +24,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--smoke-test", action="store_true", help="Перевірити запуск і закрити вікно"
     )
     parser.add_argument("--smoke-result", type=Path, help=argparse.SUPPRESS)
+    parser.add_argument("--smoke-scope", help=argparse.SUPPRESS)
     parser.add_argument("--database", type=Path, help="Шлях до спільної локальної БД")
     parser.add_argument(
         "--email-demo",
@@ -66,6 +68,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.smoke_result and not args.smoke_test:
         parser.error("--smoke-result використовується лише з --smoke-test.")
+    packaged = getattr(sys, "frozen", False)
+    if args.smoke_scope is not None and (
+        not (packaged and args.smoke_test)
+        or not re.fullmatch(r"[0-9a-f]{32}", args.smoke_scope)
+    ):
+        parser.error("Некоректний тестовий профіль.")
     if args.learner_demo and (
         args.database is None or (args.init_demo and args.database.exists())
     ):
@@ -96,7 +104,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("--credentials-file використовується лише з --init-demo.")
     if args.recovery and (sys.platform != "win32" or args.database or args.smoke_test):
         parser.error("Аварійне відновлення доступне для стандартного профілю Windows.")
-    if getattr(sys, "frozen", False) and args.database:
+    if packaged and args.database:
         parser.error("Цей випуск використовує приватний профіль CyberForge.")
 
     from alembic.util.exc import CommandError
@@ -125,9 +133,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         from PySide6.QtWidgets import QApplication
 
         app = QApplication([sys.argv[0]])
-    app.setApplicationName("CyberForge")
+    app.setApplicationName(
+        f"CyberForge-smoke-{args.smoke_scope}" if args.smoke_scope else "CyberForge"
+    )
     app.setOrganizationName("CyberForge")
-    packaged = getattr(sys, "frozen", False)
     if packaged and args.smoke_test:
         QStandardPaths.setTestModeEnabled(True)
     data_location = QStandardPaths.writableLocation(
@@ -171,6 +180,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
                 raise ApplicationError(PROFILE_ERROR) from None
             storage = ProfileRecovery(profile)
+            if not args.demo_profile:
+                confirm = None
+                if not (setup_only or args.smoke_test or args.recovery):
+                    from cyberforge.ui.data_recovery import confirm_legacy_import
+
+                    confirm = confirm_legacy_import
+                if not storage.prepare_legacy(confirm, emergency=args.recovery):
+                    return 0
             if args.recovery:
                 from cyberforge.ui.data_recovery import choose_backup
 
