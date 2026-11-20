@@ -315,7 +315,7 @@ class ProfileRecovery:
     def _import_legacy(self, source: Path, pending: Path, done: Path) -> None:
         windows = self.profile.windows
         assert windows is not None
-        windows.validate(source.parent, directory=True)
+        windows.validate_legacy(source.parent, directory=True)
         self._staging_root()
         with ExitStack() as locks:
             files = {}
@@ -331,7 +331,7 @@ class ProfileRecovery:
                 stream = locks.enter_context(windows.lock_legacy_file(path))
                 if not os.path.samestat(info, os.fstat(stream.fileno())):
                     raise PermissionError(path)
-                windows.validate(path, directory=False)
+                windows.validate_legacy(path, directory=False)
                 files[suffix] = stream
             if "-journal" in files:
                 raise ApplicationError(

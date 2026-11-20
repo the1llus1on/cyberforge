@@ -15,7 +15,10 @@ from cyberforge.domain.accounts import AccessDenied, ApplicationError, Role
 from cyberforge.persistence.database import Database
 from cyberforge.persistence.profile import DATABASE_NAME, PrivateProfile
 from cyberforge.persistence.recovery import ProfileRecovery
-from cyberforge.persistence.windows_profile import valid_descriptor
+from cyberforge.persistence.windows_profile import (
+    descriptor_rejection_reason,
+    valid_descriptor,
+)
 
 PASSWORD = "synthetic-test-password"
 
@@ -48,6 +51,20 @@ def test_acl_accepts_only_expected_owner_and_inheritance():
     )
     assert not valid_descriptor(descriptor.replace("OICIID", "ID"), sid, directory=True)
     assert not valid_descriptor(f"O:{sid}D:NO_ACCESS_CONTROL", sid, directory=True)
+
+
+def test_legacy_owner_rights_requires_current_owner_and_no_extra_principals():
+    sid = "S-1-5-21-1-2-3-1001"
+    acl = "D:P(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICI;FA;;;S-1-3-4)"
+    assert (
+        descriptor_rejection_reason(f"O:{sid}{acl}", sid, directory=True, legacy=True)
+        is None
+    )
+    assert not valid_descriptor(f"O:{sid}{acl}", sid, directory=True)
+    assert descriptor_rejection_reason("O:BA" + acl, sid, directory=True, legacy=True)
+    assert descriptor_rejection_reason(
+        f"O:{sid}{acl}(A;;FR;;;WD)", sid, directory=True, legacy=True
+    )
 
 
 def test_profile_refuses_concurrent_lock(storage):

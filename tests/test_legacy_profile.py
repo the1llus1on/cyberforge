@@ -4,7 +4,9 @@ import errno
 import json
 import os
 import sqlite3
+import subprocess
 from contextlib import closing
+from pathlib import Path
 
 import pytest
 
@@ -30,6 +32,7 @@ from cyberforge.llm.factory import create_gateway
 from cyberforge.persistence.database import Database
 from cyberforge.persistence.profile import PrivateProfile, private_profile_root
 from cyberforge.persistence.recovery import ProfileRecovery
+from cyberforge.persistence.windows_profile import WindowsProfileSecurity
 from tests.test_analytics import complete
 
 
@@ -40,6 +43,8 @@ def profiles(tmp_path):
     class ClosedSource:
         def validate(self, path, *, directory):
             pass
+
+        validate_legacy = validate
 
         def lock_legacy_file(self, path):
             return path.open("rb")
@@ -64,6 +69,33 @@ def test_no_legacy_keeps_clean_first_run(profiles):
     with closing(storage.startup()) as db:
         assert AccountService(db).needs_bootstrap()
     assert not legacy.exists()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="native CPython legacy owner ACL")
+def test_migrates_database_with_original_python_created_directory(tmp_path):
+    legacy = tmp_path / "old Qt profile" / "cyberforge.sqlite3"
+    with closing(seed(legacy, "0008")) as db:
+        AccountService(db).bootstrap("root", "Адміністратор", "synthetic-password")
+    security = WindowsProfileSecurity()
+    icacls = Path(os.environ["SystemRoot"]) / "System32" / "icacls.exe"
+    for path in (legacy.parent, legacy):
+        # Hosted tests may run elevated. Reproduce ownership of the files
+        # created by the old application running under an ordinary token.
+        if security._descriptor(path).partition("D:")[0] != f"O:{security.sid}":
+            subprocess.run(
+                [icacls, path, "/setowner", f"*{security.sid}"],
+                check=True,
+                capture_output=True,
+                timeout=10,
+            )
+    before = legacy.read_bytes()
+    private = PrivateProfile(private_profile_root(legacy.parent))
+    with private.acquire():
+        storage = ProfileRecovery(private)
+        assert storage.prepare_legacy(lambda: True)
+        with closing(storage.startup()) as db:
+            assert AccountService(db).login("root", "synthetic-password")
+    assert legacy.read_bytes() == before
 
 
 def test_legacy_requires_consent_and_emergency_cannot_bypass_it(profiles):

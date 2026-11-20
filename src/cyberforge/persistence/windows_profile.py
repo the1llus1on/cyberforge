@@ -308,6 +308,12 @@ class WindowsProfileSecurity:
         if not valid_descriptor(descriptor, self.sid, directory=directory):
             raise PermissionError("Небезпечні дозволи приватного профілю Windows.")
 
+    def validate_legacy(self, path: Path, *, directory: bool) -> None:
+        if descriptor_rejection_reason(
+            self._descriptor(path), self.sid, directory=directory, legacy=True
+        ):
+            raise PermissionError("Небезпечні дозволи старого профілю Windows.")
+
     @contextmanager
     def lock_for_replacement(self, path: Path) -> Iterator[BinaryIO]:
         """Allow replacement while keeping legacy SQLite readers and writers out."""
@@ -376,7 +382,7 @@ def valid_descriptor(descriptor: str, sid: str, *, directory: bool) -> bool:
 
 
 def descriptor_rejection_reason(
-    descriptor: str, sid: str, *, directory: bool
+    descriptor: str, sid: str, *, directory: bool, legacy: bool = False
 ) -> str | None:
     """Return a redacted reason code when a Windows ACL is not acceptable."""
     owner, separator, dacl = descriptor.partition("D:")
@@ -400,6 +406,10 @@ def descriptor_rejection_reason(
     if "".join(f"({entry})" for entry in entries) != all_entries:
         return "malformed_aces"
     aliases = {"S-1-5-18": "SY", "S-1-5-32-544": "BA"}
+    if legacy and owner == f"O:{sid}":
+        # CPython mkdir(0700) uses OWNER RIGHTS. It denotes the verified owner
+        # of this object, not the owner of the parent or the process token.
+        aliases.update({"OW": sid, "S-1-3-4": sid})
     principals = {sid, "SY", "BA"}
     effective = set()
     inherited = set()
