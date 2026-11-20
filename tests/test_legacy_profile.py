@@ -32,7 +32,10 @@ from cyberforge.llm.factory import create_gateway
 from cyberforge.persistence.database import Database
 from cyberforge.persistence.profile import PrivateProfile, private_profile_root
 from cyberforge.persistence.recovery import ProfileRecovery
-from cyberforge.persistence.windows_profile import WindowsProfileSecurity
+from cyberforge.persistence.windows_profile import (
+    WindowsProfileSecurity,
+    descriptor_rejection_reason,
+)
 from tests.test_analytics import complete
 
 
@@ -73,7 +76,11 @@ def test_no_legacy_keeps_clean_first_run(profiles):
 
 @pytest.mark.skipif(os.name != "nt", reason="native CPython legacy owner ACL")
 def test_migrates_database_with_original_python_created_directory(tmp_path):
-    legacy = tmp_path / "old Qt profile" / "cyberforge.sqlite3"
+    # Model the user's private AppData ancestor without ACLs specific to
+    # the hosted runner's temp directory. CPython still creates the legacy
+    # directory and its Owner Rights ACE through the original entry point.
+    parent = PrivateProfile(tmp_path / "user AppData")
+    legacy = parent.root / "old Qt profile" / "cyberforge.sqlite3"
     with closing(seed(legacy, "0008")) as db:
         AccountService(db).bootstrap("root", "Адміністратор", "synthetic-password")
     security = WindowsProfileSecurity()
@@ -88,6 +95,13 @@ def test_migrates_database_with_original_python_created_directory(tmp_path):
                 capture_output=True,
                 timeout=10,
             )
+        descriptor = security._descriptor(path)
+        if path == legacy.parent:
+            assert ";;;S-1-3-4)" in descriptor
+        reason = descriptor_rejection_reason(
+            descriptor, security.sid, directory=path.is_dir(), legacy=True
+        )
+        assert reason is None, f"legacy fixture ACL: {reason}"
     before = legacy.read_bytes()
     private = PrivateProfile(private_profile_root(legacy.parent))
     with private.acquire():
