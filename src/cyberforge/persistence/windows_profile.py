@@ -1,0 +1,460 @@
+"""Native ACL enforcement for the Windows application data profile."""
+
+import ctypes
+import re
+from collections.abc import Iterator
+from contextlib import contextmanager
+from ctypes import wintypes
+from pathlib import Path
+from typing import BinaryIO
+
+_READ_OWNER_DACL = 0x05
+_PROTECTED_DACL = 0x80000000
+_SE_FILE_OBJECT = 1
+_TOKEN_QUERY = 8
+_TOKEN_USER = 1
+_ERROR_ALREADY_EXISTS = 183
+_FULL_ACCESS = 0x1F01FF
+_REPARSE_POINT = 0x400
+_PTR = ctypes.c_void_p
+_PPTR = ctypes.POINTER(_PTR)
+_DWORD = wintypes.DWORD
+_PD = ctypes.POINTER(_DWORD)
+_BOOL = wintypes.BOOL
+_HANDLE = wintypes.HANDLE
+_WSTR = wintypes.LPCWSTR
+RELEASE_MUTEX = r"Local\CyberForge-Release-v1"
+
+
+class _SecurityAttributes(ctypes.Structure):
+    _fields_ = [
+        ("length", _DWORD),
+        ("descriptor", _PTR),
+        ("inherit_handle", _BOOL),
+    ]
+
+
+class _RenameInfo(ctypes.Structure):
+    _fields_ = [
+        ("flags", _DWORD),
+        ("root", _HANDLE),
+        ("name_bytes", _DWORD),
+        ("name", wintypes.WCHAR * 1),
+    ]
+
+
+def _function(library, name, result, *arguments):
+    call = getattr(library, name)
+    call.restype = result
+    call.argtypes = arguments
+    return call
+
+
+@contextmanager
+def release_instance() -> Iterator[None]:
+    from cyberforge.domain.accounts import ApplicationError
+
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    create = _function(kernel, "CreateMutexW", _HANDLE, _PTR, _BOOL, _WSTR)
+    close = _function(kernel, "CloseHandle", _BOOL, _HANDLE)
+    handle = create(None, False, RELEASE_MUTEX)
+    error = ctypes.get_last_error()
+    if not handle:
+        raise ctypes.WinError(error)
+    try:
+        if error == _ERROR_ALREADY_EXISTS:
+            raise ApplicationError("CyberForge уже запущено.")
+        yield
+    finally:
+        close(handle)
+
+
+class WindowsProfileSecurity:
+    def __init__(self) -> None:
+        self.kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        self.security = ctypes.WinDLL("advapi32", use_last_error=True)
+        self.close = _function(self.kernel, "CloseHandle", _BOOL, _HANDLE)
+        self.free = _function(self.kernel, "LocalFree", _PTR, _PTR)
+        self.open_file = _function(
+            self.kernel,
+            "CreateFileW",
+            _HANDLE,
+            _WSTR,
+            _DWORD,
+            _DWORD,
+            _PTR,
+            _DWORD,
+            _DWORD,
+            _HANDLE,
+        )
+        self.sid = self._current_sid()
+
+    def _current_sid(self) -> str:
+        process = _function(self.kernel, "GetCurrentProcess", _HANDLE)()
+        open_token = _function(
+            self.security, "OpenProcessToken", _BOOL, _HANDLE, _DWORD, _PPTR
+        )
+        read_token = _function(
+            self.security,
+            "GetTokenInformation",
+            _BOOL,
+            _HANDLE,
+            _DWORD,
+            _PTR,
+            _DWORD,
+            _PD,
+        )
+        token = _PTR()
+        if not open_token(process, _TOKEN_QUERY, ctypes.byref(token)):
+            raise ctypes.WinError(ctypes.get_last_error())
+        try:
+            length = _DWORD()
+            read_token(token, _TOKEN_USER, None, 0, ctypes.byref(length))
+            buffer = ctypes.create_string_buffer(length.value)
+            if not read_token(token, _TOKEN_USER, buffer, length, ctypes.byref(length)):
+                raise ctypes.WinError(ctypes.get_last_error())
+            sid = ctypes.cast(buffer, _PPTR)[0]
+            to_string = _function(
+                self.security, "ConvertSidToStringSidW", _BOOL, _PTR, _PPTR
+            )
+            result = _PTR()
+            if not to_string(sid, ctypes.byref(result)):
+                raise ctypes.WinError(ctypes.get_last_error())
+            try:
+                return ctypes.wstring_at(result)
+            finally:
+                self.free(result)
+        finally:
+            self.close(token)
+
+    def create_root(self, path: Path) -> None:
+        descriptor = _PTR()
+        parse = _function(
+            self.security,
+            "ConvertStringSecurityDescriptorToSecurityDescriptorW",
+            _BOOL,
+            _WSTR,
+            _DWORD,
+            _PPTR,
+            _PD,
+        )
+        sddl = (
+            f"O:{self.sid}D:P(A;OICI;FA;;;{self.sid})(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)"
+        )
+        if not parse(sddl, 1, ctypes.byref(descriptor), None):
+            raise ctypes.WinError(ctypes.get_last_error())
+        try:
+            create = _function(
+                self.kernel,
+                "CreateDirectoryW",
+                _BOOL,
+                _WSTR,
+                ctypes.POINTER(_SecurityAttributes),
+            )
+            attrs = _SecurityAttributes(
+                ctypes.sizeof(_SecurityAttributes), descriptor, False
+            )
+            created = False
+            if not create(str(path), ctypes.byref(attrs)):
+                error = ctypes.get_last_error()
+                if error != _ERROR_ALREADY_EXISTS:
+                    raise ctypes.WinError(error)
+            else:
+                created = True
+            if created:
+                get_dacl = _function(
+                    self.security,
+                    "GetSecurityDescriptorDacl",
+                    _BOOL,
+                    _PTR,
+                    ctypes.POINTER(_BOOL),
+                    _PPTR,
+                    ctypes.POINTER(_BOOL),
+                )
+                present = _BOOL()
+                dacl = _PTR()
+                defaulted = _BOOL()
+                if (
+                    not get_dacl(
+                        descriptor,
+                        ctypes.byref(present),
+                        ctypes.byref(dacl),
+                        ctypes.byref(defaulted),
+                    )
+                    or not present.value
+                ):
+                    raise ctypes.WinError(ctypes.get_last_error())
+                set_dacl = _function(
+                    self.security,
+                    "SetNamedSecurityInfoW",
+                    _DWORD,
+                    _WSTR,
+                    _DWORD,
+                    _DWORD,
+                    _PTR,
+                    _PTR,
+                    _PTR,
+                    _PTR,
+                )
+                status = set_dacl(
+                    str(path),
+                    _SE_FILE_OBJECT,
+                    0x04 | _PROTECTED_DACL,
+                    None,
+                    None,
+                    dacl,
+                    None,
+                )
+                if status:
+                    raise ctypes.WinError(status)
+        finally:
+            self.free(descriptor)
+
+    def _descriptor(self, path: Path) -> str:
+        read = _function(
+            self.security,
+            "GetNamedSecurityInfoW",
+            _DWORD,
+            _WSTR,
+            _DWORD,
+            _DWORD,
+            _PPTR,
+            _PPTR,
+            _PPTR,
+            _PPTR,
+            _PPTR,
+        )
+        convert = _function(
+            self.security,
+            "ConvertSecurityDescriptorToStringSecurityDescriptorW",
+            _BOOL,
+            _PTR,
+            _DWORD,
+            _DWORD,
+            _PPTR,
+            _PD,
+        )
+        security = _PTR()
+        owner = _PTR()
+        acl = _PTR()
+        status = read(
+            str(path),
+            _SE_FILE_OBJECT,
+            _READ_OWNER_DACL,
+            ctypes.byref(owner),
+            None,
+            ctypes.byref(acl),
+            None,
+            ctypes.byref(security),
+        )
+        if status:
+            raise ctypes.WinError(status)
+        try:
+            to_string = _function(
+                self.security, "ConvertSidToStringSidW", _BOOL, _PTR, _PPTR
+            )
+            owner_text = _PTR()
+            if not to_string(owner, ctypes.byref(owner_text)):
+                raise ctypes.WinError(ctypes.get_last_error())
+            try:
+                owner_sid = ctypes.wstring_at(owner_text)
+            finally:
+                self.free(owner_text)
+            result = _PTR()
+            if not convert(security, 1, _READ_OWNER_DACL, ctypes.byref(result), None):
+                raise ctypes.WinError(ctypes.get_last_error())
+            try:
+                _, separator, dacl = ctypes.wstring_at(result).partition("D:")
+                if not separator:
+                    return ctypes.wstring_at(result)
+                if not acl:
+                    return ""
+                get_ace = _function(self.security, "GetAce", _BOOL, _PTR, _DWORD, _PPTR)
+                ace_count = ctypes.c_ushort.from_address(acl.value + 4).value
+                entries = list(re.finditer(r"\(([^()]*)\)", dacl))
+                if len(entries) != ace_count:
+                    return ""
+                replacements = []
+                for index, entry in enumerate(entries):
+                    ace = _PTR()
+                    if not get_ace(acl, index, ctypes.byref(ace)):
+                        raise ctypes.WinError(ctypes.get_last_error())
+                    if ctypes.c_ubyte.from_address(ace.value).value != 0:
+                        return ""
+                    sid_text = _PTR()
+                    if not to_string(_PTR(ace.value + 8), ctypes.byref(sid_text)):
+                        raise ctypes.WinError(ctypes.get_last_error())
+                    try:
+                        actual_sid = ctypes.wstring_at(sid_text)
+                    finally:
+                        self.free(sid_text)
+                    fields = entry.group(1).split(";")
+                    if len(fields) != 6:
+                        return ""
+                    fields[-1] = actual_sid
+                    replacements.append((entry.span(), "(" + ";".join(fields) + ")"))
+                for (start, end), replacement in reversed(replacements):
+                    dacl = dacl[:start] + replacement + dacl[end:]
+                # SDDL renders some well-known owner SIDs as aliases. Keep the
+                # actual owner SID so validation compares identity, not spelling.
+                return f"O:{owner_sid}D:{dacl}"
+            finally:
+                self.free(result)
+        finally:
+            self.free(security)
+
+    def validate(self, path: Path, *, directory: bool) -> None:
+        descriptor = self._descriptor(path)
+        if not valid_descriptor(descriptor, self.sid, directory=directory):
+            raise PermissionError("Небезпечні дозволи приватного профілю Windows.")
+
+    def validate_legacy(self, path: Path, *, directory: bool) -> None:
+        if descriptor_rejection_reason(
+            self._descriptor(path), self.sid, directory=directory, legacy=True
+        ):
+            raise PermissionError("Небезпечні дозволи старого профілю Windows.")
+
+    @contextmanager
+    def lock_for_replacement(self, path: Path) -> Iterator[BinaryIO]:
+        """Allow replacement while keeping legacy SQLite readers and writers out."""
+        with self._read_with_share(path, share=4) as stream:  # FILE_SHARE_DELETE
+            yield stream
+
+    @contextmanager
+    def lock_legacy_file(self, path: Path) -> Iterator[BinaryIO]:
+        """Exclude all data handles and keep the original file at its name."""
+        with self._read_with_share(path, share=0) as stream:
+            yield stream
+
+    @contextmanager
+    def _read_with_share(self, path: Path, *, share: int) -> Iterator[BinaryIO]:
+        import msvcrt
+
+        # GENERIC_READ, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT.
+        handle = self.open_file(str(path), 0x80000000, share, None, 3, 0x00200000, None)
+        if handle == _PTR(-1).value:
+            raise ctypes.WinError(ctypes.get_last_error())
+        try:
+            fd = msvcrt.open_osfhandle(handle, 0)
+        except OSError:
+            self.close(handle)
+            raise
+        with open(fd, "rb") as stream:
+            yield stream
+
+    def replace(self, source: Path, target: Path) -> None:
+        """Rename over the old name while holding its read-only exclusion handle."""
+        rename = _function(
+            self.kernel,
+            "SetFileInformationByHandle",
+            _BOOL,
+            _HANDLE,
+            _DWORD,
+            _PTR,
+            _DWORD,
+        )
+        target_bytes = str(target).encode("utf-16-le")
+        size = _RenameInfo.name.offset + len(target_bytes) + 2
+        buffer = ctypes.create_string_buffer(size)
+        header = _RenameInfo.from_buffer(buffer)
+        # FILE_RENAME_REPLACE_IF_EXISTS | FILE_RENAME_POSIX_SEMANTICS.
+        header.flags = 3
+        header.name_bytes = len(target_bytes)
+        ctypes.memmove(
+            ctypes.addressof(buffer) + _RenameInfo.name.offset,
+            target_bytes,
+            len(target_bytes),
+        )
+        # DELETE, all sharing modes, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT.
+        handle = self.open_file(str(source), 0x10000, 7, None, 3, 0x00200000, None)
+        if handle == _PTR(-1).value:
+            raise ctypes.WinError(ctypes.get_last_error())
+        try:
+            if not rename(handle, 22, buffer, size):  # FileRenameInfoEx
+                raise ctypes.WinError(ctypes.get_last_error())
+        finally:
+            self.close(handle)
+
+
+def valid_descriptor(descriptor: str, sid: str, *, directory: bool) -> bool:
+    """Check owner, effective access and inheritable directory access."""
+    return descriptor_rejection_reason(descriptor, sid, directory=directory) is None
+
+
+def descriptor_rejection_reason(
+    descriptor: str, sid: str, *, directory: bool, legacy: bool = False
+) -> str | None:
+    """Return a redacted reason code when a Windows ACL is not acceptable."""
+    owner, separator, dacl = descriptor.partition("D:")
+    # Windows can assign the primary owner of an elevated process token
+    # (Administrators) when creating a directory, even when the DACL grants
+    # the exact account SID explicitly. Both possible group owners are already
+    # trusted principals in the strict allow-list below.
+    if not separator or owner not in {
+        f"O:{sid}",
+        "O:SY",
+        "O:BA",
+        "O:S-1-5-18",
+        "O:S-1-5-32-544",
+    }:
+        return "owner"
+    flags, _, entries = dacl.partition("(")
+    if not re.fullmatch(r"(?:P|AI|AR)*", flags) or not entries:
+        return "dacl_flags_or_empty"
+    all_entries = "(" + entries
+    entries = re.findall(r"\(([^()]*)\)", all_entries)
+    if "".join(f"({entry})" for entry in entries) != all_entries:
+        return "malformed_aces"
+    aliases = {"S-1-5-18": "SY", "S-1-5-32-544": "BA"}
+    if legacy and owner == f"O:{sid}":
+        # CPython mkdir(0700) uses OWNER RIGHTS. It denotes the verified owner
+        # of this object, not the owner of the parent or the process token.
+        aliases.update({"OW": sid, "S-1-3-4": sid})
+    principals = {sid, "SY", "BA"}
+    effective = set()
+    inherited = set()
+    for entry in entries:
+        parts = entry.split(";")
+        if len(parts) != 6:
+            return "malformed_ace"
+        kind, ace_flags, rights, object_type, inherited_type, principal = parts
+        principal = aliases.get(principal, principal)
+        if kind != "A":
+            return "unexpected_ace_type"
+        if principal not in principals:
+            return _principal_reason(principal)
+        if (
+            object_type
+            or inherited_type
+            or not re.fullmatch(r"(?:OI|CI|IO|ID|NP)*", ace_flags)
+        ):
+            return "unexpected_ace_attributes"
+        full_access = rights == "FA" or (
+            rights.startswith("0x") and int(rights, 16) == _FULL_ACCESS
+        )
+        if full_access and "IO" not in ace_flags:
+            effective.add(principal)
+        if (
+            directory
+            and full_access
+            and all(flag in ace_flags for flag in ("OI", "CI"))
+        ):
+            if "NP" not in ace_flags:
+                inherited.add(principal)
+    if effective != principals:
+        return "missing_effective_access"
+    if directory and inherited != principals:
+        return "missing_inheritable_access"
+    return None
+
+
+def _principal_reason(principal: str) -> str:
+    """Describe a rejected well-known principal without disclosing its SID."""
+    known = {
+        "AU": "authenticated_users",
+        "BU": "builtin_users",
+        "CO": "creator_owner",
+        "OW": "owner_rights",
+        "WD": "everyone",
+    }
+    return f"unexpected_ace_{known.get(principal, 'other')}"

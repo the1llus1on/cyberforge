@@ -4385,3 +4385,168 @@ ADR-0012 / SRS Amendment A12 — **APPROVED**. Documentation Review Gate
 і P12-01–P12-18 — **PENDING IMPLEMENTATION VERIFICATION**. Погодження
 документації не закриває фізичне приймання Windows 11 або майбутні
 перевірки пакування, інсталяції та приватності.
+
+## 18.11.2026 — Phase 12 WP1: контракти та цільові перевірки
+
+Власник дозволив WP1–WP5. GitHub MCP підтвердив remote `main` на
+`6cced5766c98ba836aeea395a8fb1ea7743550d7`. Локальний checkout
+збігався з базою і був чистим до створення `feat/phase-12-finalization`.
+
+[Контракти WP1](PHASE_12_WP1_CONTRACTS.md) фіксують український
+каталог, topic-only проєкцію і grounding, локальний policy evidence,
+прив'язку preview та умови startup, vault, backup/restore/upgrade.
+Додано чисті моделі та проєкцію без зміни маршрутів A11, SQLite,
+scoring або Mentor. Вибір fallback детермінований. Наявність
+`NOT_MET` має пріоритет для всього зрізу, а справжній нуль
+лишається джерелом критеріїв.
+
+- Offline Ruff lint і format check — **PASS**.
+- Offline Qt offscreen pytest для WP1, Analytics, Analytics UI, Scoring,
+  Agents, Mentor, Accounts і міграцій evaluation — **245 passed**.
+- Після додавання перевірки повторної валідації payload цільовий
+  `tests/test_topic_advisory.py` — **28 passed**.
+- Незалежна серіалізація контрольного запиту через Perl JSON::PP і
+  OpenSSL SHA-256 дала
+  `a538acc8a598dceeea770d7dc550a04d51c40cba6595783559b22da3009333d8`.
+
+P12-01 та WP1 Contract Freeze Gate — **PENDING INDEPENDENT REVIEW**.
+Цільові тести і контрольний відбиток є інженерними доказами.
+Незалежний огляд контрактів WP1 потрібен до WP2. Підключення provider,
+фізичний Windows, артефакти та CI кандидата очікують відповідних WP.
+
+## 18.11.2026 — Phase 12 WP1: незалежний огляд і Contract Freeze
+
+Власник передав результат незалежного read-only огляду
+[WP1](https://github.com/the1llus1on/cyberforge/commit/a2cfdac6b16352c5e8e506faf010ef2fa280b051):
+**PASS**, відкритих BLOCKER або MAJOR не виявлено. Оглядач читав джерела й
+тести. **245** цільових регресій та **28** перевірок WP1 — результати
+Codex. Локальний і remote SHA звірено. На перевіреному SHA повторно
+пройшли Ruff і **28** перевірок WP1. P12-01 — **CONTRACT REVIEW PASSED**.
+WP1 Contract Freeze Gate — **PASSED**.
+
+WP3 має перевірити автентичність і чинність організаційної політики,
+атомарне одноразове підтвердження та авторизовану внутрішню A11
+проєкцію. Результати тестів оглядачу не приписуються.
+
+## 18.11.2026 — Phase 12 WP2: приватний профіль, startup і SQLite
+
+Новий Windows-профіль створюється з DACL для поточного SID, SYSTEM і
+Administrators. Небезпечні ACL, reparse points, файлові перенаправлення
+та зайнятий профіль блокують startup. GUI створює першого адміністратора
+через чинний транзакційний AccountService після валідації БД. Явний
+development CLI збережено.
+
+Авторизований Administrator може зробити SQLite Online Backup і запланувати
+відновлення після закриття з'єднань. Копія має метадані revision і SHA-256.
+Схему перевірено за міграціями випуску разом з integrity і FK. Перед
+активацією нового стану перевірено й збережено попередній стан. Windows
+утримує дескриптор старого файла, що блокує нові читання й записи, і
+виконує атомарну заміну через FileRenameInfoEx. Аварійний режим зберігає
+пошкоджений головний файл у приватному quarantine; за наявності
+неузгоджених sidecars зупиняється для ручного розгляду. Верифікація
+sha не засвідчує походження резервної копії.
+
+- Ruff lint, format і git whitespace check — **PASS**.
+- WSL offscreen, цільові тести WP2, foundation, Accounts, Accounts UI
+  та evaluation migration — **78 passed**.
+- Окремі цільові перевірки busy backup і concurrent bootstrap — **PASS**.
+- WSLg Wayland, bootstrap GUI — **2 passed**.
+- Нативний Windows build 26300 через interop, CPython 3.13: тимчасовий
+  профіль підтвердив ACL та успадкування, блокування профілю, відмову
+  при відкритому сторонньому SQLite handle й атомарну заміну файла.
+  Це цільова перевірка джерел, без перевірки артефактів або другого SID.
+
+## 18.11.2026 — Phase 12 WP3: vault, організаційна політика й advisory
+
+WP2 додатково перевірено під нативним Windows CPython 3.12.16.
+`test_profile_recovery.py` і `tests/ui/test_bootstrap.py` —
+**16 passed, 1 POSIX-only skipped**, включно зі сторонньою ACL та SQLite
+lifecycle у синтетичних профілях. Другий Windows SID і приймання
+фінальних артефактів очікують WP5.
+
+WP3 додає Windows Credential Manager, рольові сервісні межі й явну
+активацію provider/model. Машинна 64-bit HKLM policy гілка з перевіреним
+owner/DACL є довіреним джерелом організаційного дозволу. Значення
+перевіряється заново, а заміна ключа, відсутній або відкликаний доказ,
+прострочення та невідповідність зрізу блокують мережеву дію. Один
+атомарно спожитий preview надсилає точне показане тіло через вузький
+маршрут LLMGateway. Підтримано Groq і Gemini stateless Interactions,
+без SDK retry/failover на маршруті D12-10. Фоновий результат мусить
+пройти повторну авторизацію. Числовий V1 і Mentor-контракти збережено.
+
+- Ruff і git whitespace check — **PASS**.
+- WSL offscreen advisory, contracts, Analytics/GUI та Gemini regression —
+  **134 passed, 1 native Windows vault skip**.
+- WSL додаткові два випадки timeout/fallback — **2 passed**.
+- Нативний Windows CPython 3.12.16, advisory regression та disposable
+  vault entries — **40 passed**.
+- Обидва provider transports перевірено на контрольованих відповідях.
+  Реальних API викликів і реєстрації політики установи не виконувалось.
+
+## 18.11.2026 — Phase 12 WP4: рецепт Windows build
+
+PyInstaller onedir, pinned hooks і Inno Setup пакують Windows x64 із
+точного Git archive. У runtime додано mutex для безпечної відмови setup
+під час активного екземпляра. Перевірка містить заявлені Qt/WebEngine
+ресурси, Alembic revisions і запуск повного ZIP із кириличного шляху.
+Нативний ISCC 6.7.4 пройшов синтаксичну компіляцію per-user скрипту
+на синтетичному вхідному файлі. Збігається українська локалізація
+компілятора. Окремий Windows Server 2022 job збирає і перевіряє portable.
+SHA-256, підпис, склад і lifecycle мають підтвердитися готовими
+артефактами. [Рецепт випуску](WINDOWS_RELEASE.md).
+
+Нативний Windows 11 Pro build 26300 підтвердив рецепт WP4 на
+`8e74ce4b76593b8a891b09b11b9f696930c63008` під CPython 3.12.16 x64,
+uv 0.13.7, PySide6 6.10.3, PyInstaller 6.22.3 і Inno Setup 6.7.4.
+Перевірено склад onedir, Qt test profile, WebEngine/Alembic smoke з
+розпакованого Unicode-шляху та створення unsigned ZIP/installer.
+Це попередні артефакти для lifecycle comparison. SHA-256 ZIP
+`ea0a58807bb38e795dc8a4770c231ee87cd33d27a67707a0363929103da9b5ed`,
+installer
+`3a935fbc1445c74034ead582f9850bb750597ec2362a449a94780276e9c779a6`.
+
+## 18.11.2026 — Phase 12 WP5: демо й перевірка кандидата
+
+Додано явний `--demo-profile` для окремого захищеного Windows demo v1.
+Синтетичний контент і випадкові паролі створюються за явною командою та
+публікуються разом у приватному каталозі. [Чекліст Windows 11](PHASE_12_WINDOWS_ACCEPTANCE.md)
+фіксує очікувані результати обох шляхів та докази приймання. Exact-HEAD
+CI, manifest і lifecycle smoke мають бути прив'язані до кандидата.
+
+Перед фіксацією кандидата WSL offscreen demo/foundation — **7 passed**,
+включно з двома незалежно створеними v1 профілями, очікуваними
+SAFE_DECLINE/WEB_VISITED, приватними різними паролями та Mock Mentor.
+Новий GUI preview test підтвердив точний текст запиту й окремі дії
+«Залишити локальну пораду» та «Підтвердити й надіслати» — **1 passed**.
+
+Нативний Qt Windows desktop на кандидатові `08db32339f6dc4bbb323b810bc9810b2fbb384ab`:
+повторний WebEngine preview, bootstrap та advisory preview — **4 passed**.
+Перший Windows source запуск із неявним offscreen backend завершився
+Qt abort у repeated preview. Коректний Windows desktop backend пройшов
+ті самі дії без зміни sandbox. Повний build першого кандидата зупинився
+до запуску packaged smoke через регістр ключа SystemRoot у копії
+оточення Python. Виправлено пошук у власному Windows environment mapping.
+
+## 20.11.2026 — PR #19: усунення F12-PR19-01
+
+Виявлення `AppLocalDataLocation/cyberforge.sqlite3` перед bootstrap
+виправляє сценарій оновлення з Phase 11. Пропозиція перенесення за
+замовчуванням відхилена. Windows виключає інші відкриття старих файлів
+до завершення активації. SQLite відкриває лише захищену копію main і WAL,
+відтворює WAL index і формує узгоджений snapshot. Старий rollback
+journal, небезпечний шлях, зайнята БД та конфлікт профілів зупиняють
+перенесення. Alembic працює зі staged copy. Перевіряються ревізія, схема,
+integrity, FK та історичні дані. Оригінал і приватна backup копія
+зберігаються. Локальна квитанція з SHA-256 розрізняє завершене перенесення
+і переривання під час активації.
+Перевірка старого шляху підтримує OWNER RIGHTS, створений CPython
+`mkdir(0700)`, лише коли власником об'єкта є поточний SID. Правила
+DACL нового профілю залишаються суворішими.
+
+Синтетична регресія перевіряє старий пароль, RBAC, групи, публікацію,
+спробу, scoring, Mentor та Analytics. P12-05/07/08 доповнено в
+[чеклісті Windows](PHASE_12_WINDOWS_ACCEPTANCE.md). Пакетний smoke
+використовує окремий Qt test profile. Результати CI та хеші кандидата
+записуються в Draft PR #19 після верифікації точного SHA.
+Контрольовані тести Groq/Gemini не викликають мережу. Live probe —
+**NOT VERIFIED**. Фізичне приймання — **PENDING**.

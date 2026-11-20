@@ -54,7 +54,7 @@ class WebMaterialService:
 
     @property
     def available(self) -> bool:
-        return self.demo or self.gateway.config.provider != Provider.MOCK
+        return self.demo or self.emails.selected_route()[0] != Provider.MOCK
 
     @property
     def provider_label(self) -> str:
@@ -62,7 +62,8 @@ class WebMaterialService:
             return "Офлайн-демо · синтетична композиція, без AI та мережі"
         if not self.available:
             return "Офлайн: AI не налаштовано. Демо: --web-demo."
-        return f"{self.gateway.config.provider.value} / {self.gateway.config.model}"
+        provider, model = self.emails.selected_route()
+        return f"{provider.value} / {model}"
 
     def _email(self, db, version, scenario):
         row = db.get(EmailMaterial, version.id)
@@ -224,7 +225,7 @@ class WebMaterialService:
 
                 gateway = demo_gateway(source)
             else:
-                gateway = self.gateway
+                gateway = self.emails.generation_gateway(token)
             result = WebScenarioAgentV2(gateway).run(source)
             if result.draft is None or result.status != "pending_review":
                 raise GenerationError(result.error or ErrorCategory.VALIDATION)

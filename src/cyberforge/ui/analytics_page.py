@@ -22,6 +22,8 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDateTimeEdit,
+    QDialog,
+    QDialogButtonBox,
     QFileDialog,
     QFormLayout,
     QGridLayout,
@@ -29,6 +31,7 @@ from PySide6.QtWidgets import (
     QHeaderView,
     QLabel,
     QLineEdit,
+    QPlainTextEdit,
     QPushButton,
     QTableView,
     QVBoxLayout,
@@ -40,7 +43,7 @@ from cyberforge.analytics.contracts import (
     HistoryQueryV1,
     display_percent,
 )
-from cyberforge.domain.accounts import AccessDenied, ApplicationError
+from cyberforge.domain.accounts import AccessDenied, ApplicationError, Role
 from cyberforge.ui.analytics_charts import BarChart, CriterionChart
 
 LABELS = {
@@ -217,9 +220,12 @@ class _Worker(QRunnable):
 class AnalyticsPage(QWidget):
     reveal_details = Signal(QWidget)
 
-    def __init__(self, service):
+    def __init__(self, service, advisory=None):
         super().__init__()
         self.service = service
+        self.advisory = advisory
+        self._preview_dialog = None
+        self._cloud_visible = False
         self.token = self.scenario_id = None
         self.snapshot = self.access = self.history = None
         self.generation = self.detail_generation = 0
@@ -417,6 +423,89 @@ class AnalyticsPage(QWidget):
         layout.addWidget(_label("Рекомендації викладачу · офлайн"))
         self.advice = _label()
         layout.addWidget(self.advice)
+        self.advisory_button = QPushButton("Підготувати навчальну пораду")
+        self.advisory_button.clicked.connect(self._prepare_advice)
+        self.advisory_button.hide()
+        layout.addWidget(self.advisory_button)
+        self.advisory_text = _label()
+        self.advisory_text.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
+        layout.addWidget(self.advisory_text)
+
+    def _prepare_advice(self):
+        if self.advisory is None or self.snapshot is None or not self.token:
+            return
+        self.advisory_button.setEnabled(False)
+        self._cloud_visible = False
+        self.advisory_text.clear()
+        self._submit(
+            "advisory:preview",
+            partial(
+                self.advisory.preview,
+                self.token,
+                self.snapshot.query,
+                self.generation,
+                self.cancelled,
+            ),
+        )
+
+    def _review_advice(self, preview):
+        self.advisory_text.setText("\n".join(preview.recommendations))
+        if preview.request is None:
+            self.advisory_text.setText(
+                "Доступна локальна порада.\nКод обсягу політики: "
+                + preview.scope_digest
+                + "\n"
+                + "\n".join(preview.recommendations)
+            )
+            self.advisory_button.setEnabled(True)
+            return
+        dialog = QDialog(self)
+        self._preview_dialog = dialog
+        dialog.setWindowTitle("Перевірка хмарного запиту")
+        dialog.resize(650, 480)
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(
+            _label(
+                f"Одержувач: {preview.request.url}\n"
+                "Мета: добір навчальних порад. Теми, час запиту й акаунт "
+                "провайдера можуть дозволити зробити висновок про учня."
+            )
+        )
+        body = QPlainTextEdit(preview.request.body.decode("utf-8"))
+        body.setReadOnly(True)
+        body.setAccessibleName("Точне тіло запиту")
+        layout.addWidget(body)
+        buttons = QDialogButtonBox()
+        send = buttons.addButton("Підтвердити й надіслати", QDialogButtonBox.AcceptRole)
+        cancel = buttons.addButton(
+            "Залишити локальну пораду", QDialogButtonBox.RejectRole
+        )
+        send.clicked.connect(dialog.accept)
+        cancel.clicked.connect(dialog.reject)
+        cancel.setDefault(True)
+        layout.addWidget(buttons)
+        generation, token = self.generation, self.token
+        accepted = dialog.exec()
+        self._preview_dialog = None
+        dialog.deleteLater()
+        if generation != self.generation or token != self.token or not token:
+            return
+        if not accepted:
+            self.advisory.invalidate(token)
+            self.advisory_button.setEnabled(True)
+            return
+        self._submit(
+            "advisory:dispatch",
+            partial(
+                self.advisory.dispatch,
+                token,
+                preview.identifier,
+                generation,
+                self.cancelled,
+            ),
+        )
 
     def _detail_panel(self):
         self.detail_panel = QWidget()
@@ -474,12 +563,20 @@ class AnalyticsPage(QWidget):
         ):
             label.clear()
         self.content.hide()
+        self.advisory_button.hide()
+        self.advisory_button.setEnabled(True)
+        self.advisory_text.clear()
+        self._cloud_visible = False
         self.exporting = False
         for button in self.exports:
             button.setEnabled(True)
 
     def _cancel_requests(self):
         self.cancelled.set()
+        if self.advisory is not None:
+            self.advisory.invalidate(self.token)
+        if self._preview_dialog is not None:
+            self._preview_dialog.reject()
         self.cancelled = Event()
         self.generation += 1
         self.pool.clear()
@@ -577,12 +674,17 @@ class AnalyticsPage(QWidget):
             self._submit(
                 "access",
                 partial(
-                    self.service.check_access,
+                    self._check_current_access,
                     self.token,
                     self.snapshot.query,
                     self.access,
+                    self._cloud_visible,
                 ),
             )
+
+    def _check_current_access(self, token, query, access, cloud_visible):
+        self.service.check_access(token, query, access)
+        return self.advisory.check_display(token) if cloud_visible else None
 
     @Slot(int, str, object, str)
     def _done(self, generation, kind, output, error):
@@ -593,6 +695,11 @@ class AnalyticsPage(QWidget):
             return
         if kind == "access":
             self.check_pending = False
+            if output is False:
+                self.advisory_text.clear()
+                self._cloud_visible = False
+        if kind.startswith("advisory:") and (error or kind == "advisory:dispatch"):
+            self.advisory_button.setEnabled(True)
         if kind == "export":
             self.exporting = False
             for button in self.exports:
@@ -617,6 +724,12 @@ class AnalyticsPage(QWidget):
             self._render_history()
         elif kind == "export":
             self.message.setText("Файл збережено.")
+        elif kind == "advisory:preview":
+            self._review_advice(output)
+        elif kind == "advisory:dispatch":
+            self._cloud_visible = output.cloud
+            mode = "Хмарний добір." if output.cloud else "Локальна порада."
+            self.advisory_text.setText(mode + "\n" + "\n".join(output.recommendations))
 
     @staticmethod
     def _choices(combo, label, options):
@@ -732,6 +845,9 @@ class AnalyticsPage(QWidget):
         self.previous.setEnabled(query.page > 1)
         self.next.setEnabled(query.page < page_count)
         self.advice.setText("\n\n".join(snap.recommendations))
+        self.advisory_button.setVisible(
+            self.advisory is not None and self.access.role == Role.INSTRUCTOR
+        )
         self.content.show()
 
     def _open_history(self, index):

@@ -1,8 +1,10 @@
 """Application authorization and consistent SQLite snapshots for Analytics."""
 
+import hashlib
+import json
 from collections import defaultdict
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -10,7 +12,7 @@ from sqlalchemy import String, and_, cast, select
 from sqlalchemy.exc import DBAPIError, OperationalError
 from sqlalchemy.orm import defer
 
-from cyberforge.analytics.aggregation import Learner, aggregate
+from cyberforge.analytics.aggregation import Learner, _select, aggregate
 from cyberforge.analytics.contracts import (
     AnalyticsQueryV1,
     AnalyticsScope,
@@ -21,6 +23,7 @@ from cyberforge.analytics.contracts import (
     ScenarioAnalyticsSnapshotV1,
 )
 from cyberforge.analytics.recommendations import InstructorRecommendationsService
+from cyberforge.analytics.topic_advisory import AssistantTopicInputV1, project_topics
 from cyberforge.application.analytics_history import (
     BATCH_SIZE,
     _HistoricalReader,
@@ -49,6 +52,19 @@ class AnalyticsStorageError(ApplicationError):
             if busy
             else "База даних недоступна. Спробуйте ще раз."
         )
+
+
+def _advisory_digest(value) -> str:
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
+@dataclass(frozen=True, slots=True, repr=False)
+class _AdvisorySource:
+    scope_digest: str
+    source_digest: str
+    request: AssistantTopicInputV1 | None
 
 
 @dataclass(frozen=True)
@@ -392,6 +408,44 @@ class ScenarioAnalyticsService:
             snapshot, _, access = self._snapshot(db, token, query)
         self.check_access(token, query, access)
         return snapshot, access
+
+    def advisory_source(self, token, value) -> _AdvisorySource:
+        query = self._query(value)
+        with self._transaction() as db:
+            self.accounts.require(db, token, Role.INSTRUCTOR)
+            scope = self._scope(db, token, query)
+            by_learner = defaultdict(list)
+            for entry in self._attempts(db, query, scope):
+                if entry.detail.activity == "COMPLETED":
+                    by_learner[entry.detail.learner_id].append(entry)
+            selected = tuple(
+                entry
+                for learner in sorted(by_learner)
+                for entry in _select(by_learner[learner], query.aggregation)
+            )
+            request = project_topics(
+                (entry.detail for entry in selected),
+                ordering_error=any(entry.ordering_error for entry in selected),
+            )
+            local_scope = query.model_dump(
+                mode="json", exclude={"page", "page_size", "sort", "direction"}
+            )
+            sources = [
+                [
+                    str(entry.detail.attempt_id),
+                    entry.detail.publication.id,
+                    entry.detail.group.id,
+                    entry.detail.learner_id,
+                    entry.detail.result_status,
+                    entry.result_digest,
+                ]
+                for entry in selected
+            ]
+            return _AdvisorySource(
+                _advisory_digest(local_scope),
+                _advisory_digest([asdict(scope.access), sources]),
+                request,
+            )
 
     def summary(self, token, value):
         return self.load(token, value)[0]

@@ -5,9 +5,11 @@ from datetime import UTC, datetime, timedelta
 from threading import Event
 
 import pytest
-from PySide6.QtCore import QDateTime, Qt
-from PySide6.QtWidgets import QFileDialog
+from PySide6.QtCore import QDateTime, Qt, QTimer
+from PySide6.QtWidgets import QFileDialog, QPlainTextEdit, QPushButton
 
+from cyberforge.application.topic_advisory import AdvisoryPreview, AdvisoryResult
+from cyberforge.llm.topic_transport import TopicProviderRequest
 from cyberforge.ui.navigation import View
 from cyberforge.ui.shell import MainWindow
 from cyberforge.ui.theme import apply_theme
@@ -48,6 +50,52 @@ def open_analytics(qtbot, window):
     window.scenario_list.setCurrentRow(0)
     qtbot.waitUntil(lambda: window.analytics_page.snapshot is not None, timeout=8000)
     return window.analytics_page
+
+
+def test_cloud_preview_requires_explicit_confirmation(qtbot, analytics_window):
+    _, window, _ = analytics_window
+    page = open_analytics(qtbot, window)
+    sent = []
+    wire = b'{"schema_version":"assistant-topic-input-v1","topics":["reporting"]}'
+
+    class Advisory:
+        def invalidate(self, token):
+            pass
+
+        def check_display(self, token):
+            return True
+
+        def dispatch(self, token, identifier, generation, cancelled):
+            sent.append((identifier, generation))
+            return AdvisoryResult(True, ("Потренуйте повідомлення.",))
+
+    page.advisory = Advisory()
+    preview = AdvisoryPreview(
+        "fixture-confirmation",
+        "a" * 64,
+        ("Локальна порада.",),
+        TopicProviderRequest("groq", "https://api.groq.com", "fixture", wire),
+    )
+    displayed = []
+
+    def choose(text):
+        dialog = page._preview_dialog
+        displayed.append(dialog.findChild(QPlainTextEdit).toPlainText())
+        target = next(
+            button
+            for button in dialog.findChildren(QPushButton)
+            if button.text() == text
+        )
+        target.click()
+
+    QTimer.singleShot(0, lambda: choose("Залишити локальну пораду"))
+    page._review_advice(preview)
+    assert displayed == [wire.decode()] and not sent
+    QTimer.singleShot(0, lambda: choose("Підтвердити й надіслати"))
+    page._review_advice(preview)
+    qtbot.waitUntil(lambda: page._cloud_visible)
+    assert sent == [("fixture-confirmation", page.generation)]
+    assert page.advisory_text.text().endswith("Потренуйте повідомлення.")
 
 
 def test_dashboard_charts_filters_details_and_heartbeat(

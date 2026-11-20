@@ -51,16 +51,17 @@ class Database:
 
         self.sessions = sessionmaker(self.engine, expire_on_commit=False)
 
-    def migration_config(self) -> Config:
+    @staticmethod
+    def migration_config() -> Config:
         config = Config()
         config.set_main_option("script_location", "cyberforge.persistence:migrations")
         return config
 
-    def upgrade(self) -> None:
+    def upgrade(self, revision: str = "head") -> None:
         config = self.migration_config()
         with self.engine.begin() as connection:
             config.attributes["connection"] = connection
-            command.upgrade(config, "head")
+            command.upgrade(config, revision)
 
     def close(self) -> None:
         self.engine.dispose()
