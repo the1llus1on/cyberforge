@@ -1,12 +1,12 @@
 """Synthetic upgrades from the pre-Phase-12 default SQLite layout."""
 
+import ctypes
 import errno
 import json
 import os
 import sqlite3
-import subprocess
 from contextlib import closing
-from pathlib import Path
+from ctypes import wintypes
 
 import pytest
 
@@ -66,6 +66,35 @@ def seed(path, revision="head"):
     return db
 
 
+def set_test_legacy_acl(security, path):
+    """Set owner and DACL only on a synthetic Windows runner fixture."""
+    inheritance = "OICI" if path.is_dir() else ""
+    sddl = f"O:{security.sid}D:P" + "".join(
+        f"(A;{inheritance};FA;;;{sid})" for sid in ("SY", "BA", "OW")
+    )
+    descriptor = ctypes.c_void_p()
+    parse = security.security.ConvertStringSecurityDescriptorToSecurityDescriptorW
+    parse.argtypes = (
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(wintypes.DWORD),
+    )
+    parse.restype = wintypes.BOOL
+    if not parse(sddl, 1, ctypes.byref(descriptor), None):
+        raise ctypes.WinError(ctypes.get_last_error())
+    try:
+        apply = security.security.SetFileSecurityW
+        apply.argtypes = (wintypes.LPCWSTR, wintypes.DWORD, ctypes.c_void_p)
+        apply.restype = wintypes.BOOL
+        # OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION |
+        # PROTECTED_DACL_SECURITY_INFORMATION.
+        if not apply(str(path), 0x80000005, descriptor):
+            raise ctypes.WinError(ctypes.get_last_error())
+    finally:
+        security.free(descriptor)
+
+
 def test_no_legacy_keeps_clean_first_run(profiles):
     legacy, storage = profiles
     assert storage.prepare_legacy(lambda: pytest.fail("unexpected confirmation"))
@@ -84,17 +113,11 @@ def test_migrates_database_with_original_python_created_directory(tmp_path):
     with closing(seed(legacy, "0008")) as db:
         AccountService(db).bootstrap("root", "Адміністратор", "synthetic-password")
     security = WindowsProfileSecurity()
-    icacls = Path(os.environ["SystemRoot"]) / "System32" / "icacls.exe"
     for path in (legacy.parent, legacy):
-        # Hosted tests may run elevated. Reproduce ownership of the files
-        # created by the old application running under an ordinary token.
-        if security._descriptor(path).partition("D:")[0] != f"O:{security.sid}":
-            subprocess.run(
-                [icacls, path, "/setowner", f"*{security.sid}"],
-                check=True,
-                capture_output=True,
-                timeout=10,
-            )
+        # Hosted Windows runs elevated. Set the exact ordinary-user ACL on
+        # disposable objects rather than simulate it by changing only ownership.
+        if os.environ.get("GITHUB_ACTIONS") == "true":
+            set_test_legacy_acl(security, path)
         descriptor = security._descriptor(path)
         if path == legacy.parent:
             assert ";;;S-1-3-4)" in descriptor
